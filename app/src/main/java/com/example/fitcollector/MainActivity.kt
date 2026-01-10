@@ -112,9 +112,9 @@ private fun StepsTodayScreen(
 
     // IMPORTANT: choose the right baseUrl:
     // Emulator:
-    val baseUrl = "http://10.0.2.2:8000/"
+    // val baseUrl = "http://10.0.2.2:8000/"
     // Real phone on same Wi-Fi as PC (replace with your PC IPv4):
-    //    val baseUrl = "http://192.168.1.174:8000/"
+    val baseUrl = "http://192.168.1.174:8000/"
 
     val api = remember { buildApi(baseUrl) }
     var syncResult by remember { mutableStateOf<String?>(null) }

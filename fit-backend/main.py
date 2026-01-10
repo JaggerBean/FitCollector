@@ -5,9 +5,15 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy import create_engine, text
 from fastapi.middleware.cors import CORSMiddleware
+import os
+import os
+from fastapi import Header
 
 
-engine = create_engine("sqlite:///fitcollector.db", future=True)
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///fitcollector.db")
+engine = create_engine(DATABASE_URL, future=True)
+API_KEY = os.getenv("FIT_API_KEY", "dev-secret-change-me")
+# engine = create_engine("sqlite:///fitcollector.db", future=True)
 
 app = FastAPI(title="FitCollector Backend", version="0.1.0")
 
@@ -18,6 +24,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+def require_api_key(x_api_key: str | None):
+    if x_api_key != API_KEY:
+        raise HTTPException(status_code=401, detail="Invalid API key")
 
 def init_db() -> None:
     with engine.begin() as conn:
@@ -56,7 +66,8 @@ def health():
 
 
 @app.post("/v1/ingest")
-def ingest(p: IngestPayload):
+def ingest(p: IngestPayload, x_api_key: str | None = Header(default=None, alias="X-API-Key")):
+    require_api_key(x_api_key)
     server_day = date.today().isoformat() if not p.day else p.day
     server_ts = datetime.utcnow().isoformat() + "Z" if not p.timestamp else p.timestamp
 
@@ -77,9 +88,10 @@ def ingest(p: IngestPayload):
 
     return {"ok": True, "device_id": p.device_id, "day": server_day, "steps_today": p.steps_today}
 
-
 @app.get("/v1/latest/{device_id}")
-def latest(device_id: str):
+def latest(device_id: str, x_api_key: str | None = Header(default=None, alias="X-API-Key")):
+    require_api_key(x_api_key)
+
     with engine.begin() as conn:
         row = conn.execute(
             text("""
