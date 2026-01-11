@@ -6,8 +6,12 @@ from pydantic import BaseModel, Field
 from sqlalchemy import create_engine, text
 from fastapi.middleware.cors import CORSMiddleware
 import os
-import os
 from fastapi import Header
+from zoneinfo import ZoneInfo
+from datetime import timezone
+
+
+CENTRAL_TZ = ZoneInfo("America/Chicago")
 
 
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///fitcollector.db")
@@ -31,20 +35,43 @@ def require_api_key(x_api_key: str | None):
 
 def init_db() -> None:
     with engine.begin() as conn:
+        # 1) Create table if it doesn't exist (original schema is fine)
         conn.execute(text("""
         CREATE TABLE IF NOT EXISTS step_ingest (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id BIGSERIAL PRIMARY KEY,
             device_id TEXT NOT NULL,
-            day TEXT NOT NULL,
-            steps_today INTEGER NOT NULL,
+            day DATE NOT NULL,
+            steps_today BIGINT NOT NULL,
             source TEXT,
-            created_at TEXT NOT NULL
+            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
         );
         """))
+
+        # 2) Migration: add minecraft_username if missing
+        conn.execute(text("""
+        ALTER TABLE step_ingest
+        ADD COLUMN IF NOT EXISTS minecraft_username TEXT;
+        """))
+
+        # Optional: backfill old rows so you can later enforce NOT NULL
+        conn.execute(text("""
+        UPDATE step_ingest
+        SET minecraft_username = COALESCE(minecraft_username, device_id)
+        WHERE minecraft_username IS NULL;
+        """))
+
+        # 3) Indexes (now safe)
         conn.execute(text("""
         CREATE INDEX IF NOT EXISTS idx_step_ingest_device_day
         ON step_ingest(device_id, day);
         """))
+
+        conn.execute(text("""
+        CREATE INDEX IF NOT EXISTS idx_step_ingest_mc_day
+        ON step_ingest(minecraft_username, day);
+        """))
+
+
 
 
 @app.on_event("startup")
@@ -53,6 +80,7 @@ def on_startup():
 
 
 class IngestPayload(BaseModel):
+    minecraft_username: str = Field(..., min_length=3, max_length=16)
     device_id: str = Field(..., min_length=6, max_length=128)
     steps_today: int = Field(..., ge=0, le=500_000)
     day: Optional[str] = None
@@ -68,21 +96,21 @@ def health():
 @app.post("/v1/ingest")
 def ingest(p: IngestPayload, x_api_key: str | None = Header(default=None, alias="X-API-Key")):
     require_api_key(x_api_key)
-    server_day = date.today().isoformat() if not p.day else p.day
+    server_day = server_day = datetime.now(CENTRAL_TZ).date() if not p.day else p.day
     server_ts = datetime.utcnow().isoformat() + "Z" if not p.timestamp else p.timestamp
 
     with engine.begin() as conn:
         conn.execute(
             text("""
-            INSERT INTO step_ingest (device_id, day, steps_today, source, created_at)
-            VALUES (:device_id, :day, :steps_today, :source, :created_at)
+            INSERT INTO step_ingest (minecraft_username, device_id, day, steps_today, source)
+            VALUES (:minecraft_username, :device_id, :day, :steps_today, :source)
             """),
             {
+                "minecraft_username": p.minecraft_username,
                 "device_id": p.device_id,
                 "day": server_day,
                 "steps_today": int(p.steps_today),
                 "source": p.source,
-                "created_at": server_ts,
             },
         )
 
@@ -95,10 +123,16 @@ def latest(device_id: str, x_api_key: str | None = Header(default=None, alias="X
     with engine.begin() as conn:
         row = conn.execute(
             text("""
-            SELECT device_id, day, steps_today, source, created_at
+            SELECT
+                minecraft_username,
+                device_id,
+                day::text AS day,
+                steps_today,
+                source,
+                created_at
             FROM step_ingest
             WHERE device_id = :device_id
-            ORDER BY id DESC
+            ORDER BY created_at DESC
             LIMIT 1
             """),
             {"device_id": device_id},
@@ -107,4 +141,45 @@ def latest(device_id: str, x_api_key: str | None = Header(default=None, alias="X
     if not row:
         raise HTTPException(status_code=404, detail="No data for device_id")
 
-    return dict(row)
+    d = dict(row)
+    if d.get("created_at"):
+        d["created_at"] = d["created_at"].astimezone(CENTRAL_TZ).isoformat()
+    return d
+
+
+
+@app.get("/v1/admin/all")
+def admin_all(
+    limit: int = 100,
+    x_api_key: str | None = Header(default=None, alias="X-API-Key"),
+):
+    require_api_key(x_api_key)
+
+    with engine.begin() as conn:
+        rows = conn.execute(
+            text("""
+            SELECT
+                id,
+                minecraft_username,
+                device_id,
+                day::text AS day,
+                steps_today,
+                source,
+                created_at
+            FROM step_ingest
+            ORDER BY created_at DESC
+            LIMIT :limit
+            """),
+            {"limit": limit},
+        ).mappings().all()
+
+    # ✅ Convert RowMapping → dict and convert created_at to CST
+    out: list[dict] = []
+    for r in rows:
+        d = dict(r)
+        if d.get("created_at"):
+            d["created_at"] = d["created_at"].astimezone(CENTRAL_TZ).isoformat()
+        out.append(d)
+
+    return out
+

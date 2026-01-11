@@ -8,8 +8,11 @@ import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.Path
+import okhttp3.Interceptor
+
 
 data class IngestPayload(
+    val minecraft_username: String,
     val device_id: String,
     val steps_today: Long,
     val source: String = "health_connect"
@@ -41,11 +44,20 @@ interface FitApi {
     suspend fun latest(@Path("deviceId") deviceId: String): LatestResponse
 }
 
-fun buildApi(baseUrl: String): FitApi {
+fun buildApi(baseUrl: String, apiKey: String): FitApi {
     val logger = HttpLoggingInterceptor().apply {
         level = HttpLoggingInterceptor.Level.BODY
     }
+
+    val authInterceptor = Interceptor { chain ->
+        val req = chain.request().newBuilder()
+            .addHeader("X-API-Key", apiKey)
+            .build()
+        chain.proceed(req)
+    }
+
     val client = OkHttpClient.Builder()
+        .addInterceptor(authInterceptor)
         .addInterceptor(logger)
         .build()
 
@@ -56,3 +68,4 @@ fun buildApi(baseUrl: String): FitApi {
         .build()
         .create(FitApi::class.java)
 }
+

@@ -62,8 +62,25 @@ private fun StepsTodayScreen(
     var hasPerms by remember { mutableStateOf(false) }
     var stepsToday by remember { mutableStateOf<Long?>(null) }
     var error by remember { mutableStateOf<String?>(null) }
+    var syncResult by remember { mutableStateOf<String?>(null) }
 
     var client by remember { mutableStateOf<HealthConnectClient?>(null) }
+
+    // --- Backend wiring ---
+    val deviceId = remember { getOrCreateDeviceId(context) }
+
+    // Choose ONE:
+    //val baseUrl = "http://10.0.2.2:8000/"            // emulator
+    val baseUrl = "http://192.168.1.174:8000/"     // real phone on same Wi-Fi
+
+    // If you added API key auth, set it here:
+    val apiKey = "fc_live_7f3c9b2a7b2c4a2f9c8d1d0d9b3a"
+    val api = remember { buildApi(baseUrl, apiKey) }   // if no apiKey in your buildApi, use buildApi(baseUrl)
+
+    var mcUsername by remember { mutableStateOf(getMinecraftUsername(context)) }
+    var mcDraft by remember { mutableStateOf(mcUsername) }
+    var mcSaved by remember { mutableStateOf(mcUsername.isNotBlank()) }
+
 
     fun checkAvailability() {
         val sdkStatus = HealthConnectClient.getSdkStatus(context)
@@ -81,15 +98,16 @@ private fun StepsTodayScreen(
         }
     }
 
-    fun refreshGrantedPermissions() {
-        val hc = client ?: return
-        scope.launch {
-            try {
-                val granted = hc.permissionController.getGrantedPermissions()
-                hasPerms = granted.containsAll(permissions)
-            } catch (e: Exception) {
-                error = e.message
-            }
+    suspend fun refreshGrantedPermissions(): Boolean {
+        val hc = client ?: return false
+        return try {
+            val granted = hc.permissionController.getGrantedPermissions()
+            val ok = granted.containsAll(permissions)
+            hasPerms = ok
+            ok
+        } catch (e: Exception) {
+            error = e.message
+            false
         }
     }
 
@@ -107,103 +125,146 @@ private fun StepsTodayScreen(
         return resp.records.sumOf { it.count }
     }
 
-    // --- Backend wiring (simple) ---
-    val deviceId = remember { getOrCreateDeviceId(context) }
+    suspend fun syncSteps(steps: Long) {
+        try {
+            val resp = api.ingest(
+                IngestPayload(
+                    minecraft_username = mcUsername,
+                    device_id = deviceId,
+                    steps_today = steps
+                )
+            )
 
-    // IMPORTANT: choose the right baseUrl:
-    // Emulator:
-    // val baseUrl = "http://10.0.2.2:8000/"
-    // Real phone on same Wi-Fi as PC (replace with your PC IPv4):
-    val baseUrl = "http://192.168.1.174:8000/"
-
-    val api = remember { buildApi(baseUrl) }
-    var syncResult by remember { mutableStateOf<String?>(null) }
-
-    LaunchedEffect(Unit) {
-        checkAvailability()
-        refreshGrantedPermissions()
+            syncResult = "Synced OK: ${resp.steps_today} steps on ${resp.day}"
+        } catch (e: Exception) {
+            syncResult = "Sync failed: ${e.message}"
+        }
     }
 
-    Box(
+    // ✅ Auto flow: availability -> perms -> read -> sync
+    LaunchedEffect(Unit) {
+        error = null
+        syncResult = null
+
+        checkAvailability()
+        val hc = client
+        if (hc == null) return@LaunchedEffect
+
+        val ok = refreshGrantedPermissions()
+        if (!ok) {
+            // No perms yet; user must tap Request permission once.
+            return@LaunchedEffect
+        }
+
+        try {
+            val steps = readStepsToday(hc)
+            stepsToday = steps
+            syncSteps(steps)
+        } catch (e: Exception) {
+            error = e.message ?: "Unknown error"
+        }
+    }
+
+    // ✅ Optional: also auto-sync if stepsToday changes (prevents double-run issues)
+    LaunchedEffect(stepsToday) {
+        val steps = stepsToday ?: return@LaunchedEffect
+        // Only sync if we haven't already synced successfully for this value
+        if (syncResult?.startsWith("Synced OK") == true) return@LaunchedEffect
+        if (!mcSaved) return@LaunchedEffect
+        // Comment this out if you don’t want re-sync on every read
+        // syncSteps(steps)
+    }
+
+    Column(
         modifier = Modifier
             .fillMaxSize()
             .statusBarsPadding()
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Text("FitCollector", style = MaterialTheme.typography.headlineSmall)
-            Text("Device: $deviceId")
-            Text("Health Connect status: $status")
+        Text("FitCollector", style = MaterialTheme.typography.headlineSmall)
+        Text("Device: $deviceId")
+        Text("Health Connect status: $status")
+        Text("Perms granted: $hasPerms")
 
-            Button(onClick = {
-                error = null
-                checkAvailability()
-                refreshGrantedPermissions()
-            }) { Text("Check Health Connect") }
+        Text("Minecraft username (required)")
 
+        OutlinedTextField(
+            value = mcDraft,
+            onValueChange = { mcDraft = it },
+            singleLine = true,
+            placeholder = { Text("e.g. MinerSteve123") },
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             Button(
-                enabled = client != null && !hasPerms,
+                enabled = mcDraft.trim().isNotEmpty(),
                 onClick = {
-                    error = null
-                    requestPermissions(permissions)
+                    val cleaned = mcDraft.trim()
+                    setMinecraftUsername(context, cleaned)
+                    mcUsername = cleaned
+                    mcSaved = true
                 }
-            ) { Text("Request Steps Permission") }
+            ) { Text("Save") }
 
-            TextButton(
-                enabled = client != null,
-                onClick = { refreshGrantedPermissions() }
-            ) { Text("Refresh permission status") }
-
-            Button(
-                enabled = client != null && hasPerms,
-                onClick = {
-                    val hc = client ?: return@Button
-                    error = null
-                    scope.launch {
-                        try {
-                            stepsToday = readStepsToday(hc)
-                        } catch (e: Exception) {
-                            error = e.message ?: "Unknown error"
-                        }
-                    }
-                }
-            ) { Text("Read Steps Today") }
-
-            if (stepsToday != null) {
-                Text("Steps today: $stepsToday")
-            }
-
-            // ✅ NORMAL sync button
-            Button(
-                enabled = (stepsToday != null),
-                onClick = {
-                    val steps = stepsToday ?: return@Button
-                    error = null
-                    syncResult = null
-                    scope.launch {
-                        try {
-                            val resp = api.ingest(
-                                IngestPayload(device_id = deviceId, steps_today = steps)
-                            )
-                            syncResult = "Synced OK: ${resp.steps_today} steps on ${resp.day}"
-                        } catch (e: Exception) {
-                            syncResult = "Sync failed: ${e.message}"
-                        }
-                    }
-                }
-            ) { Text("Sync to backend") }
-
-            if (syncResult != null) {
-                Text(syncResult!!)
-            }
-
-            if (error != null) {
-                Text("Error: $error", color = MaterialTheme.colorScheme.error)
-            }
+            Text(if (mcSaved) "Saved: $mcUsername" else "Not saved", modifier = Modifier.padding(top = 12.dp))
         }
+
+
+        if (stepsToday != null) {
+            Text("Steps today: $stepsToday")
+        }
+
+        // --- Manual controls (still useful) ---
+        Button(onClick = {
+            error = null
+            syncResult = null
+            checkAvailability()
+            scope.launch {
+                refreshGrantedPermissions()
+            }
+        }) { Text("Re-check Health Connect") }
+
+        Button(
+            enabled = client != null && !hasPerms,
+            onClick = {
+                error = null
+                requestPermissions(permissions)
+            }
+        ) { Text("Request Steps Permission") }
+
+        Button(
+            enabled = client != null && hasPerms,
+            onClick = {
+                val hc = client ?: return@Button
+                error = null
+                syncResult = null
+                scope.launch {
+                    try {
+                        val steps = readStepsToday(hc)
+                        stepsToday = steps
+                        syncSteps(steps)
+                    } catch (e: Exception) {
+                        error = e.message ?: "Unknown error"
+                    }
+                }
+            }
+        ) { Text("Read + Sync Now") }
+
+        if (syncResult != null) {
+            Text(syncResult!!)
+        }
+
+        if (error != null) {
+            Text("Error: $error", color = MaterialTheme.colorScheme.error)
+        }
+
+        Spacer(Modifier.height(8.dp))
+        Text(
+            "Auto behavior: if Health Connect is available and permission is granted, " +
+                    "the app reads today's steps and syncs automatically on launch."
+        )
     }
 }
+

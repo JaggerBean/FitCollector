@@ -9,7 +9,8 @@ services:
     ports:
       - "8000:8000"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     restart: unless-stopped
 
   db:
@@ -21,6 +22,11 @@ services:
       POSTGRES_DB: fitcollector
     volumes:
       - fitcollector_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fit -d fitcollector"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
     restart: unless-stopped
 
 volumes:
