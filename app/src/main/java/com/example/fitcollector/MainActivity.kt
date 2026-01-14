@@ -23,6 +23,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -47,6 +48,8 @@ private val HealthGreen = Color(0xFF2E7D32)
 private val HealthLightGreen = Color(0xFFE8F5E9)
 private val HealthBlue = Color(0xFF1565C0)
 private val HealthLightBlue = Color(0xFFE3F2FD)
+private val MinecraftDirt = Color(0xFF795548)
+private val MinecraftGrass = Color(0xFF4CAF50)
 
 class MainActivity : ComponentActivity() {
 
@@ -61,7 +64,7 @@ class MainActivity : ComponentActivity() {
             ) { /* result handled by re-check */ }
 
         setContent {
-            FitCollectorTheme {
+            StepCraftTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
@@ -83,7 +86,7 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun FitCollectorTheme(content: @Composable () -> Unit) {
+fun StepCraftTheme(content: @Composable () -> Unit) {
     val colorScheme = lightColorScheme(
         primary = HealthGreen,
         onPrimary = Color.White,
@@ -213,7 +216,49 @@ private fun MainDashboard(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("FitCollector", fontWeight = FontWeight.Bold) },
+                title = {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center,
+                            modifier = Modifier.padding(top = 4.dp)
+                        ) {
+                            // Using DirectionsRun silhouette - directly above the block
+                            Icon(
+                                imageVector = Icons.Default.DirectionsRun,
+                                contentDescription = null,
+                                tint = HealthGreen,
+                                modifier = Modifier
+                                    .size(24.dp)
+                                    .offset(y = 1.dp) // Sink him into the block
+                            )
+                            // The Minecraft Block
+                            Box(
+                                modifier = Modifier
+                                    .size(18.dp)
+                                    .clip(RoundedCornerShape(2.dp))
+                                    .background(MinecraftDirt)
+                                    .padding(1.dp)
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(5.dp)
+                                        .background(MinecraftGrass)
+                                )
+                            }
+                        }
+                        Spacer(Modifier.width(12.dp))
+                        Text(
+                            "StepCraft", 
+                            fontWeight = FontWeight.Black, 
+                            fontSize = 28.sp,
+                            fontFamily = FontFamily.Monospace,
+                            letterSpacing = (-1.5).sp,
+                            color = HealthGreen
+                        )
+                    }
+                },
                 actions = {
                     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(end = 8.dp)) {
                         Text("Auto-Sync", style = MaterialTheme.typography.labelMedium)
@@ -312,11 +357,17 @@ private fun MainDashboard(
                     mcSaved = mcSaved,
                     canChangeMc = canChangeMc,
                     queuedName = queuedName,
+                    onCancelQueue = {
+                        cancelQueuedUsername(context)
+                        queuedName = null
+                        mcDraft = mcUsername // Fill back with saved name
+                    },
                     onSaveClick = {
                         val cleaned = mcDraft.trim()
                         if (canChangeMc || mcDraft.trim() == mcUsername) {
                             setMinecraftUsername(context, cleaned)
                             mcUsername = cleaned
+                            mcDraft = cleaned
                             mcSaved = true
                             queuedName = null
                         } else {
@@ -554,6 +605,7 @@ fun AccountCard(
     mcSaved: Boolean,
     canChangeMc: Boolean,
     queuedName: String?,
+    onCancelQueue: () -> Unit,
     onSaveClick: () -> Unit
 ) {
     ElevatedCard(
@@ -602,16 +654,32 @@ fun AccountCard(
             }
 
             if (queuedName != null) {
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(12.dp))
                 Surface(
                     color = MaterialTheme.colorScheme.secondaryContainer,
-                    shape = RoundedCornerShape(8.dp),
+                    shape = RoundedCornerShape(12.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text(
-                        "Next up: $queuedName (Applying tomorrow)",
+                    Row(
                         modifier = Modifier.padding(8.dp),
-                        style = MaterialTheme.typography.labelSmall)
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                "Next up: $queuedName",
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                "Applying tomorrow",
+                                style = MaterialTheme.typography.labelSmall
+                            )
+                        }
+                        TextButton(onClick = onCancelQueue) {
+                            Text("Cancel", color = MaterialTheme.colorScheme.error)
+                        }
+                    }
                 }
             } else if (isChanging && !canChangeMc) {
                 Spacer(Modifier.height(8.dp))

@@ -65,6 +65,14 @@ fun queueMinecraftUsername(context: Context, username: String) {
         .apply()
 }
 
+fun cancelQueuedUsername(context: Context) {
+    val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    prefs.edit()
+        .remove(KEY_QUEUED_USER)
+        .remove(KEY_QUEUED_DATE)
+        .apply()
+}
+
 fun getQueuedUsername(context: Context): String? {
     val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
     return prefs.getString(KEY_QUEUED_USER, null)
