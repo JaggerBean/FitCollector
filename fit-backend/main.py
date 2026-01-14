@@ -100,21 +100,73 @@ def ingest(p: IngestPayload, x_api_key: str | None = Header(default=None, alias=
     server_ts = datetime.utcnow().isoformat() + "Z" if not p.timestamp else p.timestamp
 
     with engine.begin() as conn:
-        conn.execute(
+        # Check if this device has already submitted a username today
+        device_row = conn.execute(
             text("""
-            INSERT INTO step_ingest (minecraft_username, device_id, day, steps_today, source)
-            VALUES (:minecraft_username, :device_id, :day, :steps_today, :source)
+                SELECT minecraft_username FROM step_ingest
+                WHERE device_id = :device_id AND day = :day
+                ORDER BY created_at ASC LIMIT 1
             """),
-            {
-                "minecraft_username": p.minecraft_username,
-                "device_id": p.device_id,
-                "day": server_day,
-                "steps_today": int(p.steps_today),
-                "source": p.source,
-            },
-        )
+            {"device_id": p.device_id, "day": server_day}
+        ).fetchone()
 
-    return {"ok": True, "device_id": p.device_id, "day": server_day, "steps_today": p.steps_today}
+        if device_row is not None:
+            # Device already submitted a username today
+            first_username = device_row[0]
+            if first_username != p.minecraft_username:
+                # Only allow submissions for the first username of the day
+                return {"ok": False, "reason": "Device already submitted a different username today", "device_id": p.device_id, "day": server_day, "first_username": first_username}
+
+        # Otherwise, proceed with upsert logic for username
+        # Check for existing record for this username
+        row = conn.execute(
+            text("""
+                SELECT day, steps_today FROM step_ingest
+                WHERE minecraft_username = :minecraft_username
+                ORDER BY created_at DESC LIMIT 1
+            """),
+            {"minecraft_username": p.minecraft_username}
+        ).fetchone()
+
+        should_upsert = False
+        is_new_day = False
+        if row is None:
+            # No record for this username, insert
+            should_upsert = True
+            is_new_day = True
+        else:
+            prev_day, prev_steps = row
+            if str(server_day) != str(prev_day):
+                should_upsert = True
+                is_new_day = True
+            elif int(p.steps_today) > prev_steps:
+                should_upsert = True
+
+        if should_upsert:
+            # Delete all previous entries for this username
+            conn.execute(
+                text("""
+                    DELETE FROM step_ingest WHERE minecraft_username = :minecraft_username
+                """),
+                {"minecraft_username": p.minecraft_username}
+            )
+            # Insert the new record
+            conn.execute(
+                text("""
+                    INSERT INTO step_ingest (minecraft_username, device_id, day, steps_today, source)
+                    VALUES (:minecraft_username, :device_id, :day, :steps_today, :source)
+                """),
+                {
+                    "minecraft_username": p.minecraft_username,
+                    "device_id": p.device_id,
+                    "day": server_day,
+                    "steps_today": int(p.steps_today),
+                    "source": p.source,
+                },
+            )
+            return {"ok": True, "device_id": p.device_id, "day": server_day, "steps_today": p.steps_today, "upserted": True, "new_day": is_new_day}
+        else:
+            return {"ok": True, "device_id": p.device_id, "day": server_day, "steps_today": p.steps_today, "upserted": False, "reason": "Not higher than previous for this day"}
 
 @app.get("/v1/latest/{device_id}")
 def latest(device_id: str, x_api_key: str | None = Header(default=None, alias="X-API-Key")):

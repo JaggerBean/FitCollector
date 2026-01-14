@@ -10,7 +10,6 @@ import retrofit2.http.POST
 import retrofit2.http.Path
 import okhttp3.Interceptor
 
-
 data class IngestPayload(
     val minecraft_username: String,
     val device_id: String,
@@ -26,21 +25,24 @@ data class IngestResponse(
 )
 
 data class LatestResponse(
+    val minecraft_username: String? = null,
     val device_id: String,
     val day: String,
     val steps_today: Long,
-    val source: String?,
-    val created_at: String
+    val source: String? = null,
+    val created_at: String? = null
 )
 
-interface FitApi {
-    @GET("/health")
-    suspend fun health(): Map<String, Any>
+data class HealthResp(val ok: Boolean)
 
-    @POST("/v1/ingest")
+interface FitApi {
+    @GET("health")
+    suspend fun health(): HealthResp
+
+    @POST("v1/ingest")
     suspend fun ingest(@Body payload: IngestPayload): IngestResponse
 
-    @GET("/v1/latest/{deviceId}")
+    @GET("v1/latest/{deviceId}")
     suspend fun latest(@Path("deviceId") deviceId: String): LatestResponse
 }
 
@@ -51,7 +53,7 @@ fun buildApi(baseUrl: String, apiKey: String): FitApi {
 
     val authInterceptor = Interceptor { chain ->
         val req = chain.request().newBuilder()
-            .addHeader("X-API-Key", apiKey)
+            .header("X-API-Key", apiKey)
             .build()
         chain.proceed(req)
     }
@@ -62,10 +64,9 @@ fun buildApi(baseUrl: String, apiKey: String): FitApi {
         .build()
 
     return Retrofit.Builder()
-        .baseUrl(baseUrl) // must end with /
+        .baseUrl(baseUrl) // MUST end with /
         .client(client)
         .addConverterFactory(GsonConverterFactory.create())
         .build()
         .create(FitApi::class.java)
 }
-
