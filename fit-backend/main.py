@@ -243,6 +243,41 @@ def validate_player_key(device_id: str, player_api_key: str, server_name: str) -
     return row[0]
 
 
+def validate_and_get_server(device_id: str, player_api_key: str) -> tuple[str, str]:
+    """
+    Validate player key (no server knowledge needed) and return (server_name, minecraft_username).
+    This is used for player ingest - they only know their own key, not the server key.
+    Updates last_used timestamp.
+    """
+    with engine.begin() as conn:
+        row = conn.execute(
+            text("""
+                SELECT server_name, minecraft_username FROM player_keys
+                WHERE key = :key 
+                  AND device_id = :device_id
+                  AND active = TRUE
+            """),
+            {
+                "key": player_api_key,
+                "device_id": device_id
+            }
+        ).fetchone()
+        
+        if not row:
+            raise HTTPException(
+                status_code=401, 
+                detail="Invalid player API key or device mismatch"
+            )
+        
+        # Update last_used timestamp
+        conn.execute(
+            text("UPDATE player_keys SET last_used = NOW() WHERE key = :key"),
+            {"key": player_api_key}
+        )
+    
+    return row[0], row[1]  # server_name, minecraft_username
+
+
 @app.on_event("startup")
 def on_startup():
     init_db()
@@ -355,25 +390,28 @@ def get_server_info(server_name: str = Depends(require_api_key)):
 
 
 @app.post("/v1/ingest")
-def ingest(p: IngestPayload, server_name: str = Depends(require_api_key)):
+def ingest(p: IngestPayload):
     """
-    Ingest step data. 
-    Requires both server API key (in header) and player API key (in body).
+    Ingest step data using only player API key.
+    Server name is automatically determined from the player key lookup.
     Auto-generates player key on first submission if it doesn't exist.
     Auto-updates username if device previously registered with different name.
     """
-    # Get or create player key (auto-updates username if changed)
-    player_key = get_or_create_player_key(p.device_id, p.minecraft_username, server_name)
+    # Validate player key and get server_name and current_username
+    server_name, current_username = validate_and_get_server(p.device_id, p.player_api_key)
     
-    # Validate the provided player key matches what we expect
-    current_username = validate_player_key(p.device_id, p.player_api_key, server_name)
-    
-    # Verify the username in payload matches what's in our database
+    # If username changed, auto-update it
     if current_username != p.minecraft_username:
-        raise HTTPException(
-            status_code=409,
-            detail=f"Username mismatch: device registered as '{current_username}' but submission is for '{p.minecraft_username}'"
-        )
+        with engine.begin() as conn:
+            conn.execute(
+                text("""
+                    UPDATE player_keys 
+                    SET minecraft_username = :new_username
+                    WHERE key = :key
+                """),
+                {"new_username": p.minecraft_username, "key": p.player_api_key}
+            )
+        current_username = p.minecraft_username
     
     server_day = datetime.now(CENTRAL_TZ).date() if not p.day else p.day
     server_ts = datetime.utcnow().isoformat() + "Z" if not p.timestamp else p.timestamp
