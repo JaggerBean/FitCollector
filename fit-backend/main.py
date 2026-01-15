@@ -287,11 +287,24 @@ class IngestPayload(BaseModel):
     minecraft_username: str = Field(..., min_length=3, max_length=16)
     device_id: str = Field(..., min_length=6, max_length=128)
     steps_today: int = Field(..., ge=0, le=500_000)
-    server_name: str = Field(..., min_length=3, max_length=50)  # Server to register with
-    player_api_key: Optional[str] = Field(None, min_length=20)  # Optional on first submission
+    player_api_key: str = Field(..., min_length=20)  # Required - must register first
     day: Optional[str] = None
     source: Optional[str] = "health_connect"
     timestamp: Optional[str] = None
+
+
+class PlayerRegistrationRequest(BaseModel):
+    minecraft_username: str = Field(..., min_length=3, max_length=16)
+    device_id: str = Field(..., min_length=6, max_length=128)
+    server_name: str = Field(..., min_length=3, max_length=50)
+
+
+class PlayerApiKeyResponse(BaseModel):
+    player_api_key: str
+    minecraft_username: str
+    device_id: str
+    server_name: str
+    message: str = "Save this key securely. You'll need it for all future submissions."
 
 
 class ServerRegistrationRequest(BaseModel):
@@ -311,6 +324,73 @@ class ApiKeyResponse(BaseModel):
 @app.get("/health")
 def health():
     return {"ok": True}
+
+
+@app.post("/v1/players/register")
+def register_player(request: PlayerRegistrationRequest):
+    """
+    Register a new player and get their player API key.
+    
+    This endpoint is public (no authentication required).
+    Players call this once with their device_id, username, and server name.
+    Returns a unique API key to use for all future step submissions.
+    """
+    
+    # Generate unique player API key
+    player_api_key = secrets.token_urlsafe(32)
+    
+    try:
+        with engine.begin() as conn:
+            # Check if server exists
+            server_exists = conn.execute(
+                text("SELECT id FROM api_keys WHERE server_name = :server_name AND active = TRUE"),
+                {"server_name": request.server_name}
+            ).fetchone()
+            
+            if not server_exists:
+                raise HTTPException(status_code=404, detail=f"Server '{request.server_name}' not found. Register with a valid server name.")
+            
+            # Check if this device already has a key for this server
+            existing_key = conn.execute(
+                text("""
+                    SELECT key FROM player_keys 
+                    WHERE device_id = :device_id AND server_name = :server_name AND active = TRUE
+                """),
+                {"device_id": request.device_id, "server_name": request.server_name}
+            ).fetchone()
+            
+            if existing_key:
+                raise HTTPException(
+                    status_code=409, 
+                    detail=f"Device already registered for '{request.server_name}'. Use existing key or contact admin to reset."
+                )
+            
+            # Insert new player key
+            conn.execute(
+                text("""
+                    INSERT INTO player_keys (key, device_id, minecraft_username, server_name, active)
+                    VALUES (:key, :device_id, :username, :server, TRUE)
+                """),
+                {
+                    "key": player_api_key,
+                    "device_id": request.device_id,
+                    "username": request.minecraft_username,
+                    "server": request.server_name
+                }
+            )
+        
+        return PlayerApiKeyResponse(
+            player_api_key=player_api_key,
+            minecraft_username=request.minecraft_username,
+            device_id=request.device_id,
+            server_name=request.server_name,
+            message="Save this key securely in your app. You'll need it for all future step submissions."
+        )
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to register player: {str(e)}")
 
 
 @app.post("/v1/servers/register")
@@ -393,38 +473,14 @@ def get_server_info(server_name: str = Depends(require_api_key)):
 @app.post("/v1/ingest")
 def ingest(p: IngestPayload):
     """
-    Ingest step data. Auto-registers player on first submission.
+    Ingest step data. Requires player to be registered first via /v1/players/register.
     
-    On first submission: player_api_key can be null
-      → Auto-generates and returns it in response
-    
-    On subsequent submissions: player_api_key required
-      → Validates and processes ingest
-    
+    Validates player API key and processes step data.
     Auto-updates username if device previously registered with different name.
     """
     
-    player_api_key = p.player_api_key
-    is_first_submission = player_api_key is None or player_api_key.strip() == ""
-    
-    if is_first_submission:
-        # Auto-register: create player key
-        player_api_key = get_or_create_player_key(p.device_id, p.minecraft_username, p.server_name)
-        server_name = p.server_name
-        current_username = p.minecraft_username
-    else:
-        # Existing player: validate their key
-        try:
-            server_name, current_username = validate_and_get_server(p.device_id, player_api_key)
-        except HTTPException:
-            raise
-        
-        # Verify they're submitting to the correct server
-        if server_name != p.server_name:
-            raise HTTPException(
-                status_code=409,
-                detail=f"Player key registered for '{server_name}' but submitted to '{p.server_name}'"
-            )
+    # Validate player key and get server_name and current_username
+    server_name, current_username = validate_and_get_server(p.device_id, p.player_api_key)
     
     # If username changed, auto-update it
     if current_username != p.minecraft_username:
@@ -510,17 +566,9 @@ def ingest(p: IngestPayload):
                     "source": p.source,
                 },
             )
-            response = {"ok": True, "device_id": p.device_id, "day": server_day, "steps_today": p.steps_today, "upserted": True, "new_day": is_new_day}
-            if is_first_submission:
-                response["player_api_key"] = player_api_key
-                response["message"] = "First submission! Save this player_api_key for future submissions."
-            return response
+            return {"ok": True, "device_id": p.device_id, "day": server_day, "steps_today": p.steps_today, "upserted": True, "new_day": is_new_day}
         else:
-            response = {"ok": True, "device_id": p.device_id, "day": server_day, "steps_today": p.steps_today, "upserted": False, "reason": "Not higher than previous for this day"}
-            if is_first_submission:
-                response["player_api_key"] = player_api_key
-                response["message"] = "First submission! Save this player_api_key for future submissions."
-            return response
+            return {"ok": True, "device_id": p.device_id, "day": server_day, "steps_today": p.steps_today, "upserted": False, "reason": "Not higher than previous for this day"}
 
 @app.get("/v1/latest/{device_id}")
 def latest(device_id: str, server_name: str = Depends(require_api_key)):
