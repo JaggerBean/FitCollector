@@ -1,11 +1,12 @@
 from datetime import datetime, date
 from typing import Optional
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends
 from pydantic import BaseModel, Field
 from sqlalchemy import create_engine, text
 from fastapi.middleware.cors import CORSMiddleware
 import os
+import secrets
 from fastapi import Header
 from zoneinfo import ZoneInfo
 from datetime import timezone
@@ -16,8 +17,6 @@ CENTRAL_TZ = ZoneInfo("America/Chicago")
 
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///fitcollector.db")
 engine = create_engine(DATABASE_URL, future=True)
-API_KEY = os.getenv("FIT_API_KEY", "dev-secret-change-me")
-# engine = create_engine("sqlite:///fitcollector.db", future=True)
 
 app = FastAPI(title="FitCollector Backend", version="0.1.0")
 
@@ -29,9 +28,27 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-def require_api_key(x_api_key: str | None):
-    if x_api_key != API_KEY:
-        raise HTTPException(status_code=401, detail="Invalid API key")
+def require_api_key(x_api_key: str | None = Header(default=None, alias="X-API-Key")):
+    """Validate API key and return the server name."""
+    if not x_api_key:
+        raise HTTPException(status_code=401, detail="Missing API key")
+    
+    with engine.begin() as conn:
+        key_row = conn.execute(
+            text("SELECT server_name FROM api_keys WHERE key = :key AND active = TRUE"),
+            {"key": x_api_key}
+        ).fetchone()
+        
+        if not key_row:
+            raise HTTPException(status_code=401, detail="Invalid API key")
+        
+        # Update last_used timestamp
+        conn.execute(
+            text("UPDATE api_keys SET last_used = NOW() WHERE key = :key"),
+            {"key": x_api_key}
+        )
+    
+    return key_row[0]
 
 def init_db() -> None:
     with engine.begin() as conn:
@@ -71,7 +88,159 @@ def init_db() -> None:
         ON step_ingest(minecraft_username, day);
         """))
 
+        # 4) Create api_keys table for per-server authentication
+        conn.execute(text("""
+        CREATE TABLE IF NOT EXISTS api_keys (
+            id BIGSERIAL PRIMARY KEY,
+            key TEXT UNIQUE NOT NULL,
+            server_name TEXT NOT NULL,
+            active BOOLEAN DEFAULT TRUE,
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            last_used TIMESTAMPTZ
+        );
+        """))
 
+        # Create index for faster lookups
+        conn.execute(text("""
+        CREATE INDEX IF NOT EXISTS idx_api_keys_key
+        ON api_keys(key);
+        """))
+
+        # 5) Create player_keys table for per-player authentication
+        conn.execute(text("""
+        CREATE TABLE IF NOT EXISTS player_keys (
+            id BIGSERIAL PRIMARY KEY,
+            key TEXT UNIQUE NOT NULL,
+            device_id TEXT NOT NULL,
+            minecraft_username TEXT NOT NULL,
+            server_name TEXT NOT NULL,
+            active BOOLEAN DEFAULT TRUE,
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            last_used TIMESTAMPTZ,
+            UNIQUE(device_id, server_name)
+        );
+        """))
+
+        # Create indexes for player key lookups
+        conn.execute(text("""
+        CREATE INDEX IF NOT EXISTS idx_player_keys_key
+        ON player_keys(key);
+        """))
+
+        conn.execute(text("""
+        CREATE INDEX IF NOT EXISTS idx_player_keys_device_server
+        ON player_keys(device_id, server_name);
+        """))
+
+
+
+
+def require_api_key(x_api_key: str | None = Header(default=None, alias="X-API-Key")):
+    """Validate API key and return the server name."""
+    if not x_api_key:
+        raise HTTPException(status_code=401, detail="Missing API key")
+    
+    with engine.begin() as conn:
+        key_row = conn.execute(
+            text("SELECT server_name FROM api_keys WHERE key = :key AND active = TRUE"),
+            {"key": x_api_key}
+        ).fetchone()
+        
+        if not key_row:
+            raise HTTPException(status_code=401, detail="Invalid API key")
+        
+        # Update last_used timestamp
+        conn.execute(
+            text("UPDATE api_keys SET last_used = NOW() WHERE key = :key"),
+            {"key": x_api_key}
+        )
+    
+    return key_row[0]
+
+
+def get_or_create_player_key(device_id: str, minecraft_username: str, server_name: str) -> str:
+    """
+    Get existing player key or create new one.
+    Auto-updates username if device previously registered with different name.
+    """
+    with engine.begin() as conn:
+        # Check if device_id has a key for this server
+        existing = conn.execute(
+            text("""
+                SELECT key, minecraft_username FROM player_keys
+                WHERE device_id = :device_id AND server_name = :server
+                LIMIT 1
+            """),
+            {"device_id": device_id, "server": server_name}
+        ).fetchone()
+        
+        if existing:
+            key, old_username = existing
+            
+            # If username changed, update it
+            if old_username != minecraft_username:
+                conn.execute(
+                    text("""
+                        UPDATE player_keys 
+                        SET minecraft_username = :new_username
+                        WHERE key = :key
+                    """),
+                    {"new_username": minecraft_username, "key": key}
+                )
+            
+            return key
+        
+        # First time: create new player key
+        new_key = secrets.token_urlsafe(32)
+        conn.execute(
+            text("""
+                INSERT INTO player_keys (key, device_id, minecraft_username, server_name, active)
+                VALUES (:key, :device_id, :username, :server, TRUE)
+            """),
+            {
+                "key": new_key,
+                "device_id": device_id,
+                "username": minecraft_username,
+                "server": server_name
+            }
+        )
+        return new_key
+
+
+def validate_player_key(device_id: str, player_api_key: str, server_name: str) -> str:
+    """
+    Validate player key and return current minecraft_username.
+    Updates last_used timestamp.
+    """
+    with engine.begin() as conn:
+        row = conn.execute(
+            text("""
+                SELECT minecraft_username FROM player_keys
+                WHERE key = :key 
+                  AND device_id = :device_id
+                  AND server_name = :server
+                  AND active = TRUE
+            """),
+            {
+                "key": player_api_key,
+                "device_id": device_id,
+                "server": server_name
+            }
+        ).fetchone()
+        
+        if not row:
+            raise HTTPException(
+                status_code=401, 
+                detail="Invalid player API key"
+            )
+        
+        # Update last_used timestamp
+        conn.execute(
+            text("UPDATE player_keys SET last_used = NOW() WHERE key = :key"),
+            {"key": player_api_key}
+        )
+    
+    return row[0]
 
 
 @app.on_event("startup")
@@ -83,9 +252,24 @@ class IngestPayload(BaseModel):
     minecraft_username: str = Field(..., min_length=3, max_length=16)
     device_id: str = Field(..., min_length=6, max_length=128)
     steps_today: int = Field(..., ge=0, le=500_000)
+    player_api_key: str = Field(..., min_length=20)  # Player key for authentication
     day: Optional[str] = None
     source: Optional[str] = "health_connect"
     timestamp: Optional[str] = None
+
+
+class ServerRegistrationRequest(BaseModel):
+    server_name: str = Field(..., min_length=3, max_length=50)
+    owner_name: str = Field(..., min_length=2, max_length=100)
+    owner_email: str = Field(..., min_length=5, max_length=255)
+    server_address: Optional[str] = Field(None, min_length=5, max_length=255)
+    server_version: Optional[str] = None
+
+
+class ApiKeyResponse(BaseModel):
+    api_key: str
+    server_name: str
+    message: str = "Store this key securely. You won't be able to see it again!"
 
 
 @app.get("/health")
@@ -93,10 +277,105 @@ def health():
     return {"ok": True}
 
 
+@app.post("/v1/servers/register")
+def register_server(request: ServerRegistrationRequest):
+    """
+    Register a new Minecraft server and get an API key.
+    
+    This endpoint is public (no authentication required) to allow new server owners to register.
+    The API key returned should be stored securely by the server owner.
+    """
+    
+    # Generate unique API key
+    api_key = secrets.token_urlsafe(32)
+    
+    try:
+        with engine.begin() as conn:
+            # Check if server name already exists
+            existing = conn.execute(
+                text("SELECT id FROM api_keys WHERE server_name = :server_name AND active = TRUE"),
+                {"server_name": request.server_name}
+            ).fetchone()
+            
+            if existing:
+                raise HTTPException(status_code=409, detail=f"Server name '{request.server_name}' already registered")
+            
+            # Insert new API key
+            conn.execute(
+                text("""
+                    INSERT INTO api_keys (key, server_name, active)
+                    VALUES (:key, :server_name, :active)
+                """),
+                {"key": api_key, "server_name": request.server_name, "active": True}
+            )
+            
+            # TODO: Store additional server metadata (owner_name, owner_email, server_address, etc.)
+            # For now, we're just using server_name in the api_keys table
+            # You might want to create a separate 'servers' table for this metadata
+            
+            # TODO: Send email to owner_email with the API key
+            # Example: send_email(request.owner_email, api_key, request.server_name)
+        
+        return ApiKeyResponse(
+            api_key=api_key,
+            server_name=request.server_name,
+            message="Store this key securely in your server config. You won't be able to see it again!"
+        )
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to register server: {str(e)}")
+
+
+@app.get("/v1/servers/info")
+def get_server_info(server_name: str = Depends(require_api_key)):
+    """Get info about the authenticated server."""
+    with engine.begin() as conn:
+        row = conn.execute(
+            text("""
+                SELECT server_name, active, created_at, last_used
+                FROM api_keys
+                WHERE server_name = :server_name
+                LIMIT 1
+            """),
+            {"server_name": server_name}
+        ).mappings().first()
+    
+    if not row:
+        raise HTTPException(status_code=404, detail="Server not found")
+    
+    d = dict(row)
+    if d.get("created_at"):
+        d["created_at"] = d["created_at"].astimezone(CENTRAL_TZ).isoformat()
+    if d.get("last_used"):
+        d["last_used"] = d["last_used"].astimezone(CENTRAL_TZ).isoformat()
+    
+    return d
+
+
 @app.post("/v1/ingest")
-def ingest(p: IngestPayload, x_api_key: str | None = Header(default=None, alias="X-API-Key")):
-    require_api_key(x_api_key)
-    server_day = server_day = datetime.now(CENTRAL_TZ).date() if not p.day else p.day
+def ingest(p: IngestPayload, server_name: str = Depends(require_api_key)):
+    """
+    Ingest step data. 
+    Requires both server API key (in header) and player API key (in body).
+    Auto-generates player key on first submission if it doesn't exist.
+    Auto-updates username if device previously registered with different name.
+    """
+    # Get or create player key (auto-updates username if changed)
+    player_key = get_or_create_player_key(p.device_id, p.minecraft_username, server_name)
+    
+    # Validate the provided player key matches what we expect
+    current_username = validate_player_key(p.device_id, p.player_api_key, server_name)
+    
+    # Verify the username in payload matches what's in our database
+    if current_username != p.minecraft_username:
+        raise HTTPException(
+            status_code=409,
+            detail=f"Username mismatch: device registered as '{current_username}' but submission is for '{p.minecraft_username}'"
+        )
+    
+    server_day = datetime.now(CENTRAL_TZ).date() if not p.day else p.day
     server_ts = datetime.utcnow().isoformat() + "Z" if not p.timestamp else p.timestamp
 
     with engine.begin() as conn:
@@ -169,8 +448,8 @@ def ingest(p: IngestPayload, x_api_key: str | None = Header(default=None, alias=
             return {"ok": True, "device_id": p.device_id, "day": server_day, "steps_today": p.steps_today, "upserted": False, "reason": "Not higher than previous for this day"}
 
 @app.get("/v1/latest/{device_id}")
-def latest(device_id: str, x_api_key: str | None = Header(default=None, alias="X-API-Key")):
-    require_api_key(x_api_key)
+def latest(device_id: str, server_name: str = Depends(require_api_key)):
+    # server_name is validated by require_api_key dependency
 
     with engine.begin() as conn:
         row = conn.execute(
@@ -203,9 +482,9 @@ def latest(device_id: str, x_api_key: str | None = Header(default=None, alias="X
 @app.get("/v1/admin/all")
 def admin_all(
     limit: int = 100,
-    x_api_key: str | None = Header(default=None, alias="X-API-Key"),
+    server_name: str = Depends(require_api_key),
 ):
-    require_api_key(x_api_key)
+    # server_name is validated by require_api_key dependency
 
     with engine.begin() as conn:
         rows = conn.execute(
