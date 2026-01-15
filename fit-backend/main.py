@@ -287,7 +287,8 @@ class IngestPayload(BaseModel):
     minecraft_username: str = Field(..., min_length=3, max_length=16)
     device_id: str = Field(..., min_length=6, max_length=128)
     steps_today: int = Field(..., ge=0, le=500_000)
-    player_api_key: str = Field(..., min_length=20)  # Player key for authentication
+    server_name: str = Field(..., min_length=3, max_length=50)  # Server to register with
+    player_api_key: Optional[str] = Field(None, min_length=20)  # Optional on first submission
     day: Optional[str] = None
     source: Optional[str] = "health_connect"
     timestamp: Optional[str] = None
@@ -392,13 +393,38 @@ def get_server_info(server_name: str = Depends(require_api_key)):
 @app.post("/v1/ingest")
 def ingest(p: IngestPayload):
     """
-    Ingest step data using only player API key.
-    Server name is automatically determined from the player key lookup.
-    Auto-generates player key on first submission if it doesn't exist.
+    Ingest step data. Auto-registers player on first submission.
+    
+    On first submission: player_api_key can be null
+      → Auto-generates and returns it in response
+    
+    On subsequent submissions: player_api_key required
+      → Validates and processes ingest
+    
     Auto-updates username if device previously registered with different name.
     """
-    # Validate player key and get server_name and current_username
-    server_name, current_username = validate_and_get_server(p.device_id, p.player_api_key)
+    
+    player_api_key = p.player_api_key
+    is_first_submission = player_api_key is None or player_api_key.strip() == ""
+    
+    if is_first_submission:
+        # Auto-register: create player key
+        player_api_key = get_or_create_player_key(p.device_id, p.minecraft_username, p.server_name)
+        server_name = p.server_name
+        current_username = p.minecraft_username
+    else:
+        # Existing player: validate their key
+        try:
+            server_name, current_username = validate_and_get_server(p.device_id, player_api_key)
+        except HTTPException:
+            raise
+        
+        # Verify they're submitting to the correct server
+        if server_name != p.server_name:
+            raise HTTPException(
+                status_code=409,
+                detail=f"Player key registered for '{server_name}' but submitted to '{p.server_name}'"
+            )
     
     # If username changed, auto-update it
     if current_username != p.minecraft_username:
@@ -409,7 +435,7 @@ def ingest(p: IngestPayload):
                     SET minecraft_username = :new_username
                     WHERE key = :key
                 """),
-                {"new_username": p.minecraft_username, "key": p.player_api_key}
+                {"new_username": p.minecraft_username, "key": player_api_key}
             )
         current_username = p.minecraft_username
     
@@ -432,7 +458,10 @@ def ingest(p: IngestPayload):
             first_username = device_row[0]
             if first_username != p.minecraft_username:
                 # Only allow submissions for the first username of the day
-                return {"ok": False, "reason": "Device already submitted a different username today", "device_id": p.device_id, "day": server_day, "first_username": first_username}
+                response = {"ok": False, "reason": "Device already submitted a different username today", "device_id": p.device_id, "day": server_day, "first_username": first_username}
+                if is_first_submission:
+                    response["player_api_key"] = player_api_key
+                return response
 
         # Otherwise, proceed with upsert logic for username
         # Check for existing record for this username
@@ -481,9 +510,17 @@ def ingest(p: IngestPayload):
                     "source": p.source,
                 },
             )
-            return {"ok": True, "device_id": p.device_id, "day": server_day, "steps_today": p.steps_today, "upserted": True, "new_day": is_new_day}
+            response = {"ok": True, "device_id": p.device_id, "day": server_day, "steps_today": p.steps_today, "upserted": True, "new_day": is_new_day}
+            if is_first_submission:
+                response["player_api_key"] = player_api_key
+                response["message"] = "First submission! Save this player_api_key for future submissions."
+            return response
         else:
-            return {"ok": True, "device_id": p.device_id, "day": server_day, "steps_today": p.steps_today, "upserted": False, "reason": "Not higher than previous for this day"}
+            response = {"ok": True, "device_id": p.device_id, "day": server_day, "steps_today": p.steps_today, "upserted": False, "reason": "Not higher than previous for this day"}
+            if is_first_submission:
+                response["player_api_key"] = player_api_key
+                response["message"] = "First submission! Save this player_api_key for future submissions."
+            return response
 
 @app.get("/v1/latest/{device_id}")
 def latest(device_id: str, server_name: str = Depends(require_api_key)):
