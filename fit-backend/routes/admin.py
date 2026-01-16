@@ -391,3 +391,67 @@ def admin_unban_player(
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to unban player: {str(e)}")
+
+
+@router.delete("/v1/admin/all-data")
+def admin_delete_all_data(
+    confirm: str = None,
+    _: bool = Depends(require_master_admin),
+):
+    """
+    Delete ALL stored data in the system (master admin only).
+    This is a destructive operation that cannot be undone.
+    
+    Requires X-Admin-Key header and confirm=yes query parameter to prevent accidents.
+    
+    Deletes:
+    - All step submissions from all servers
+    - All player keys/tokens
+    - All server API keys
+    
+    Keeps:
+    - Ban records (for enforcement)
+    """
+    
+    if confirm != "yes":
+        raise HTTPException(
+            status_code=400,
+            detail="This operation deletes ALL data. Confirm by passing ?confirm=yes"
+        )
+    
+    try:
+        with engine.begin() as conn:
+            # Delete all step data
+            step_result = conn.execute(
+                text("DELETE FROM step_ingest")
+            )
+            steps_deleted = step_result.rowcount
+            
+            # Delete all player keys
+            keys_result = conn.execute(
+                text("DELETE FROM player_keys")
+            )
+            keys_deleted = keys_result.rowcount
+            
+            # Delete all server API keys
+            api_result = conn.execute(
+                text("DELETE FROM api_keys")
+            )
+            api_deleted = api_result.rowcount
+        
+        return {
+            "ok": True,
+            "action": "admin_deleted_all_data",
+            "warning": "ALL DATA HAS BEEN PERMANENTLY DELETED",
+            "records_deleted": {
+                "step_submissions": steps_deleted,
+                "player_tokens": keys_deleted,
+                "server_api_keys": api_deleted
+            },
+            "message": f"Deleted {steps_deleted} step records, {keys_deleted} player tokens, and {api_deleted} server keys"
+        }
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to delete all data: {str(e)}")
