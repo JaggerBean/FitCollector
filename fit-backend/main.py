@@ -681,10 +681,12 @@ def latest(device_id: str, server_name: str = Depends(require_api_key)):
 
 @app.get("/v1/admin/all")
 def admin_all(
-    limit: int = 100,
+    limit: int = 1000,
     server_name: str = Depends(require_api_key),
 ):
     # server_name is validated by require_api_key dependency
+    # NOTE: This endpoint returns ALL data regardless of server, grouped by server
+    # It's for your personal admin use to monitor everything
 
     with engine.begin() as conn:
         rows = conn.execute(
@@ -696,21 +698,26 @@ def admin_all(
                 day::text AS day,
                 steps_today,
                 source,
+                server_name,
                 created_at
             FROM step_ingest
-            ORDER BY created_at DESC
+            ORDER BY server_name, created_at DESC
             LIMIT :limit
             """),
             {"limit": limit},
         ).mappings().all()
 
-    # ✅ Convert RowMapping → dict and convert created_at to CST
-    out: list[dict] = []
+    # Group by server_name
+    grouped: dict[str, list] = {}
     for r in rows:
         d = dict(r)
         if d.get("created_at"):
             d["created_at"] = d["created_at"].astimezone(CENTRAL_TZ).isoformat()
-        out.append(d)
+        
+        srv = d["server_name"]
+        if srv not in grouped:
+            grouped[srv] = []
+        grouped[srv].append(d)
 
-    return out
+    return grouped
 
