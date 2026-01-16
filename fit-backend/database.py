@@ -107,6 +107,12 @@ def init_db() -> None:
         );
         """))
 
+        # 7a) Migration: add ban_group_id if missing
+        conn.execute(text("""
+        ALTER TABLE bans
+        ADD COLUMN IF NOT EXISTS ban_group_id TEXT;
+        """))
+
         conn.execute(text("""
         CREATE INDEX IF NOT EXISTS idx_bans_server_username
         ON bans(server_name, minecraft_username);
