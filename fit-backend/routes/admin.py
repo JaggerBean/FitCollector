@@ -48,6 +48,131 @@ def latest(device_id: str, server_name: str = Depends(require_api_key)):
     return d
 
 
+@router.get("/v1/admin/bans")
+def admin_get_all_bans(
+    limit: int = 1000,
+    _: bool = Depends(require_master_admin),
+):
+    """
+    Get all bans across all servers.
+    Master admin only (requires X-Admin-Key header).
+    
+    Returns all bans grouped by server.
+    """
+    with engine.begin() as conn:
+        rows = conn.execute(
+            text("""
+            SELECT
+                server_name,
+                ban_group_id,
+                minecraft_username,
+                device_id,
+                reason,
+                banned_at
+            FROM bans
+            ORDER BY server_name, banned_at DESC
+            LIMIT :limit
+            """),
+            {"limit": limit},
+        ).mappings().all()
+
+    # Group by server, then by ban_group_id
+    grouped_by_server: dict[str, dict] = {}
+    for r in rows:
+        d = dict(r)
+        if d.get("banned_at"):
+            d["banned_at"] = d["banned_at"].astimezone(CENTRAL_TZ).isoformat()
+        
+        server = d["server_name"]
+        group = d["ban_group_id"]
+        
+        if server not in grouped_by_server:
+            grouped_by_server[server] = {}
+        
+        if group not in grouped_by_server[server]:
+            grouped_by_server[server][group] = {
+                "ban_group_id": group,
+                "username": None,
+                "devices": [],
+                "reason": d["reason"],
+                "banned_at": d["banned_at"]
+            }
+        
+        if d["minecraft_username"]:
+            grouped_by_server[server][group]["username"] = d["minecraft_username"]
+        if d["device_id"]:
+            grouped_by_server[server][group]["devices"].append(d["device_id"])
+
+    # Convert to list format for each server
+    result = {}
+    for server, bans_dict in grouped_by_server.items():
+        result[server] = {
+            "total_bans": len(bans_dict),
+            "bans": list(bans_dict.values())
+        }
+
+    return result
+
+
+@router.get("/v1/admin/servers/{server_name}/bans")
+def admin_get_server_bans(
+    server_name: str,
+    limit: int = 1000,
+    _: bool = Depends(require_master_admin),
+):
+    """
+    Get all bans for a specific server.
+    Master admin only (requires X-Admin-Key header).
+    
+    Parameters:
+    - server_name: Server to view bans for
+    """
+    with engine.begin() as conn:
+        rows = conn.execute(
+            text("""
+            SELECT
+                ban_group_id,
+                minecraft_username,
+                device_id,
+                reason,
+                banned_at
+            FROM bans
+            WHERE server_name = :server_name
+            ORDER BY banned_at DESC
+            LIMIT :limit
+            """),
+            {"server_name": server_name, "limit": limit},
+        ).mappings().all()
+
+    # Group by ban_group_id
+    grouped: dict[str, dict] = {}
+    for r in rows:
+        d = dict(r)
+        if d.get("banned_at"):
+            d["banned_at"] = d["banned_at"].astimezone(CENTRAL_TZ).isoformat()
+        
+        group = d["ban_group_id"]
+        if group not in grouped:
+            grouped[group] = {
+                "ban_group_id": group,
+                "username": None,
+                "devices": [],
+                "reason": d["reason"],
+                "banned_at": d["banned_at"]
+            }
+        
+        if d["minecraft_username"]:
+            grouped[group]["username"] = d["minecraft_username"]
+        if d["device_id"]:
+            grouped[group]["devices"].append(d["device_id"])
+
+    return {
+        "server_name": server_name,
+        "total_bans": len(grouped),
+        "bans": list(grouped.values())
+    }
+
+
 @router.get("/v1/admin/all")
 def admin_all(
     limit: int = 1000,

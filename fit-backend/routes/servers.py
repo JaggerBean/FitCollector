@@ -98,6 +98,63 @@ def get_server_info(server_name: str = Depends(require_api_key)):
     return d
 
 
+@router.get("/v1/servers/bans")
+def get_server_bans(
+    limit: int = 1000,
+    server_name: str = Depends(require_api_key),
+):
+    """
+    Get all bans for this server.
+    Requires server API key.
+    
+    Returns banned usernames and devices with reasons.
+    """
+    with engine.begin() as conn:
+        rows = conn.execute(
+            text("""
+            SELECT
+                ban_group_id,
+                minecraft_username,
+                device_id,
+                reason,
+                banned_at
+            FROM bans
+            WHERE server_name = :server_name
+            ORDER BY banned_at DESC
+            LIMIT :limit
+            """),
+            {"server_name": server_name, "limit": limit},
+        ).mappings().all()
+
+    # Group by ban_group_id
+    grouped: dict[str, dict] = {}
+    for r in rows:
+        d = dict(r)
+        if d.get("banned_at"):
+            d["banned_at"] = d["banned_at"].astimezone(CENTRAL_TZ).isoformat()
+        
+        group = d["ban_group_id"]
+        if group not in grouped:
+            grouped[group] = {
+                "ban_group_id": group,
+                "username": None,
+                "devices": [],
+                "reason": d["reason"],
+                "banned_at": d["banned_at"]
+            }
+        
+        if d["minecraft_username"]:
+            grouped[group]["username"] = d["minecraft_username"]
+        if d["device_id"]:
+            grouped[group]["devices"].append(d["device_id"])
+
+    return {
+        "server_name": server_name,
+        "total_bans": len(grouped),
+        "bans": list(grouped.values())
+    }
+
+
 @router.get("/v1/servers/players")
 def get_server_players(
     limit: int = 1000,
