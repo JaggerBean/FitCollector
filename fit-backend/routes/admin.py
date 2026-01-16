@@ -12,9 +12,7 @@ router = APIRouter()
 
 
 class BanRequest(BaseModel):
-    minecraft_username: str | None = Field(None, min_length=3, max_length=16)
-    device_id: str | None = Field(None, min_length=6, max_length=128)
-    reason: str | None = Field(None, max_length=500)
+    reason: str = Field(default="broke code of conduct", max_length=500)
 
 
 @router.get("/v1/latest/{device_id}")
@@ -234,8 +232,9 @@ def admin_ban_player(
     Parameters:
     - server_name: Server to ban from
     - minecraft_username: Username to ban
-    - device_id (optional): Device ID to also ban
-    - reason (optional): Reason for the ban
+    - reason: Reason for the ban (defaults to "broke code of conduct")
+    
+    Automatically bans both the username and all associated devices.
     """
     
     if not minecraft_username or len(minecraft_username.strip()) == 0:
@@ -248,36 +247,47 @@ def admin_ban_player(
         with engine.begin() as conn:
             banned_items = []
             
-            # Ban by username
-            if minecraft_username:
-                existing = conn.execute(
-                    text("""
-                        SELECT id FROM bans
-                        WHERE server_name = :server_name
-                        AND minecraft_username = :minecraft_username
-                        AND device_id IS NULL
-                    """),
-                    {"server_name": server_name, "minecraft_username": minecraft_username}
-                ).fetchone()
-                
-                if not existing:
-                    conn.execute(
-                        text("""
-                            INSERT INTO bans (server_name, minecraft_username, reason)
-                            VALUES (:server_name, :minecraft_username, :reason)
-                        """),
-                        {
-                            "server_name": server_name,
-                            "minecraft_username": minecraft_username,
-                            "reason": request.reason
-                        }
-                    )
-                    banned_items.append(f"username '{minecraft_username}'")
-                else:
-                    banned_items.append(f"username '{minecraft_username}' (already banned)")
+            # First, find all device_ids associated with this username
+            devices = conn.execute(
+                text("""
+                    SELECT DISTINCT device_id FROM player_keys
+                    WHERE minecraft_username = :minecraft_username
+                    AND server_name = :server_name
+                """),
+                {"minecraft_username": minecraft_username, "server_name": server_name}
+            ).fetchall()
             
-            # Ban by device_id if provided
-            if request.device_id:
+            device_ids = [d[0] for d in devices]
+            
+            # Ban the username
+            existing = conn.execute(
+                text("""
+                    SELECT id FROM bans
+                    WHERE server_name = :server_name
+                    AND minecraft_username = :minecraft_username
+                    AND device_id IS NULL
+                """),
+                {"server_name": server_name, "minecraft_username": minecraft_username}
+            ).fetchone()
+            
+            if not existing:
+                conn.execute(
+                    text("""
+                        INSERT INTO bans (server_name, minecraft_username, reason)
+                        VALUES (:server_name, :minecraft_username, :reason)
+                    """),
+                    {
+                        "server_name": server_name,
+                        "minecraft_username": minecraft_username,
+                        "reason": request.reason
+                    }
+                )
+                banned_items.append(f"username '{minecraft_username}'")
+            else:
+                banned_items.append(f"username '{minecraft_username}' (already banned)")
+            
+            # Ban all associated devices
+            for device_id in device_ids:
                 existing = conn.execute(
                     text("""
                         SELECT id FROM bans
@@ -285,7 +295,7 @@ def admin_ban_player(
                         AND device_id = :device_id
                         AND minecraft_username IS NULL
                     """),
-                    {"server_name": server_name, "device_id": request.device_id}
+                    {"server_name": server_name, "device_id": device_id}
                 ).fetchone()
                 
                 if not existing:
@@ -296,21 +306,20 @@ def admin_ban_player(
                         """),
                         {
                             "server_name": server_name,
-                            "device_id": request.device_id,
+                            "device_id": device_id,
                             "reason": request.reason
                         }
                     )
-                    banned_items.append(f"device '{request.device_id}'")
-                else:
-                    banned_items.append(f"device '{request.device_id}' (already banned)")
+                    banned_items.append(f"device '{device_id}'")
         
         return {
             "ok": True,
             "action": "admin_banned",
             "server_name": server_name,
-            "banned_items": banned_items,
+            "minecraft_username": minecraft_username,
+            "banned_devices": device_ids,
             "reason": request.reason,
-            "message": f"Banned {', '.join(banned_items)} from server '{server_name}'"
+            "message": f"Banned '{minecraft_username}' and {len(device_ids)} device(s) from server '{server_name}'"
         }
     
     except HTTPException:
@@ -323,17 +332,17 @@ def admin_ban_player(
 def admin_unban_player(
     server_name: str,
     minecraft_username: str,
-    device_id: str | None = None,
     _: bool = Depends(require_master_admin),
 ):
     """
     Unban a player from a specific server.
     Master admin only (requires X-Admin-Key header).
     
+    Automatically unbans the username and all associated devices.
+    
     Parameters:
     - server_name: Server to unban from
     - minecraft_username: Username to unban
-    - device_id (optional): Device ID to also unban
     """
     
     if not minecraft_username or len(minecraft_username.strip()) == 0:
@@ -344,36 +353,35 @@ def admin_unban_player(
     
     try:
         with engine.begin() as conn:
-            unbanned_items = []
+            # First, find all device_ids associated with this username on this server
+            devices = conn.execute(
+                text("""
+                    SELECT device_id FROM bans
+                    WHERE server_name = :server_name
+                    AND minecraft_username = :minecraft_username
+                """),
+                {"server_name": server_name, "minecraft_username": minecraft_username}
+            ).fetchall()
             
-            # Unban by username
+            device_ids = [d[0] for d in devices if d[0] is not None]
+            
+            # Delete all bans for this username and its associated devices
             result = conn.execute(
                 text("""
                     DELETE FROM bans
                     WHERE server_name = :server_name
-                    AND minecraft_username = :minecraft_username
-                    AND device_id IS NULL
+                    AND (minecraft_username = :minecraft_username
+                         OR device_id IN (
+                            SELECT device_id FROM bans
+                            WHERE server_name = :server_name
+                            AND minecraft_username = :minecraft_username
+                         ))
                 """),
                 {"server_name": server_name, "minecraft_username": minecraft_username}
             )
-            if result.rowcount > 0:
-                unbanned_items.append(f"username '{minecraft_username}'")
+            rows_deleted = result.rowcount
             
-            # Unban by device_id if provided
-            if device_id:
-                result = conn.execute(
-                    text("""
-                        DELETE FROM bans
-                        WHERE server_name = :server_name
-                        AND device_id = :device_id
-                        AND minecraft_username IS NULL
-                    """),
-                    {"server_name": server_name, "device_id": device_id}
-                )
-                if result.rowcount > 0:
-                    unbanned_items.append(f"device '{device_id}'")
-            
-            if not unbanned_items:
+            if rows_deleted == 0:
                 raise HTTPException(
                     status_code=404,
                     detail=f"No bans found for '{minecraft_username}' on server '{server_name}'"
@@ -383,8 +391,10 @@ def admin_unban_player(
             "ok": True,
             "action": "admin_unbanned",
             "server_name": server_name,
-            "unbanned_items": unbanned_items,
-            "message": f"Unbanned {', '.join(unbanned_items)} from server '{server_name}'"
+            "minecraft_username": minecraft_username,
+            "associated_devices_unbanned": device_ids,
+            "bans_removed": rows_deleted,
+            "message": f"Unbanned '{minecraft_username}' and {len(device_ids)} associated device(s) from server '{server_name}'"
         }
     
     except HTTPException:
