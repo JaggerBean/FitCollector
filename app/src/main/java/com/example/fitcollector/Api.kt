@@ -35,6 +35,27 @@ data class LatestResponse(
 
 data class HealthResp(val ok: Boolean)
 
+data class ServerInfo(
+    val server_name: String,
+    val created_at: String? = null
+)
+
+data class AvailableServersResponse(
+    val total_servers: Int,
+    val servers: List<ServerInfo>
+)
+
+data class RegisterPayload(
+    val minecraft_username: String,
+    val device_id: String,
+    val server_name: String
+)
+
+data class RegisterResponse(
+    val ok: Boolean,
+    val message: String? = null
+)
+
 interface FitApi {
     @GET("health")
     suspend fun health(): HealthResp
@@ -44,6 +65,12 @@ interface FitApi {
 
     @GET("v1/latest/{deviceId}")
     suspend fun latest(@Path("deviceId") deviceId: String): LatestResponse
+
+    @GET("v1/servers/available")
+    suspend fun getAvailableServers(): AvailableServersResponse
+
+    @POST("v1/players/register")
+    suspend fun register(@Body payload: RegisterPayload): RegisterResponse
 }
 
 fun buildApi(baseUrl: String, apiKey: String): FitApi {

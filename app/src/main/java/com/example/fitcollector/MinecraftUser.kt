@@ -18,6 +18,8 @@ private const val KEY_AUTO_SYNC = "auto_sync_enabled"
 private const val KEY_SYNC_LOG = "sync_log"
 private const val KEY_LAST_STEPS = "last_known_steps"
 private const val KEY_LAST_STEPS_DATE = "last_known_steps_date"
+private const val KEY_ONBOARDING_COMPLETE = "onboarding_complete"
+private const val KEY_SELECTED_SERVER = "selected_server"
 
 private val dateFormatter = DateTimeFormatter.ISO_LOCAL_DATE
 private val dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
@@ -159,4 +161,24 @@ fun getTimeUntilNextChange(): String {
         hours > 0 -> "$hours hours and $minutes minutes"
         else -> "$minutes minutes"
     }
+}
+
+fun isOnboardingComplete(context: Context): Boolean {
+    val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    return prefs.getBoolean(KEY_ONBOARDING_COMPLETE, false)
+}
+
+fun setOnboardingComplete(context: Context, complete: Boolean) {
+    val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    prefs.edit().putBoolean(KEY_ONBOARDING_COMPLETE, complete).apply()
+}
+
+fun getSelectedServer(context: Context): String {
+    val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    return prefs.getString(KEY_SELECTED_SERVER, "") ?: ""
+}
+
+fun setSelectedServer(context: Context, server: String) {
+    val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    prefs.edit().putString(KEY_SELECTED_SERVER, server).apply()
 }
