@@ -31,6 +31,9 @@ import java.time.Instant
 import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
+import androidx.health.connect.client.request.AggregateRequest
+import androidx.health.connect.client.records.StepsRecord
+import androidx.health.connect.client.time.TimeRangeFilter
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -42,7 +45,7 @@ fun DashboardScreen(
     val centralZone = remember { ZoneId.of("America/Chicago") }
 
     val permissions = remember {
-        setOf(androidx.health.connect.client.permission.HealthPermission.getReadPermission(androidx.health.connect.client.records.StepsRecord::class))
+        setOf(androidx.health.connect.client.permission.HealthPermission.getReadPermission(StepsRecord::class))
     }
 
     var hcStatus by remember { mutableStateOf("Checking...") }
@@ -53,7 +56,6 @@ fun DashboardScreen(
     var client by remember { mutableStateOf<androidx.health.connect.client.HealthConnectClient?>(null) }
 
     val deviceId = remember { getOrCreateDeviceId(context) }
-    val baseUrl = "http://74.208.73.134/"
     var mcUsername by remember { mutableStateOf(getMinecraftUsername(context)) }
     var autoSyncEnabled by remember { mutableStateOf(isAutoSyncEnabled(context)) }
 
@@ -83,12 +85,22 @@ fun DashboardScreen(
     }
 
     suspend fun readStepsToday(hc: androidx.health.connect.client.HealthConnectClient): Long {
-        val start = ZonedDateTime.now(centralZone).toLocalDate().atStartOfDay(centralZone).toInstant()
-        val now = Instant.now()
-        val resp = hc.readRecords(androidx.health.connect.client.request.ReadRecordsRequest(androidx.health.connect.client.records.StepsRecord::class, androidx.health.connect.client.time.TimeRangeFilter.between(start, now)))
-        val total = resp.records.sumOf { it.count }
-        saveLastKnownSteps(context, total)
-        return total
+        return try {
+            val start = ZonedDateTime.now(centralZone).toLocalDate().atStartOfDay(centralZone).toInstant()
+            val now = Instant.now()
+            
+            val response = hc.aggregate(
+                AggregateRequest(
+                    metrics = setOf(StepsRecord.COUNT_TOTAL),
+                    timeRangeFilter = TimeRangeFilter.between(start, now)
+                )
+            )
+            val total = response[StepsRecord.COUNT_TOTAL] ?: 0L
+            saveLastKnownSteps(context, total)
+            total
+        } catch (e: Exception) {
+            0L
+        }
     }
 
     suspend fun syncSteps(steps: Long, source: String) {
@@ -103,26 +115,69 @@ fun DashboardScreen(
         }
         var successCount = 0
         var failCount = 0
+        val errors = mutableListOf<String>()
+        val globalApi = buildApi(BASE_URL, GLOBAL_API_KEY)
+
         selectedServers.forEach { server ->
-            val serverKey = getServerKey(context, mcUsername, server)
-            if (serverKey.isNullOrBlank()) {
-                failCount++
-                return@forEach
+            suspend fun getOrRecoverKey(): String? {
+                var key = getServerKey(context, mcUsername, server)
+                if (key != null) return key
+                try {
+                    val resp = globalApi.getKeys(deviceId, mcUsername)
+                    resp.servers.forEach { (s, k) -> saveServerKey(context, mcUsername, s, k) }
+                    key = resp.servers[server]
+                    if (key != null) return key
+                } catch (e: Exception) {}
+                try {
+                    val resp = globalApi.register(RegisterPayload(mcUsername, deviceId, server))
+                    saveServerKey(context, mcUsername, server, resp.player_api_key)
+                    return resp.player_api_key
+                } catch (e: Exception) {}
+                return null
             }
-            try {
-                val api = buildApi(baseUrl, serverKey)
-                api.ingest(IngestPayload(
+
+            suspend fun performIngest(key: String): Boolean {
+                globalApi.ingest(IngestPayload(
                     minecraft_username = mcUsername,
                     device_id = deviceId,
                     steps_today = steps,
-                    player_api_key = serverKey,
+                    player_api_key = key,
                     day = dayStr,
                     source = "health_connect",
                     timestamp = timestampStr
                 ))
-                successCount++
+                return true
+            }
+
+            try {
+                var key = getOrRecoverKey()
+                if (key == null) {
+                    failCount++
+                    return@forEach
+                }
+                try {
+                    if (performIngest(key)) {
+                        successCount++
+                    }
+                } catch (e: retrofit2.HttpException) {
+                    if (e.code() == 401) {
+                        try {
+                            val resp = globalApi.getKeys(deviceId, mcUsername)
+                            resp.servers.forEach { (s, k) -> saveServerKey(context, mcUsername, s, k) }
+                            val newKey = resp.servers[server]
+                            if (newKey != null && newKey != key) {
+                                if (performIngest(newKey)) {
+                                    successCount++
+                                    return@forEach
+                                }
+                            }
+                        } catch (e2: Exception) {}
+                    }
+                    throw e
+                }
             } catch (e: Exception) {
                 failCount++
+                errors.add(e.message ?: "Unknown error")
             }
         }
         val logMessage = when {

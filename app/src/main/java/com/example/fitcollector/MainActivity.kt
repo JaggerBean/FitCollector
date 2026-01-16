@@ -51,6 +51,9 @@ class MainActivity : ComponentActivity() {
                 PermissionController.createRequestPermissionResultContract()
             ) { /* result handled by re-check */ }
 
+        // Schedule background sync
+        SyncWorker.schedule(this)
+
         setContent {
             FitCollectorTheme {
                 Surface(
@@ -93,21 +96,3 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
-
-// ...existing code...
-
-// ...existing code...
-
-// ...existing code...
-
-// ...existing code...
-
-// ...existing code...
-
-// ...existing code...
-
-// ...existing code...
-
-// ...existing code...
-
-// ...existing code...

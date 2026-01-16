@@ -10,6 +10,9 @@ import retrofit2.http.POST
 import retrofit2.http.Path
 import okhttp3.Interceptor
 
+const val BASE_URL = "http://74.208.73.134/"
+const val GLOBAL_API_KEY = "fc_live_7f3c9b2a7b2c4a2f9c8d1d0d9b3a"
+
 data class IngestPayload(
     val minecraft_username: String,
     val device_id: String,

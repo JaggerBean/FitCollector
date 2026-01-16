@@ -5,11 +5,10 @@ import android.util.Log
 import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.permission.HealthPermission
 import androidx.health.connect.client.records.StepsRecord
-import androidx.health.connect.client.request.ReadRecordsRequest
+import androidx.health.connect.client.request.AggregateRequest
 import androidx.health.connect.client.time.TimeRangeFilter
 import androidx.work.*
 import java.time.Instant
-import java.time.LocalDate
 import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
@@ -57,18 +56,23 @@ class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
         }
 
         return try {
-            // 5. Read steps
-            val zone = ZoneId.systemDefault()
-            val nowZoned = ZonedDateTime.now(zone)
-            val start = nowZoned.toLocalDate().atStartOfDay(zone).toInstant()
+            // 5. Read steps using aggregate for better accuracy
+            val centralZone = ZoneId.of("America/Chicago")
+            val nowZoned = ZonedDateTime.now(centralZone)
+            val start = nowZoned.toLocalDate().atStartOfDay(centralZone).toInstant()
             val now = Instant.now()
-            val resp = client.readRecords(ReadRecordsRequest(StepsRecord::class, TimeRangeFilter.between(start, now)))
-            val totalSteps = resp.records.sumOf { it.count }
+            
+            val aggregateResponse = client.aggregate(
+                AggregateRequest(
+                    metrics = setOf(StepsRecord.COUNT_TOTAL),
+                    timeRangeFilter = TimeRangeFilter.between(start, now)
+                )
+            )
+            val totalSteps = aggregateResponse[StepsRecord.COUNT_TOTAL] ?: 0L
             
             saveLastKnownSteps(context, totalSteps)
 
             // 6. Sync to backend for each server
-            val baseUrl = "http://74.208.73.134/"
             val dayStr = nowZoned.format(dayFormatter)
             val timestampStr = now.toString()
             val nowStr = nowZoned.format(logTimeFormatter)
@@ -77,26 +81,70 @@ class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
             var failCount = 0
             val errors = mutableListOf<String>()
 
+            val globalApi = buildApi(BASE_URL, GLOBAL_API_KEY)
+
             selectedServers.forEach { server ->
-                val serverKey = getServerKey(context, mcUsername, server)
-                if (serverKey.isNullOrBlank()) {
-                    failCount++
-                    errors.add("No key for $server")
-                    return@forEach
+                suspend fun getOrRecoverKey(): String? {
+                    var key = getServerKey(context, mcUsername, server)
+                    if (key != null) return key
+
+                    try {
+                        val resp = globalApi.getKeys(deviceId, mcUsername)
+                        resp.servers.forEach { (s, k) -> saveServerKey(context, mcUsername, s, k) }
+                        key = resp.servers[server]
+                        if (key != null) return key
+                    } catch (e: Exception) {}
+
+                    try {
+                        val resp = globalApi.register(RegisterPayload(mcUsername, deviceId, server))
+                        saveServerKey(context, mcUsername, server, resp.player_api_key)
+                        return resp.player_api_key
+                    } catch (e: Exception) {}
+
+                    return null
                 }
 
-                try {
-                    val api = buildApi(baseUrl, serverKey)
-                    api.ingest(IngestPayload(
+                suspend fun performIngest(key: String): Boolean {
+                    globalApi.ingest(IngestPayload(
                         minecraft_username = mcUsername,
                         device_id = deviceId,
                         steps_today = totalSteps,
-                        player_api_key = serverKey,
+                        player_api_key = key,
                         day = dayStr,
                         source = "health_connect",
                         timestamp = timestampStr
                     ))
-                    successCount++
+                    return true
+                }
+
+                try {
+                    val key = getOrRecoverKey()
+                    if (key == null) {
+                        failCount++
+                        errors.add("Could not get key for $server")
+                        return@forEach
+                    }
+
+                    try {
+                        if (performIngest(key)) {
+                            successCount++
+                        }
+                    } catch (e: retrofit2.HttpException) {
+                        if (e.code() == 401) {
+                            try {
+                                val keysResp = globalApi.getKeys(deviceId, mcUsername)
+                                keysResp.servers.forEach { (s, k) -> saveServerKey(context, mcUsername, s, k) }
+                                val newKey = keysResp.servers[server]
+                                if (newKey != null && newKey != key) {
+                                    if (performIngest(newKey)) {
+                                        successCount++
+                                        return@forEach
+                                    }
+                                }
+                            } catch (e2: Exception) {}
+                        }
+                        throw e
+                    }
                 } catch (e: Exception) {
                     failCount++
                     errors.add("$server: ${e.message}")

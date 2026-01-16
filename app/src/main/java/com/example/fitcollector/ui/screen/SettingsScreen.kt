@@ -42,7 +42,6 @@ fun SettingsScreen(
     var servers by remember { mutableStateOf<List<ServerInfo>>(emptyList()) }
     var isLoading by remember { mutableStateOf(false) }
     var message by remember { mutableStateOf<Pair<String, Boolean>?>(null) }
-    var registeredKeys by remember { mutableStateOf(getServerKeysForUser(context, mcUsername)) }
     val canChangeMc = remember { canChangeMinecraftUsername(context) }
     var queuedUsername by remember { mutableStateOf(getQueuedUsername(context)) }
     var showServerDialog by remember { mutableStateOf(false) }
@@ -60,7 +59,6 @@ fun SettingsScreen(
             val resp = globalApi.getAvailableServers()
             servers = resp.servers
         } catch (e: Exception) {}
-        registeredKeys = getServerKeysForUser(context, mcUsername)
     }
 
     if (showServerDialog) {
@@ -256,7 +254,6 @@ fun SettingsScreen(
                                         }
                                         setSelectedServers(context, serverDraft.toList())
                                         selectedServers = serverDraft
-                                        registeredKeys = getServerKeysForUser(context, mcUsername)
                                         message = "Settings saved!" to true
                                     } catch (e: Exception) {
                                         message = (e.message ?: "Network error") to false
@@ -277,28 +274,6 @@ fun SettingsScreen(
                         }
                         message?.let { (msg, success) ->
                             Text(msg, color = if (success) Color(0xFF2E7D32) else Color.Red, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 8.dp))
-                        }
-                    }
-                }
-            }
-            item {
-                Text("Registered API Keys (Debug)", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-            }
-            item {
-                Card(modifier = Modifier.fillMaxWidth()) {
-                    Column(Modifier.padding(16.dp)) {
-                        if (registeredKeys.isEmpty()) {
-                            Text("No servers registered for '$mcUsername'.", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
-                        } else {
-                            registeredKeys.forEach { (server, key) ->
-                                Column(modifier = Modifier.padding(vertical = 4.dp)) {
-                                    Text(server, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = Color(0xFF2E7D32))
-                                    Text(key, style = MaterialTheme.typography.bodySmall, fontFamily = FontFamily.Monospace, color = Color.DarkGray)
-                                    if (registeredKeys.keys.last() != server) {
-                                        Divider(modifier = Modifier.padding(top = 8.dp))
-                                    }
-                                }
-                            }
                         }
                     }
                 }
