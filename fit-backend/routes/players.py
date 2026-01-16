@@ -35,8 +35,6 @@ def get_keys(device_id: str, minecraft_username: str):
         raise HTTPException(status_code=500, detail=f"Failed to fetch keys: {str(e)}")
 from utils import generate_opaque_token, hash_token
 
-router = APIRouter()
-
 
 @router.get("/v1/servers/available")
 def get_available_servers():
