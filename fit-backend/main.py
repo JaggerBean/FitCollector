@@ -89,6 +89,12 @@ def init_db() -> None:
         WHERE minecraft_username IS NULL;
         """))
 
+        # 3) Migration: add server_name if missing
+        conn.execute(text("""
+        ALTER TABLE step_ingest
+        ADD COLUMN IF NOT EXISTS server_name TEXT;
+        """))
+
         # 3) Indexes (now safe)
         conn.execute(text("""
         CREATE INDEX IF NOT EXISTS idx_step_ingest_device_day
@@ -622,11 +628,11 @@ def ingest(p: IngestPayload):
                 """),
                 {"minecraft_username": p.minecraft_username}
             )
-            # Insert the new record
+            # Insert the new record with server_name
             conn.execute(
                 text("""
-                    INSERT INTO step_ingest (minecraft_username, device_id, day, steps_today, source)
-                    VALUES (:minecraft_username, :device_id, :day, :steps_today, :source)
+                    INSERT INTO step_ingest (minecraft_username, device_id, day, steps_today, source, server_name)
+                    VALUES (:minecraft_username, :device_id, :day, :steps_today, :source, :server_name)
                 """),
                 {
                     "minecraft_username": p.minecraft_username,
@@ -634,6 +640,7 @@ def ingest(p: IngestPayload):
                     "day": server_day,
                     "steps_today": int(p.steps_today),
                     "source": p.source,
+                    "server_name": server_name,
                 },
             )
             return {"ok": True, "device_id": p.device_id, "day": server_day, "steps_today": p.steps_today, "upserted": True, "new_day": is_new_day}
