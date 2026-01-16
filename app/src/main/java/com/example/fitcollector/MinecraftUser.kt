@@ -23,7 +23,6 @@ private const val KEY_SELECTED_SERVERS = "selected_servers"
 private const val KEY_SERVER_KEYS = "server_keys"
 
 private val dateFormatter = DateTimeFormatter.ISO_LOCAL_DATE
-private val dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
 
 data class SyncLogEntry(
     val timestamp: String,
@@ -88,7 +87,6 @@ fun applyQueuedUsernameIfPossible(context: Context): String? {
     
     val today = LocalDate.now().format(dateFormatter)
     
-    // Only apply if it wasn't queued today AND we can change it today
     if (queuedDate != today && canChangeMinecraftUsername(context)) {
         setMinecraftUsername(context, queuedName)
         return queuedName
@@ -98,7 +96,7 @@ fun applyQueuedUsernameIfPossible(context: Context): String? {
 
 fun isAutoSyncEnabled(context: Context): Boolean {
     val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-    return prefs.getBoolean(KEY_AUTO_SYNC, true) // Default to true
+    return prefs.getBoolean(KEY_AUTO_SYNC, true)
 }
 
 fun setAutoSyncEnabled(context: Context, enabled: Boolean) {
@@ -186,16 +184,28 @@ fun setSelectedServers(context: Context, servers: List<String>) {
     prefs.edit().putString(KEY_SELECTED_SERVERS, Gson().toJson(servers)).apply()
 }
 
-fun getServerKeys(context: Context): Map<String, String> {
+fun getServerKey(context: Context, username: String, server: String): String? {
+    val allKeys = getAllServerKeys(context)
+    return allKeys["$username:$server"]
+}
+
+fun saveServerKey(context: Context, username: String, server: String, key: String) {
+    val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    val allKeys = getAllServerKeys(context).toMutableMap()
+    allKeys["$username:$server"] = key
+    prefs.edit().putString(KEY_SERVER_KEYS, Gson().toJson(allKeys)).apply()
+}
+
+fun getAllServerKeys(context: Context): Map<String, String> {
     val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
     val json = prefs.getString(KEY_SERVER_KEYS, "{}")
     val type = object : TypeToken<Map<String, String>>() {}.type
     return Gson().fromJson(json, type)
 }
 
-fun saveServerKey(context: Context, server: String, key: String) {
-    val keys = getServerKeys(context).toMutableMap()
-    keys[server] = key
-    val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-    prefs.edit().putString(KEY_SERVER_KEYS, Gson().toJson(keys)).apply()
+fun getServerKeysForUser(context: Context, username: String): Map<String, String> {
+    val all = getAllServerKeys(context)
+    val prefix = "$username:"
+    return all.filterKeys { it.startsWith(prefix) }
+              .mapKeys { it.key.substring(prefix.length) }
 }

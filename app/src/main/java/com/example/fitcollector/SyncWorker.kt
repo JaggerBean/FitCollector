@@ -30,10 +30,9 @@ class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
             return Result.success()
         }
 
-        // 2. Check if credentials are set
-        val mcUsername = getMinecraftUsername(context)
+        // 2. Check and apply queued username if midnight has passed
+        val mcUsername = applyQueuedUsernameIfPossible(context) ?: getMinecraftUsername(context)
         val selectedServers = getSelectedServers(context)
-        val serverKeys = getServerKeys(context)
         val deviceId = getOrCreateDeviceId(context)
         
         if (mcUsername.isBlank() || selectedServers.isEmpty()) {
@@ -79,7 +78,7 @@ class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
             val errors = mutableListOf<String>()
 
             selectedServers.forEach { server ->
-                val serverKey = serverKeys[server]
+                val serverKey = getServerKey(context, mcUsername, server)
                 if (serverKey.isNullOrBlank()) {
                     failCount++
                     errors.add("No key for $server")
