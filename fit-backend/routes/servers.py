@@ -4,6 +4,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel, Field
 from sqlalchemy import text
 from zoneinfo import ZoneInfo
+import secrets
 from database import engine
 from models import ServerRegistrationRequest, ApiKeyResponse
 from utils import generate_opaque_token, hash_token
@@ -264,6 +265,7 @@ def ban_player(
     try:
         with engine.begin() as conn:
             banned_items = []
+            ban_group_id = secrets.token_urlsafe(16)
             
             # First, find all device_ids associated with this username
             devices = conn.execute(
@@ -291,10 +293,11 @@ def ban_player(
             if not existing:
                 conn.execute(
                     text("""
-                        INSERT INTO bans (server_name, minecraft_username, reason)
-                        VALUES (:server_name, :minecraft_username, :reason)
+                        INSERT INTO bans (ban_group_id, server_name, minecraft_username, reason)
+                        VALUES (:ban_group_id, :server_name, :minecraft_username, :reason)
                     """),
                     {
+                        "ban_group_id": ban_group_id,
                         "server_name": server_name,
                         "minecraft_username": minecraft_username,
                         "reason": request.reason
@@ -319,10 +322,11 @@ def ban_player(
                 if not existing:
                     conn.execute(
                         text("""
-                            INSERT INTO bans (server_name, device_id, reason)
-                            VALUES (:server_name, :device_id, :reason)
+                            INSERT INTO bans (ban_group_id, server_name, device_id, reason)
+                            VALUES (:ban_group_id, :server_name, :device_id, :reason)
                         """),
                         {
+                            "ban_group_id": ban_group_id,
                             "server_name": server_name,
                             "device_id": device_id,
                             "reason": request.reason
@@ -367,39 +371,45 @@ def unban_player(
     
     try:
         with engine.begin() as conn:
-            # First, find all device_ids associated with this username on this server
-            devices = conn.execute(
+            # Find the username ban to get the ban_group_id
+            username_ban = conn.execute(
                 text("""
-                    SELECT device_id FROM bans
+                    SELECT ban_group_id FROM bans
                     WHERE server_name = :server_name
                     AND minecraft_username = :minecraft_username
+                    AND device_id IS NULL
                 """),
                 {"server_name": server_name, "minecraft_username": minecraft_username}
-            ).fetchall()
+            ).fetchone()
             
-            device_ids = [d[0] for d in devices if d[0] is not None]
-            
-            # Delete all bans for this username and its associated devices
-            result = conn.execute(
-                text("""
-                    DELETE FROM bans
-                    WHERE server_name = :server_name
-                    AND (minecraft_username = :minecraft_username
-                         OR device_id IN (
-                            SELECT device_id FROM bans
-                            WHERE server_name = :server_name
-                            AND minecraft_username = :minecraft_username
-                         ))
-                """),
-                {"server_name": server_name, "minecraft_username": minecraft_username}
-            )
-            rows_deleted = result.rowcount
-            
-            if rows_deleted == 0:
+            if not username_ban:
                 raise HTTPException(
                     status_code=404,
                     detail=f"No bans found for '{minecraft_username}' on server '{server_name}'"
                 )
+            
+            ban_group_id = username_ban[0]
+            
+            # Find all device bans with this ban_group_id
+            device_bans = conn.execute(
+                text("""
+                    SELECT device_id FROM bans
+                    WHERE ban_group_id = :ban_group_id
+                    AND device_id IS NOT NULL
+                """),
+                {"ban_group_id": ban_group_id}
+            ).fetchall()
+            
+            device_ids = [d[0] for d in device_bans]
+            
+            # Delete all bans with this ban_group_id
+            result = conn.execute(
+                text("""
+                    DELETE FROM bans
+                    WHERE ban_group_id = :ban_group_id
+                """),
+                {"ban_group_id": ban_group_id}
+            )
         
         return {
             "ok": True,
@@ -407,7 +417,7 @@ def unban_player(
             "server_name": server_name,
             "minecraft_username": minecraft_username,
             "associated_devices_unbanned": device_ids,
-            "bans_removed": rows_deleted,
+            "bans_removed": result.rowcount,
             "message": f"Unbanned '{minecraft_username}' and {len(device_ids)} associated device(s)"
         }
     

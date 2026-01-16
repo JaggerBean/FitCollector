@@ -98,6 +98,7 @@ def init_db() -> None:
         conn.execute(text("""
         CREATE TABLE IF NOT EXISTS bans (
             id BIGSERIAL PRIMARY KEY,
+            ban_group_id TEXT NOT NULL,
             server_name TEXT NOT NULL,
             minecraft_username TEXT,
             device_id TEXT,
@@ -114,4 +115,9 @@ def init_db() -> None:
         conn.execute(text("""
         CREATE INDEX IF NOT EXISTS idx_bans_server_device
         ON bans(server_name, device_id);
+        """))
+
+        conn.execute(text("""
+        CREATE INDEX IF NOT EXISTS idx_bans_ban_group_id
+        ON bans(ban_group_id);
         """))
