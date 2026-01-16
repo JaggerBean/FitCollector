@@ -133,3 +133,82 @@ def get_server_players(
         "total_records": len(out),
         "data": out
     }
+
+
+@router.delete("/v1/servers/players/{minecraft_username}")
+def delete_player(
+    minecraft_username: str,
+    all: bool = False,
+    server_name: str = Depends(require_api_key),
+):
+    """
+    Delete a player's data.
+    
+    Requires server API key.
+    
+    Parameters:
+    - minecraft_username: Player username to delete
+    - all: If true, delete ALL data for this player across all servers.
+           If false, delete only data for this specific server.
+    
+    Returns deletion summary with number of records removed.
+    """
+    
+    if not minecraft_username or len(minecraft_username.strip()) == 0:
+        raise HTTPException(status_code=400, detail="minecraft_username cannot be empty")
+    
+    try:
+        with engine.begin() as conn:
+            if all:
+                # Delete all data for this player across all servers
+                result = conn.execute(
+                    text("""
+                        DELETE FROM step_ingest
+                        WHERE minecraft_username = :minecraft_username
+                    """),
+                    {"minecraft_username": minecraft_username}
+                )
+                rows_deleted = result.rowcount
+                
+                # Also disable their player keys (don't delete, just disable)
+                conn.execute(
+                    text("""
+                        UPDATE player_keys
+                        SET active = FALSE
+                        WHERE minecraft_username = :minecraft_username
+                    """),
+                    {"minecraft_username": minecraft_username}
+                )
+                
+                return {
+                    "ok": True,
+                    "action": "deleted_all",
+                    "minecraft_username": minecraft_username,
+                    "rows_deleted": rows_deleted,
+                    "message": f"All data for '{minecraft_username}' deleted across all servers"
+                }
+            else:
+                # Delete only for this specific server
+                result = conn.execute(
+                    text("""
+                        DELETE FROM step_ingest
+                        WHERE minecraft_username = :minecraft_username
+                        AND server_name = :server_name
+                    """),
+                    {"minecraft_username": minecraft_username, "server_name": server_name}
+                )
+                rows_deleted = result.rowcount
+                
+                return {
+                    "ok": True,
+                    "action": "deleted_server",
+                    "minecraft_username": minecraft_username,
+                    "server_name": server_name,
+                    "rows_deleted": rows_deleted,
+                    "message": f"All data for '{minecraft_username}' on server '{server_name}' deleted"
+                }
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to delete player: {str(e)}")
