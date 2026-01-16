@@ -17,6 +17,7 @@ CENTRAL_TZ = ZoneInfo("America/Chicago")
 
 
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///fitcollector.db")
+MASTER_ADMIN_KEY = os.getenv("MASTER_ADMIN_KEY", "change-me-in-production")  # Master admin key
 engine = create_engine(DATABASE_URL, future=True)
 
 
@@ -61,6 +62,17 @@ def require_api_key(x_api_key: str | None = Header(default=None, alias="X-API-Ke
         )
     
     return key_row[0]
+
+
+def require_master_admin(x_admin_key: str | None = Header(default=None, alias="X-Admin-Key")):
+    """Validate master admin key. Only you should have this."""
+    if not x_admin_key:
+        raise HTTPException(status_code=401, detail="Missing admin key")
+    
+    if x_admin_key != MASTER_ADMIN_KEY:
+        raise HTTPException(status_code=401, detail="Invalid admin key")
+    
+    return True
 
 def init_db() -> None:
     with engine.begin() as conn:
@@ -682,11 +694,10 @@ def latest(device_id: str, server_name: str = Depends(require_api_key)):
 @app.get("/v1/admin/all")
 def admin_all(
     limit: int = 1000,
-    server_name: str = Depends(require_api_key),
+    _: bool = Depends(require_master_admin),
 ):
-    # server_name is validated by require_api_key dependency
-    # NOTE: This endpoint returns ALL data regardless of server, grouped by server
-    # It's for your personal admin use to monitor everything
+    # Master admin only - restricted access
+    # Shows ALL data from ALL servers grouped by server
 
     with engine.begin() as conn:
         rows = conn.execute(

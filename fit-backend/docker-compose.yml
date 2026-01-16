@@ -5,7 +5,7 @@ services:
     environment:
       # SQLAlchemy wants this format
       DATABASE_URL: postgresql+psycopg2://fit:fitpass@db:5432/fitcollector
-      FIT_API_KEY: "fc_live_7f3c9b2a7b2c4a2f9c8d1d0d9b3a"
+      MASTER_ADMIN_KEY: asdf
     ports:
       - "8000:8000"
     depends_on:
