@@ -36,6 +36,12 @@ class ServerRegistrationRequest(BaseModel):
     server_version: Optional[str] = None
 
 
+
+class KeysResponse(BaseModel):
+    minecraft_username: str
+    device_id: str
+    servers: dict[str, str]  # server_name -> player_api_key
+
 class ApiKeyResponse(BaseModel):
     api_key: str
     server_name: str

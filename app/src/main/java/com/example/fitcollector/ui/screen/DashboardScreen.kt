@@ -24,9 +24,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.fitcollector.*
 import com.example.fitcollector.ui.screen.components.ActivityCard
+import com.example.fitcollector.ui.screen.components.ResetTimer
 import com.example.fitcollector.ui.screen.components.SyncStatusBanner
 import kotlinx.coroutines.launch
 import java.time.Instant
+import java.time.ZoneId
+import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -36,6 +39,7 @@ fun DashboardScreen(
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    val centralZone = remember { ZoneId.of("America/Chicago") }
 
     val permissions = remember {
         setOf(androidx.health.connect.client.permission.HealthPermission.getReadPermission(androidx.health.connect.client.records.StepsRecord::class))
@@ -53,7 +57,7 @@ fun DashboardScreen(
     var mcUsername by remember { mutableStateOf(getMinecraftUsername(context)) }
     var autoSyncEnabled by remember { mutableStateOf(isAutoSyncEnabled(context)) }
 
-    val logTimeFormatter = remember { DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss") }
+    val logTimeFormatter = remember { DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withZone(centralZone) }
 
     fun checkAvailability() {
         val sdkStatus = androidx.health.connect.client.HealthConnectClient.getSdkStatus(context)
@@ -79,8 +83,7 @@ fun DashboardScreen(
     }
 
     suspend fun readStepsToday(hc: androidx.health.connect.client.HealthConnectClient): Long {
-        val zone = java.time.ZoneId.systemDefault()
-        val start = java.time.ZonedDateTime.now(zone).toLocalDate().atStartOfDay(zone).toInstant()
+        val start = ZonedDateTime.now(centralZone).toLocalDate().atStartOfDay(centralZone).toInstant()
         val now = Instant.now()
         val resp = hc.readRecords(androidx.health.connect.client.request.ReadRecordsRequest(androidx.health.connect.client.records.StepsRecord::class, androidx.health.connect.client.time.TimeRangeFilter.between(start, now)))
         val total = resp.records.sumOf { it.count }
@@ -89,9 +92,9 @@ fun DashboardScreen(
     }
 
     suspend fun syncSteps(steps: Long, source: String) {
-        val nowZoned = java.time.ZonedDateTime.now()
+        val nowZoned = ZonedDateTime.now(centralZone)
         val nowStr = nowZoned.format(logTimeFormatter)
-        val dayStr = nowZoned.format(java.time.format.DateTimeFormatter.ISO_LOCAL_DATE)
+        val dayStr = nowZoned.format(DateTimeFormatter.ISO_LOCAL_DATE)
         val timestampStr = Instant.now().toString()
         val selectedServers = getSelectedServers(context)
         if (selectedServers.isEmpty()) {
@@ -203,6 +206,9 @@ fun DashboardScreen(
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            item {
+                ResetTimer()
+            }
             item {
                 ActivityCard(
                     stepsToday = stepsToday,

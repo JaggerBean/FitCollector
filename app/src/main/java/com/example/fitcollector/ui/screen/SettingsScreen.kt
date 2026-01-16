@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Lock
@@ -17,6 +18,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.fitcollector.*
+import com.example.fitcollector.ui.screen.components.ResetTimer
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -43,6 +45,8 @@ fun SettingsScreen(
     var registeredKeys by remember { mutableStateOf(getServerKeysForUser(context, mcUsername)) }
     val canChangeMc = remember { canChangeMinecraftUsername(context) }
     var queuedUsername by remember { mutableStateOf(getQueuedUsername(context)) }
+    var showServerDialog by remember { mutableStateOf(false) }
+
     val permissions = remember { setOf(androidx.health.connect.client.permission.HealthPermission.getReadPermission(androidx.health.connect.client.records.StepsRecord::class)) }
 
     LaunchedEffect(Unit) {
@@ -57,6 +61,52 @@ fun SettingsScreen(
             servers = resp.servers
         } catch (e: Exception) {}
         registeredKeys = getServerKeysForUser(context, mcUsername)
+    }
+
+    if (showServerDialog) {
+        AlertDialog(
+            onDismissRequest = { showServerDialog = false },
+            title = { Text("Select Servers") },
+            text = {
+                Box(Modifier.heightIn(max = 300.dp)) {
+                    LazyColumn {
+                        items(servers) { server ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable {
+                                        serverDraft = if (serverDraft.contains(server.server_name)) {
+                                            serverDraft - server.server_name
+                                        } else {
+                                            serverDraft + server.server_name
+                                        }
+                                    }
+                                    .padding(vertical = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Checkbox(
+                                    checked = serverDraft.contains(server.server_name),
+                                    onCheckedChange = { checked ->
+                                        serverDraft = if (checked) {
+                                            serverDraft + server.server_name
+                                        } else {
+                                            serverDraft - server.server_name
+                                        }
+                                    }
+                                )
+                                Spacer(Modifier.width(8.dp))
+                                Text(server.server_name)
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showServerDialog = false }) {
+                    Text("Done")
+                }
+            }
+        )
     }
 
     Scaffold(
@@ -87,8 +137,10 @@ fun SettingsScreen(
                             onValueChange = { mcDraft = it },
                             label = { Text("Minecraft Username") },
                             modifier = Modifier.fillMaxWidth(),
-                            singleLine = true
+                            singleLine = true,
+                            enabled = queuedUsername == null
                         )
+                        
                         if (queuedUsername != null) {
                             Surface(
                                 color = MaterialTheme.colorScheme.secondaryContainer,
@@ -96,74 +148,106 @@ fun SettingsScreen(
                                 modifier = Modifier.padding(top = 8.dp).fillMaxWidth()
                             ) {
                                 Column(Modifier.padding(12.dp)) {
-                                    Text("Change queued: $queuedUsername", style = MaterialTheme.typography.labelMedium)
-                                    Text("Will apply tomorrow.", style = MaterialTheme.typography.labelSmall)
-                                    TextButton(onClick = { cancelQueuedUsername(context); queuedUsername = null; mcDraft = mcUsername }) {
-                                        Text("Cancel", color = Color.Red)
+                                    Text("Change queued: $queuedUsername", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
+                                    Text("This name will automatically apply at midnight CST.", style = MaterialTheme.typography.labelSmall)
+                                    Spacer(Modifier.height(8.dp))
+                                    ResetTimer()
+                                    Row(Modifier.padding(top = 8.dp)) {
+                                        TextButton(onClick = { 
+                                            cancelQueuedUsername(context)
+                                            queuedUsername = null
+                                            mcDraft = mcUsername
+                                        }) {
+                                            Text("Cancel Change", color = MaterialTheme.colorScheme.error)
+                                        }
                                     }
                                 }
                             }
                         } else if (!canChangeMc && mcDraft != mcUsername) {
-                            Text("You've already changed your name today. This new name will be queued to apply in ${getTimeUntilNextChange()}.", style = MaterialTheme.typography.labelSmall, color = Color(0xFF1565C0))
-                        }
-                        Spacer(Modifier.height(16.dp))
-                        Text("Selected Servers:", style = MaterialTheme.typography.labelLarge)
-                        servers.forEach { server ->
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable {
-                                        serverDraft = if (serverDraft.contains(server.server_name)) {
-                                            serverDraft - server.server_name
-                                        } else {
-                                            serverDraft + server.server_name
-                                        }
-                                    }
-                                    .padding(vertical = 4.dp),
-                                verticalAlignment = Alignment.CenterVertically
+                            Surface(
+                                color = Color(0xFFE3F2FD),
+                                shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp),
+                                modifier = Modifier.padding(top = 8.dp).fillMaxWidth()
                             ) {
-                                Checkbox(
-                                    checked = serverDraft.contains(server.server_name),
-                                    onCheckedChange = { checked ->
-                                        serverDraft = if (checked) {
-                                            serverDraft + server.server_name
-                                        } else {
-                                            serverDraft - server.server_name
+                                Column(Modifier.padding(12.dp)) {
+                                    Text("You've already changed your name today.", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+                                    Text("This name will be queued to apply tomorrow.", style = MaterialTheme.typography.labelSmall)
+                                    Spacer(Modifier.height(8.dp))
+                                    ResetTimer()
+                                    Row(Modifier.padding(top = 8.dp)) {
+                                        Button(
+                                            onClick = {
+                                                queueMinecraftUsername(context, mcDraft)
+                                                queuedUsername = mcDraft
+                                            },
+                                            modifier = Modifier.height(36.dp),
+                                            contentPadding = PaddingValues(horizontal = 12.dp),
+                                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2E7D32))
+                                        ) {
+                                            Text("Confirm Queue", style = MaterialTheme.typography.labelMedium)
+                                        }
+                                        Spacer(Modifier.width(8.dp))
+                                        TextButton(
+                                            onClick = { mcDraft = mcUsername },
+                                            modifier = Modifier.height(36.dp)
+                                        ) {
+                                            Text("Discard", style = MaterialTheme.typography.labelMedium)
                                         }
                                     }
-                                )
-                                Spacer(Modifier.width(8.dp))
-                                Text(server.server_name)
+                                }
                             }
                         }
+                        
                         Spacer(Modifier.height(16.dp))
-                        val hasChanges = mcDraft != mcUsername || serverDraft != selectedServers
+                        Text("Selected Servers (${serverDraft.size})", style = MaterialTheme.typography.labelLarge)
+                        if (serverDraft.isNotEmpty()) {
+                            Text(
+                                text = serverDraft.joinToString(", "),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Color.Gray,
+                                modifier = Modifier.padding(vertical = 4.dp)
+                            )
+                        } else {
+                            Text(
+                                text = "No servers selected",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.error,
+                                modifier = Modifier.padding(vertical = 4.dp)
+                            )
+                        }
+                        
+                        OutlinedButton(
+                            onClick = { showServerDialog = true },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("Change Servers")
+                        }
+                        
+                        Spacer(Modifier.height(16.dp))
+                        val hasServerChanges = serverDraft != selectedServers
+                        val canSaveServers = hasServerChanges && serverDraft.isNotEmpty()
+                        
+                        // We only show the main "Save" button for server changes if name isn't in a "pending queue" state
+                        // or if the name HAS changed and can be changed immediately.
+                        val canChangeNameInstantly = mcDraft != mcUsername && canChangeMc
+                        
                         Button(
                             onClick = {
                                 scope.launch {
                                     isLoading = true
                                     try {
-                                        if (mcDraft != mcUsername) {
-                                            if (canChangeMc) {
-                                                serverDraft.forEach { server ->
-                                                    if (getServerKey(context, mcDraft, server) == null) {
-                                                        val resp = globalApi.register(RegisterPayload(mcDraft, deviceId, server))
-                                                        saveServerKey(context, mcDraft, server, resp.player_api_key)
-                                                    }
+                                        if (canChangeNameInstantly) {
+                                            serverDraft.forEach { server ->
+                                                if (getServerKey(context, mcDraft, server) == null) {
+                                                    val resp = globalApi.register(RegisterPayload(mcDraft, deviceId, server))
+                                                    saveServerKey(context, mcDraft, server, resp.player_api_key)
                                                 }
-                                                setMinecraftUsername(context, mcDraft)
-                                                mcUsername = mcDraft
-                                            } else {
-                                                serverDraft.forEach { server ->
-                                                    if (getServerKey(context, mcDraft, server) == null) {
-                                                        val resp = globalApi.register(RegisterPayload(mcDraft, deviceId, server))
-                                                        saveServerKey(context, mcDraft, server, resp.player_api_key)
-                                                    }
-                                                }
-                                                queueMinecraftUsername(context, mcDraft)
-                                                queuedUsername = mcDraft
                                             }
+                                            setMinecraftUsername(context, mcDraft)
+                                            mcUsername = mcDraft
                                         }
+                                        
+                                        // Always sync server selection
                                         serverDraft.forEach { server ->
                                             if (getServerKey(context, mcUsername, server) == null) {
                                                 val resp = globalApi.register(RegisterPayload(mcUsername, deviceId, server))
@@ -173,7 +257,7 @@ fun SettingsScreen(
                                         setSelectedServers(context, serverDraft.toList())
                                         selectedServers = serverDraft
                                         registeredKeys = getServerKeysForUser(context, mcUsername)
-                                        message = (if (mcDraft != mcUsername && !canChangeMc) "Username change queued. Servers updated!" else "Settings saved!") to true
+                                        message = "Settings saved!" to true
                                     } catch (e: Exception) {
                                         message = (e.message ?: "Network error") to false
                                     } finally {
@@ -181,11 +265,15 @@ fun SettingsScreen(
                                     }
                                 }
                             },
-                            enabled = hasChanges && !isLoading && serverDraft.isNotEmpty(),
-                            modifier = Modifier.fillMaxWidth()
+                            enabled = (canChangeNameInstantly || canSaveServers) && !isLoading,
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFF2E7D32),
+                                disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant
+                            )
                         ) {
                             if (isLoading) CircularProgressIndicator(modifier = Modifier.size(20.dp), color = Color.White)
-                            else Text("Save & Sync Servers")
+                            else Text("Save Changes")
                         }
                         message?.let { (msg, success) ->
                             Text(msg, color = if (success) Color(0xFF2E7D32) else Color.Red, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 8.dp))

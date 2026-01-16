@@ -184,18 +184,40 @@ fun OnboardingScreen(
                                 isLoading = true
                                 error = null
                                 try {
+                                    // Try to recover keys if they already exist for this device/username
+                                    val keysResp = globalApi.getKeys(deviceId, mcUsername)
+                                    keysResp.servers.forEach { (server, key) ->
+                                        saveServerKey(context, mcUsername, server, key)
+                                    }
+                                    
+                                    // Register for any missing servers
                                     selectedServers.forEach { server ->
                                         if (getServerKey(context, mcUsername, server) == null) {
                                             val resp = globalApi.register(RegisterPayload(mcUsername, deviceId, server))
                                             saveServerKey(context, mcUsername, server, resp.player_api_key)
                                         }
                                     }
+                                    
                                     setMinecraftUsername(context, mcUsername)
                                     setSelectedServers(context, selectedServers.toList())
                                     setOnboardingComplete(context, true)
                                     onComplete()
                                 } catch (e: Exception) {
-                                    error = e.message ?: "Network error"
+                                    // If keys recovery fails, just try registering normally
+                                    try {
+                                        selectedServers.forEach { server ->
+                                            if (getServerKey(context, mcUsername, server) == null) {
+                                                val resp = globalApi.register(RegisterPayload(mcUsername, deviceId, server))
+                                                saveServerKey(context, mcUsername, server, resp.player_api_key)
+                                            }
+                                        }
+                                        setMinecraftUsername(context, mcUsername)
+                                        setSelectedServers(context, selectedServers.toList())
+                                        setOnboardingComplete(context, true)
+                                        onComplete()
+                                    } catch (e2: Exception) {
+                                        error = e2.message ?: "Network error"
+                                    }
                                 } finally {
                                     isLoading = false
                                 }
