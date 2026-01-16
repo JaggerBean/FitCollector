@@ -5,7 +5,8 @@ import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import java.time.Duration
 import java.time.LocalDate
-import java.time.LocalDateTime
+import java.time.ZonedDateTime
+import java.time.ZoneId
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 
@@ -21,8 +22,10 @@ private const val KEY_LAST_STEPS_DATE = "last_known_steps_date"
 private const val KEY_ONBOARDING_COMPLETE = "onboarding_complete"
 private const val KEY_SELECTED_SERVERS = "selected_servers"
 private const val KEY_SERVER_KEYS = "server_keys"
+private const val KEY_THEME_MODE = "theme_mode" // "System", "Light", "Dark"
 
 private val dateFormatter = DateTimeFormatter.ISO_LOCAL_DATE
+private val CENTRAL_ZONE = ZoneId.of("America/Chicago")
 
 data class SyncLogEntry(
     val timestamp: String,
@@ -39,7 +42,7 @@ fun getMinecraftUsername(context: Context): String {
 
 fun setMinecraftUsername(context: Context, username: String) {
     val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-    val today = LocalDate.now().format(dateFormatter)
+    val today = ZonedDateTime.now(CENTRAL_ZONE).toLocalDate().format(dateFormatter)
     
     prefs.edit()
         .putString(KEY_MC_USER, username)
@@ -53,13 +56,13 @@ fun canChangeMinecraftUsername(context: Context): Boolean {
     val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
     val lastChange = prefs.getString(KEY_LAST_CHANGE_DATE, null) ?: return true
     
-    val today = LocalDate.now().format(dateFormatter)
+    val today = ZonedDateTime.now(CENTRAL_ZONE).toLocalDate().format(dateFormatter)
     return lastChange != today
 }
 
 fun queueMinecraftUsername(context: Context, username: String) {
     val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-    val today = LocalDate.now().format(dateFormatter)
+    val today = ZonedDateTime.now(CENTRAL_ZONE).toLocalDate().format(dateFormatter)
     
     prefs.edit()
         .putString(KEY_QUEUED_USER, username)
@@ -85,7 +88,7 @@ fun applyQueuedUsernameIfPossible(context: Context): String? {
     val queuedName = prefs.getString(KEY_QUEUED_USER, null) ?: return null
     val queuedDate = prefs.getString(KEY_QUEUED_DATE, null) ?: return null
     
-    val today = LocalDate.now().format(dateFormatter)
+    val today = ZonedDateTime.now(CENTRAL_ZONE).toLocalDate().format(dateFormatter)
     
     if (queuedDate != today && canChangeMinecraftUsername(context)) {
         setMinecraftUsername(context, queuedName)
@@ -106,7 +109,7 @@ fun setAutoSyncEnabled(context: Context, enabled: Boolean) {
 
 fun saveLastKnownSteps(context: Context, steps: Long) {
     val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-    val today = LocalDate.now().format(dateFormatter)
+    val today = ZonedDateTime.now(CENTRAL_ZONE).toLocalDate().format(dateFormatter)
     prefs.edit()
         .putLong(KEY_LAST_STEPS, steps)
         .putString(KEY_LAST_STEPS_DATE, today)
@@ -116,7 +119,7 @@ fun saveLastKnownSteps(context: Context, steps: Long) {
 fun getLastKnownSteps(context: Context): Long? {
     val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
     val lastDate = prefs.getString(KEY_LAST_STEPS_DATE, null)
-    val today = LocalDate.now().format(dateFormatter)
+    val today = ZonedDateTime.now(CENTRAL_ZONE).toLocalDate().format(dateFormatter)
     
     return if (lastDate == today) {
         prefs.getLong(KEY_LAST_STEPS, 0)
@@ -149,8 +152,8 @@ fun getSyncLog(context: Context): List<SyncLogEntry> {
 }
 
 fun getTimeUntilNextChange(): String {
-    val now = LocalDateTime.now()
-    val midnight = LocalDateTime.of(LocalDate.now().plusDays(1), LocalTime.MIDNIGHT)
+    val now = ZonedDateTime.now(CENTRAL_ZONE)
+    val midnight = now.toLocalDate().plusDays(1).atStartOfDay(CENTRAL_ZONE)
     val duration = Duration.between(now, midnight)
     
     val hours = duration.toHours()
@@ -208,4 +211,14 @@ fun getServerKeysForUser(context: Context, username: String): Map<String, String
     val prefix = "$username:"
     return all.filterKeys { it.startsWith(prefix) }
               .mapKeys { it.key.substring(prefix.length) }
+}
+
+fun getThemeMode(context: Context): String {
+    val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    return prefs.getString(KEY_THEME_MODE, "System") ?: "System"
+}
+
+fun setThemeMode(context: Context, mode: String) {
+    val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    prefs.edit().putString(KEY_THEME_MODE, mode).apply()
 }

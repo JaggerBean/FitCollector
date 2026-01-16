@@ -14,26 +14,14 @@ import androidx.activity.compose.setContent
 import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalContext
 import androidx.health.connect.client.PermissionController
-import androidx.compose.ui.graphics.Color
 import com.example.fitcollector.ui.screen.OnboardingScreen
 import com.example.fitcollector.ui.screen.DashboardScreen
 import com.example.fitcollector.ui.screen.SettingsScreen
 import com.example.fitcollector.ui.screen.ActivityLogScreen
-import com.example.fitcollector.ui.screen.components.ActivityCard
-import com.example.fitcollector.ui.screen.components.SyncStatusBanner
-import com.example.fitcollector.ui.screen.components.LogEntryRow
 import com.example.fitcollector.ui.theme.FitCollectorTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.Modifier
-
-// Professional Color Palette
-private val HealthGreen = Color(0xFF2E7D32)
-private val HealthLightGreen = Color(0xFFE8F5E9)
-private val HealthBlue = Color(0xFF1565C0)
-private val HealthLightBlue = Color(0xFFE3F2FD)
-private val MinecraftDirt = Color(0xFF795548)
-private val MinecraftGrass = Color(0xFF4CAF50)
 
 enum class AppScreen {
     Onboarding, Dashboard, Settings, Log
@@ -55,12 +43,26 @@ class MainActivity : ComponentActivity() {
         SyncWorker.schedule(this)
 
         setContent {
-            FitCollectorTheme {
+            val context = LocalContext.current
+            val themeMode = remember { mutableStateOf(getThemeMode(context)) }
+
+            // A side effect to keep the themeMode state in sync with preferences
+            // This is a simple way to handle it without a full ViewModel for now
+            LaunchedEffect(Unit) {
+                while(true) {
+                    val current = getThemeMode(context)
+                    if (themeMode.value != current) {
+                        themeMode.value = current
+                    }
+                    kotlinx.coroutines.delay(500)
+                }
+            }
+
+            FitCollectorTheme(themeMode = themeMode.value) {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    val context = LocalContext.current
                     var currentScreen by remember { 
                         mutableStateOf(if (isOnboardingComplete(context)) AppScreen.Dashboard else AppScreen.Onboarding) 
                     }

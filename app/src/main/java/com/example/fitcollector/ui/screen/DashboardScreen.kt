@@ -26,6 +26,8 @@ import com.example.fitcollector.*
 import com.example.fitcollector.ui.screen.components.ActivityCard
 import com.example.fitcollector.ui.screen.components.ResetTimer
 import com.example.fitcollector.ui.screen.components.SyncStatusBanner
+import com.example.fitcollector.ui.theme.MinecraftDirt
+import com.example.fitcollector.ui.theme.MinecraftGrass
 import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.ZoneId
@@ -54,6 +56,7 @@ fun DashboardScreen(
     var syncResult by remember { mutableStateOf<String?>(null) }
     var lastSyncInstant by remember { mutableStateOf<Instant?>(null) }
     var client by remember { mutableStateOf<androidx.health.connect.client.HealthConnectClient?>(null) }
+    var autoTimeDisabled by remember { mutableStateOf(false) }
 
     val deviceId = remember { getOrCreateDeviceId(context) }
     var mcUsername by remember { mutableStateOf(getMinecraftUsername(context)) }
@@ -62,6 +65,7 @@ fun DashboardScreen(
     val logTimeFormatter = remember { DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withZone(centralZone) }
 
     fun checkAvailability() {
+        autoTimeDisabled = !isAutomaticTimeEnabled(context)
         val sdkStatus = androidx.health.connect.client.HealthConnectClient.getSdkStatus(context)
         hcStatus = when (sdkStatus) {
             androidx.health.connect.client.HealthConnectClient.SDK_AVAILABLE -> "Available"
@@ -104,6 +108,11 @@ fun DashboardScreen(
     }
 
     suspend fun syncSteps(steps: Long, source: String) {
+        if (!isAutomaticTimeEnabled(context)) {
+            syncResult = "Sync failed: Automatic time is disabled"
+            autoTimeDisabled = true
+            return
+        }
         val nowZoned = ZonedDateTime.now(centralZone)
         val nowStr = nowZoned.format(logTimeFormatter)
         val dayStr = nowZoned.format(DateTimeFormatter.ISO_LOCAL_DATE)
@@ -220,17 +229,17 @@ fun DashboardScreen(
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.DirectionsRun,
                                 contentDescription = null,
-                                tint = Color(0xFF2E7D32),
+                                tint = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.size(24.dp).offset(y = 1.dp)
                             )
                             Box(
                                 modifier = Modifier
                                     .size(18.dp)
                                     .clip(androidx.compose.foundation.shape.RoundedCornerShape(2.dp))
-                                    .background(Color(0xFF795548))
+                                    .background(MinecraftDirt)
                                     .padding(1.dp)
                             ) {
-                                Box(modifier = Modifier.fillMaxWidth().height(5.dp).background(Color(0xFF4CAF50)))
+                                Box(modifier = Modifier.fillMaxWidth().height(5.dp).background(MinecraftGrass))
                             }
                         }
                         Spacer(Modifier.width(12.dp))
@@ -240,7 +249,7 @@ fun DashboardScreen(
                             fontSize = 28.sp,
                             fontFamily = FontFamily.Monospace,
                             letterSpacing = (-1.5).sp,
-                            color = Color(0xFF2E7D32)
+                            color = MaterialTheme.colorScheme.primary
                         )
                     }
                 },
@@ -267,7 +276,7 @@ fun DashboardScreen(
             item {
                 ActivityCard(
                     stepsToday = stepsToday,
-                    isSyncEnabled = client != null && hasPerms && mcUsername.isNotBlank() && getSelectedServers(context).isNotEmpty(),
+                    isSyncEnabled = client != null && hasPerms && mcUsername.isNotBlank() && getSelectedServers(context).isNotEmpty() && !autoTimeDisabled,
                     onSyncClick = {
                         scope.launch {
                             client?.let { hc ->
@@ -293,9 +302,10 @@ fun DashboardScreen(
                     }
                 }
             }
-            if (!hasPerms || hcStatus != "Available" || mcUsername.isBlank() || getSelectedServers(context).isEmpty()) {
+            if (!hasPerms || hcStatus != "Available" || mcUsername.isBlank() || getSelectedServers(context).isEmpty() || autoTimeDisabled) {
                 item {
                     val message = when {
+                        autoTimeDisabled -> "Automatic Date & Time must be enabled in system settings."
                         hcStatus != "Available" -> "Health Connect is not available on this device."
                         !hasPerms -> "Health Connect permissions are required to read steps."
                         mcUsername.isBlank() -> "Please set your Minecraft username in Settings."
@@ -305,7 +315,13 @@ fun DashboardScreen(
                     Surface(
                         color = MaterialTheme.colorScheme.errorContainer,
                         shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
-                        modifier = Modifier.fillMaxWidth().clickable { onNavigate(com.example.fitcollector.AppScreen.Settings) }
+                        modifier = Modifier.fillMaxWidth().clickable { 
+                            if (autoTimeDisabled) {
+                                // Potentially open settings here
+                            } else {
+                                onNavigate(com.example.fitcollector.AppScreen.Settings)
+                            }
+                        }
                     ) {
                         Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
                             Icon(Icons.Default.Warning, null, tint = MaterialTheme.colorScheme.error)
@@ -320,7 +336,7 @@ fun DashboardScreen(
                     onClick = { onNavigate(com.example.fitcollector.AppScreen.Log) },
                     modifier = Modifier.fillMaxWidth().height(56.dp),
                     shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1565C0))
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
                 ) {
                     Icon(Icons.AutoMirrored.Filled.List, null)
                     Spacer(Modifier.width(12.dp))

@@ -1,4 +1,5 @@
 package com.example.fitcollector.ui.screen.components
+
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -18,6 +19,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.fitcollector.SyncLogEntry
+import com.example.fitcollector.ui.theme.*
 import kotlinx.coroutines.delay
 import java.time.Duration
 import java.time.Instant
@@ -26,8 +28,8 @@ import java.time.ZonedDateTime
 
 @Composable
 fun SyncStatusBanner(msg: String, isSuccess: Boolean, timestamp: Instant? = null) {
-    val bgColor = if (isSuccess) Color(0xFFE8F5E9) else MaterialTheme.colorScheme.errorContainer
-    val contentColor = if (isSuccess) Color(0xFF2E7D32) else MaterialTheme.colorScheme.error
+    val bgColor = if (isSuccess) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.errorContainer
+    val contentColor = if (isSuccess) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onErrorContainer
 
     var timeAgo by remember { mutableStateOf("just now") }
 
@@ -84,7 +86,7 @@ fun ActivityCard(stepsToday: Long?, isSyncEnabled: Boolean, onSyncClick: () -> U
             modifier = Modifier
                 .background(
                     brush = Brush.verticalGradient(
-                        colors = listOf(Color(0xFF2E7D32), Color(0xFF1B5E20))
+                        colors = listOf(HealthGreen, Color(0xFF1B5E20))
                     )
                 )
                 .padding(24.dp)
@@ -129,7 +131,7 @@ fun ActivityCard(stepsToday: Long?, isSyncEnabled: Boolean, onSyncClick: () -> U
                     enabled = isSyncEnabled,
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color.White,
-                        contentColor = Color(0xFF2E7D32),
+                        contentColor = HealthGreen,
                         disabledContainerColor = Color.White.copy(alpha = 0.3f),
                         disabledContentColor = Color.White.copy(alpha = 0.5f)
                     ),
@@ -152,35 +154,50 @@ fun ActivityCard(stepsToday: Long?, isSyncEnabled: Boolean, onSyncClick: () -> U
 
 @Composable
 fun LogEntryRow(entry: SyncLogEntry) {
-    Surface(
-        color = Color.White,
+    ElevatedCard(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(8.dp),
-        shadowElevation = 0.5.dp
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.elevatedCardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        )
     ) {
         Row(
-            modifier = Modifier.padding(12.dp),
+            modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
                 modifier = Modifier
-                    .size(8.dp)
+                    .size(10.dp)
                     .clip(CircleShape)
-                    .background(if (entry.success) Color(0xFF2E7D32) else Color.Red)
+                    .background(if (entry.success) HealthGreen else MaterialTheme.colorScheme.error)
             )
-            Spacer(Modifier.width(12.dp))
+            Spacer(Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Text(entry.message, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold)
-                Text(entry.timestamp, style = MaterialTheme.typography.labelSmall, color = Color.Gray)
+                Text(
+                    entry.message,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Spacer(Modifier.height(2.dp))
+                Text(
+                    entry.timestamp,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
-            Text(
-                entry.source,
-                style = MaterialTheme.typography.labelSmall,
-                color = Color(0xFF1565C0),
-                modifier = Modifier
-                    .background(Color(0xFFE3F2FD), RoundedCornerShape(4.dp))
-                    .padding(horizontal = 4.dp, vertical = 2.dp)
-            )
+            Surface(
+                color = MaterialTheme.colorScheme.secondaryContainer,
+                shape = RoundedCornerShape(6.dp)
+            ) {
+                Text(
+                    entry.source,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer,
+                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                    fontWeight = FontWeight.Medium
+                )
+            }
         }
     }
 }
@@ -204,7 +221,7 @@ fun ResetTimer() {
     }
 
     Surface(
-        color = Color(0xFFFFEBEE),
+        color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f),
         shape = RoundedCornerShape(8.dp),
         modifier = Modifier.fillMaxWidth()
     ) {
@@ -217,12 +234,12 @@ fun ResetTimer() {
                 "Time Until Reset: ",
                 style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFFD32F2F)
+                color = MaterialTheme.colorScheme.secondary
             )
             Text(
                 timeRemaining,
                 style = MaterialTheme.typography.labelLarge,
-                color = Color(0xFFD32F2F),
+                color = MaterialTheme.colorScheme.secondary,
                 fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
             )
         }
