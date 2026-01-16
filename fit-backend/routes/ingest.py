@@ -121,12 +121,16 @@ def ingest(p: IngestPayload):
                 should_upsert = True
 
         if should_upsert:
-            # Delete all previous entries for this username
+            # Delete previous entry for this username, server, and day only
             conn.execute(
                 text("""
-                    DELETE FROM step_ingest WHERE minecraft_username = :minecraft_username
+                    DELETE FROM step_ingest WHERE minecraft_username = :minecraft_username AND server_name = :server_name AND day = :day
                 """),
-                {"minecraft_username": p.minecraft_username}
+                {
+                    "minecraft_username": p.minecraft_username,
+                    "server_name": server_name,
+                    "day": server_day
+                }
             )
             # Insert the new record with server_name
             conn.execute(
