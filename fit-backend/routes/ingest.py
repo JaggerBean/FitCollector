@@ -1,7 +1,7 @@
 """Step data ingest endpoint."""
 
 from datetime import datetime
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from sqlalchemy import text
 from zoneinfo import ZoneInfo
 from database import engine
@@ -19,10 +19,37 @@ def ingest(p: IngestPayload):
     
     Validates player API key and processes step data.
     Auto-updates username if device previously registered with different name.
+    Checks for bans before allowing submission.
     """
     
     # Validate player key and get server_name and current_username
     server_name, current_username = validate_and_get_server(p.device_id, p.player_api_key)
+    
+    # Check if player is banned (by username or device)
+    with engine.begin() as conn:
+        ban_check = conn.execute(
+            text("""
+                SELECT id, reason FROM bans
+                WHERE server_name = :server_name
+                AND (
+                    minecraft_username = :minecraft_username
+                    OR device_id = :device_id
+                )
+                LIMIT 1
+            """),
+            {
+                "server_name": server_name,
+                "minecraft_username": p.minecraft_username,
+                "device_id": p.device_id
+            }
+        ).fetchone()
+        
+        if ban_check:
+            reason = ban_check[1] if ban_check[1] else "No reason provided"
+            raise HTTPException(
+                status_code=403,
+                detail=f"You are banned from server '{server_name}'. Reason: {reason}"
+            )
     
     # If username changed, auto-update it
     if current_username != p.minecraft_username:

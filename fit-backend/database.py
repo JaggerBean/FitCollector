@@ -93,3 +93,25 @@ def init_db() -> None:
         CREATE INDEX IF NOT EXISTS idx_player_keys_device_server
         ON player_keys(device_id, server_name);
         """))
+
+        # 7) Create bans table for player bans
+        conn.execute(text("""
+        CREATE TABLE IF NOT EXISTS bans (
+            id BIGSERIAL PRIMARY KEY,
+            server_name TEXT NOT NULL,
+            minecraft_username TEXT,
+            device_id TEXT,
+            reason TEXT,
+            banned_at TIMESTAMPTZ DEFAULT NOW()
+        );
+        """))
+
+        conn.execute(text("""
+        CREATE INDEX IF NOT EXISTS idx_bans_server_username
+        ON bans(server_name, minecraft_username);
+        """))
+
+        conn.execute(text("""
+        CREATE INDEX IF NOT EXISTS idx_bans_server_device
+        ON bans(server_name, device_id);
+        """))
