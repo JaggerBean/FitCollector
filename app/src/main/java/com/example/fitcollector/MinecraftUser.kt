@@ -20,6 +20,7 @@ private const val KEY_LAST_STEPS = "last_known_steps"
 private const val KEY_LAST_STEPS_DATE = "last_known_steps_date"
 private const val KEY_ONBOARDING_COMPLETE = "onboarding_complete"
 private const val KEY_SELECTED_SERVER = "selected_server"
+private const val KEY_PLAYER_API_KEY = "player_api_key"
 
 private val dateFormatter = DateTimeFormatter.ISO_LOCAL_DATE
 private val dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
@@ -181,4 +182,14 @@ fun getSelectedServer(context: Context): String {
 fun setSelectedServer(context: Context, server: String) {
     val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
     prefs.edit().putString(KEY_SELECTED_SERVER, server).apply()
+}
+
+fun getPlayerApiKey(context: Context): String {
+    val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    return prefs.getString(KEY_PLAYER_API_KEY, "") ?: ""
+}
+
+fun setPlayerApiKey(context: Context, apiKey: String) {
+    val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    prefs.edit().putString(KEY_PLAYER_API_KEY, apiKey).apply()
 }

@@ -509,15 +509,11 @@ fun OnboardingScreen(
                                 isLoading = true
                                 error = null
                                 try {
-                                    val resp = api.register(RegisterPayload(mcUsername, deviceId, selectedServer))
-                                    if (resp.ok) {
-                                        setMinecraftUsername(context, mcUsername)
-                                        setSelectedServer(context, selectedServer)
-                                        setOnboardingComplete(context, true)
-                                        onComplete()
-                                    } else {
-                                        error = resp.message ?: "Registration failed"
-                                    }
+                                    api.register(RegisterPayload(mcUsername, deviceId, selectedServer))
+                                    setMinecraftUsername(context, mcUsername)
+                                    setSelectedServer(context, selectedServer)
+                                    setOnboardingComplete(context, true)
+                                    onComplete()
                                 } catch (e: Exception) {
                                     error = e.message ?: "Network error"
                                 } finally {
@@ -643,16 +639,12 @@ fun SettingsScreen(
                                 scope.launch {
                                     isLoading = true
                                     try {
-                                        val resp = api.register(RegisterPayload(mcDraft, deviceId, serverDraft))
-                                        if (resp.ok) {
-                                            setMinecraftUsername(context, mcDraft)
-                                            setSelectedServer(context, serverDraft)
-                                            mcUsername = mcDraft
-                                            selectedServer = serverDraft
-                                            message = "Settings saved & device registered!" to true
-                                        } else {
-                                            message = (resp.message ?: "Failed to register") to false
-                                        }
+                                        api.register(RegisterPayload(mcDraft, deviceId, serverDraft))
+                                        setMinecraftUsername(context, mcDraft)
+                                        setSelectedServer(context, serverDraft)
+                                        mcUsername = mcDraft
+                                        selectedServer = serverDraft
+                                        message = "Settings saved & device registered!" to true
                                     } catch (e: Exception) {
                                         message = (e.message ?: "Network error") to false
                                     } finally {
@@ -834,6 +826,10 @@ fun ActivityCard(stepsToday: Long?, isSyncEnabled: Boolean, onSyncClick: () -> U
                         style = MaterialTheme.typography.titleMedium,
                         color = Color.White.copy(alpha = 0.8f)
                     )
+                    Spacer(Modifier.weight(1f))
+                    IconButton(onClick = onSyncClick) {
+                        Icon(Icons.Default.Refresh, "Sync Now", tint = Color.White)
+                    }
                 }
 
                 Spacer(Modifier.height(8.dp))

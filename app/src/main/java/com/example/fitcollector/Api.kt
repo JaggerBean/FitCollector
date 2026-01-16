@@ -52,8 +52,11 @@ data class RegisterPayload(
 )
 
 data class RegisterResponse(
-    val ok: Boolean,
-    val message: String? = null
+    val player_api_key: String,
+    val minecraft_username: String,
+    val device_id: String,
+    val server_name: String,
+    val message: String
 )
 
 interface FitApi {
