@@ -57,9 +57,10 @@ class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
 
         return try {
             // 5. Read steps using aggregate for better accuracy
-            val centralZone = ZoneId.of("America/Chicago")
-            val nowZoned = ZonedDateTime.now(centralZone)
-            val start = nowZoned.toLocalDate().atStartOfDay(centralZone).toInstant()
+            // Use the device's local timezone to determine the start of "today"
+            val deviceZone = ZoneId.systemDefault()
+            val nowZoned = ZonedDateTime.now(deviceZone)
+            val start = nowZoned.toLocalDate().atStartOfDay(deviceZone).toInstant()
             val now = Instant.now()
             
             val aggregateResponse = client.aggregate(

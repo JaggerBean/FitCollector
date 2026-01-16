@@ -6,9 +6,11 @@
         <package android:name="com.google.android.apps.healthdata" />
     </queries>
 
-    <!-- Required to specify which Health Connect permissions the app can request (codelab) -->
+    <!-- Required permissions -->
     <uses-permission android:name="android.permission.health.READ_STEPS" />
+    <uses-permission android:name="android.permission.health.READ_HEALTH_DATA_IN_BACKGROUND" />
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
 
     <application

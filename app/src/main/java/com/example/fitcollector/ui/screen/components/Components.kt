@@ -9,6 +9,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.automirrored.filled.DirectionsRun
+import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -80,7 +82,7 @@ fun ActivityCard(stepsToday: Long?, isSyncEnabled: Boolean, onSyncClick: () -> U
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.Transparent)
+        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
     ) {
         Box(
             modifier = Modifier
@@ -97,35 +99,40 @@ fun ActivityCard(stepsToday: Long?, isSyncEnabled: Boolean, onSyncClick: () -> U
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Icon(
-                        Icons.Default.Refresh,
+                        Icons.AutoMirrored.Filled.DirectionsRun,
                         null,
-                        tint = Color.White,
-                        modifier = Modifier.size(32.dp)
+                        tint = Color.White.copy(alpha = 0.9f),
+                        modifier = Modifier.size(28.dp)
                     )
                     Spacer(Modifier.width(12.dp))
                     Text(
                         "Steps Today",
                         style = MaterialTheme.typography.titleMedium,
-                        color = Color.White.copy(alpha = 0.8f)
+                        color = Color.White.copy(alpha = 0.8f),
+                        fontWeight = FontWeight.Bold
                     )
-                    Spacer(Modifier.weight(1f))
-                    IconButton(onClick = onSyncClick) {
-                        Icon(Icons.Default.Refresh, "Sync Now", tint = Color.White)
-                    }
                 }
-                Spacer(Modifier.height(8.dp))
+                
+                Spacer(Modifier.height(16.dp))
+                
                 Text(
-                    text = stepsToday?.toString() ?: "--",
-                    style = MaterialTheme.typography.displayLarge,
+                    text = stepsToday?.let { String.format("%,d", it) } ?: "--",
+                    style = MaterialTheme.typography.displayLarge.copy(
+                        fontSize = 56.sp,
+                        letterSpacing = (-2).sp
+                    ),
                     color = Color.White,
                     fontWeight = FontWeight.Black
                 )
+                
                 Text(
                     "Keep moving to earn rewards!",
                     style = MaterialTheme.typography.bodyMedium,
                     color = Color.White.copy(alpha = 0.7f)
                 )
-                Spacer(Modifier.height(24.dp))
+                
+                Spacer(Modifier.height(32.dp))
+                
                 Button(
                     onClick = onSyncClick,
                     enabled = isSyncEnabled,
@@ -136,13 +143,14 @@ fun ActivityCard(stepsToday: Long?, isSyncEnabled: Boolean, onSyncClick: () -> U
                         disabledContentColor = Color.White.copy(alpha = 0.5f)
                     ),
                     shape = RoundedCornerShape(16.dp),
-                    modifier = Modifier.fillMaxWidth().height(56.dp)
+                    modifier = Modifier.fillMaxWidth().height(60.dp),
+                    contentPadding = PaddingValues(0.dp)
                 ) {
-                    Icon(Icons.Default.Refresh, null)
+                    Icon(Icons.Default.Sync, null, modifier = Modifier.size(20.dp))
                     Spacer(Modifier.width(12.dp))
                     Text(
                         "SYNC NOW",
-                        fontWeight = FontWeight.ExtraBold,
+                        fontWeight = FontWeight.Black,
                         style = MaterialTheme.typography.titleMedium,
                         letterSpacing = 1.sp
                     )

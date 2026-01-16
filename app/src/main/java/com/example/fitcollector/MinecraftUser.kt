@@ -9,6 +9,8 @@ import java.time.ZonedDateTime
 import java.time.ZoneId
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
+import androidx.health.connect.client.records.StepsRecord
+import androidx.health.connect.client.records.metadata.Metadata
 
 private const val PREFS_NAME = "fitcollector"
 private const val KEY_MC_USER = "minecraft_username"
@@ -16,6 +18,7 @@ private const val KEY_LAST_CHANGE_DATE = "last_username_change_date"
 private const val KEY_QUEUED_USER = "queued_minecraft_username"
 private const val KEY_QUEUED_DATE = "queued_date"
 private const val KEY_AUTO_SYNC = "auto_sync_enabled"
+private const val KEY_BACKGROUND_SYNC = "background_sync_enabled"
 private const val KEY_SYNC_LOG = "sync_log"
 private const val KEY_LAST_STEPS = "last_known_steps"
 private const val KEY_LAST_STEPS_DATE = "last_known_steps_date"
@@ -23,6 +26,7 @@ private const val KEY_ONBOARDING_COMPLETE = "onboarding_complete"
 private const val KEY_SELECTED_SERVERS = "selected_servers"
 private const val KEY_SERVER_KEYS = "server_keys"
 private const val KEY_THEME_MODE = "theme_mode" // "System", "Light", "Dark"
+private const val KEY_ALLOWED_SOURCES = "allowed_step_sources"
 
 private val dateFormatter = DateTimeFormatter.ISO_LOCAL_DATE
 private val CENTRAL_ZONE = ZoneId.of("America/Chicago")
@@ -88,7 +92,7 @@ fun applyQueuedUsernameIfPossible(context: Context): String? {
     val queuedName = prefs.getString(KEY_QUEUED_USER, null) ?: return null
     val queuedDate = prefs.getString(KEY_QUEUED_DATE, null) ?: return null
     
-    val today = ZonedDateTime.now(CENTRAL_ZONE).toLocalDate().format(dateFormatter)
+    val today = LocalDate.now(CENTRAL_ZONE).format(dateFormatter)
     
     if (queuedDate != today && canChangeMinecraftUsername(context)) {
         setMinecraftUsername(context, queuedName)
@@ -105,6 +109,16 @@ fun isAutoSyncEnabled(context: Context): Boolean {
 fun setAutoSyncEnabled(context: Context, enabled: Boolean) {
     val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
     prefs.edit().putBoolean(KEY_AUTO_SYNC, enabled).apply()
+}
+
+fun isBackgroundSyncEnabled(context: Context): Boolean {
+    val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    return prefs.getBoolean(KEY_BACKGROUND_SYNC, true)
+}
+
+fun setBackgroundSyncEnabled(context: Context, enabled: Boolean) {
+    val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    prefs.edit().putBoolean(KEY_BACKGROUND_SYNC, enabled).apply()
 }
 
 fun saveLastKnownSteps(context: Context, steps: Long) {
@@ -221,4 +235,49 @@ fun getThemeMode(context: Context): String {
 fun setThemeMode(context: Context, mode: String) {
     val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
     prefs.edit().putString(KEY_THEME_MODE, mode).apply()
+}
+
+fun shouldExcludeManualSteps(context: Context): Boolean {
+    return true // Always enabled for integrity
+}
+
+fun getAllowedStepSources(context: Context): Set<String> {
+    val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    return prefs.getStringSet(KEY_ALLOWED_SOURCES, emptySet()) ?: emptySet()
+}
+
+fun setAllowedStepSources(context: Context, sources: Set<String>) {
+    val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    prefs.edit().putStringSet(KEY_ALLOWED_SOURCES, sources).apply()
+}
+
+/**
+ * Shared logic to determine if a specific record should be counted.
+ * Rejects manual entries and suspicious "Active Session" records which are often manual workouts.
+ * LEGITIMATE "Unknown" methods are allowed as they often come from wearable hardware.
+ */
+fun isRecordValid(record: StepsRecord, allowedSources: Set<String>): Boolean {
+    val recordingMethod = record.metadata.recordingMethod
+    val sourceApp = record.metadata.dataOrigin.packageName
+    
+    // 1. Source Check
+    if (allowedSources.isNotEmpty() && !allowedSources.contains(sourceApp)) {
+        return false
+    }
+    
+    // 2. Strict Manual Exclusion
+    return when {
+        // Explicit manual entry
+        recordingMethod == Metadata.RECORDING_METHOD_MANUAL_ENTRY -> false
+        
+        // "Active Session" is often used by apps like Samsung Health or Google Fit 
+        // when a user manually adds a "Workout" after the fact.
+        recordingMethod == Metadata.RECORDING_METHOD_ACTIVELY_RECORDED -> false
+        
+        // We previously suspected Google Fit's "Unknown" entries, but the user confirmed
+        // that legitimate hardware records can appear as Unknown.
+        // We will allow UNKNOWN (0) while still rejecting explicit MANUAL (2) and ACTIVE (3).
+        
+        else -> true
+    }
 }

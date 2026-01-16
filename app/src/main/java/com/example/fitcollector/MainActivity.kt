@@ -18,13 +18,14 @@ import com.example.fitcollector.ui.screen.OnboardingScreen
 import com.example.fitcollector.ui.screen.DashboardScreen
 import com.example.fitcollector.ui.screen.SettingsScreen
 import com.example.fitcollector.ui.screen.ActivityLogScreen
+import com.example.fitcollector.ui.screen.RawHealthDataScreen
 import com.example.fitcollector.ui.theme.FitCollectorTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.Modifier
 
 enum class AppScreen {
-    Onboarding, Dashboard, Settings, Log
+    Onboarding, Dashboard, Settings, Log, RawHealth
 }
 
 class MainActivity : ComponentActivity() {
@@ -46,8 +47,6 @@ class MainActivity : ComponentActivity() {
             val context = LocalContext.current
             val themeMode = remember { mutableStateOf(getThemeMode(context)) }
 
-            // A side effect to keep the themeMode state in sync with preferences
-            // This is a simple way to handle it without a full ViewModel for now
             LaunchedEffect(Unit) {
                 while(true) {
                     val current = getThemeMode(context)
@@ -86,10 +85,14 @@ class MainActivity : ComponentActivity() {
                             )
                             AppScreen.Settings -> SettingsScreen(
                                 requestPermissions = { perms -> requestPermissions.launch(perms) },
-                                onBack = { onNavigate(AppScreen.Dashboard) }
+                                onBack = { onNavigate(AppScreen.Dashboard) },
+                                onNavigateToRawHealth = { onNavigate(AppScreen.RawHealth) }
                             )
                             AppScreen.Log -> ActivityLogScreen(
                                 onBack = { onNavigate(AppScreen.Dashboard) }
+                            )
+                            AppScreen.RawHealth -> RawHealthDataScreen(
+                                onBack = { onNavigate(AppScreen.Settings) }
                             )
                         }
                     }

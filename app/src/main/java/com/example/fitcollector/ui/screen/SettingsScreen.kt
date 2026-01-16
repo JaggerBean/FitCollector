@@ -1,12 +1,18 @@
 package com.example.fitcollector.ui.screen
 
+import android.content.Intent
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -15,15 +21,22 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import com.example.fitcollector.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.time.Instant
+import androidx.health.connect.client.request.ReadRecordsRequest
+import androidx.health.connect.client.records.StepsRecord
+import androidx.health.connect.client.time.TimeRangeFilter
+import androidx.health.connect.client.HealthConnectClient
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
     requestPermissions: (Set<String>) -> Unit,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    onNavigateToRawHealth: () -> Unit
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -32,6 +45,7 @@ fun SettingsScreen(
 
     var mcUsername by remember { mutableStateOf(getMinecraftUsername(context)) }
     var autoSyncEnabled by remember { mutableStateOf(isAutoSyncEnabled(context)) }
+    var backgroundSyncEnabled by remember { mutableStateOf(isBackgroundSyncEnabled(context)) }
     var currentTheme by remember { mutableStateOf(getThemeMode(context)) }
     
     var mcDraft by remember { mutableStateOf(mcUsername) }
@@ -40,15 +54,31 @@ fun SettingsScreen(
     var isLoading by remember { mutableStateOf(false) }
     var message by remember { mutableStateOf<Pair<String, Boolean>?>(null) }
     var queuedName by remember { mutableStateOf(getQueuedUsername(context)) }
+    
+    var showServerSelector by remember { mutableStateOf(false) }
 
     val canChangeMc = remember { canChangeMinecraftUsername(context) }
-    val permissions = remember { setOf(androidx.health.connect.client.permission.HealthPermission.getReadPermission(androidx.health.connect.client.records.StepsRecord::class)) }
+    
+    // Updated permissions set to include background read
+    val permissions = remember { 
+        setOf(
+            androidx.health.connect.client.permission.HealthPermission.getReadPermission(StepsRecord::class),
+            "android.permission.health.READ_HEALTH_DATA_IN_BACKGROUND"
+        ) 
+    }
+
+    var allPermissionsGranted by remember { mutableStateOf(false) }
+
+    // Step Source State
+    val currentSources = getAllowedStepSources(context)
+    var selectedSource by remember { mutableStateOf(currentSources.firstOrNull() ?: "") }
+    var recentSources by remember { mutableStateOf<Set<String>>(emptySet()) }
 
     var timeUntilReset by remember { mutableStateOf(getTimeUntilNextChange()) }
     LaunchedEffect(Unit) {
         while(true) {
             timeUntilReset = getTimeUntilNextChange()
-            delay(1000 * 60) // Update every minute
+            delay(1000 * 60)
         }
     }
 
@@ -57,7 +87,24 @@ fun SettingsScreen(
     LaunchedEffect(Unit) {
         try { 
             val resp = globalApi.getAvailableServers()
-            availableServers = resp.servers
+            availableServers = resp.servers.sortedBy { it.server_name.lowercase() }
+        } catch (e: Exception) {}
+
+        try {
+            val hc = HealthConnectClient.getOrCreate(context)
+            val now = Instant.now()
+            val start = now.minus(java.time.Duration.ofDays(7))
+            val response = hc.readRecords(
+                ReadRecordsRequest(
+                    recordType = StepsRecord::class,
+                    timeRangeFilter = TimeRangeFilter.between(start, now)
+                )
+            )
+            recentSources = response.records.map { it.metadata.dataOrigin.packageName }.toSet()
+            
+            // Check permissions
+            val granted = hc.permissionController.getGrantedPermissions()
+            allPermissionsGranted = granted.containsAll(permissions)
         } catch (e: Exception) {}
     }
 
@@ -126,7 +173,7 @@ fun SettingsScreen(
                         if (queuedName != null) {
                             Surface(
                                 color = MaterialTheme.colorScheme.secondaryContainer,
-                                shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
+                                shape = RoundedCornerShape(12.dp),
                                 modifier = Modifier.fillMaxWidth()
                             ) {
                                 Row(
@@ -164,31 +211,11 @@ fun SettingsScreen(
                         
                         Spacer(Modifier.height(16.dp))
                         
-                        Text("Available Servers:", style = MaterialTheme.typography.labelLarge)
-                        Spacer(Modifier.height(8.dp))
-                        availableServers.forEach { server ->
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable { 
-                                        selectedServers = if (selectedServers.contains(server.server_name)) {
-                                            selectedServers - server.server_name
-                                        } else {
-                                            selectedServers + server.server_name
-                                        }
-                                    }
-                                    .padding(vertical = 4.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Checkbox(
-                                    checked = selectedServers.contains(server.server_name),
-                                    onCheckedChange = { checked ->
-                                        selectedServers = if (checked) selectedServers + server.server_name else selectedServers - server.server_name
-                                    }
-                                )
-                                Spacer(Modifier.width(8.dp))
-                                Text(server.server_name)
-                            }
+                        OutlinedButton(
+                            onClick = { showServerSelector = true },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(if (selectedServers.isEmpty()) "Select Servers" else "Servers: ${selectedServers.size} selected")
                         }
 
                         Spacer(Modifier.height(16.dp))
@@ -201,9 +228,12 @@ fun SettingsScreen(
                                     scope.launch {
                                         isLoading = true
                                         try {
-                                            selectedServers.forEach { server ->
-                                                val resp = globalApi.register(RegisterPayload(cleaned, deviceId, server))
-                                                saveServerKey(context, cleaned, server, resp.player_api_key)
+                                            selectedServers.forEach { serverName ->
+                                                val serverInfo = availableServers.find { it.server_name == serverName }
+                                                if (serverInfo != null) {
+                                                    val resp = globalApi.register(RegisterPayload(cleaned, deviceId, serverInfo.server_name))
+                                                    saveServerKey(context, cleaned, serverInfo.server_name, resp.player_api_key)
+                                                }
                                             }
                                             setMinecraftUsername(context, cleaned)
                                             setSelectedServers(context, selectedServers.toList())
@@ -219,7 +249,6 @@ fun SettingsScreen(
                                 } else {
                                     queueMinecraftUsername(context, cleaned)
                                     queuedName = cleaned
-                                    // Also save server selections even if username is queued
                                     setSelectedServers(context, selectedServers.toList())
                                     message = "Username queued for tomorrow!" to true
                                 }
@@ -243,14 +272,77 @@ fun SettingsScreen(
             }
 
             item {
-                Text("App Preferences", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Text("Health Connect Integrity", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            }
+
+            item {
+                Card(modifier = Modifier.fillMaxWidth()) {
+                    Column(Modifier.padding(16.dp)) {
+                        Text("Choose your steps source", style = MaterialTheme.typography.labelLarge)
+                        Text("Only allow steps from one specific app.", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                        
+                        Spacer(Modifier.height(8.dp))
+                        
+                        val allAvailableSources = (recentSources + (if (selectedSource.isNotEmpty()) setOf(selectedSource) else emptySet())).sorted()
+                        if (allAvailableSources.isEmpty()) {
+                            Text("No step sources found in the last 7 days.", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                        } else {
+                            allAvailableSources.forEach { pkg ->
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable {
+                                            selectedSource = pkg
+                                            setAllowedStepSources(context, setOf(pkg))
+                                        }
+                                        .padding(vertical = 4.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    RadioButton(
+                                        selected = selectedSource == pkg,
+                                        onClick = {
+                                            selectedSource = pkg
+                                            setAllowedStepSources(context, setOf(pkg))
+                                        }
+                                    )
+                                    Spacer(Modifier.width(8.dp))
+                                    val displayName = when(pkg) {
+                                        "com.google.android.apps.fitness" -> "Google Fit"
+                                        "com.sec.android.app.shealth" -> "Samsung Health"
+                                        context.packageName -> "StepCraft (This App)"
+                                        else -> pkg
+                                    }
+                                    Text(displayName, style = MaterialTheme.typography.bodyMedium)
+                                }
+                            }
+                        }
+
+                        HorizontalDivider(Modifier.padding(vertical = 16.dp))
+
+                        OutlinedButton(
+                            onClick = onNavigateToRawHealth,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Icon(Icons.Default.Info, null)
+                            Spacer(Modifier.width(8.dp))
+                            Text("Debug: View Raw Health Records")
+                        }
+                    }
+                }
+            }
+
+            item {
+                Text("Sync & Permissions", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             }
 
             item {
                 Card(modifier = Modifier.fillMaxWidth()) {
                     Column(Modifier.padding(16.dp)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text("Auto-Sync Steps", modifier = Modifier.weight(1f))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text("Auto-Sync on Open", style = MaterialTheme.typography.labelLarge)
+                                Text("Sync steps immediately when you open the app.", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                            }
                             Switch(
                                 checked = autoSyncEnabled,
                                 onCheckedChange = {
@@ -259,22 +351,152 @@ fun SettingsScreen(
                                 }
                             )
                         }
-                        Spacer(Modifier.height(8.dp))
-                        Text("If enabled, StepCraft will automatically sync your steps when the app opens.", 
-                            style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         
                         HorizontalDivider(Modifier.padding(vertical = 16.dp))
                         
-                        Button(
-                            onClick = { requestPermissions(permissions) },
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
-                        ) {
-                            Icon(Icons.Default.Lock, null)
-                            Spacer(Modifier.width(8.dp))
-                            Text("Update Health Permissions")
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text("Background Sync", style = MaterialTheme.typography.labelLarge)
+                                Text("Periodic sync every 15 mins while app is closed.", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                            }
+                            Switch(
+                                checked = backgroundSyncEnabled,
+                                onCheckedChange = {
+                                    backgroundSyncEnabled = it
+                                    setBackgroundSyncEnabled(context, it)
+                                }
+                            )
+                        }
+                        
+                        if (backgroundSyncEnabled) {
+                            Surface(
+                                color = MaterialTheme.colorScheme.surfaceVariant,
+                                shape = RoundedCornerShape(8.dp),
+                                modifier = Modifier.padding(top = 12.dp).fillMaxWidth()
+                            ) {
+                                Column(Modifier.padding(12.dp)) {
+                                    Text("IMPORTANT: Background Sync Requirement", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelMedium)
+                                    Text(
+                                        "1. Tap 'Health Connect Settings' below\n" +
+                                        "2. Find 'Background read' in the permissions list\n" +
+                                        "3. Turn it ON to allow syncing while closed.",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        modifier = Modifier.padding(top = 4.dp)
+                                    )
+                                }
+                            }
+                        }
+                        
+                        Spacer(Modifier.height(16.dp))
+                        
+                        if (!allPermissionsGranted) {
+                            Button(
+                                onClick = { requestPermissions(permissions) },
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
+                            ) {
+                                Icon(Icons.Default.Lock, null)
+                                Spacer(Modifier.width(8.dp))
+                                Text("Update Permissions")
+                            }
+                        } else {
+                            OutlinedButton(
+                                onClick = {
+                                    val intent = Intent("androidx.health.ACTION_HEALTH_CONNECT_SETTINGS")
+                                    context.startActivity(intent)
+                                },
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Icon(Icons.Default.Settings, null)
+                                Spacer(Modifier.width(8.dp))
+                                Text("Health Connect Settings")
+                            }
                         }
                     }
+                }
+            }
+        }
+    }
+
+    if (showServerSelector) {
+        ServerSelectorDialog(
+            availableServers = availableServers,
+            selectedServers = selectedServers,
+            onSelectionChanged = { selectedServers = it },
+            onDismiss = { showServerSelector = false }
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ServerSelectorDialog(
+    availableServers: List<ServerInfo>,
+    selectedServers: Set<String>,
+    onSelectionChanged: (Set<String>) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var searchQuery by remember { mutableStateOf("") }
+    val filteredServers = remember(searchQuery, availableServers) {
+        availableServers.filter { it.server_name.contains(searchQuery, ignoreCase = true) }
+    }
+
+    Dialog(onDismissRequest = onDismiss) {
+        Surface(
+            shape = RoundedCornerShape(16.dp),
+            color = MaterialTheme.colorScheme.surface,
+            modifier = Modifier.fillMaxWidth().fillMaxHeight(0.8f)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text("Select Servers", style = MaterialTheme.typography.headlineSmall)
+                Spacer(Modifier.height(16.dp))
+                
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
+                    label = { Text("Search Servers") },
+                    leadingIcon = { Icon(Icons.Default.Search, null) },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
+                )
+                
+                Spacer(Modifier.height(8.dp))
+                
+                LazyColumn(modifier = Modifier.weight(1f)) {
+                    items(filteredServers) { server ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    if (selectedServers.contains(server.server_name)) {
+                                        onSelectionChanged(selectedServers - server.server_name)
+                                    } else {
+                                        onSelectionChanged(selectedServers + server.server_name)
+                                    }
+                                }
+                                .padding(vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Checkbox(
+                                checked = selectedServers.contains(server.server_name),
+                                onCheckedChange = { checked ->
+                                    if (checked) onSelectionChanged(selectedServers + server.server_name)
+                                    else onSelectionChanged(selectedServers - server.server_name)
+                                }
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Text(server.server_name)
+                        }
+                    }
+                }
+                
+                Spacer(Modifier.height(16.dp))
+                
+                Button(
+                    onClick = onDismiss,
+                    modifier = Modifier.align(Alignment.End)
+                ) {
+                    Text("Done")
                 }
             }
         }

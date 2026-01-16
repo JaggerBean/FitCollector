@@ -33,9 +33,11 @@ import java.time.Instant
 import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
+import androidx.health.connect.client.request.ReadRecordsRequest
 import androidx.health.connect.client.request.AggregateRequest
 import androidx.health.connect.client.records.StepsRecord
 import androidx.health.connect.client.time.TimeRangeFilter
+import androidx.health.connect.client.records.metadata.Metadata
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -44,7 +46,7 @@ fun DashboardScreen(
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val centralZone = remember { ZoneId.of("America/Chicago") }
+    val deviceZone = remember { ZoneId.systemDefault() }
 
     val permissions = remember {
         setOf(androidx.health.connect.client.permission.HealthPermission.getReadPermission(StepsRecord::class))
@@ -62,7 +64,7 @@ fun DashboardScreen(
     var mcUsername by remember { mutableStateOf(getMinecraftUsername(context)) }
     var autoSyncEnabled by remember { mutableStateOf(isAutoSyncEnabled(context)) }
 
-    val logTimeFormatter = remember { DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withZone(centralZone) }
+    val logTimeFormatter = remember { DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withZone(deviceZone) }
 
     fun checkAvailability() {
         autoTimeDisabled = !isAutomaticTimeEnabled(context)
@@ -90,18 +92,38 @@ fun DashboardScreen(
 
     suspend fun readStepsToday(hc: androidx.health.connect.client.HealthConnectClient): Long {
         return try {
-            val start = ZonedDateTime.now(centralZone).toLocalDate().atStartOfDay(centralZone).toInstant()
-            val now = Instant.now()
+            val nowDevice = ZonedDateTime.now(deviceZone)
+            val midnightDevice = nowDevice.toLocalDate().atStartOfDay(deviceZone).toInstant()
+            val nowInstant = Instant.now()
             
-            val response = hc.aggregate(
-                AggregateRequest(
-                    metrics = setOf(StepsRecord.COUNT_TOTAL),
-                    timeRangeFilter = TimeRangeFilter.between(start, now)
+            // Safety check for clock drift
+            val start = if (midnightDevice.isAfter(nowInstant)) nowInstant else midnightDevice
+
+            val allowedSources = getAllowedStepSources(context)
+
+            // We must query individual records to apply our custom filtering (Source check + Manual exclusion)
+            var totalSteps = 0L
+            var pageToken: String? = null
+            
+            do {
+                val response = hc.readRecords(
+                    ReadRecordsRequest(
+                        recordType = StepsRecord::class,
+                        timeRangeFilter = TimeRangeFilter.between(start, nowInstant),
+                        pageToken = pageToken
+                    )
                 )
-            )
-            val total = response[StepsRecord.COUNT_TOTAL] ?: 0L
-            saveLastKnownSteps(context, total)
-            total
+                
+                for (record in response.records) {
+                    if (isRecordValid(record, allowedSources)) {
+                        totalSteps += record.count
+                    }
+                }
+                pageToken = response.pageToken
+            } while (pageToken != null)
+            
+            saveLastKnownSteps(context, totalSteps)
+            totalSteps
         } catch (e: Exception) {
             0L
         }
@@ -113,7 +135,7 @@ fun DashboardScreen(
             autoTimeDisabled = true
             return
         }
-        val nowZoned = ZonedDateTime.now(centralZone)
+        val nowZoned = ZonedDateTime.now(deviceZone)
         val nowStr = nowZoned.format(logTimeFormatter)
         val dayStr = nowZoned.format(DateTimeFormatter.ISO_LOCAL_DATE)
         val timestampStr = Instant.now().toString()
@@ -124,7 +146,6 @@ fun DashboardScreen(
         }
         var successCount = 0
         var failCount = 0
-        val errors = mutableListOf<String>()
         val globalApi = buildApi(BASE_URL, GLOBAL_API_KEY)
 
         selectedServers.forEach { server ->
@@ -186,7 +207,6 @@ fun DashboardScreen(
                 }
             } catch (e: Exception) {
                 failCount++
-                errors.add(e.message ?: "Unknown error")
             }
         }
         val logMessage = when {
