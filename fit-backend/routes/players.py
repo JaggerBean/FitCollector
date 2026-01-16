@@ -4,6 +4,9 @@ from fastapi import APIRouter, HTTPException
 from sqlalchemy import text
 from database import engine
 from models import PlayerRegistrationRequest, PlayerApiKeyResponse, KeysResponse
+
+router = APIRouter()
+
 @router.get("/v1/players/keys/{device_id}/{minecraft_username}", response_model=KeysResponse)
 def get_keys(device_id: str, minecraft_username: str):
     """
