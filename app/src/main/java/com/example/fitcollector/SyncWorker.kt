@@ -32,11 +32,12 @@ class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
 
         // 2. Check if credentials are set
         val mcUsername = getMinecraftUsername(context)
-        val playerApiKey = getPlayerApiKey(context)
+        val selectedServers = getSelectedServers(context)
+        val serverKeys = getServerKeys(context)
         val deviceId = getOrCreateDeviceId(context)
         
-        if (mcUsername.isBlank() || playerApiKey.isBlank()) {
-            Log.e("SyncWorker", "Missing credentials, failing.")
+        if (mcUsername.isBlank() || selectedServers.isEmpty()) {
+            Log.e("SyncWorker", "Missing credentials or no servers selected, failing.")
             return Result.failure()
         }
 
@@ -67,35 +68,69 @@ class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
             
             saveLastKnownSteps(context, totalSteps)
 
-            // 6. Sync to backend
+            // 6. Sync to backend for each server
             val baseUrl = "http://74.208.73.134/"
-            val api = buildApi(baseUrl, playerApiKey)
-
             val dayStr = nowZoned.format(dayFormatter)
             val timestampStr = now.toString()
-
-            api.ingest(IngestPayload(
-                minecraft_username = mcUsername,
-                device_id = deviceId,
-                steps_today = totalSteps,
-                player_api_key = playerApiKey,
-                day = dayStr,
-                source = "health_connect",
-                timestamp = timestampStr
-            ))
-
-            // 7. Log success
             val nowStr = nowZoned.format(logTimeFormatter)
-            Log.d("SyncWorker", "Background sync success: $totalSteps steps")
-            addSyncLogEntry(context, SyncLogEntry(
-                timestamp = nowStr,
-                steps = totalSteps,
-                source = "Background",
-                success = true,
-                message = "Auto-synced $totalSteps steps"
-            ))
 
-            Result.success()
+            var successCount = 0
+            var failCount = 0
+            val errors = mutableListOf<String>()
+
+            selectedServers.forEach { server ->
+                val serverKey = serverKeys[server]
+                if (serverKey.isNullOrBlank()) {
+                    failCount++
+                    errors.add("No key for $server")
+                    return@forEach
+                }
+
+                try {
+                    val api = buildApi(baseUrl, serverKey)
+                    api.ingest(IngestPayload(
+                        minecraft_username = mcUsername,
+                        device_id = deviceId,
+                        steps_today = totalSteps,
+                        player_api_key = serverKey,
+                        day = dayStr,
+                        source = "health_connect",
+                        timestamp = timestampStr
+                    ))
+                    successCount++
+                } catch (e: Exception) {
+                    failCount++
+                    errors.add("$server: ${e.message}")
+                }
+            }
+
+            if (successCount > 0) {
+                Log.d("SyncWorker", "Background sync success: $totalSteps steps to $successCount servers")
+                addSyncLogEntry(context, SyncLogEntry(
+                    timestamp = nowStr,
+                    steps = totalSteps,
+                    source = "Background",
+                    success = true,
+                    message = "Auto-synced to $successCount server(s)"
+                ))
+            }
+            
+            if (failCount > 0) {
+                Log.e("SyncWorker", "Background sync failed for $failCount servers")
+                addSyncLogEntry(context, SyncLogEntry(
+                    timestamp = nowStr,
+                    steps = totalSteps,
+                    source = "Background",
+                    success = successCount > 0,
+                    message = "Failed for $failCount servers: ${errors.joinToString(", ")}"
+                ))
+            }
+
+            if (successCount == 0 && failCount > 0) {
+                Result.retry()
+            } else {
+                Result.success()
+            }
         } catch (e: Exception) {
             Log.e("SyncWorker", "Background sync failed: ${e.message}")
             val nowStr = ZonedDateTime.now().format(logTimeFormatter)
@@ -104,7 +139,7 @@ class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
                 steps = 0,
                 source = "Background",
                 success = false,
-                message = "BG Sync Failed: ${e.message}"
+                message = "BG Sync Critical Failure: ${e.message}"
             ))
             Result.retry()
         }

@@ -19,8 +19,8 @@ private const val KEY_SYNC_LOG = "sync_log"
 private const val KEY_LAST_STEPS = "last_known_steps"
 private const val KEY_LAST_STEPS_DATE = "last_known_steps_date"
 private const val KEY_ONBOARDING_COMPLETE = "onboarding_complete"
-private const val KEY_SELECTED_SERVER = "selected_server"
-private const val KEY_PLAYER_API_KEY = "player_api_key"
+private const val KEY_SELECTED_SERVERS = "selected_servers"
+private const val KEY_SERVER_KEYS = "server_keys"
 
 private val dateFormatter = DateTimeFormatter.ISO_LOCAL_DATE
 private val dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
@@ -174,22 +174,28 @@ fun setOnboardingComplete(context: Context, complete: Boolean) {
     prefs.edit().putBoolean(KEY_ONBOARDING_COMPLETE, complete).apply()
 }
 
-fun getSelectedServer(context: Context): String {
+fun getSelectedServers(context: Context): List<String> {
     val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-    return prefs.getString(KEY_SELECTED_SERVER, "") ?: ""
+    val json = prefs.getString(KEY_SELECTED_SERVERS, "[]")
+    val type = object : TypeToken<List<String>>() {}.type
+    return Gson().fromJson(json, type)
 }
 
-fun setSelectedServer(context: Context, server: String) {
+fun setSelectedServers(context: Context, servers: List<String>) {
     val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-    prefs.edit().putString(KEY_SELECTED_SERVER, server).apply()
+    prefs.edit().putString(KEY_SELECTED_SERVERS, Gson().toJson(servers)).apply()
 }
 
-fun getPlayerApiKey(context: Context): String {
+fun getServerKeys(context: Context): Map<String, String> {
     val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-    return prefs.getString(KEY_PLAYER_API_KEY, "") ?: ""
+    val json = prefs.getString(KEY_SERVER_KEYS, "{}")
+    val type = object : TypeToken<Map<String, String>>() {}.type
+    return Gson().fromJson(json, type)
 }
 
-fun setPlayerApiKey(context: Context, apiKey: String) {
+fun saveServerKey(context: Context, server: String, key: String) {
+    val keys = getServerKeys(context).toMutableMap()
+    keys[server] = key
     val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-    prefs.edit().putString(KEY_PLAYER_API_KEY, apiKey).apply()
+    prefs.edit().putString(KEY_SERVER_KEYS, Gson().toJson(keys)).apply()
 }

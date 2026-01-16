@@ -157,11 +157,6 @@ private fun MainDashboard(
     val deviceId = remember { getOrCreateDeviceId(context) }
     val baseUrl = "http://74.208.73.134/"
     
-    // Use stored player API key if available, fallback to global key
-    val playerKey = remember { getPlayerApiKey(context) }
-    val apiKey = if (playerKey.isNotBlank()) playerKey else "fc_live_7f3c9b2a7b2c4a2f9c8d1d0d9b3a"
-    val api = remember { buildApi(baseUrl, apiKey) }
-
     var mcUsername by remember { mutableStateOf(getMinecraftUsername(context)) }
     var autoSyncEnabled by remember { mutableStateOf(isAutoSyncEnabled(context)) }
 
@@ -205,26 +200,52 @@ private fun MainDashboard(
         val nowStr = nowZoned.format(logTimeFormatter)
         val dayStr = nowZoned.format(DateTimeFormatter.ISO_LOCAL_DATE)
         val timestampStr = Instant.now().toString()
-        val currentApiKey = getPlayerApiKey(context)
-
-        try {
-            api.ingest(IngestPayload(
-                minecraft_username = mcUsername,
-                device_id = deviceId,
-                steps_today = steps,
-                player_api_key = currentApiKey,
-                day = dayStr,
-                source = "health_connect",
-                timestamp = timestampStr
-            ))
-            syncResult = "Successfully synced $steps steps"
-            lastSyncInstant = Instant.now()
-            addSyncLogEntry(context, SyncLogEntry(nowStr, steps, source, true, "Success: $steps steps"))
-        } catch (e: Exception) {
-            syncResult = "Sync failed"
-            lastSyncInstant = null
-            addSyncLogEntry(context, SyncLogEntry(nowStr, steps, source, false, e.message ?: "Network error"))
+        
+        val selectedServers = getSelectedServers(context)
+        val serverKeys = getServerKeys(context)
+        
+        if (selectedServers.isEmpty()) {
+            syncResult = "No servers selected"
+            return
         }
+
+        var successCount = 0
+        var failCount = 0
+
+        selectedServers.forEach { server ->
+            val serverKey = serverKeys[server]
+            if (serverKey.isNullOrBlank()) {
+                failCount++
+                return@forEach
+            }
+
+            try {
+                val api = buildApi(baseUrl, serverKey)
+                api.ingest(IngestPayload(
+                    minecraft_username = mcUsername,
+                    device_id = deviceId,
+                    steps_today = steps,
+                    player_api_key = serverKey,
+                    day = dayStr,
+                    source = "health_connect",
+                    timestamp = timestampStr
+                ))
+                successCount++
+            } catch (e: Exception) {
+                failCount++
+            }
+        }
+
+        val logMessage = when {
+            successCount > 0 && failCount == 0 -> "Success: $steps steps to all $successCount servers"
+            successCount > 0 && failCount > 0 -> "Partial Success: Synced to $successCount, Failed for $failCount"
+            else -> "Failed: Could not sync to any servers"
+        }
+        
+        addSyncLogEntry(context, SyncLogEntry(nowStr, steps, source, successCount > 0, logMessage))
+        
+        syncResult = if (successCount > 0) "Synced to $successCount server(s)" else "Sync failed"
+        if (successCount > 0) lastSyncInstant = Instant.now()
     }
 
     LaunchedEffect(Unit) {
@@ -301,7 +322,7 @@ private fun MainDashboard(
             item {
                 ActivityCard(
                     stepsToday = stepsToday, 
-                    isSyncEnabled = client != null && hasPerms && mcUsername.isNotBlank(),
+                    isSyncEnabled = client != null && hasPerms && mcUsername.isNotBlank() && getSelectedServers(context).isNotEmpty(),
                     onSyncClick = {
                         scope.launch {
                             client?.let { hc ->
@@ -329,12 +350,13 @@ private fun MainDashboard(
                 }
             }
 
-            if (!hasPerms || hcStatus != "Available" || mcUsername.isBlank()) {
+            if (!hasPerms || hcStatus != "Available" || mcUsername.isBlank() || getSelectedServers(context).isEmpty()) {
                 item {
                     val message = when {
                         hcStatus != "Available" -> "Health Connect is not available on this device."
                         !hasPerms -> "Health Connect permissions are required to read steps."
                         mcUsername.isBlank() -> "Please set your Minecraft username in Settings."
+                        getSelectedServers(context).isEmpty() -> "Please select at least one server in Settings."
                         else -> ""
                     }
                     Surface(
@@ -365,8 +387,9 @@ private fun MainDashboard(
             }
 
             item {
+                val selectedCount = getSelectedServers(context).size
                 Text(
-                    if (autoSyncEnabled) "Auto-sync is enabled." else "Auto-sync is disabled.",
+                    if (autoSyncEnabled) "Auto-sync is enabled ($selectedCount servers)." else "Auto-sync is disabled.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.fillMaxWidth(),
@@ -385,12 +408,14 @@ fun OnboardingScreen(
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val api = remember { buildApi("http://74.208.73.134/", "fc_live_7f3c9b2a7b2c4a2f9c8d1d0d9b3a") }
+    val baseUrl = "http://74.208.73.134/"
+    val globalApiKey = "fc_live_7f3c9b2a7b2c4a2f9c8d1d0d9b3a"
+    val globalApi = remember { buildApi(baseUrl, globalApiKey) }
     val deviceId = remember { getOrCreateDeviceId(context) }
 
     var step by remember { mutableIntStateOf(1) }
     var mcUsername by remember { mutableStateOf("") }
-    var selectedServer by remember { mutableStateOf("") }
+    var selectedServers by remember { mutableStateOf<Set<String>>(emptySet()) }
     var servers by remember { mutableStateOf<List<ServerInfo>>(emptyList()) }
     var isLoading by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
@@ -400,7 +425,7 @@ fun OnboardingScreen(
 
     LaunchedEffect(Unit) {
         try {
-            val resp = api.getAvailableServers()
+            val resp = globalApi.getAvailableServers()
             servers = resp.servers
         } catch (e: Exception) {
             error = "Could not fetch servers: ${e.message}"
@@ -471,7 +496,7 @@ fun OnboardingScreen(
                 OnboardingStep(
                     number = 2,
                     title = "Minecraft Identity",
-                    description = "Enter your exact Minecraft username and select your server.",
+                    description = "Enter your exact Minecraft username and select your servers.",
                     icon = Icons.Default.Person
                 ) {
                     OutlinedTextField(
@@ -482,17 +507,32 @@ fun OnboardingScreen(
                         singleLine = true
                     )
                     Spacer(Modifier.height(16.dp))
-                    Text("Select Server:", style = MaterialTheme.typography.labelLarge)
+                    Text("Select Servers:", style = MaterialTheme.typography.labelLarge)
                     LazyColumn(modifier = Modifier.heightIn(max = 200.dp)) {
                         items(servers) { server ->
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .clickable { selectedServer = server.server_name }
+                                    .clickable { 
+                                        selectedServers = if (selectedServers.contains(server.server_name)) {
+                                            selectedServers - server.server_name
+                                        } else {
+                                            selectedServers + server.server_name
+                                        }
+                                    }
                                     .padding(vertical = 8.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                RadioButton(selected = selectedServer == server.server_name, onClick = { selectedServer = server.server_name })
+                                Checkbox(
+                                    checked = selectedServers.contains(server.server_name),
+                                    onCheckedChange = { checked ->
+                                        selectedServers = if (checked) {
+                                            selectedServers + server.server_name
+                                        } else {
+                                            selectedServers - server.server_name
+                                        }
+                                    }
+                                )
                                 Spacer(Modifier.width(8.dp))
                                 Text(server.server_name)
                             }
@@ -501,7 +541,7 @@ fun OnboardingScreen(
                     Spacer(Modifier.height(16.dp))
                     Button(
                         onClick = { step = 3 },
-                        enabled = mcUsername.isNotBlank() && selectedServer.isNotBlank(),
+                        enabled = mcUsername.isNotBlank() && selectedServers.isNotEmpty(),
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text("Next")
@@ -525,10 +565,15 @@ fun OnboardingScreen(
                                 isLoading = true
                                 error = null
                                 try {
-                                    val resp = api.register(RegisterPayload(mcUsername, deviceId, selectedServer))
+                                    val currentKeys = getServerKeys(context)
+                                    selectedServers.forEach { server ->
+                                        if (!currentKeys.containsKey(server)) {
+                                            val resp = globalApi.register(RegisterPayload(mcUsername, deviceId, server))
+                                            saveServerKey(context, server, resp.player_api_key)
+                                        }
+                                    }
                                     setMinecraftUsername(context, mcUsername)
-                                    setSelectedServer(context, selectedServer)
-                                    setPlayerApiKey(context, resp.player_api_key)
+                                    setSelectedServers(context, selectedServers.toList())
                                     setOnboardingComplete(context, true)
                                     onComplete()
                                 } catch (e: Exception) {
@@ -571,15 +616,17 @@ fun SettingsScreen(
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val api = remember { buildApi("http://74.208.73.134/", "fc_live_7f3c9b2a7b2c4a2f9c8d1d0d9b3a") }
+    val baseUrl = "http://74.208.73.134/"
+    val globalApiKey = "fc_live_7f3c9b2a7b2c4a2f9c8d1d0d9b3a"
+    val globalApi = remember { buildApi(baseUrl, globalApiKey) }
     val deviceId = remember { getOrCreateDeviceId(context) }
 
     var mcUsername by remember { mutableStateOf(getMinecraftUsername(context)) }
-    var selectedServer by remember { mutableStateOf(getSelectedServer(context)) }
+    var selectedServers by remember { mutableStateOf(getSelectedServers(context).toSet()) }
     var autoSyncEnabled by remember { mutableStateOf(isAutoSyncEnabled(context)) }
     
     var mcDraft by remember { mutableStateOf(mcUsername) }
-    var serverDraft by remember { mutableStateOf(selectedServer) }
+    var serverDraft by remember { mutableStateOf(selectedServers) }
     var servers by remember { mutableStateOf<List<ServerInfo>>(emptyList()) }
     var isLoading by remember { mutableStateOf(false) }
     var message by remember { mutableStateOf<Pair<String, Boolean>?>(null) } // Text to Success/Error
@@ -589,7 +636,7 @@ fun SettingsScreen(
 
     LaunchedEffect(Unit) {
         try { 
-            val resp = api.getAvailableServers()
+            val resp = globalApi.getAvailableServers()
             servers = resp.servers
         } catch (e: Exception) {}
     }
@@ -633,16 +680,31 @@ fun SettingsScreen(
                         
                         Spacer(Modifier.height(16.dp))
                         
-                        Text("Selected Server:", style = MaterialTheme.typography.labelLarge)
+                        Text("Selected Servers:", style = MaterialTheme.typography.labelLarge)
                         servers.forEach { server ->
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .clickable { serverDraft = server.server_name }
+                                    .clickable { 
+                                        serverDraft = if (serverDraft.contains(server.server_name)) {
+                                            serverDraft - server.server_name
+                                        } else {
+                                            serverDraft + server.server_name
+                                        }
+                                    }
                                     .padding(vertical = 4.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                RadioButton(selected = serverDraft == server.server_name, onClick = { serverDraft = server.server_name })
+                                Checkbox(
+                                    checked = serverDraft.contains(server.server_name),
+                                    onCheckedChange = { checked ->
+                                        serverDraft = if (checked) {
+                                            serverDraft + server.server_name
+                                        } else {
+                                            serverDraft - server.server_name
+                                        }
+                                    }
+                                )
                                 Spacer(Modifier.width(8.dp))
                                 Text(server.server_name)
                             }
@@ -650,19 +712,24 @@ fun SettingsScreen(
 
                         Spacer(Modifier.height(16.dp))
 
-                        val hasChanges = mcDraft != mcUsername || serverDraft != selectedServer
+                        val hasChanges = mcDraft != mcUsername || serverDraft != selectedServers
                         Button(
                             onClick = {
                                 scope.launch {
                                     isLoading = true
                                     try {
-                                        val resp = api.register(RegisterPayload(mcDraft, deviceId, serverDraft))
+                                        val currentKeys = getServerKeys(context)
+                                        serverDraft.forEach { server ->
+                                            if (!currentKeys.containsKey(server)) {
+                                                val resp = globalApi.register(RegisterPayload(mcDraft, deviceId, server))
+                                                saveServerKey(context, server, resp.player_api_key)
+                                            }
+                                        }
                                         setMinecraftUsername(context, mcDraft)
-                                        setSelectedServer(context, serverDraft)
-                                        setPlayerApiKey(context, resp.player_api_key)
+                                        setSelectedServers(context, serverDraft.toList())
                                         mcUsername = mcDraft
-                                        selectedServer = serverDraft
-                                        message = "Settings saved & device registered!" to true
+                                        selectedServers = serverDraft
+                                        message = "Settings saved & servers synced!" to true
                                     } catch (e: Exception) {
                                         message = (e.message ?: "Network error") to false
                                     } finally {
@@ -670,11 +737,11 @@ fun SettingsScreen(
                                     }
                                 }
                             },
-                            enabled = hasChanges && !isLoading && (canChangeMc || mcDraft == mcUsername),
+                            enabled = hasChanges && !isLoading && (canChangeMc || mcDraft == mcUsername) && serverDraft.isNotEmpty(),
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             if (isLoading) CircularProgressIndicator(modifier = Modifier.size(20.dp), color = Color.White)
-                            else Text("Save & Register Device")
+                            else Text("Save & Sync Servers")
                         }
 
                         message?.let { (msg, success) ->
