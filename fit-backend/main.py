@@ -7,6 +7,7 @@ from sqlalchemy import create_engine, text
 from fastapi.middleware.cors import CORSMiddleware
 import os
 import secrets
+import hashlib
 from fastapi import Header
 from zoneinfo import ZoneInfo
 from datetime import timezone
@@ -17,6 +18,17 @@ CENTRAL_TZ = ZoneInfo("America/Chicago")
 
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///fitcollector.db")
 engine = create_engine(DATABASE_URL, future=True)
+
+
+# Token hashing utilities for opaque tokens
+def hash_token(token: str) -> str:
+    """Hash a token using SHA256."""
+    return hashlib.sha256(token.encode()).hexdigest()
+
+
+def generate_opaque_token(length: int = 32) -> str:
+    """Generate a random opaque token."""
+    return secrets.token_urlsafe(length)
 
 app = FastAPI(title="FitCollector Backend", version="0.1.0")
 
@@ -136,14 +148,19 @@ def init_db() -> None:
 
 
 def require_api_key(x_api_key: str | None = Header(default=None, alias="X-API-Key")):
-    """Validate API key and return the server name."""
+    """
+    Validate server API key (opaque token).
+    Returns server_name on success.
+    """
     if not x_api_key:
         raise HTTPException(status_code=401, detail="Missing API key")
     
+    key_hash = hash_token(x_api_key)
+    
     with engine.begin() as conn:
         key_row = conn.execute(
-            text("SELECT server_name FROM api_keys WHERE key = :key AND active = TRUE"),
-            {"key": x_api_key}
+            text("SELECT server_name FROM api_keys WHERE key = :key_hash AND active = TRUE"),
+            {"key_hash": key_hash}
         ).fetchone()
         
         if not key_row:
@@ -151,8 +168,8 @@ def require_api_key(x_api_key: str | None = Header(default=None, alias="X-API-Ke
         
         # Update last_used timestamp
         conn.execute(
-            text("UPDATE api_keys SET last_used = NOW() WHERE key = :key"),
-            {"key": x_api_key}
+            text("UPDATE api_keys SET last_used = NOW() WHERE key = :key_hash"),
+            {"key_hash": key_hash}
         )
     
     return key_row[0]
@@ -245,20 +262,22 @@ def validate_player_key(device_id: str, player_api_key: str, server_name: str) -
 
 def validate_and_get_server(device_id: str, player_api_key: str) -> tuple[str, str]:
     """
-    Validate player key (no server knowledge needed) and return (server_name, minecraft_username).
-    This is used for player ingest - they only know their own key, not the server key.
+    Validate user token (opaque token) and return (server_name, minecraft_username).
+    Scoped: can only access their own data.
     Updates last_used timestamp.
     """
+    token_hash = hash_token(player_api_key)
+    
     with engine.begin() as conn:
         row = conn.execute(
             text("""
                 SELECT server_name, minecraft_username FROM player_keys
-                WHERE key = :key 
+                WHERE key = :key_hash 
                   AND device_id = :device_id
                   AND active = TRUE
             """),
             {
-                "key": player_api_key,
+                "key_hash": token_hash,
                 "device_id": device_id
             }
         ).fetchone()
@@ -266,13 +285,13 @@ def validate_and_get_server(device_id: str, player_api_key: str) -> tuple[str, s
         if not row:
             raise HTTPException(
                 status_code=401, 
-                detail="Invalid player API key or device mismatch"
+                detail="Invalid user token or device mismatch"
             )
         
         # Update last_used timestamp
         conn.execute(
-            text("UPDATE player_keys SET last_used = NOW() WHERE key = :key"),
-            {"key": player_api_key}
+            text("UPDATE player_keys SET last_used = NOW() WHERE key = :key_hash"),
+            {"key_hash": token_hash}
         )
     
     return row[0], row[1]  # server_name, minecraft_username
@@ -365,26 +384,31 @@ def register_player(request: PlayerRegistrationRequest):
                     detail=f"Device already registered for '{request.server_name}'. Use existing key or contact admin to reset."
                 )
             
-            # Insert new player key
+            # Generate opaque token and hash it before storing
+            plaintext_token = generate_opaque_token()
+            token_hash = hash_token(plaintext_token)
+            
+            # Insert new player token (hashed)
             conn.execute(
                 text("""
                     INSERT INTO player_keys (key, device_id, minecraft_username, server_name, active)
-                    VALUES (:key, :device_id, :username, :server, TRUE)
+                    VALUES (:key_hash, :device_id, :username, :server, TRUE)
                 """),
                 {
-                    "key": player_api_key,
+                    "key_hash": token_hash,
                     "device_id": request.device_id,
                     "username": request.minecraft_username,
                     "server": request.server_name
                 }
             )
         
+        # Return the plaintext token ONLY on creation (never again)
         return PlayerApiKeyResponse(
-            player_api_key=player_api_key,
+            player_api_key=plaintext_token,
             minecraft_username=request.minecraft_username,
             device_id=request.device_id,
             server_name=request.server_name,
-            message="Save this key securely in your app. You'll need it for all future step submissions."
+            message="Save this token securely in your app. You'll need it for all future step submissions. You cannot retrieve it if lost."
         )
     
     except HTTPException:
@@ -396,14 +420,16 @@ def register_player(request: PlayerRegistrationRequest):
 @app.post("/v1/servers/register")
 def register_server(request: ServerRegistrationRequest):
     """
-    Register a new Minecraft server and get an API key.
+    Register a new Minecraft server and get an API key (opaque token).
     
     This endpoint is public (no authentication required) to allow new server owners to register.
     The API key returned should be stored securely by the server owner.
+    Can only access data from this server.
     """
     
-    # Generate unique API key
-    api_key = secrets.token_urlsafe(32)
+    # Generate opaque token and hash it
+    plaintext_key = generate_opaque_token()
+    key_hash = hash_token(plaintext_key)
     
     try:
         with engine.begin() as conn:
@@ -416,13 +442,13 @@ def register_server(request: ServerRegistrationRequest):
             if existing:
                 raise HTTPException(status_code=409, detail=f"Server name '{request.server_name}' already registered")
             
-            # Insert new API key
+            # Insert new API key (hashed)
             conn.execute(
                 text("""
                     INSERT INTO api_keys (key, server_name, active)
-                    VALUES (:key, :server_name, :active)
+                    VALUES (:key_hash, :server_name, :active)
                 """),
-                {"key": api_key, "server_name": request.server_name, "active": True}
+                {"key_hash": key_hash, "server_name": request.server_name, "active": True}
             )
             
             # TODO: Store additional server metadata (owner_name, owner_email, server_address, etc.)
@@ -430,10 +456,11 @@ def register_server(request: ServerRegistrationRequest):
             # You might want to create a separate 'servers' table for this metadata
             
             # TODO: Send email to owner_email with the API key
-            # Example: send_email(request.owner_email, api_key, request.server_name)
+            # Example: send_email(request.owner_email, plaintext_key, request.server_name)
         
+        # Return the plaintext key ONLY on creation (never again)
         return ApiKeyResponse(
-            api_key=api_key,
+            api_key=plaintext_key,
             server_name=request.server_name,
             message="Store this key securely in your server config. You won't be able to see it again!"
         )

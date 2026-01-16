@@ -1,14 +1,16 @@
 #!/usr/bin/env python3
 """
-Utility script to manage API keys for FitCollector backend.
+Utility script to manage API keys and user tokens for FitCollector backend.
+Supports hashed opaque tokens.
+
 Usage:
-  Server keys (X-API-Key header):
+  Server API Keys (admin/plugin):
     python manage_keys.py server add <server_name> [key_length]
     python manage_keys.py server list
     python manage_keys.py server disable <key>
     python manage_keys.py server enable <key>
   
-  Player keys (in request body):
+  User Tokens (mobile app):
     python manage_keys.py player list [server_name]
     python manage_keys.py player list-by-device <device_id> [server_name]
     python manage_keys.py player disable <key>
@@ -18,6 +20,7 @@ Usage:
 import os
 import secrets
 import sys
+import hashlib
 from datetime import datetime
 from sqlalchemy import create_engine, text
 
@@ -25,27 +28,34 @@ DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///fitcollector.db")
 engine = create_engine(DATABASE_URL, future=True)
 
 
-def generate_api_key(length: int = 32) -> str:
-    """Generate a random API key."""
+def hash_token(token: str) -> str:
+    """Hash a token using SHA256."""
+    return hashlib.sha256(token.encode()).hexdigest()
+
+
+def generate_opaque_token(length: int = 32) -> str:
+    """Generate a random opaque token."""
     return secrets.token_urlsafe(length)
 
 
 def add_server_key(server_name: str, key_length: int = 32) -> str:
-    """Add a new API key for a server."""
-    api_key = generate_api_key(key_length)
+    """Add a new API key for a server (hashed opaque token)."""
+    plaintext_key = generate_opaque_token(key_length)
+    key_hash = hash_token(plaintext_key)
     
     try:
         with engine.begin() as conn:
             conn.execute(
                 text("""
                     INSERT INTO api_keys (key, server_name, active)
-                    VALUES (:key, :server_name, :active)
+                    VALUES (:key_hash, :server_name, :active)
                 """),
-                {"key": api_key, "server_name": server_name, "active": True}
+                {"key_hash": key_hash, "server_name": server_name, "active": True}
             )
         print(f"✓ Created server API key for '{server_name}':")
-        print(f"  Key: {api_key}")
-        return api_key
+        print(f"  Key: {plaintext_key}")
+        print(f"  Hash: {key_hash}")
+        return plaintext_key
     except Exception as e:
         print(f"✗ Error creating key: {e}")
         return None
@@ -77,17 +87,17 @@ def list_server_keys() -> None:
         
         print(f"{id_:<5} {server_name:<20} {active_str:<7} {created_str:<20} {last_used_str:<20}")
 
-
 def disable_server_key(api_key: str) -> None:
-    """Disable a server API key."""
+    """Disable a server API key (requires plaintext key, hashed for lookup)."""
     try:
+        key_hash = hash_token(api_key)
         with engine.begin() as conn:
             result = conn.execute(
-                text("UPDATE api_keys SET active = FALSE WHERE key = :key"),
-                {"key": api_key}
+                text("UPDATE api_keys SET active = FALSE WHERE key = :key_hash"),
+                {"key_hash": key_hash}
             )
             if result.rowcount == 0:
-                print(f"✗ Key not found: {api_key}")
+                print(f"✗ Key not found: {api_key[:12]}...")
             else:
                 print(f"✓ Disabled server key: {api_key[:12]}...")
     except Exception as e:
@@ -95,15 +105,16 @@ def disable_server_key(api_key: str) -> None:
 
 
 def enable_server_key(api_key: str) -> None:
-    """Enable a server API key."""
+    """Enable a server API key (requires plaintext key, hashed for lookup)."""
     try:
+        key_hash = hash_token(api_key)
         with engine.begin() as conn:
             result = conn.execute(
-                text("UPDATE api_keys SET active = TRUE WHERE key = :key"),
-                {"key": api_key}
+                text("UPDATE api_keys SET active = TRUE WHERE key = :key_hash"),
+                {"key_hash": key_hash}
             )
             if result.rowcount == 0:
-                print(f"✗ Key not found: {api_key}")
+                print(f"✗ Key not found: {api_key[:12]}...")
             else:
                 print(f"✓ Enabled server key: {api_key[:12]}...")
     except Exception as e:
@@ -184,33 +195,35 @@ def list_player_keys_by_device(device_id: str, server_name: str = None) -> None:
 
 
 def disable_player_key(api_key: str) -> None:
-    """Disable a player API key."""
+    """Disable a player token (requires plaintext key, hashed for lookup)."""
     try:
+        key_hash = hash_token(api_key)
         with engine.begin() as conn:
             result = conn.execute(
-                text("UPDATE player_keys SET active = FALSE WHERE key = :key"),
-                {"key": api_key}
+                text("UPDATE player_keys SET active = FALSE WHERE key = :key_hash"),
+                {"key_hash": key_hash}
             )
             if result.rowcount == 0:
-                print(f"✗ Key not found: {api_key}")
+                print(f"✗ Key not found: {api_key[:12]}...")
             else:
-                print(f"✓ Disabled player key: {api_key[:12]}...")
+                print(f"✓ Disabled player token: {api_key[:12]}...")
     except Exception as e:
         print(f"✗ Error disabling key: {e}")
 
 
 def enable_player_key(api_key: str) -> None:
-    """Enable a player API key."""
+    """Enable a player token (requires plaintext key, hashed for lookup)."""
     try:
+        key_hash = hash_token(api_key)
         with engine.begin() as conn:
             result = conn.execute(
-                text("UPDATE player_keys SET active = TRUE WHERE key = :key"),
-                {"key": api_key}
+                text("UPDATE player_keys SET active = TRUE WHERE key = :key_hash"),
+                {"key_hash": key_hash}
             )
             if result.rowcount == 0:
-                print(f"✗ Key not found: {api_key}")
+                print(f"✗ Key not found: {api_key[:12]}...")
             else:
-                print(f"✓ Enabled player key: {api_key[:12]}...")
+                print(f"✓ Enabled player token: {api_key[:12]}...")
     except Exception as e:
         print(f"✗ Error enabling key: {e}")
 
