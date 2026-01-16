@@ -160,6 +160,21 @@ def delete_player(
     try:
         with engine.begin() as conn:
             if all:
+                # Check if player exists at all
+                exists = conn.execute(
+                    text("""
+                        SELECT COUNT(*) as count FROM step_ingest
+                        WHERE minecraft_username = :minecraft_username
+                    """),
+                    {"minecraft_username": minecraft_username}
+                ).fetchone()
+                
+                if exists[0] == 0:
+                    raise HTTPException(
+                        status_code=404,
+                        detail=f"Player '{minecraft_username}' not found in any server"
+                    )
+                
                 # Delete all data for this player across all servers
                 result = conn.execute(
                     text("""
@@ -188,6 +203,22 @@ def delete_player(
                     "message": f"All data for '{minecraft_username}' deleted across all servers"
                 }
             else:
+                # Check if player exists on this specific server
+                exists = conn.execute(
+                    text("""
+                        SELECT COUNT(*) as count FROM step_ingest
+                        WHERE minecraft_username = :minecraft_username
+                        AND server_name = :server_name
+                    """),
+                    {"minecraft_username": minecraft_username, "server_name": server_name}
+                ).fetchone()
+                
+                if exists[0] == 0:
+                    raise HTTPException(
+                        status_code=404,
+                        detail=f"Player '{minecraft_username}' not found on server '{server_name}'"
+                    )
+                
                 # Delete only for this specific server
                 result = conn.execute(
                     text("""
