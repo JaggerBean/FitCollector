@@ -9,6 +9,36 @@ from utils import generate_opaque_token, hash_token
 router = APIRouter()
 
 
+@router.get("/v1/servers/available")
+def get_available_servers():
+    """
+    Get all available servers that users can register to.
+    
+    This endpoint is public (no authentication required).
+    Returns a list of all active servers in the system.
+    """
+    try:
+        with engine.begin() as conn:
+            rows = conn.execute(
+                text("""
+                    SELECT server_name, created_at
+                    FROM api_keys
+                    WHERE active = TRUE
+                    ORDER BY server_name ASC
+                """)
+            ).mappings().all()
+        
+        servers = [dict(row) for row in rows]
+        
+        return {
+            "total_servers": len(servers),
+            "servers": servers
+        }
+    
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to fetch available servers: {str(e)}")
+
+
 @router.post("/v1/players/register")
 def register_player(request: PlayerRegistrationRequest) -> PlayerApiKeyResponse:
     """
