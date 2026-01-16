@@ -14,7 +14,10 @@ data class IngestPayload(
     val minecraft_username: String,
     val device_id: String,
     val steps_today: Long,
-    val source: String = "health_connect"
+    val player_api_key: String,
+    val day: String,
+    val source: String = "health_connect",
+    val timestamp: String
 )
 
 data class IngestResponse(

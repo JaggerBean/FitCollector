@@ -156,7 +156,10 @@ private fun MainDashboard(
 
     val deviceId = remember { getOrCreateDeviceId(context) }
     val baseUrl = "http://74.208.73.134/"
-    val apiKey = "fc_live_7f3c9b2a7b2c4a2f9c8d1d0d9b3a"
+    
+    // Use stored player API key if available, fallback to global key
+    val playerKey = remember { getPlayerApiKey(context) }
+    val apiKey = if (playerKey.isNotBlank()) playerKey else "fc_live_7f3c9b2a7b2c4a2f9c8d1d0d9b3a"
     val api = remember { buildApi(baseUrl, apiKey) }
 
     var mcUsername by remember { mutableStateOf(getMinecraftUsername(context)) }
@@ -198,12 +201,25 @@ private fun MainDashboard(
     }
 
     suspend fun syncSteps(steps: Long, source: String) {
-        val nowStr = ZonedDateTime.now().format(logTimeFormatter)
+        val nowZoned = ZonedDateTime.now()
+        val nowStr = nowZoned.format(logTimeFormatter)
+        val dayStr = nowZoned.format(DateTimeFormatter.ISO_LOCAL_DATE)
+        val timestampStr = Instant.now().toString()
+        val currentApiKey = getPlayerApiKey(context)
+
         try {
-            val resp = api.ingest(IngestPayload(mcUsername, deviceId, steps))
-            syncResult = "Successfully synced ${resp.steps_today} steps"
+            api.ingest(IngestPayload(
+                minecraft_username = mcUsername,
+                device_id = deviceId,
+                steps_today = steps,
+                player_api_key = currentApiKey,
+                day = dayStr,
+                source = "health_connect",
+                timestamp = timestampStr
+            ))
+            syncResult = "Successfully synced $steps steps"
             lastSyncInstant = Instant.now()
-            addSyncLogEntry(context, SyncLogEntry(nowStr, steps, source, true, "Success: ${resp.steps_today} steps"))
+            addSyncLogEntry(context, SyncLogEntry(nowStr, steps, source, true, "Success: $steps steps"))
         } catch (e: Exception) {
             syncResult = "Sync failed"
             lastSyncInstant = null
@@ -509,9 +525,10 @@ fun OnboardingScreen(
                                 isLoading = true
                                 error = null
                                 try {
-                                    api.register(RegisterPayload(mcUsername, deviceId, selectedServer))
+                                    val resp = api.register(RegisterPayload(mcUsername, deviceId, selectedServer))
                                     setMinecraftUsername(context, mcUsername)
                                     setSelectedServer(context, selectedServer)
+                                    setPlayerApiKey(context, resp.player_api_key)
                                     setOnboardingComplete(context, true)
                                     onComplete()
                                 } catch (e: Exception) {
@@ -639,9 +656,10 @@ fun SettingsScreen(
                                 scope.launch {
                                     isLoading = true
                                     try {
-                                        api.register(RegisterPayload(mcDraft, deviceId, serverDraft))
+                                        val resp = api.register(RegisterPayload(mcDraft, deviceId, serverDraft))
                                         setMinecraftUsername(context, mcDraft)
                                         setSelectedServer(context, serverDraft)
+                                        setPlayerApiKey(context, resp.player_api_key)
                                         mcUsername = mcDraft
                                         selectedServer = serverDraft
                                         message = "Settings saved & device registered!" to true

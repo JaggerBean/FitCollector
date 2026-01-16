@@ -9,6 +9,7 @@ import androidx.health.connect.client.request.ReadRecordsRequest
 import androidx.health.connect.client.time.TimeRangeFilter
 import androidx.work.*
 import java.time.Instant
+import java.time.LocalDate
 import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
@@ -17,6 +18,7 @@ import java.util.concurrent.TimeUnit
 class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
 
     private val logTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+    private val dayFormatter = DateTimeFormatter.ISO_LOCAL_DATE
 
     override suspend fun doWork(): Result {
         val context = applicationContext
@@ -28,10 +30,13 @@ class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
             return Result.success()
         }
 
-        // 2. Check if username is set
+        // 2. Check if credentials are set
         val mcUsername = getMinecraftUsername(context)
-        if (mcUsername.isBlank()) {
-            Log.e("SyncWorker", "No username set, failing.")
+        val playerApiKey = getPlayerApiKey(context)
+        val deviceId = getOrCreateDeviceId(context)
+        
+        if (mcUsername.isBlank() || playerApiKey.isBlank()) {
+            Log.e("SyncWorker", "Missing credentials, failing.")
             return Result.failure()
         }
 
@@ -54,7 +59,8 @@ class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
         return try {
             // 5. Read steps
             val zone = ZoneId.systemDefault()
-            val start = ZonedDateTime.now(zone).toLocalDate().atStartOfDay(zone).toInstant()
+            val nowZoned = ZonedDateTime.now(zone)
+            val start = nowZoned.toLocalDate().atStartOfDay(zone).toInstant()
             val now = Instant.now()
             val resp = client.readRecords(ReadRecordsRequest(StepsRecord::class, TimeRangeFilter.between(start, now)))
             val totalSteps = resp.records.sumOf { it.count }
@@ -63,14 +69,23 @@ class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
 
             // 6. Sync to backend
             val baseUrl = "http://74.208.73.134/"
-            val apiKey = "fc_live_7f3c9b2a7b2c4a2f9c8d1d0d9b3a"
-            val deviceId = getOrCreateDeviceId(context)
-            val api = buildApi(baseUrl, apiKey)
+            val api = buildApi(baseUrl, playerApiKey)
 
-            api.ingest(IngestPayload(mcUsername, deviceId, totalSteps))
+            val dayStr = nowZoned.format(dayFormatter)
+            val timestampStr = now.toString()
+
+            api.ingest(IngestPayload(
+                minecraft_username = mcUsername,
+                device_id = deviceId,
+                steps_today = totalSteps,
+                player_api_key = playerApiKey,
+                day = dayStr,
+                source = "health_connect",
+                timestamp = timestampStr
+            ))
 
             // 7. Log success
-            val nowStr = ZonedDateTime.now().format(logTimeFormatter)
+            val nowStr = nowZoned.format(logTimeFormatter)
             Log.d("SyncWorker", "Background sync success: $totalSteps steps")
             addSyncLogEntry(context, SyncLogEntry(
                 timestamp = nowStr,
@@ -103,8 +118,6 @@ class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
                 .setRequiredNetworkType(NetworkType.CONNECTED)
                 .build()
 
-            // Note: Android enforces a minimum interval of 15 minutes for PeriodicWork.
-            // Setting it to 15 minutes (the absolute minimum).
             val request = PeriodicWorkRequestBuilder<SyncWorker>(15, TimeUnit.MINUTES)
                 .setConstraints(constraints)
                 .build()
@@ -115,6 +128,13 @@ class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
                 request
             )
             Log.d("SyncWorker", "Worker scheduled for 15 minute intervals.")
+        }
+
+        fun runOnce(context: Context) {
+            val request = OneTimeWorkRequestBuilder<SyncWorker>()
+                .build()
+            WorkManager.getInstance(context).enqueue(request)
+            Log.d("SyncWorker", "One-time worker triggered for immediate testing.")
         }
 
         fun cancel(context: Context) {
