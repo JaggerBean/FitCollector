@@ -95,25 +95,32 @@ def ingest(p: IngestPayload):
                     "first_username": first_username
                 }
 
-        # Otherwise, proceed with upsert logic for username
-        # Check for existing record for this username
+        # Otherwise, proceed with upsert logic for username, server, and day
+        # Check for existing record for this username, server, and day
         row = conn.execute(
             text("""
                 SELECT day, steps_today FROM step_ingest
                 WHERE minecraft_username = :minecraft_username
+                  AND server_name = :server_name
+                  AND day = :day
                 ORDER BY created_at DESC LIMIT 1
             """),
-            {"minecraft_username": p.minecraft_username}
+            {
+                "minecraft_username": p.minecraft_username,
+                "server_name": server_name,
+                "day": server_day
+            }
         ).fetchone()
 
         should_upsert = False
         is_new_day = False
         if row is None:
-            # No record for this username, insert
+            # No record for this username/server/day, insert
             should_upsert = True
             is_new_day = True
         else:
             prev_day, prev_steps = row
+            # prev_day should always equal server_day here, but keep logic for safety
             if str(server_day) != str(prev_day):
                 should_upsert = True
                 is_new_day = True
