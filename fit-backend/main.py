@@ -497,6 +497,49 @@ def get_server_info(server_name: str = Depends(require_api_key)):
     return d
 
 
+@app.get("/v1/servers/players")
+def get_server_players(
+    limit: int = 1000,
+    server_name: str = Depends(require_api_key),
+):
+    """
+    Get all player data for this server.
+    Requires server API key. Returns all step submissions scoped to this server.
+    """
+    with engine.begin() as conn:
+        rows = conn.execute(
+            text("""
+            SELECT
+                minecraft_username,
+                device_id,
+                day::text AS day,
+                steps_today,
+                source,
+                created_at
+            FROM step_ingest
+            WHERE server_name = :server_name
+            ORDER BY minecraft_username, day DESC
+            LIMIT :limit
+            """),
+            {"server_name": server_name, "limit": limit},
+        ).mappings().all()
+
+    # Convert timestamps to ISO format in server timezone
+    out: list[dict] = []
+    for r in rows:
+        d = dict(r)
+        if d.get("created_at"):
+            d["created_at"] = d["created_at"].astimezone(CENTRAL_TZ).isoformat()
+        out.append(d)
+
+    return {
+        "server_name": server_name,
+        "player_count": len(set(row["minecraft_username"] for row in out)),
+        "total_records": len(out),
+        "data": out
+    }
+
+
 @app.post("/v1/ingest")
 def ingest(p: IngestPayload):
     """
