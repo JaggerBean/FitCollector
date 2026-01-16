@@ -3,7 +3,9 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from database import init_db
-from routes import health, players, servers, ingest, admin
+from routes import health, players, ingest
+from routes.servers import router as servers_router
+from routes.admin import router as admin_router
 
 # Initialize FastAPI app
 app = FastAPI(title="FitCollector Backend", version="0.1.0")
@@ -20,9 +22,9 @@ app.add_middleware(
 # Register routers
 app.include_router(health.router)
 app.include_router(players.router)
-app.include_router(servers.router)
+app.include_router(servers_router)
 app.include_router(ingest.router)
-app.include_router(admin.router)
+app.include_router(admin_router)
 
 
 @app.on_event("startup")
