@@ -87,6 +87,9 @@ interface FitApi {
     @POST("v1/players/register")
     suspend fun register(@Body payload: RegisterPayload): RegisterResponse
 
+    @POST("v1/players/recover-key")
+    suspend fun recoverKey(@Body payload: RegisterPayload): RegisterResponse
+
     @GET("v1/players/keys/{deviceId}/{username}")
     suspend fun getKeys(
         @Path("deviceId") deviceId: String,

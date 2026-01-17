@@ -232,17 +232,7 @@ fun SettingsScreen(
                                     scope.launch {
                                         isLoading = true
                                         try {
-                                            // 1. Recover existing keys if any (handles re-installs/device switches)
-                                            try {
-                                                val keysResp = globalApi.getKeys(deviceId, cleaned)
-                                                keysResp.servers.forEach { (server, key) ->
-                                                    saveServerKey(context, cleaned, server, key)
-                                                }
-                                            } catch (e: Exception) {
-                                                // Ignore if keys recovery fails
-                                            }
-
-                                            // 2. Register for servers that don't have keys yet
+                                            // Register/Recover for selected servers
                                             selectedServers.forEach { serverName ->
                                                 if (getServerKey(context, cleaned, serverName) == null) {
                                                     try {
@@ -250,12 +240,10 @@ fun SettingsScreen(
                                                         saveServerKey(context, cleaned, serverName, resp.player_api_key)
                                                     } catch (e: HttpException) {
                                                         if (e.code() == 409) {
-                                                            // Conflict: Already registered. Fetch keys to get the API key.
+                                                            // Conflict: Already registered. Try to recover.
                                                             try {
-                                                                val keysResp = globalApi.getKeys(deviceId, cleaned)
-                                                                keysResp.servers[serverName]?.let { key ->
-                                                                    saveServerKey(context, cleaned, serverName, key)
-                                                                }
+                                                                val recoveryResp = globalApi.recoverKey(RegisterPayload(cleaned, deviceId, serverName))
+                                                                saveServerKey(context, cleaned, serverName, recoveryResp.player_api_key)
                                                             } catch (ex: Exception) {}
                                                         } else throw e
                                                     }

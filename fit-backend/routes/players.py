@@ -3,38 +3,10 @@
 from fastapi import APIRouter, HTTPException
 from sqlalchemy import text
 from database import engine
-from models import PlayerRegistrationRequest, PlayerApiKeyResponse, KeysResponse, KeyRecoveryRequest
+from models import PlayerRegistrationRequest, PlayerApiKeyResponse, KeyRecoveryRequest
 from utils import generate_opaque_token, hash_token
 
 router = APIRouter()
-
-@router.get("/v1/players/keys/{device_id}/{minecraft_username}", response_model=KeysResponse)
-def get_keys(device_id: str, minecraft_username: str):
-    """
-    Fetch all API keys for a given device and Minecraft username.
-    Returns a mapping of server_name -> player_api_key (hashed).
-    """
-    try:
-        with engine.begin() as conn:
-            rows = conn.execute(
-                text("""
-                    SELECT server_name, key
-                    FROM player_keys
-                    WHERE device_id = :device_id AND minecraft_username = :minecraft_username AND active = TRUE
-                """),
-                {"device_id": device_id, "minecraft_username": minecraft_username}
-            ).mappings().all()
-
-        servers = {row["server_name"]: row["key"] for row in rows}
-
-        return KeysResponse(
-            minecraft_username=minecraft_username,
-            device_id=device_id,
-            servers=servers
-        )
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to fetch keys: {str(e)}")
-
 
 @router.get("/v1/servers/available")
 def get_available_servers():
