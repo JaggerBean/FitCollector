@@ -42,6 +42,13 @@ class KeysResponse(BaseModel):
     device_id: str
     servers: dict[str, str]  # server_name -> player_api_key
 
+
+class KeyRecoveryRequest(BaseModel):
+    minecraft_username: str = Field(..., min_length=3, max_length=16)
+    device_id: str = Field(..., min_length=6, max_length=128)
+    server_name: str = Field(..., min_length=3, max_length=50)
+
+
 class ApiKeyResponse(BaseModel):
     api_key: str
     server_name: str

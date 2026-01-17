@@ -9,10 +9,12 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -30,6 +32,7 @@ import androidx.health.connect.client.request.ReadRecordsRequest
 import androidx.health.connect.client.records.StepsRecord
 import androidx.health.connect.client.time.TimeRangeFilter
 import androidx.health.connect.client.HealthConnectClient
+import retrofit2.HttpException
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -56,6 +59,7 @@ fun SettingsScreen(
     var queuedName by remember { mutableStateOf(getQueuedUsername(context)) }
     
     var showServerSelector by remember { mutableStateOf(false) }
+    var showKeysDialog by remember { mutableStateOf(false) }
 
     val canChangeMc = remember { canChangeMinecraftUsername(context) }
     
@@ -228,13 +232,36 @@ fun SettingsScreen(
                                     scope.launch {
                                         isLoading = true
                                         try {
+                                            // 1. Recover existing keys if any (handles re-installs/device switches)
+                                            try {
+                                                val keysResp = globalApi.getKeys(deviceId, cleaned)
+                                                keysResp.servers.forEach { (server, key) ->
+                                                    saveServerKey(context, cleaned, server, key)
+                                                }
+                                            } catch (e: Exception) {
+                                                // Ignore if keys recovery fails
+                                            }
+
+                                            // 2. Register for servers that don't have keys yet
                                             selectedServers.forEach { serverName ->
-                                                val serverInfo = availableServers.find { it.server_name == serverName }
-                                                if (serverInfo != null) {
-                                                    val resp = globalApi.register(RegisterPayload(cleaned, deviceId, serverInfo.server_name))
-                                                    saveServerKey(context, cleaned, serverInfo.server_name, resp.player_api_key)
+                                                if (getServerKey(context, cleaned, serverName) == null) {
+                                                    try {
+                                                        val resp = globalApi.register(RegisterPayload(cleaned, deviceId, serverName))
+                                                        saveServerKey(context, cleaned, serverName, resp.player_api_key)
+                                                    } catch (e: HttpException) {
+                                                        if (e.code() == 409) {
+                                                            // Conflict: Already registered. Fetch keys to get the API key.
+                                                            try {
+                                                                val keysResp = globalApi.getKeys(deviceId, cleaned)
+                                                                keysResp.servers[serverName]?.let { key ->
+                                                                    saveServerKey(context, cleaned, serverName, key)
+                                                                }
+                                                            } catch (ex: Exception) {}
+                                                        } else throw e
+                                                    }
                                                 }
                                             }
+
                                             setMinecraftUsername(context, cleaned)
                                             setSelectedServers(context, selectedServers.toList())
                                             mcUsername = cleaned
@@ -415,6 +442,49 @@ fun SettingsScreen(
                     }
                 }
             }
+
+            item {
+                Text("Developer Debug", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.error)
+            }
+
+            item {
+                Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.1f))) {
+                    Column(Modifier.padding(16.dp)) {
+                        Button(
+                            onClick = { showKeysDialog = true },
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
+                        ) {
+                            Icon(Icons.Default.Search, null)
+                            Spacer(Modifier.width(8.dp))
+                            Text("View Saved API Keys")
+                        }
+                        
+                        Spacer(Modifier.height(8.dp))
+                        
+                        Button(
+                            onClick = {
+                                clearAllServerKeys(context)
+                                message = "All server keys cleared!" to true
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                        ) {
+                            Icon(Icons.Default.Delete, null)
+                            Spacer(Modifier.width(8.dp))
+                            Text("Clear All API Keys")
+                        }
+                        
+                        Spacer(Modifier.height(8.dp))
+                        
+                        Text(
+                            "Device ID: $deviceId",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = Color.Gray
+                        )
+                    }
+                }
+            }
         }
     }
 
@@ -425,6 +495,44 @@ fun SettingsScreen(
             onSelectionChanged = { selectedServers = it },
             onDismiss = { showServerSelector = false }
         )
+    }
+
+    if (showKeysDialog) {
+        val keys = getAllServerKeys(context)
+        Dialog(onDismissRequest = { showKeysDialog = false }) {
+            Surface(
+                shape = RoundedCornerShape(16.dp),
+                color = MaterialTheme.colorScheme.surface,
+                modifier = Modifier.fillMaxWidth().padding(16.dp)
+            ) {
+                Column(Modifier.padding(16.dp)) {
+                    Text("Saved API Keys", style = MaterialTheme.typography.titleLarge)
+                    Spacer(Modifier.height(16.dp))
+                    
+                    if (keys.isEmpty()) {
+                        Text("No keys saved.", style = MaterialTheme.typography.bodyMedium)
+                    } else {
+                        LazyColumn(modifier = Modifier.heightIn(max = 400.dp)) {
+                            items(keys.toList()) { (ident, key) ->
+                                Column(Modifier.padding(vertical = 8.dp)) {
+                                    Text(ident, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelLarge)
+                                    Text(key, style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                                }
+                                HorizontalDivider()
+                            }
+                        }
+                    }
+                    
+                    Spacer(Modifier.height(16.dp))
+                    Button(
+                        onClick = { showKeysDialog = false },
+                        modifier = Modifier.align(Alignment.End)
+                    ) {
+                        Text("Close")
+                    }
+                }
+            }
+        }
     }
 }
 

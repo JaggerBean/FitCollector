@@ -3,7 +3,8 @@
 from fastapi import APIRouter, HTTPException
 from sqlalchemy import text
 from database import engine
-from models import PlayerRegistrationRequest, PlayerApiKeyResponse, KeysResponse
+from models import PlayerRegistrationRequest, PlayerApiKeyResponse, KeysResponse, KeyRecoveryRequest
+from utils import generate_opaque_token, hash_token
 
 router = APIRouter()
 
@@ -33,7 +34,6 @@ def get_keys(device_id: str, minecraft_username: str):
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to fetch keys: {str(e)}")
-from utils import generate_opaque_token, hash_token
 
 
 @router.get("/v1/servers/available")
@@ -133,3 +133,84 @@ def register_player(request: PlayerRegistrationRequest) -> PlayerApiKeyResponse:
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to register player: {str(e)}")
+
+@router.post("/v1/players/recover-key")
+def recover_key(request: KeyRecoveryRequest) -> PlayerApiKeyResponse:
+    """
+    Recover/reset a player API key for a specific server.
+    
+    This endpoint allows players to get a new API key if they've lost their original one.
+    The device_id and minecraft_username combo identifies the player's identity.
+    Returns a new plaintext key that must be saved immediately.
+    """
+    try:
+        with engine.begin() as conn:
+            # Check if this player is registered for this server
+            existing_key = conn.execute(
+                text("""
+                    SELECT id FROM player_keys 
+                    WHERE device_id = :device_id 
+                      AND minecraft_username = :minecraft_username
+                      AND server_name = :server_name 
+                      AND active = TRUE
+                """),
+                {
+                    "device_id": request.device_id,
+                    "minecraft_username": request.minecraft_username,
+                    "server_name": request.server_name
+                }
+            ).fetchone()
+            
+            if not existing_key:
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"No active registration found for this device/username on '{request.server_name}'"
+                )
+            
+            # Generate new plaintext token and hash it
+            plaintext_token = generate_opaque_token()
+            token_hash = hash_token(plaintext_token)
+            
+            # Update the existing key with the new hashed token
+            conn.execute(
+                text("""
+                    UPDATE player_keys 
+                    SET key = :new_key_hash
+                    WHERE device_id = :device_id 
+                      AND minecraft_username = :minecraft_username
+                      AND server_name = :server_name
+                """),
+                {
+                    "new_key_hash": token_hash,
+                    "device_id": request.device_id,
+                    "minecraft_username": request.minecraft_username,
+                    "server_name": request.server_name
+                }
+            )
+            
+            # Log the recovery event for audit purposes
+            conn.execute(
+                text("""
+                    INSERT INTO key_recovery_audit (device_id, minecraft_username, server_name)
+                    VALUES (:device_id, :minecraft_username, :server_name)
+                """),
+                {
+                    "device_id": request.device_id,
+                    "minecraft_username": request.minecraft_username,
+                    "server_name": request.server_name
+                }
+            )
+        
+        # Return the new plaintext token
+        return PlayerApiKeyResponse(
+            player_api_key=plaintext_token,
+            minecraft_username=request.minecraft_username,
+            device_id=request.device_id,
+            server_name=request.server_name,
+            message="Your old API key has been revoked. Save this new token securely. You'll need it for all future step submissions."
+        )
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to recover key: {str(e)}")

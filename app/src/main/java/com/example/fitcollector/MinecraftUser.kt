@@ -213,6 +213,11 @@ fun saveServerKey(context: Context, username: String, server: String, key: Strin
     prefs.edit().putString(KEY_SERVER_KEYS, Gson().toJson(allKeys)).apply()
 }
 
+fun clearAllServerKeys(context: Context) {
+    val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    prefs.edit().remove(KEY_SERVER_KEYS).apply()
+}
+
 fun getAllServerKeys(context: Context): Map<String, String> {
     val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
     val json = prefs.getString(KEY_SERVER_KEYS, "{}")

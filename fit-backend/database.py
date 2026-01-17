@@ -127,3 +127,18 @@ def init_db() -> None:
         CREATE INDEX IF NOT EXISTS idx_bans_ban_group_id
         ON bans(ban_group_id);
         """))
+        # 8) Create key_recovery_audit table for tracking key recoveries
+        conn.execute(text("""
+        CREATE TABLE IF NOT EXISTS key_recovery_audit (
+            id BIGSERIAL PRIMARY KEY,
+            device_id TEXT NOT NULL,
+            minecraft_username TEXT NOT NULL,
+            server_name TEXT NOT NULL,
+            recovered_at TIMESTAMPTZ DEFAULT NOW()
+        );
+        """))
+
+        conn.execute(text("""
+        CREATE INDEX IF NOT EXISTS idx_key_recovery_device_server
+        ON key_recovery_audit(device_id, server_name);
+        """))
