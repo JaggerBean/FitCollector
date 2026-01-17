@@ -414,6 +414,7 @@ fun ResetTimer() {
             Text(
                 timeRemaining,
                 style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.Bold,
                 color = getTimerColor(),
                 fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
             )

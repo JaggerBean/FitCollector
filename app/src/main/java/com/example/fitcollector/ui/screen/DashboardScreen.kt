@@ -63,6 +63,7 @@ fun DashboardScreen(
     val deviceId = remember { getOrCreateDeviceId(context) }
     var mcUsername by remember { mutableStateOf(getMinecraftUsername(context)) }
     var autoSyncEnabled by remember { mutableStateOf(isAutoSyncEnabled(context)) }
+    var backgroundSyncEnabled by remember { mutableStateOf(isBackgroundSyncEnabled(context)) }
 
     val logTimeFormatter = remember { DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withZone(deviceZone) }
 
@@ -353,8 +354,14 @@ fun DashboardScreen(
 
             item {
                 val selectedCount = getSelectedServers(context).size
+                val syncStatus = when {
+                    autoSyncEnabled && backgroundSyncEnabled -> "Auto-sync & Background-sync enabled ($selectedCount servers)."
+                    autoSyncEnabled -> "Auto-sync enabled ($selectedCount servers)."
+                    backgroundSyncEnabled -> "Background-sync enabled."
+                    else -> "Sync is disabled."
+                }
                 Text(
-                    if (autoSyncEnabled) "Auto-sync is enabled ($selectedCount servers)." else "Auto-sync is disabled.",
+                    syncStatus,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.fillMaxWidth(),
