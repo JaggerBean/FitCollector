@@ -12,6 +12,8 @@ import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.compose.foundation.Image
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -247,25 +249,34 @@ fun DashboardScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.Center
                     ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center,
-                            modifier = Modifier.padding(top = 4.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.DirectionsRun,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(24.dp).offset(y = 1.dp)
+                        val logoRes = remember { context.resources.getIdentifier("ic_custom_foreground", "drawable", context.packageName) }
+                        if (logoRes != 0) {
+                            Image(
+                                painter = painterResource(id = logoRes),
+                                contentDescription = "App logo",
+                                modifier = Modifier.size(48.dp)
                             )
-                            Box(
-                                modifier = Modifier
-                                    .size(18.dp)
-                                    .clip(androidx.compose.foundation.shape.RoundedCornerShape(2.dp))
-                                    .background(MinecraftDirt)
-                                    .padding(1.dp)
+                        } else {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center,
+                                modifier = Modifier.padding(top = 4.dp)
                             ) {
-                                Box(modifier = Modifier.fillMaxWidth().height(5.dp).background(MinecraftGrass))
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.DirectionsRun,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(24.dp).offset(y = 1.dp)
+                                )
+                                Box(
+                                    modifier = Modifier
+                                        .size(18.dp)
+                                        .clip(androidx.compose.foundation.shape.RoundedCornerShape(2.dp))
+                                        .background(MinecraftDirt)
+                                        .padding(1.dp)
+                                ) {
+                                    Box(modifier = Modifier.fillMaxWidth().height(5.dp).background(MinecraftGrass))
+                                }
                             }
                         }
                         Spacer(Modifier.width(12.dp))
