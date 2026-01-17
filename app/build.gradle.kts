@@ -55,6 +55,7 @@ dependencies {
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.material.icons.extended)
     implementation(libs.androidx.work.runtime.ktx)
+    implementation("io.coil-kt:coil-compose:2.4.0")
     
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

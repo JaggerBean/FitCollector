@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.DirectionsRun
-
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
@@ -30,6 +29,8 @@ import com.example.fitcollector.ui.theme.MinecraftDirt
 import com.example.fitcollector.ui.theme.MinecraftGrass
 import kotlinx.coroutines.launch
 import java.time.Instant
+import coil.compose.AsyncImage
+import java.net.URLEncoder
 import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
@@ -62,6 +63,7 @@ fun DashboardScreen(
 
     val deviceId = remember { getOrCreateDeviceId(context) }
     var mcUsername by remember { mutableStateOf(getMinecraftUsername(context)) }
+    
     var autoSyncEnabled by remember { mutableStateOf(isAutoSyncEnabled(context)) }
     var backgroundSyncEnabled by remember { mutableStateOf(isBackgroundSyncEnabled(context)) }
 
@@ -224,6 +226,7 @@ fun DashboardScreen(
         if (applied != null) {
             mcUsername = applied
         }
+        // No UUID fetch — use username-based avatar (Minotar)
         checkAvailability()
         val hc = client
         if (hc != null && refreshGrantedPermissions()) {
@@ -240,7 +243,10 @@ fun DashboardScreen(
         topBar = {
             CenterAlignedTopAppBar(
                 title = {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.Center,
@@ -271,6 +277,27 @@ fun DashboardScreen(
                             letterSpacing = (-1.5).sp,
                             color = MaterialTheme.colorScheme.primary
                         )
+                    }
+                },
+                navigationIcon = {
+                    // Avatar moved to navigationIcon (left side)
+                    val avatarUrl = remember(mcUsername) {
+                        if (!mcUsername.isNullOrBlank()) {
+                            val enc = URLEncoder.encode(mcUsername, "UTF-8")
+                            "https://minotar.net/avatar/$enc/48"
+                        } else null
+                    }
+
+                    avatarUrl?.let { url ->
+                        Box(modifier = Modifier.padding(start = 12.dp)) {
+                            AsyncImage(
+                                model = url,
+                                contentDescription = "Minecraft avatar",
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .clip(androidx.compose.foundation.shape.RoundedCornerShape(6.dp))
+                            )
+                        }
                     }
                 },
                 actions = {
