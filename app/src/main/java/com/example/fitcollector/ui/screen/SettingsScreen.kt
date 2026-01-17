@@ -247,6 +247,16 @@ fun SettingsScreen(
                                     scope.launch {
                                         isLoading = true
                                         try {
+                                                // Validate username with Mojang API if it's a new username
+                                                if (cleaned != mcUsername) {
+                                                    val profile = fetchMinecraftProfile(cleaned)
+                                                    if (profile == null || profile.id == null) {
+                                                        val details = profile?.errorMessage ?: "no response"
+                                                        message = "'$cleaned' is not a valid Minecraft username. API: $details" to false
+                                                        isLoading = false
+                                                        return@launch
+                                                    }
+                                                }
                                             // Register/Recover for selected servers
                                             selectedServers.forEach { serverName ->
                                                 if (getServerKey(context, cleaned, serverName) == null) {
@@ -277,10 +287,27 @@ fun SettingsScreen(
                                         }
                                     }
                                 } else {
-                                    queueMinecraftUsername(context, cleaned)
-                                    queuedName = cleaned
-                                    setSelectedServers(context, selectedServers.toList())
-                                    message = "Username queued for tomorrow!" to true
+                                    scope.launch {
+                                        isLoading = true
+                                        try {
+                                            // Validate username with Mojang API
+                                            val profile = fetchMinecraftProfile(cleaned)
+                                            if (profile == null || profile.id == null) {
+                                                val details = profile?.errorMessage ?: "no response"
+                                                message = "'$cleaned' is not a valid Minecraft username. API: $details" to false
+                                                isLoading = false
+                                                return@launch
+                                            }
+                                            queueMinecraftUsername(context, cleaned)
+                                            queuedName = cleaned
+                                            setSelectedServers(context, selectedServers.toList())
+                                            message = "Username queued for tomorrow!" to true
+                                        } catch (e: Exception) {
+                                            message = (e.message ?: "Failed to queue username") to false
+                                        } finally {
+                                            isLoading = false
+                                        }
+                                    }
                                 }
                             },
                             enabled = hasChanges && !isLoading,

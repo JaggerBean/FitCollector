@@ -9,9 +9,14 @@ import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.Path
 import okhttp3.Interceptor
+import java.net.URL
+import java.net.URLEncoder
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 const val BASE_URL = "http://74.208.73.134/"
 const val GLOBAL_API_KEY = "fc_live_7f3c9b2a7b2c4a2f9c8d1d0d9b3a"
+const val MOJANG_API_URL = "https://api.mojang.com/users/profiles/minecraft/"
 
 data class IngestPayload(
     val minecraft_username: String,
@@ -65,6 +70,12 @@ data class RegisterResponse(
     val message: String
 )
 
+data class MojangProfile(
+    val id: String? = null,
+    val name: String? = null,
+    val errorMessage: String? = null
+)
+
 interface FitApi {
     @GET("health")
     suspend fun health(): HealthResp
@@ -108,4 +119,55 @@ fun buildApi(baseUrl: String, apiKey: String): FitApi {
         .addConverterFactory(GsonConverterFactory.create())
         .build()
         .create(FitApi::class.java)
+}
+
+suspend fun validateMinecraftUsername(username: String): Boolean {
+    return try {
+        withContext(Dispatchers.IO) {
+            val trimmed = username.trim()
+            if (trimmed.isEmpty()) return@withContext false
+            val encoded = URLEncoder.encode(trimmed, "UTF-8")
+            val url = URL("$MOJANG_API_URL$encoded")
+            val connection = url.openConnection() as java.net.HttpURLConnection
+            connection.connectTimeout = 5000
+            connection.readTimeout = 5000
+            val responseCode = connection.responseCode
+
+            val inputStream = if (responseCode in 200..399) connection.inputStream else connection.errorStream
+            val response = inputStream?.bufferedReader()?.use { it.readText() } ?: ""
+            android.util.Log.d("ValidateUsername", "URL=$url responseCode=$responseCode response=$response")
+            val gson = com.google.gson.Gson()
+            val profile = try { gson.fromJson(response, MojangProfile::class.java) } catch (e: Exception) { null }
+
+            // Valid if it has an id field and no errorMessage
+            profile?.id != null && profile.errorMessage == null
+        }
+    } catch (e: Exception) {
+        android.util.Log.e("ValidateUsername", "Error validating username", e)
+        false
+    }
+}
+
+suspend fun fetchMinecraftProfile(username: String): MojangProfile? {
+    return try {
+        withContext(Dispatchers.IO) {
+            val trimmed = username.trim()
+            if (trimmed.isEmpty()) return@withContext null
+            val encoded = URLEncoder.encode(trimmed, "UTF-8")
+            val url = URL("$MOJANG_API_URL$encoded")
+            val connection = url.openConnection() as java.net.HttpURLConnection
+            connection.connectTimeout = 5000
+            connection.readTimeout = 5000
+            val responseCode = connection.responseCode
+
+            val inputStream = if (responseCode in 200..399) connection.inputStream else connection.errorStream
+            val response = inputStream?.bufferedReader()?.use { it.readText() } ?: ""
+            android.util.Log.d("FetchMinecraftProfile", "URL=$url responseCode=$responseCode response=$response")
+            val gson = com.google.gson.Gson()
+            try { gson.fromJson(response, MojangProfile::class.java) } catch (e: Exception) { null }
+        }
+    } catch (e: Exception) {
+        android.util.Log.e("FetchMinecraftProfile", "Error fetching profile", e)
+        null
+    }
 }

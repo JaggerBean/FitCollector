@@ -317,6 +317,10 @@ fun OnboardingScreen(
                         singleLine = true
                     )
                     Spacer(Modifier.height(16.dp))
+                    if (error != null) {
+                        Text(error!!, color = Color.Red, style = MaterialTheme.typography.bodySmall)
+                        Spacer(Modifier.height(8.dp))
+                    }
                     Text("Select Servers:", style = MaterialTheme.typography.labelLarge)
                     LazyColumn(modifier = Modifier.heightIn(max = 200.dp)) {
                         items(servers) { server ->
@@ -350,8 +354,20 @@ fun OnboardingScreen(
                     }
                     Spacer(Modifier.height(16.dp))
                     Button(
-                        onClick = { step = 4 },
-                        enabled = mcUsername.isNotBlank() && selectedServers.isNotEmpty(),
+                        onClick = {
+                            scope.launch {
+                                    error = null
+                                    val cleaned = mcUsername.trim()
+                                    val profile = fetchMinecraftProfile(cleaned)
+                                    if (profile == null || profile.id == null) {
+                                        val details = profile?.errorMessage ?: "no response"
+                                        error = "'$cleaned' is not a valid Minecraft username. API: $details"
+                                    } else {
+                                        step = 4
+                                    }
+                                }
+                        },
+                        enabled = mcUsername.isNotBlank() && selectedServers.isNotEmpty() && !isLoading,
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text("Next")
