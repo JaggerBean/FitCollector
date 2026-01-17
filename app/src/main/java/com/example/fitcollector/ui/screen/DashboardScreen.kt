@@ -7,7 +7,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.DirectionsRun
-import androidx.compose.material.icons.automirrored.filled.List
+
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
@@ -153,10 +153,9 @@ fun DashboardScreen(
                 var key = getServerKey(context, mcUsername, server)
                 if (key != null) return key
                 try {
-                    val resp = globalApi.getKeys(deviceId, mcUsername)
-                    resp.servers.forEach { (s, k) -> saveServerKey(context, mcUsername, s, k) }
-                    key = resp.servers[server]
-                    if (key != null) return key
+                    val resp = globalApi.recoverKey(RegisterPayload(mcUsername, deviceId, server))
+                    saveServerKey(context, mcUsername, server, resp.player_api_key)
+                    return resp.player_api_key
                 } catch (e: Exception) {}
                 try {
                     val resp = globalApi.register(RegisterPayload(mcUsername, deviceId, server))
@@ -192,10 +191,10 @@ fun DashboardScreen(
                 } catch (e: retrofit2.HttpException) {
                     if (e.code() == 401) {
                         try {
-                            val resp = globalApi.getKeys(deviceId, mcUsername)
-                            resp.servers.forEach { (s, k) -> saveServerKey(context, mcUsername, s, k) }
-                            val newKey = resp.servers[server]
+                            val resp = globalApi.recoverKey(RegisterPayload(mcUsername, deviceId, server))
+                            val newKey = resp.player_api_key
                             if (newKey != null && newKey != key) {
+                                saveServerKey(context, mcUsername, server, newKey)
                                 if (performIngest(newKey)) {
                                     successCount++
                                     return@forEach
@@ -238,7 +237,7 @@ fun DashboardScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
+            CenterAlignedTopAppBar(
                 title = {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Column(
@@ -335,7 +334,7 @@ fun DashboardScreen(
                     Surface(
                         color = MaterialTheme.colorScheme.errorContainer,
                         shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
-                        modifier = Modifier.fillMaxWidth().clickable { 
+                        modifier = Modifier.fillMaxWidth().clickable {
                             if (autoTimeDisabled) {
                                 // Potentially open settings here
                             } else {
@@ -351,18 +350,7 @@ fun DashboardScreen(
                     }
                 }
             }
-            item {
-                Button(
-                    onClick = { onNavigate(com.example.fitcollector.AppScreen.Log) },
-                    modifier = Modifier.fillMaxWidth().height(56.dp),
-                    shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
-                ) {
-                    Icon(Icons.AutoMirrored.Filled.List, null)
-                    Spacer(Modifier.width(12.dp))
-                    Text("RECENT ACTIVITY LOG", fontWeight = FontWeight.Bold)
-                }
-            }
+
             item {
                 val selectedCount = getSelectedServers(context).size
                 Text(

@@ -65,12 +65,6 @@ data class RegisterResponse(
     val message: String
 )
 
-data class KeysResponse(
-    val minecraft_username: String,
-    val device_id: String,
-    val servers: Map<String, String> // server_name -> player_api_key
-)
-
 interface FitApi {
     @GET("health")
     suspend fun health(): HealthResp
@@ -89,12 +83,6 @@ interface FitApi {
 
     @POST("v1/players/recover-key")
     suspend fun recoverKey(@Body payload: RegisterPayload): RegisterResponse
-
-    @GET("v1/players/keys/{deviceId}/{username}")
-    suspend fun getKeys(
-        @Path("deviceId") deviceId: String,
-        @Path("username") username: String
-    ): KeysResponse
 }
 
 fun buildApi(baseUrl: String, apiKey: String): FitApi {

@@ -34,6 +34,7 @@ import java.time.Instant
 import androidx.health.connect.client.request.ReadRecordsRequest
 import androidx.health.connect.client.records.StepsRecord
 import androidx.health.connect.client.time.TimeRangeFilter
+import retrofit2.HttpException
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -177,20 +178,6 @@ fun OnboardingScreen(
                     } else {
                         Button(onClick = { requestPermissions(permissions) }, modifier = Modifier.fillMaxWidth()) {
                             Text("Authorize Health Connect")
-                        }
-                        TextButton(onClick = {
-                            scope.launch {
-                                val hc = androidx.health.connect.client.HealthConnectClient.getOrCreate(context)
-                                hasPerms = hc.permissionController.getGrantedPermissions().containsAll(permissions)
-                                if (hasPerms) {
-                                    error = null
-                                    step = 2
-                                } else {
-                                    error = "Permissions not yet granted. Please enable them in the Health Connect app."
-                                }
-                            }
-                        }) {
-                            Text("I've authorized it, check again")
                         }
                     }
                 }
@@ -388,40 +375,31 @@ fun OnboardingScreen(
                                 isLoading = true
                                 error = null
                                 try {
-                                    // Try to recover keys if they already exist for this device/username
-                                    val keysResp = globalApi.getKeys(deviceId, mcUsername)
-                                    keysResp.servers.forEach { (server, key) ->
-                                        saveServerKey(context, mcUsername, server, key)
-                                    }
-                                    
-                                    // Register for any missing servers
-                                    selectedServers.forEach { server ->
-                                        if (getServerKey(context, mcUsername, server) == null) {
-                                            val resp = globalApi.register(RegisterPayload(mcUsername, deviceId, server))
-                                            saveServerKey(context, mcUsername, server, resp.player_api_key)
+                                    // Register/Recover for selected servers
+                                    val cleaned = mcUsername.trim()
+                                    selectedServers.forEach { serverName ->
+                                        try {
+                                            val resp = globalApi.register(RegisterPayload(cleaned, deviceId, serverName))
+                                            saveServerKey(context, cleaned, serverName, resp.player_api_key)
+                                        } catch (e: HttpException) {
+                                            if (e.code() == 409) {
+                                                // Conflict: Already registered. Try to recover.
+                                                try {
+                                                    val recoveryResp = globalApi.recoverKey(RegisterPayload(cleaned, deviceId, serverName))
+                                                    saveServerKey(context, cleaned, serverName, recoveryResp.player_api_key)
+                                                } catch (ex: Exception) {
+                                                    // Fail silently for recovery, if it fails we just don't have the key
+                                                }
+                                            } else throw e
                                         }
                                     }
                                     
-                                    setMinecraftUsername(context, mcUsername)
+                                    setMinecraftUsername(context, cleaned)
                                     setSelectedServers(context, selectedServers.toList())
                                     setOnboardingComplete(context, true)
                                     onComplete()
                                 } catch (e: Exception) {
-                                    // If keys recovery fails, just try registering normally
-                                    try {
-                                        selectedServers.forEach { server ->
-                                            if (getServerKey(context, mcUsername, server) == null) {
-                                                val resp = globalApi.register(RegisterPayload(mcUsername, deviceId, server))
-                                                saveServerKey(context, mcUsername, server, resp.player_api_key)
-                                            }
-                                        }
-                                        setMinecraftUsername(context, mcUsername)
-                                        setSelectedServers(context, selectedServers.toList())
-                                        setOnboardingComplete(context, true)
-                                        onComplete()
-                                    } catch (e2: Exception) {
-                                        error = e2.message ?: "Network error"
-                                    }
+                                    error = e.message ?: "Registration failed"
                                 } finally {
                                     isLoading = false
                                 }

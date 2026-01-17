@@ -90,10 +90,9 @@ class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
                     if (key != null) return key
 
                     try {
-                        val resp = globalApi.getKeys(deviceId, mcUsername)
-                        resp.servers.forEach { (s, k) -> saveServerKey(context, mcUsername, s, k) }
-                        key = resp.servers[server]
-                        if (key != null) return key
+                        val resp = globalApi.recoverKey(RegisterPayload(mcUsername, deviceId, server))
+                        saveServerKey(context, mcUsername, server, resp.player_api_key)
+                        return resp.player_api_key
                     } catch (e: Exception) {}
 
                     try {
@@ -133,10 +132,10 @@ class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
                     } catch (e: retrofit2.HttpException) {
                         if (e.code() == 401) {
                             try {
-                                val keysResp = globalApi.getKeys(deviceId, mcUsername)
-                                keysResp.servers.forEach { (s, k) -> saveServerKey(context, mcUsername, s, k) }
-                                val newKey = keysResp.servers[server]
-                                if (newKey != null && newKey != key) {
+                                val resp = globalApi.recoverKey(RegisterPayload(mcUsername, deviceId, server))
+                                saveServerKey(context, mcUsername, server, resp.player_api_key)
+                                val newKey = resp.player_api_key
+                                if (newKey != key) {
                                     if (performIngest(newKey)) {
                                         successCount++
                                         return@forEach

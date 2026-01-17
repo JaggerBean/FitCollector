@@ -86,7 +86,8 @@ class MainActivity : ComponentActivity() {
                             AppScreen.Settings -> SettingsScreen(
                                 requestPermissions = { perms -> requestPermissions.launch(perms) },
                                 onBack = { onNavigate(AppScreen.Dashboard) },
-                                onNavigateToRawHealth = { onNavigate(AppScreen.RawHealth) }
+                                onNavigateToRawHealth = { onNavigate(AppScreen.RawHealth) },
+                                onNavigateToLog = { onNavigate(AppScreen.Log) }
                             )
                             AppScreen.Log -> ActivityLogScreen(
                                 onBack = { onNavigate(AppScreen.Dashboard) }

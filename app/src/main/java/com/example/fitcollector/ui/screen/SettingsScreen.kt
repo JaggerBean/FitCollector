@@ -9,6 +9,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Lock
@@ -39,7 +40,8 @@ import retrofit2.HttpException
 fun SettingsScreen(
     requestPermissions: (Set<String>) -> Unit,
     onBack: () -> Unit,
-    onNavigateToRawHealth: () -> Unit
+    onNavigateToRawHealth: () -> Unit,
+    onNavigateToLog: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -79,10 +81,10 @@ fun SettingsScreen(
     var recentSources by remember { mutableStateOf<Set<String>>(emptySet()) }
 
     var timeUntilReset by remember { mutableStateOf(getTimeUntilNextChange()) }
-    LaunchedEffect(Unit) {
+    LaunchedEffect(key1 = Unit) {
         while(true) {
             timeUntilReset = getTimeUntilNextChange()
-            delay(1000 * 60)
+            delay(1000L * 60L)
         }
     }
 
@@ -129,6 +131,19 @@ fun SettingsScreen(
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            item {
+                Button(
+                    onClick = { onNavigateToLog() },
+                    modifier = Modifier.fillMaxWidth().height(56.dp),
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
+                ) {
+                    Icon(Icons.AutoMirrored.Filled.List, null)
+                    Spacer(Modifier.width(12.dp))
+                    Text("RECENT ACTIVITY LOG", fontWeight = FontWeight.Bold)
+                }
+            }
+
             item {
                 Text("Appearance", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             }
@@ -287,15 +302,13 @@ fun SettingsScreen(
             }
 
             item {
-                Text("Health Connect Integrity", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Text("Health Connect Settings", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             }
 
             item {
                 Card(modifier = Modifier.fillMaxWidth()) {
                     Column(Modifier.padding(16.dp)) {
-                        Text("Choose your steps source", style = MaterialTheme.typography.labelLarge)
-                        Text("Only allow steps from one specific app.", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
-                        
+                        Text("Choose your step source", style = MaterialTheme.typography.labelLarge)
                         Spacer(Modifier.height(8.dp))
                         
                         val allAvailableSources = (recentSources + (if (selectedSource.isNotEmpty()) setOf(selectedSource) else emptySet())).sorted()
@@ -473,6 +486,7 @@ fun SettingsScreen(
                     }
                 }
             }
+
         }
     }
 
