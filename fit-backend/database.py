@@ -72,6 +72,12 @@ def init_db() -> None:
         );
         """))
 
+        # 5a) Migration: add max_players column if missing (NULL = unlimited)
+        conn.execute(text("""
+        ALTER TABLE api_keys
+        ADD COLUMN IF NOT EXISTS max_players INTEGER;
+        """))
+
         conn.execute(text("""
         CREATE INDEX IF NOT EXISTS idx_api_keys_key
         ON api_keys(key);

@@ -50,14 +50,16 @@ def register_player(request: PlayerRegistrationRequest) -> PlayerApiKeyResponse:
     
     try:
         with engine.begin() as conn:
-            # Check if server exists
-            server_exists = conn.execute(
-                text("SELECT id FROM api_keys WHERE server_name = :server_name AND active = TRUE"),
+            # Check if server exists and get max_players limit
+            server_info = conn.execute(
+                text("SELECT id, max_players FROM api_keys WHERE server_name = :server_name AND active = TRUE"),
                 {"server_name": request.server_name}
             ).fetchone()
             
-            if not server_exists:
+            if not server_info:
                 raise HTTPException(status_code=404, detail=f"Server '{request.server_name}' not found. Register with a valid server name.")
+            
+            max_players = server_info[1]  # Can be NULL (unlimited) or an integer
             
             # Check if this device already has a key for this server
             existing_key = conn.execute(
@@ -73,6 +75,23 @@ def register_player(request: PlayerRegistrationRequest) -> PlayerApiKeyResponse:
                     status_code=409, 
                     detail=f"Device already registered for '{request.server_name}'. Use existing key or contact admin to reset."
                 )
+            
+            # Check if server has reached player limit
+            if max_players is not None:
+                current_player_count = conn.execute(
+                    text("""
+                        SELECT COUNT(DISTINCT minecraft_username) 
+                        FROM player_keys 
+                        WHERE server_name = :server_name AND active = TRUE
+                    """),
+                    {"server_name": request.server_name}
+                ).scalar()
+                
+                if current_player_count >= max_players:
+                    raise HTTPException(
+                        status_code=403,
+                        detail=f"Server '{request.server_name}' has reached its maximum player limit ({max_players} players). Contact the server admin."
+                    )
             
             # Generate opaque token and hash it before storing
             plaintext_token = generate_opaque_token()
