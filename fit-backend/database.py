@@ -52,6 +52,14 @@ def init_db() -> None:
         ON step_ingest(minecraft_username, day);
         """))
 
+        # 4a) Add unique constraint to prevent duplicate entries from multiple devices
+        # This ensures only one entry per username/server/day combination
+        conn.execute(text("""
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_step_ingest_unique_user_server_day
+        ON step_ingest(minecraft_username, server_name, day)
+        WHERE minecraft_username IS NOT NULL AND server_name IS NOT NULL;
+        """))
+
         # 5) Create api_keys table for per-server authentication
         conn.execute(text("""
         CREATE TABLE IF NOT EXISTS api_keys (

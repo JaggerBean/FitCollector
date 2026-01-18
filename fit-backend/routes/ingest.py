@@ -128,22 +128,20 @@ def ingest(p: IngestPayload):
                 should_upsert = True
 
         if should_upsert:
-            # Delete previous entry for this username, server, and day only
-            conn.execute(
-                text("""
-                    DELETE FROM step_ingest WHERE minecraft_username = :minecraft_username AND server_name = :server_name AND day = :day
-                """),
-                {
-                    "minecraft_username": p.minecraft_username,
-                    "server_name": server_name,
-                    "day": server_day
-                }
-            )
-            # Insert the new record with server_name
+            # Use upsert to atomically handle race conditions from multiple devices
+            # This ensures only the highest step count is stored for a username/server/day
             conn.execute(
                 text("""
                     INSERT INTO step_ingest (minecraft_username, device_id, day, steps_today, source, server_name)
                     VALUES (:minecraft_username, :device_id, :day, :steps_today, :source, :server_name)
+                    ON CONFLICT (minecraft_username, server_name, day)
+                    WHERE minecraft_username IS NOT NULL AND server_name IS NOT NULL
+                    DO UPDATE SET
+                        steps_today = EXCLUDED.steps_today,
+                        device_id = EXCLUDED.device_id,
+                        source = EXCLUDED.source,
+                        created_at = NOW()
+                    WHERE EXCLUDED.steps_today > step_ingest.steps_today
                 """),
                 {
                     "minecraft_username": p.minecraft_username,
