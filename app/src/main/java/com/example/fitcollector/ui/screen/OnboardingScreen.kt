@@ -31,6 +31,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import com.example.fitcollector.*
 import kotlinx.coroutines.launch
 import java.time.Instant
+import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.request.ReadRecordsRequest
 import androidx.health.connect.client.records.StepsRecord
 import androidx.health.connect.client.time.TimeRangeFilter
@@ -215,8 +216,9 @@ fun OnboardingScreen(
                                 Spacer(Modifier.height(12.dp))
                                 Button(
                                     onClick = {
-                                        val intent = Intent("androidx.health.ACTION_HEALTH_CONNECT_SETTINGS")
-                                        context.startActivity(intent)
+                                        val settingsIntent = Intent()
+                                        settingsIntent.action = HealthConnectClient.ACTION_HEALTH_CONNECT_SETTINGS
+                                        context.startActivity(settingsIntent)
                                     },
                                     modifier = Modifier.fillMaxWidth()
                                 ) {
@@ -252,8 +254,9 @@ fun OnboardingScreen(
                         
                         OutlinedButton(
                             onClick = {
-                                val intent = Intent("androidx.health.ACTION_HEALTH_CONNECT_SETTINGS")
-                                context.startActivity(intent)
+                                val settingsIntent = Intent()
+                                settingsIntent.action = HealthConnectClient.ACTION_HEALTH_CONNECT_SETTINGS
+                                context.startActivity(settingsIntent)
                             },
                             modifier = Modifier.fillMaxWidth()
                         ) {

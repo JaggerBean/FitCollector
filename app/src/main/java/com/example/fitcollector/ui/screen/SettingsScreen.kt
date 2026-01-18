@@ -457,8 +457,9 @@ fun SettingsScreen(
                         } else {
                             OutlinedButton(
                                 onClick = {
-                                    val intent = Intent("androidx.health.ACTION_HEALTH_CONNECT_SETTINGS")
-                                    context.startActivity(intent)
+                                    val settingsIntent = Intent()
+                                    settingsIntent.action = HealthConnectClient.ACTION_HEALTH_CONNECT_SETTINGS
+                                    context.startActivity(settingsIntent)
                                 },
                                 modifier = Modifier.fillMaxWidth()
                             ) {
