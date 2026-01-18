@@ -569,6 +569,30 @@ fun SettingsScreen(
             }
         }
     }
+    
+    // Health Connect error dialog
+    if (showHealthConnectErrorDialog) {
+        AlertDialog(
+            onDismissRequest = { showHealthConnectErrorDialog = false },
+            title = { Text("Unable to Open Health Connect") },
+            text = {
+                Text(
+                    "We couldn't open Health Connect settings automatically. " +
+                    "Please open it manually:\n\n" +
+                    "1. Open your phone's Settings app\n" +
+                    "2. Search for 'Health Connect'\n" +
+                    "3. Tap 'App permissions'\n" +
+                    "4. Find your fitness tracker app\n" +
+                    "5. Enable 'Steps' permission"
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = { showHealthConnectErrorDialog = false }) {
+                    Text("OK")
+                }
+            }
+        )
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -643,29 +667,5 @@ fun ServerSelectorDialog(
                 }
             }
         }
-    }
-    
-    // Health Connect error dialog
-    if (showHealthConnectErrorDialog) {
-        AlertDialog(
-            onDismissRequest = { showHealthConnectErrorDialog = false },
-            title = { Text("Unable to Open Health Connect") },
-            text = {
-                Text(
-                    "We couldn't open Health Connect settings automatically. " +
-                    "Please open it manually:\n\n" +
-                    "1. Open your phone's Settings app\n" +
-                    "2. Search for 'Health Connect'\n" +
-                    "3. Tap 'App permissions'\n" +
-                    "4. Find your fitness tracker app\n" +
-                    "5. Enable 'Steps' permission"
-                )
-            },
-            confirmButton = {
-                TextButton(onClick = { showHealthConnectErrorDialog = false }) {
-                    Text("OK")
-                }
-            }
-        )
     }
 }
