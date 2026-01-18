@@ -63,6 +63,7 @@ fun OnboardingScreen(
     var isRefreshingSources by remember { mutableStateOf(false) }
     var hasAttemptedRefresh by remember { mutableStateOf(false) }
     var lastRefreshFoundSomethingNew by remember { mutableStateOf(true) }
+    var showHealthConnectErrorDialog by remember { mutableStateOf(false) }
 
     val permissions = remember { 
         setOf(
@@ -216,9 +217,13 @@ fun OnboardingScreen(
                                 Spacer(Modifier.height(12.dp))
                                 Button(
                                     onClick = {
-                                        val settingsIntent = Intent()
-                                        settingsIntent.action = HealthConnectClient.ACTION_HEALTH_CONNECT_SETTINGS
-                                        context.startActivity(settingsIntent)
+                                        try {
+                                            val settingsIntent = Intent()
+                                            settingsIntent.action = HealthConnectClient.ACTION_HEALTH_CONNECT_SETTINGS
+                                            context.startActivity(settingsIntent)
+                                        } catch (e: Exception) {
+                                            showHealthConnectErrorDialog = true
+                                        }
                                     },
                                     modifier = Modifier.fillMaxWidth()
                                 ) {
@@ -254,9 +259,13 @@ fun OnboardingScreen(
                         
                         OutlinedButton(
                             onClick = {
-                                val settingsIntent = Intent()
-                                settingsIntent.action = HealthConnectClient.ACTION_HEALTH_CONNECT_SETTINGS
-                                context.startActivity(settingsIntent)
+                                try {
+                                    val settingsIntent = Intent()
+                                    settingsIntent.action = HealthConnectClient.ACTION_HEALTH_CONNECT_SETTINGS
+                                    context.startActivity(settingsIntent)
+                                } catch (e: Exception) {
+                                    showHealthConnectErrorDialog = true
+                                }
                             },
                             modifier = Modifier.fillMaxWidth()
                         ) {
@@ -433,6 +442,30 @@ fun OnboardingScreen(
                 }
             }
         }
+    }
+    
+    // Health Connect error dialog
+    if (showHealthConnectErrorDialog) {
+        AlertDialog(
+            onDismissRequest = { showHealthConnectErrorDialog = false },
+            title = { Text("Unable to Open Health Connect") },
+            text = {
+                Text(
+                    "We couldn't open Health Connect settings automatically. " +
+                    "Please open it manually:\n\n" +
+                    "1. Open your phone's Settings app\n" +
+                    "2. Search for 'Health Connect'\n" +
+                    "3. Tap 'App permissions'\n" +
+                    "4. Find your fitness tracker app\n" +
+                    "5. Enable 'Steps' permission"
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = { showHealthConnectErrorDialog = false }) {
+                    Text("OK")
+                }
+            }
+        )
     }
 }
 
