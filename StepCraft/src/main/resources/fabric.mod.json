@@ -3,7 +3,7 @@
 	"id": "stepcraft",
 	"version": "${version}",
 	"name": "StepCraft",
-	"description": "StepCraft: Minecraft mod integration for FitCollector.",
+	"description": "StepCraft: Minecraft mod integration for FitCollector/StepCraft.",
 	"authors": [
 		"Me!"
 	],
