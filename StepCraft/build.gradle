@@ -22,7 +22,7 @@ loom {
     splitEnvironmentSourceSets()
 
 	mods {
-		"modid" {
+		"stepcraft" {
 			sourceSet sourceSets.main
 			sourceSet sourceSets.client
 		}
