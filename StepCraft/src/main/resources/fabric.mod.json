@@ -1,0 +1,41 @@
+{
+	"schemaVersion": 1,
+	"id": "stepcraft",
+	"version": "${version}",
+	"name": "StepCraft",
+	"description": "StepCraft: Minecraft mod integration for FitCollector.",
+	"authors": [
+		"Me!"
+	],
+	"contact": {
+		"homepage": "https://fabricmc.net/",
+		"sources": "https://github.com/yourrepo/StepCraft"
+	},
+	"license": "CC0-1.0",
+	"icon": "assets/stepcraft/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"com.stepcraft.StepCraftMod"
+		],
+		"client": [
+			"com.stepcraft.StepCraftModClient"
+		]
+	},
+	"mixins": [
+		"stepcraft.mixins.json",
+		{
+			"config": "stepcraft.client.mixins.json",
+			"environment": "client"
+		}
+	],
+	"depends": {
+		"fabricloader": ">=0.15.10",
+		"minecraft": "~1.20.6",
+		"java": ">=21",
+		"fabric-api": "*"
+	},
+	"suggests": {
+		"another-mod": "*"
+	}
+}
