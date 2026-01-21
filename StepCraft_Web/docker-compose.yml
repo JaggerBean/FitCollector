@@ -1,0 +1,12 @@
+version: '3.8'
+services:
+  stepcraft_web:
+    build: .
+    container_name: stepcraft_web
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+    environment:
+      - DATABASE_URL=sqlite:///./stepcraft_web.sqlite3
+    volumes:
+      - ./stepcraft_web.sqlite3:/app/stepcraft_web.sqlite3
