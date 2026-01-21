@@ -14,7 +14,9 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 
 @app.get("/", response_class=HTMLResponse)
 def register_form(request: Request):
-    return templates.TemplateResponse("register.html", {"request": request})
+    import datetime
+    year = datetime.datetime.now().year
+    return templates.TemplateResponse("register.html", {"request": request, "year": year})
 
 
 @app.post("/register", response_class=HTMLResponse)
