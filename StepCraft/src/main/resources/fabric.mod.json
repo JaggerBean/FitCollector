@@ -17,17 +17,10 @@
 	"entrypoints": {
 		"main": [
 			"com.stepcraft.StepCraftMod"
-		],
-		"client": [
-			"com.stepcraft.StepCraftModClient"
 		]
 	},
 	"mixins": [
-		"stepcraft.mixins.json",
-		{
-			"config": "stepcraft.client.mixins.json",
-			"environment": "client"
-		}
+		"stepcraft.mixins.json"
 	],
 	"depends": {
 		"fabricloader": ">=0.15.10",
