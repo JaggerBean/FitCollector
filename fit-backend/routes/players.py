@@ -1,3 +1,14 @@
+
+"""Player registration and authentication endpoints."""
+
+from fastapi import APIRouter, HTTPException
+from sqlalchemy import text
+from database import engine
+from models import PlayerRegistrationRequest, PlayerApiKeyResponse, KeyRecoveryRequest
+from utils import generate_opaque_token, hash_token
+
+router = APIRouter()
+
 @router.get("/v1/players/yesterday-steps/{minecraft_username}")
 def get_yesterday_steps(minecraft_username: str, server_name: str = Depends(require_api_key)):
     """
@@ -19,7 +30,6 @@ def get_yesterday_steps(minecraft_username: str, server_name: str = Depends(requ
         return {"minecraft_username": minecraft_username, "server_name": server_name, "day": str(yesterday), "steps_yesterday": row[0]}
     else:
         return {"minecraft_username": minecraft_username, "server_name": server_name, "day": str(yesterday), "steps_yesterday": 0}
-"""Player registration and authentication endpoints."""
 
 from fastapi import APIRouter, HTTPException
 from sqlalchemy import text
