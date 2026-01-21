@@ -1,3 +1,33 @@
+def rollover_steps_to_yesterday():
+    """Copy today's steps to yesterday for each player/server, then reset today's steps."""
+    with engine.begin() as conn:
+        # Get all unique player/server combos for today
+        today = datetime.now().date()
+        yesterday = today - timedelta(days=1)
+        rows = conn.execute(text("""
+            SELECT minecraft_username, server_name, steps_today
+            FROM step_ingest
+            WHERE day = :today
+        """), {"today": today}).fetchall()
+
+        # Insert yesterday's steps for each player/server
+        for row in rows:
+            conn.execute(text("""
+                INSERT INTO step_ingest (minecraft_username, server_name, day, steps_today)
+                VALUES (:username, :server, :yesterday, :steps)
+                ON CONFLICT (minecraft_username, server_name, day)
+                DO UPDATE SET steps_today = :steps
+            """), {
+                "username": row[0],
+                "server": row[1],
+                "yesterday": yesterday,
+                "steps": row[2]
+            })
+
+        # Reset today's steps to 0 for all players
+        conn.execute(text("""
+            UPDATE step_ingest SET steps_today = 0 WHERE day = :today
+        """), {"today": today})
 """Database schema definitions and initialization."""
 
 import os

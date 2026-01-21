@@ -4,7 +4,11 @@ WORKDIR /app
 
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install supervisor
 
 COPY . .
 
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Add supervisord config
+COPY supervisord.conf /etc/supervisord.conf
+
+CMD ["supervisord", "-c", "/etc/supervisord.conf"]

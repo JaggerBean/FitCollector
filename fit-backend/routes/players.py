@@ -1,3 +1,24 @@
+@router.get("/v1/players/yesterday-steps/{minecraft_username}")
+def get_yesterday_steps(minecraft_username: str, server_name: str = Depends(require_api_key)):
+    """
+    Get yesterday's step count for a player on a specific server.
+    Requires server API key.
+    """
+    from datetime import datetime, timedelta
+    yesterday = (datetime.now(CENTRAL_TZ) - timedelta(days=1)).date()
+    with engine.begin() as conn:
+        row = conn.execute(
+            text("""
+                SELECT steps_today FROM step_ingest
+                WHERE minecraft_username = :username AND server_name = :server AND day = :yesterday
+                LIMIT 1
+            """),
+            {"username": minecraft_username, "server": server_name, "yesterday": yesterday}
+        ).fetchone()
+    if row:
+        return {"minecraft_username": minecraft_username, "server_name": server_name, "day": str(yesterday), "steps_yesterday": row[0]}
+    else:
+        return {"minecraft_username": minecraft_username, "server_name": server_name, "day": str(yesterday), "steps_yesterday": 0}
 """Player registration and authentication endpoints."""
 
 from fastapi import APIRouter, HTTPException
