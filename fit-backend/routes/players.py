@@ -35,7 +35,6 @@ def get_yesterday_steps(minecraft_username: str, server_name: str = Depends(requ
     else:
         return {"minecraft_username": minecraft_username, "server_name": server_name, "day": str(yesterday), "steps_yesterday": 0}
 
-router = APIRouter()
 
 @router.get("/v1/servers/available")
 def get_available_servers():
