@@ -11,6 +11,8 @@ CENTRAL_TZ = ZoneInfo("America/Chicago")
 router = APIRouter()
 
 
+
+
 @router.get("/v1/servers/players")
 def get_server_players(
     limit: int = 1000,
@@ -53,6 +55,31 @@ def get_server_players(
         "data": out
     }
 
+
+@router.get("/v1/servers/players/{minecraft_username}/yesterday-steps")
+def get_yesterday_steps_server(
+    minecraft_username: str,
+    server_name: str = Depends(require_api_key),
+):
+    """
+    Get yesterday's step count for a player on this server.
+    Requires server API key.
+    """
+    from datetime import datetime, timedelta
+    yesterday = (datetime.now(CENTRAL_TZ) - timedelta(days=1)).date()
+    with engine.begin() as conn:
+        row = conn.execute(
+            text("""
+                SELECT steps_today FROM step_ingest
+                WHERE minecraft_username = :username AND server_name = :server AND day = :yesterday
+                LIMIT 1
+            """),
+            {"username": minecraft_username, "server": server_name, "yesterday": yesterday}
+        ).fetchone()
+    if row:
+        return {"minecraft_username": minecraft_username, "server_name": server_name, "day": str(yesterday), "steps_yesterday": row[0]}
+    else:
+        return {"minecraft_username": minecraft_username, "server_name": server_name, "day": str(yesterday), "steps_yesterday": 0}
 
 @router.delete("/v1/servers/players/{minecraft_username}")
 def delete_player(
