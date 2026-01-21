@@ -1,7 +1,7 @@
 
 """Player registration and authentication endpoints."""
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy import text
 from database import engine
 from models import PlayerRegistrationRequest, PlayerApiKeyResponse, KeyRecoveryRequest
