@@ -1,3 +1,4 @@
+from fastapi_mail import FastMail, MessageSchema, ConnectionConfig
 import os
 import httpx
 from fastapi import FastAPI, Form, Request
@@ -10,6 +11,31 @@ templates = Jinja2Templates(directory="templates")
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
+
+# Email configuration for Gmail
+mail_conf = ConnectionConfig(
+    MAIL_USERNAME = os.getenv("GMAIL_USER", "stepcraft.team@gmail.com"),
+    MAIL_PASSWORD = os.getenv("GMAIL_PASS", "pijt nztc djng odxj"),
+    MAIL_FROM = os.getenv("GMAIL_USER", "stepcraft.team@gmail.com"),
+    MAIL_PORT = 587,
+    MAIL_SERVER = "smtp.gmail.com",
+    MAIL_TLS = True,
+    MAIL_SSL = False,
+    USE_CREDENTIALS = True
+)
+
+async def send_api_key_email(email, server_name, api_key, message):
+    subject = "Your StepCraft API Key"
+    body = f"""Thank you for registering your server: {server_name}\nYour API Key: {api_key}\n{message}"""
+    msg = MessageSchema(
+        subject=subject,
+        recipients=[email],
+        body=body,
+        subtype="plain"
+    )
+    fm = FastMail(mail_conf)
+    await fm.send_message(msg)
+
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -60,9 +86,17 @@ async def register_server(request: Request,
     if response and response.status_code == 200:
         data = response.json()
         api_key = data.get("api_key")
-        server_name = data.get("server_name")
-        message = data.get("message")
-        return templates.TemplateResponse("confirmation.html", {"request": request, "api_key": api_key, "server_name": server_name, "message": message})
+        server_name_val = data.get("server_name")
+        message_val = data.get("message")
+        # Send email with API key
+        try:
+            await send_api_key_email(owner_email, server_name_val, api_key, message_val)
+        except Exception as e:
+            import logging
+            logging.error(f"Failed to send email: {e}")
+        import datetime
+        year = datetime.datetime.now().year
+        return templates.TemplateResponse("confirmation.html", {"request": request, "api_key": api_key, "server_name": server_name_val, "message": message_val, "year": year})
     else:
         error = response.text if response else last_error or "No backend response"
         logging.error(f"Registration failed: {error}")
