@@ -12,15 +12,14 @@ templates = Jinja2Templates(directory="templates")
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-# Email configuration for Gmail
 mail_conf = ConnectionConfig(
-    MAIL_USERNAME = os.getenv("GMAIL_USER", "stepcraft.team@gmail.com"),
-    MAIL_PASSWORD = os.getenv("GMAIL_PASS", "pijt nztc djng odxj"),
-    MAIL_FROM = os.getenv("GMAIL_USER", "stepcraft.team@gmail.com"),
+    MAIL_USERNAME = os.getenv("GMAIL_USER"),
+    MAIL_PASSWORD = os.getenv("GMAIL_PASS"),
+    MAIL_FROM = os.getenv("GMAIL_USER"),
     MAIL_PORT = 587,
     MAIL_SERVER = "smtp.gmail.com",
-    MAIL_TLS = True,
-    MAIL_SSL = False,
+    MAIL_STARTTLS = True,
+    MAIL_SSL_TLS = False,
     USE_CREDENTIALS = True
 )
 
