@@ -7,18 +7,26 @@
     <title>StepCraft Server Registration</title>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
     <style>
         body {
-            background: #F8F9FA;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #E3F2FD 0%, #E8F5E9 100%);
+            font-family: 'Roboto', Arial, sans-serif;
         }
         .form-container {
             max-width: 500px;
-            margin: 40px auto;
+            margin: 48px auto 24px auto;
             background: #fff;
-            padding: 32px 24px;
-            border-radius: 16px;
-            box-shadow: 0 2px 16px rgba(44, 67, 54, 0.10);
+            padding: 36px 28px 28px 28px;
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(44, 67, 54, 0.18);
             border: 2px solid #2E7D32;
+            animation: fadeInUp 0.7s cubic-bezier(.42,0,.58,1);
+        }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(40px); }
+            to { opacity: 1; transform: translateY(0); }
         }
         .logo {
             display: block;
@@ -26,25 +34,38 @@
             width: 80px;
         }
         .stepcraft-title {
-            font-family: monospace;
-            font-weight: bold;
-            font-size: 2.2rem;
+            font-family: 'Montserrat', monospace;
+            font-weight: 700;
+            font-size: 2.3rem;
             letter-spacing: -1.5px;
             color: #2E7D32;
             text-align: center;
             margin-bottom: 8px;
         }
         .btn-primary {
-            background-color: #1565C0;
-            border-color: #1565C0;
+            background: linear-gradient(90deg, #1565C0 60%, #2E7D32 100%);
+            border: none;
+            font-weight: 500;
+            transition: box-shadow 0.2s, transform 0.2s;
+            box-shadow: 0 2px 8px rgba(44, 67, 54, 0.10);
         }
-        .btn-primary:hover {
-            background-color: #2E7D32;
-            border-color: #2E7D32;
+        .btn-primary:hover, .btn-primary:focus {
+            background: linear-gradient(90deg, #2E7D32 60%, #1565C0 100%);
+            transform: translateY(-2px) scale(1.03);
+            box-shadow: 0 4px 16px rgba(44, 67, 54, 0.18);
         }
         .form-label {
             color: #2E7D32;
             font-weight: 500;
+            font-family: 'Roboto', Arial, sans-serif;
+        }
+        .footer {
+            text-align: center;
+            color: #1565C0;
+            font-size: 1rem;
+            margin-top: 32px;
+            opacity: 0.7;
+            font-family: 'Montserrat', monospace;
         }
     </style>
 </head>
@@ -84,6 +105,7 @@
             <button type="submit" class="btn btn-primary w-100">Register</button>
         </form>
     </div>
+    <div class="footer">&copy; {{ now().year }} StepCraft &mdash; Powered by FitCollector</div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
