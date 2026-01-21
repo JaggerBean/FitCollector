@@ -29,7 +29,7 @@ def get_claim_status_server(minecraft_username: str, server_name: str = Depends(
     if row:
         return {"claimed": row[0], "claimed_at": row[1]}
     else:
-        return {"claimed": False, "claimed_at": None}
+        raise HTTPException(status_code=404, detail=f"No claim record found for {minecraft_username} on {str(yesterday)}.")
 
 @router.post("/v1/servers/players/{minecraft_username}/claim-reward")
 def claim_reward_server(minecraft_username: str, server_name: str = Depends(require_api_key)):
@@ -115,7 +115,7 @@ def get_yesterday_steps_server(
     if row:
         return {"minecraft_username": minecraft_username, "server_name": server_name, "day": str(yesterday), "steps_yesterday": row[0]}
     else:
-        return {"minecraft_username": minecraft_username, "server_name": server_name, "day": str(yesterday), "steps_yesterday": 0}
+        raise HTTPException(status_code=404, detail=f"No step record found for {minecraft_username} on {str(yesterday)}.")
 
 @router.delete("/v1/servers/players/{minecraft_username}")
 def delete_player(
