@@ -48,7 +48,8 @@ async def register_server(request: Request,
                         "server_address": server_address,
                         "server_version": server_version
                     }
-                )
+                        , verify=False
+                    )
                 logging.info(f"Response status: {response.status_code}, body: {response.text}")
                 if response.status_code == 200:
                     break
