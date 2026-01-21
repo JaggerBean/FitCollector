@@ -47,9 +47,7 @@ async def register_server(request: Request,
                         "owner_email": owner_email,
                         "server_address": server_address,
                         "server_version": server_version
-                    },
-                    timeout=10,
-                    verify=False
+                    }
                 )
                 logging.info(f"Response status: {response.status_code}, body: {response.text}")
                 if response.status_code == 200:
