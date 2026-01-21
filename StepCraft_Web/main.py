@@ -30,7 +30,7 @@ async def register_server(request: Request,
     logging.basicConfig(level=logging.INFO)
     backend_urls = [
         #"http://fitcollector_api:8000/v1/servers/register",
-        "https://74.208.73.134/v1/servers/register/"
+        "http://74.208.73.134/v1/servers/register"
         #"http://api.stepcraft.org:8000/v1/servers/register"
     ]
     response = None
@@ -48,8 +48,7 @@ async def register_server(request: Request,
                         "server_address": server_address,
                         "server_version": server_version
                     }
-                        , verify=False
-                    )
+                )
                 logging.info(f"Response status: {response.status_code}, body: {response.text}")
                 if response.status_code == 200:
                     break
