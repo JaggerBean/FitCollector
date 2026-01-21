@@ -27,16 +27,28 @@ async def register_server(request: Request,
 ):
     # Send registration data to backend API
     async with httpx.AsyncClient() as client:
-        response = await client.post(
-            "https://api.stepcraft.org/servers/register",
-            json={
-                "server_name": server_name,
-                "owner_name": owner_name,
-                "owner_email": owner_email,
-                "server_address": server_address,
-                "server_version": server_version
-            }
-        )
+        try:
+            response = await client.post(
+                "http://fitcollector_api:8000/servers/register",
+                json={
+                    "server_name": server_name,
+                    "owner_name": owner_name,
+                    "owner_email": owner_email,
+                    "server_address": server_address,
+                    "server_version": server_version
+                }
+            )
+        except httpx.RequestError:
+            response = await client.post(
+                "http://74.208.73.134:8000/servers/register",
+                json={
+                    "server_name": server_name,
+                    "owner_name": owner_name,
+                    "owner_email": owner_email,
+                    "server_address": server_address,
+                    "server_version": server_version
+                }
+            )
     if response.status_code == 200:
         data = response.json()
         api_key = data.get("api_key")
