@@ -38,6 +38,18 @@ engine = create_engine(DATABASE_URL, future=True)
 
 
 def init_db() -> None:
+            # Create step_claims table for reward claim tracking
+            conn.execute(text("""
+            CREATE TABLE IF NOT EXISTS step_claims (
+                id BIGSERIAL PRIMARY KEY,
+                minecraft_username TEXT NOT NULL,
+                server_name TEXT NOT NULL,
+                day DATE NOT NULL,
+                claimed BOOLEAN NOT NULL DEFAULT FALSE,
+                claimed_at TIMESTAMPTZ,
+                UNIQUE(minecraft_username, server_name, day)
+            );
+            """))
     """Initialize database schema with all migrations."""
     with engine.begin() as conn:
         # 1) Create step_ingest table if it doesn't exist

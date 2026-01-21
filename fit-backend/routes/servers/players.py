@@ -3,15 +3,51 @@
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy import text
 from zoneinfo import ZoneInfo
-
+from datetime import datetime, timedelta
 from database import engine
 from auth import require_api_key
 
 CENTRAL_TZ = ZoneInfo("America/Chicago")
 router = APIRouter()
 
+# Server endpoint: check and set claim status for yesterday
+@router.get("/v1/servers/players/{minecraft_username}/claim-status")
+def get_claim_status_server(minecraft_username: str, server_name: str = Depends(require_api_key)):
+    """
+    Check if the player has claimed their reward for yesterday (server/mod use).
+    """
+    yesterday = (datetime.now(CENTRAL_TZ) - timedelta(days=1)).date()
+    with engine.begin() as conn:
+        row = conn.execute(
+            text("""
+                SELECT claimed, claimed_at FROM step_claims
+                WHERE minecraft_username = :username AND server_name = :server AND day = :yesterday
+                LIMIT 1
+            """),
+            {"username": minecraft_username, "server": server_name, "yesterday": yesterday}
+        ).fetchone()
+    if row:
+        return {"claimed": row[0], "claimed_at": row[1]}
+    else:
+        return {"claimed": False, "claimed_at": None}
 
-
+@router.post("/v1/servers/players/{minecraft_username}/claim-reward")
+def claim_reward_server(minecraft_username: str, server_name: str = Depends(require_api_key)):
+    """
+    Mark the player's reward as claimed for yesterday (server/mod use).
+    """
+    yesterday = (datetime.now(CENTRAL_TZ) - timedelta(days=1)).date()
+    with engine.begin() as conn:
+        conn.execute(
+            text("""
+                INSERT INTO step_claims (minecraft_username, server_name, day, claimed, claimed_at)
+                VALUES (:username, :server, :yesterday, TRUE, NOW())
+                ON CONFLICT (minecraft_username, server_name, day)
+                DO UPDATE SET claimed = TRUE, claimed_at = NOW()
+            """),
+            {"username": minecraft_username, "server": server_name, "yesterday": yesterday}
+        )
+    return {"claimed": True, "claimed_at": datetime.now().isoformat()}
 
 @router.get("/v1/servers/players")
 def get_server_players(

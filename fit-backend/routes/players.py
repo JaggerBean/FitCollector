@@ -1,7 +1,5 @@
-
-"""Player registration and authentication endpoints."""
-
-
+# Player endpoint: check and set claim status for today
+from datetime import datetime
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy import text
 from database import engine
@@ -14,6 +12,27 @@ router = APIRouter()
 # ...existing code...
 
 
+@router.get("/v1/players/claim-status/{minecraft_username}")
+def get_claim_status_player(minecraft_username: str, server_name: str):
+    """
+    Check if the player has claimed their reward for today (app use).
+    """
+    today = datetime.now().date()
+    with engine.begin() as conn:
+        row = conn.execute(
+            text("""
+                SELECT claimed, claimed_at FROM step_claims
+                WHERE minecraft_username = :username AND server_name = :server AND day = :today
+                LIMIT 1
+            """),
+            {"username": minecraft_username, "server": server_name, "today": today}
+        ).fetchone()
+    if row:
+        return {"claimed": row[0], "claimed_at": row[1]}
+    else:
+        return {"claimed": False, "claimed_at": None}
+
+"""Player registration and authentication endpoints."""
 
 @router.get("/v1/servers/available")
 def get_available_servers():
