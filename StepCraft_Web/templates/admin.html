@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin - StepCraft Registrations</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <h1>Registered Servers (Admin View)</h1>
+    <table border="1" cellpadding="5">
+        <tr><th>ID</th><th>Server Name</th><th>Contact Email</th><th>Notes</th><th>API Key</th></tr>
+        {% for reg in registrations %}
+        <tr>
+            <td>{{ reg.id }}</td>
+            <td>{{ reg.server_name }}</td>
+            <td>{{ reg.contact_email }}</td>
+            <td>{{ reg.notes }}</td>
+            <td><code>{{ reg.api_key }}</code></td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>
