@@ -30,7 +30,7 @@ async def register_server(request: Request,
     logging.basicConfig(level=logging.INFO)
     backend_urls = [
         #"http://fitcollector_api:8000/v1/servers/register",
-        "http://74.208.73.134/v1/servers/register"
+        "http://74.208.73.134/v1/servers/register/"
         #"http://api.stepcraft.org:8000/v1/servers/register"
     ]
     response = None
