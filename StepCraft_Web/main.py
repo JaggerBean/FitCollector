@@ -40,7 +40,7 @@ async def register_server(request: Request,
             )
         except httpx.RequestError:
             response = await client.post(
-                "http://74.208.73.134:8000/servers/register",
+                "http://74.208.73.134/v1/servers/register",
                 json={
                     "server_name": server_name,
                     "owner_name": owner_name,

@@ -9,6 +9,9 @@
     <h1>Registration Complete!</h1>
     <p>Thank you for registering your server: <b>{{ server_name }}</b></p>
     <p>Your API Key (save this!):<br><code>{{ api_key }}</code></p>
+    {% if message %}
+    <p>{{ message }}</p>
+    {% endif %}
     <p><a href="/">Register another server</a></p>
 </body>
 </html>
