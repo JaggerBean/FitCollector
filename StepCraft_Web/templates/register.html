@@ -13,6 +13,7 @@
             min-height: 100vh;
             background: linear-gradient(135deg, #E3F2FD 0%, #E8F5E9 100%);
             font-family: 'Roboto', Arial, sans-serif;
+            color: #222;
         }
         .form-container {
             max-width: 500px;
@@ -24,6 +25,35 @@
             border: 2px solid #2E7D32;
             animation: fadeInUp 0.7s cubic-bezier(.42,0,.58,1);
         }
+                /* Dark mode styles */
+                @media (prefers-color-scheme: dark) {
+                    body {
+                        background: linear-gradient(135deg, #121212 0%, #1E1E1E 100%);
+                        color: #E1E1E1;
+                    }
+                    .form-container {
+                        background: #23272A;
+                        border: 2px solid #81C784;
+                        box-shadow: 0 8px 32px rgba(44, 67, 54, 0.32);
+                    }
+                    .stepcraft-title {
+                        color: #81C784;
+                    }
+                    .form-label {
+                        color: #81C784;
+                    }
+                    .btn-primary {
+                        background: linear-gradient(90deg, #64B5F6 60%, #81C784 100%);
+                        color: #23272A;
+                    }
+                    .btn-primary:hover, .btn-primary:focus {
+                        background: linear-gradient(90deg, #81C784 60%, #64B5F6 100%);
+                        color: #23272A;
+                    }
+                    .footer {
+                        color: #64B5F6;
+                    }
+                }
         @keyframes fadeInUp {
             from { opacity: 0; transform: translateY(40px); }
             to { opacity: 1; transform: translateY(0); }
