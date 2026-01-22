@@ -7,49 +7,6 @@ DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///fitcollector.db")
 engine = create_engine(DATABASE_URL, future=True)
 
 
-def rollover_steps_to_yesterday():
-    """Copy today's steps to yesterday for each player/server, then reset today's steps."""
-    logger = logging.getLogger("fitcollector.rollover")
-    with engine.begin() as conn:
-        today = datetime.now().date()
-        yesterday = today - timedelta(days=1)
-        logger.info(f"Running rollover: {today} -> {yesterday}")
-        rows = conn.execute(text("""
-            SELECT minecraft_username, server_name, device_id, steps_today
-            FROM step_ingest
-            WHERE day = :today
-        """), {"today": today}).fetchall()
-        logger.info(f"Found {len(rows)} player/server combos for rollover.")
-        for row in rows:
-            # Update player_keys.steps_yesterday for this player/server/device
-            conn.execute(text("""
-                UPDATE player_keys
-                SET steps_yesterday = :steps
-                WHERE minecraft_username = :username AND server_name = :server AND device_id = :device_id
-            """), {
-                "steps": row[3],
-                "username": row[0],
-                "server": row[1],
-                "device_id": row[2]
-            })
-            conn.execute(text("""
-                INSERT INTO step_ingest (minecraft_username, server_name, device_id, day, steps_today)
-                VALUES (:username, :server, :device_id, :yesterday, :steps)
-                ON CONFLICT (minecraft_username, server_name, day)
-                DO UPDATE SET steps_today = :steps
-            """), {
-                "username": row[0],
-                "server": row[1],
-                "device_id": row[2],
-                "yesterday": yesterday,
-                "steps": row[3]
-            })
-        conn.execute(text("""
-            UPDATE step_ingest SET steps_today = 0 WHERE day = :today
-        """), {"today": today})
-        logger.info("Rollover complete. Today's steps reset to 0 and steps_yesterday updated.")
-
-
 """Database schema definitions and initialization."""
 
 def init_db() -> None:
@@ -169,22 +126,6 @@ def init_db() -> None:
             last_used TIMESTAMPTZ,
             UNIQUE(device_id, server_name)
         );
-        """))
-
-        # 6a) Migration: add steps_yesterday column if missing
-        conn.execute(text("""
-        ALTER TABLE player_keys
-        ADD COLUMN IF NOT EXISTS steps_yesterday BIGINT;
-        """))
-
-        conn.execute(text("""
-        CREATE INDEX IF NOT EXISTS idx_player_keys_key
-        ON player_keys(key);
-        """))
-
-        conn.execute(text("""
-        CREATE INDEX IF NOT EXISTS idx_player_keys_device_server
-        ON player_keys(device_id, server_name);
         """))
 
         # 7) Create bans table for player bans
