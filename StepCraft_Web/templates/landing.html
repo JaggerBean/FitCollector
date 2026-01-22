@@ -9,19 +9,32 @@
     <style>
         body {
             min-height: 100vh;
-            background: linear-gradient(135deg, #E3F2FD 0%, #E8F5E9 100%);
+            background: #e3f2fd;
             font-family: 'Roboto', Arial, sans-serif;
             color: #222;
+            position: relative;
+            overflow-x: hidden;
+        }
+        .bg-svg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 0;
+            pointer-events: none;
         }
         .landing-container {
             max-width: 700px;
-            margin: 48px auto 24px auto;
-            background: #fff;
-            padding: 48px 36px 36px 36px;
-            border-radius: 24px;
+            margin: 64px auto 24px auto;
+            background: rgba(255,255,255,0.95);
+            padding: 56px 36px 36px 36px;
+            border-radius: 28px;
             box-shadow: 0 8px 32px rgba(44, 67, 54, 0.18);
             border: 2px solid #2E7D32;
             animation: fadeInUp 0.7s cubic-bezier(.42,0,.58,1);
+            position: relative;
+            z-index: 1;
         }
         .stepcraft-title {
             font-family: 'Montserrat', monospace;
@@ -30,13 +43,20 @@
             letter-spacing: -1.5px;
             color: #2E7D32;
             text-align: center;
-            margin-bottom: 16px;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 8px #e8f5e9;
         }
         .subtitle {
             text-align: center;
             color: #1565C0;
             font-size: 1.3rem;
             margin-bottom: 32px;
+        }
+        .hero-img {
+            display: block;
+            margin: 0 auto 18px auto;
+            width: 120px;
+            filter: drop-shadow(0 4px 16px #b2dfdb);
         }
         .feature-list {
             margin: 32px 0;
@@ -62,16 +82,20 @@
         }
         @media (prefers-color-scheme: dark) {
             body {
-                background: linear-gradient(135deg, #121212 0%, #1E1E1E 100%);
+                background: #121212;
                 color: #E1E1E1;
             }
+            .bg-svg {
+                filter: brightness(0.5) contrast(1.2);
+            }
             .landing-container {
-                background: #23272A;
+                background: rgba(35,39,42,0.97);
                 border: 2px solid #81C784;
                 box-shadow: 0 8px 32px rgba(44, 67, 54, 0.32);
             }
             .stepcraft-title {
                 color: #81C784;
+                text-shadow: 0 2px 8px #23272A;
             }
             .subtitle {
                 color: #64B5F6;
@@ -87,18 +111,31 @@
     </style>
 </head>
 <body>
+    <!-- SVG background -->
+    <div class="bg-svg">
+        <svg width="100%" height="100%" viewBox="0 0 1440 900" fill="none" xmlns="http://www.w3.org/2000/svg" style="position:absolute;top:0;left:0;z-index:0;">
+            <defs>
+                <linearGradient id="waveGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#E3F2FD"/>
+                    <stop offset="100%" stop-color="#E8F5E9"/>
+                </linearGradient>
+            </defs>
+            <path d="M0,200 Q360,350 720,200 T1440,200 V900 H0 Z" fill="url(#waveGradient)" opacity="0.7"/>
+            <path d="M0,400 Q360,550 720,400 T1440,400 V900 H0 Z" fill="#b2dfdb" opacity="0.18"/>
+        </svg>
+    </div>
     <div class="landing-container">
-        <img src="/static/logo.png" alt="StepCraft Logo" class="logo" style="display:block;margin:0 auto 24px auto;width:100px;">
+        <img src="/static/logo.png" alt="StepCraft Logo" class="hero-img">
         <div class="stepcraft-title">StepCraft</div>
         <div class="subtitle">The Ultimate Minecraft Fitness Integration Platform</div>
-        <p>StepCraft connects your real-world fitness activity to your Minecraft server, rewarding players for being active in real life. Whether you run a community server or play with friends, StepCraft motivates healthy habits and brings a new dimension to Minecraft gameplay.</p>
+        <p style="text-align:center;font-size:1.15rem;margin-bottom:2rem;">StepCraft connects your real-world fitness activity to your Minecraft server, rewarding players for being active in real life.<br>Whether you run a community server or play with friends, StepCraft motivates healthy habits and brings a new dimension to Minecraft gameplay.</p>
         <ul class="feature-list">
-            <li>Syncs steps and activity from fitness trackers and devices</li>
-            <li>Rewards players in-game for real-world movement</li>
-            <li>Easy server registration and setup</li>
-            <li>Customizable rewards and challenges</li>
-            <li>Secure API and privacy-focused</li>
-            <li>Open to all Minecraft server owners</li>
+            <li>🏃‍♂️ Syncs steps and activity from fitness trackers and devices</li>
+            <li>🎁 Rewards players in-game for real-world movement</li>
+            <li>⚡ Easy server registration and setup</li>
+            <li>🏆 Customizable rewards and challenges</li>
+            <li>🔒 Secure API and privacy-focused</li>
+            <li>🌍 Open to all Minecraft server owners</li>
         </ul>
         <a href="/register" class="btn btn-primary cta-btn">Get Started – Register Your Server</a>
         <div class="text-center mt-3">
