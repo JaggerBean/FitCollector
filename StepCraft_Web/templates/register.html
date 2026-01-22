@@ -104,8 +104,10 @@
         <img src="/static/logo.png" alt="StepCraft Logo" class="logo">
         <div class="stepcraft-title">StepCraft</div>
         <h5 class="mb-4 text-center" style="color:#1565C0;font-weight:500;">Register Your Server</h5>
-        {% if error %}
-        <div class="alert alert-danger">{{ error }}</div>
+        {% if error is not none %}
+        <div class="alert alert-danger">
+            Registration failed:{% if error|length > 0 %} {{ error }}{% else %} Unknown error. Please check your input or try again.{% endif %}
+        </div>
         {% endif %}
         <form method="post" action="/register">
             <div class="mb-3">
