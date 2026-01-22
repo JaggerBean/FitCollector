@@ -6,6 +6,10 @@ from database import init_db
 from routes import health, players, ingest
 from routes.servers import router as servers_router
 from routes.admin import router as admin_router
+from fastapi.responses import JSONResponse
+from fastapi.requests import Request
+from fastapi.exception_handlers import RequestValidationError
+from fastapi.exceptions import HTTPException as FastAPIHTTPException
 
 # Initialize FastAPI app
 app = FastAPI(title="FitCollector Backend", version="0.1.0")
@@ -31,4 +35,20 @@ app.include_router(admin_router)
 def on_startup():
     """Initialize database on startup."""
     init_db()
+
+
+@app.exception_handler(FastAPIHTTPException)
+async def custom_http_exception_handler(request: Request, exc: FastAPIHTTPException):
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"error": f"Error {exc.status_code}: {exc.detail}"},
+    )
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    return JSONResponse(
+        status_code=422,
+        content={"error": f"Error 422: Validation error - {exc.errors()}"},
+    )
 
