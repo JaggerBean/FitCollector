@@ -143,7 +143,22 @@
                 <textarea class="form-control" id="notes" name="notes" rows="3"></textarea>
             </div>
             <button type="submit" class="btn btn-primary w-100 mb-2">Register</button>
-            <a href="mailto:stepcraft.team@gmail.com" class="btn btn-outline-secondary w-100">Contact Us</a>
+            <a id="contactBtn" href="#" class="btn btn-outline-secondary w-100">Contact Us</a>
+            <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                var contactBtn = document.getElementById('contactBtn');
+                contactBtn.addEventListener('click', function(e) {
+                    // Simple mobile detection
+                    var isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+                    if (isMobile) {
+                        window.location.href = 'mailto:stepcraft.team@gmail.com';
+                    } else {
+                        window.open('/contact-info', '_blank');
+                    }
+                    e.preventDefault();
+                });
+            });
+            </script>
         </form>
     </div>
     <div class="footer">&copy; {{ year }} StepCraft </div>
