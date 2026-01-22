@@ -48,10 +48,11 @@ async def send_api_key_email(email, server_name, api_key, message):
 
 
 
-# Redirect root to /register
+
+# Serve landing page at root
 @app.get("/", response_class=HTMLResponse)
-def root_redirect():
-    return RedirectResponse(url="/register")
+def landing_page(request: Request):
+    return templates.TemplateResponse("landing.html", {"request": request})
 
 # Registration form at /register
 @app.get("/register", response_class=HTMLResponse)
