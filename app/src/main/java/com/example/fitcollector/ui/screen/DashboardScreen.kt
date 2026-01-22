@@ -151,7 +151,7 @@ fun DashboardScreen(
         }
         var successCount = 0
         var failCount = 0
-        val globalApi = buildApi(BASE_URL, GLOBAL_API_KEY)
+        val globalApi = buildApi(BASE_URL, "")
 
         selectedServers.forEach { server ->
             suspend fun getOrRecoverKey(): String? {

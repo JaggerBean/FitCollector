@@ -1,3 +1,4 @@
+import os
 import pytest
 from fastapi.testclient import TestClient
 from main import app
@@ -33,3 +34,19 @@ def test_all_routes():
             continue
         # Print for manual review; in real tests, assert expected status and response
         print(f"{method} {path} -> {response.status_code} {response.json()}")
+
+# Add test for admin server list route
+ADMIN_KEY = os.getenv("MASTER_ADMIN_KEY", "change-me-in-production")
+
+def test_admin_list_servers():
+    response = client.get("/v1/admin/servers/list", headers={"X-Admin-Key": ADMIN_KEY})
+    assert response.status_code == 200
+    data = response.json()
+    assert "servers" in data
+    # Each server should have required fields
+    for s in data["servers"]:
+        assert "server_name" in s
+        assert "api_key_hash" in s
+        assert "active" in s
+        assert "created_at" in s
+        assert "last_used" in s

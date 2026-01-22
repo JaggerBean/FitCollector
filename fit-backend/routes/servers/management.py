@@ -7,6 +7,7 @@ from typing import Optional
 
 from database import engine
 from auth import require_api_key, require_master_admin
+from fastapi.responses import JSONResponse
 
 router = APIRouter()
 

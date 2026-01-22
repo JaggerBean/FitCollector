@@ -46,7 +46,7 @@ fun SettingsScreen(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val deviceId = remember { getOrCreateDeviceId(context) }
-    val globalApi = remember { buildApi(BASE_URL, GLOBAL_API_KEY) }
+    val globalApi = remember { buildApi(BASE_URL, "") }
 
     var mcUsername by remember { mutableStateOf(getMinecraftUsername(context)) }
     var autoSyncEnabled by remember { mutableStateOf(isAutoSyncEnabled(context)) }
