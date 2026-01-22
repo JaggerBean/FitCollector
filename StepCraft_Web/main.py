@@ -47,14 +47,21 @@ async def send_api_key_email(email, server_name, api_key, message):
 
 
 
+
+# Redirect root to /register
 @app.get("/", response_class=HTMLResponse)
+def root_redirect():
+    return RedirectResponse(url="/register")
+
+# Registration form at /register
+@app.get("/register", response_class=HTMLResponse)
 def register_form(request: Request):
     import datetime
     year = datetime.datetime.now().year
     return templates.TemplateResponse("register.html", {"request": request, "year": year})
 
 
-@app.post("/register", response_class=HTMLResponse)
+@app.post("/registered", response_class=HTMLResponse)
 async def register_server(request: Request,
     server_name: str = Form(...),
     owner_name: str = Form(...),
