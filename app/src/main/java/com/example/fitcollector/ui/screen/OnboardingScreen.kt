@@ -45,8 +45,7 @@ fun OnboardingScreen(
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val baseUrl = "http://74.208.73.134/"
-    val globalApiKey = "fc_live_7f3c9b2a7b2c4a2f9c8d1d0d9b3a"
+    val baseUrl = "https://api.stepcraft.org/"
     val globalApi = remember { buildApi(baseUrl, globalApiKey) }
     val deviceId = remember { getOrCreateDeviceId(context) }
 
