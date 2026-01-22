@@ -106,7 +106,13 @@
         <h5 class="mb-4 text-center" style="color:#1565C0;font-weight:500;">Register Your Server</h5>
         {% if error is not none %}
         <div class="alert alert-danger">
-            Registration failed:{% if error|length > 0 %} {{ error }}{% else %} Unknown error. Please check your input or try again.{% endif %}
+            {% if error|length == 0 %}
+                Registration failed: Unknown error. Please check your input or try again.
+            {% elif error.startswith('Registration failed:') %}
+                {{ error }}
+            {% else %}
+                Registration failed: {{ error }}
+            {% endif %}
         </div>
         {% endif %}
         <form method="post" action="/register">

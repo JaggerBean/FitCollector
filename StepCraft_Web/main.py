@@ -97,8 +97,16 @@ async def register_server(request: Request,
         year = datetime.datetime.now().year
         return templates.TemplateResponse("confirmation.html", {"request": request, "api_key": api_key, "server_name": server_name_val, "message": message_val, "year": year})
     else:
-        error = response.text if response else last_error or "No backend response"
+        error = None
+        if response:
+            try:
+                data = response.json()
+                error = data.get("error")
+            except Exception:
+                error = response.text
+        if not error:
+            error = last_error or "No backend response"
         logging.error(f"Registration failed: {error}")
-        return templates.TemplateResponse("register.html", {"request": request, "error": f"Registration failed: {error}"})
+        return templates.TemplateResponse("register.html", {"request": request, "error": error})
 
 ## Optionally remove or refactor /admin if not needed
