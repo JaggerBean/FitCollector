@@ -53,6 +53,11 @@ def admin_delete_server(server_name: str, _: bool = Depends(require_master_admin
                 text("DELETE FROM player_keys WHERE server_name = :server_name"),
                 {"server_name": server_name}
             )
+            # Delete player step data for this server
+            conn.execute(
+                text("DELETE FROM step_ingest WHERE server_name = :server_name"),
+                {"server_name": server_name}
+            )
             # Delete server API key
             result = conn.execute(
                 text("DELETE FROM api_keys WHERE server_name = :server_name"),
