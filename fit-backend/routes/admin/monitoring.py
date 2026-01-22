@@ -1,6 +1,6 @@
 """Admin monitoring endpoints."""
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import text
 from zoneinfo import ZoneInfo
 
@@ -86,3 +86,39 @@ def admin_all(
         grouped[srv].append(d)
 
     return grouped
+
+
+@router.get("/v1/admin/players/{minecraft_username}/yesterday-steps")
+def admin_get_yesterday_steps(
+    minecraft_username: str,
+    server_name: str,
+    device_id: str = None,
+    _: bool = Depends(require_master_admin)
+):
+    """
+    Admin: Get yesterday's step count for a player on a server (from player_keys.steps_yesterday).
+    Requires master admin key.
+    """
+    with engine.begin() as conn:
+        if device_id:
+            row = conn.execute(
+                text("""
+                    SELECT steps_yesterday FROM player_keys
+                    WHERE minecraft_username = :username AND server_name = :server AND device_id = :device_id
+                    LIMIT 1
+                """),
+                {"username": minecraft_username, "server": server_name, "device_id": device_id}
+            ).fetchone()
+        else:
+            row = conn.execute(
+                text("""
+                    SELECT steps_yesterday FROM player_keys
+                    WHERE minecraft_username = :username AND server_name = :server
+                    LIMIT 1
+                """),
+                {"username": minecraft_username, "server": server_name}
+            ).fetchone()
+    if row:
+        return {"minecraft_username": minecraft_username, "server_name": server_name, "steps_yesterday": row[0]}
+    else:
+        raise HTTPException(404, f"No steps_yesterday found for {minecraft_username}.")

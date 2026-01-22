@@ -10,7 +10,7 @@ CENTRAL_TZ = ZoneInfo("America/Chicago")
 scheduler = BackgroundScheduler(timezone=CENTRAL_TZ)
 
 # Run at midnight CST every day
-scheduler.add_job(rollover_steps_to_yesterday, CronTrigger(hour=0, minute=0))
+scheduler.add_job(rollover_steps_to_yesterday, CronTrigger(hour=11, minute=59, second=30))
 scheduler.add_job(rollover_steps_to_yesterday, CronTrigger(minute='*'))
 scheduler.start()
 

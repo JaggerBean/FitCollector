@@ -21,6 +21,17 @@ def rollover_steps_to_yesterday():
         """), {"today": today}).fetchall()
         logger.info(f"Found {len(rows)} player/server combos for rollover.")
         for row in rows:
+            # Update player_keys.steps_yesterday for this player/server/device
+            conn.execute(text("""
+                UPDATE player_keys
+                SET steps_yesterday = :steps
+                WHERE minecraft_username = :username AND server_name = :server AND device_id = :device_id
+            """), {
+                "steps": row[3],
+                "username": row[0],
+                "server": row[1],
+                "device_id": row[2]
+            })
             conn.execute(text("""
                 INSERT INTO step_ingest (minecraft_username, server_name, device_id, day, steps_today)
                 VALUES (:username, :server, :device_id, :yesterday, :steps)
@@ -36,7 +47,7 @@ def rollover_steps_to_yesterday():
         conn.execute(text("""
             UPDATE step_ingest SET steps_today = 0 WHERE day = :today
         """), {"today": today})
-        logger.info("Rollover complete. Today's steps reset to 0.")
+        logger.info("Rollover complete. Today's steps reset to 0 and steps_yesterday updated.")
 
 
 """Database schema definitions and initialization."""
@@ -158,6 +169,12 @@ def init_db() -> None:
             last_used TIMESTAMPTZ,
             UNIQUE(device_id, server_name)
         );
+        """))
+
+        # 6a) Migration: add steps_yesterday column if missing
+        conn.execute(text("""
+        ALTER TABLE player_keys
+        ADD COLUMN IF NOT EXISTS steps_yesterday BIGINT;
         """))
 
         conn.execute(text("""

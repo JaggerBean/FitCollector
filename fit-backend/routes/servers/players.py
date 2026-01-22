@@ -117,6 +117,31 @@ def get_yesterday_steps_server(
     else:
         raise HTTPException(status_code=404, detail=f"No step record found for {minecraft_username} on {str(yesterday)}.")
 
+@router.get("/v1/servers/players/{minecraft_username}/yesterday-steps-fast")
+def get_yesterday_steps_fast(
+    minecraft_username: str,
+    server_name: str = Depends(require_api_key),
+    device_id: str = None
+):
+    """
+    Get yesterday's step count for a player on this server (from player_keys.steps_yesterday).
+    Requires server API key.
+    """
+    with engine.begin() as conn:
+        row = conn.execute(
+            text("""
+                SELECT steps_yesterday FROM player_keys
+                WHERE minecraft_username = :username AND server_name = :server
+                {device_clause}
+                LIMIT 1
+            """).bindparams(device_clause="AND device_id = :device_id" if device_id else ""),
+            {"username": minecraft_username, "server": server_name, "device_id": device_id} if device_id else {"username": minecraft_username, "server": server_name}
+        ).fetchone()
+    if row:
+        return {"minecraft_username": minecraft_username, "server_name": server_name, "steps_yesterday": row[0]}
+    else:
+        raise HTTPException(status_code=404, detail=f"No steps_yesterday found for {minecraft_username}.")
+
 @router.delete("/v1/servers/players/{minecraft_username}")
 def delete_player(
     minecraft_username: str,
@@ -215,3 +240,5 @@ def delete_player(
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to delete player: {str(e)}")
+
+
