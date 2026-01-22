@@ -1,8 +1,7 @@
 
-# Contact info page
-@app.get("/contact-info", response_class=HTMLResponse)
-async def contact_info(request: Request):
-    return templates.TemplateResponse("contact-info.html", {"request": request})
+
+# Contact info page (must be after app = FastAPI())
+
 from fastapi_mail import FastMail, MessageSchema, ConnectionConfig
 import os
 import httpx
@@ -14,8 +13,14 @@ from fastapi.staticfiles import StaticFiles
 templates = Jinja2Templates(directory="templates")
 
 
+
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
+
+# Contact info page
+@app.get("/contact-info", response_class=HTMLResponse)
+async def contact_info(request: Request):
+    return templates.TemplateResponse("contact-info.html", {"request": request})
 
 mail_conf = ConnectionConfig(
     MAIL_USERNAME = os.getenv("GMAIL_USER"),
