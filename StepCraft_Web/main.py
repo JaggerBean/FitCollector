@@ -1,3 +1,8 @@
+
+# Contact info page
+@app.get("/contact-info", response_class=HTMLResponse)
+async def contact_info(request: Request):
+    return templates.TemplateResponse("contact-info.html", {"request": request})
 from fastapi_mail import FastMail, MessageSchema, ConnectionConfig
 import os
 import httpx
