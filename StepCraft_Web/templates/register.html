@@ -104,16 +104,14 @@
         <img src="/static/logo.png" alt="StepCraft Logo" class="logo">
         <div class="stepcraft-title">StepCraft</div>
         <h5 class="mb-4 text-center" style="color:#1565C0;font-weight:500;">Register Your Server</h5>
-        {% if error is not none %}
-        <div class="alert alert-danger">
-            {% if error|length == 0 %}
-                Registration failed: Unknown error. Please check your input or try again.
-            {% elif error.startswith('Registration failed:') %}
-                {{ error }}
-            {% else %}
-                Registration failed: {{ error }}
-            {% endif %}
-        </div>
+        {% if error %}
+                <div class="alert alert-danger">
+                    {% if error.startswith('Registration failed:') %}
+                        {{ error }}
+                    {% else %}
+                        Registration failed: {{ error }}
+                    {% endif %}
+                </div>
         {% endif %}
         <form method="post" action="/register">
             <div class="mb-3">
