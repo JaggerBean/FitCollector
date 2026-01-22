@@ -15,22 +15,23 @@ def rollover_steps_to_yesterday():
         yesterday = today - timedelta(days=1)
         logger.info(f"Running rollover: {today} -> {yesterday}")
         rows = conn.execute(text("""
-            SELECT minecraft_username, server_name, steps_today
+            SELECT minecraft_username, server_name, device_id, steps_today
             FROM step_ingest
             WHERE day = :today
         """), {"today": today}).fetchall()
         logger.info(f"Found {len(rows)} player/server combos for rollover.")
         for row in rows:
             conn.execute(text("""
-                INSERT INTO step_ingest (minecraft_username, server_name, day, steps_today)
-                VALUES (:username, :server, :yesterday, :steps)
+                INSERT INTO step_ingest (minecraft_username, server_name, device_id, day, steps_today)
+                VALUES (:username, :server, :device_id, :yesterday, :steps)
                 ON CONFLICT (minecraft_username, server_name, day)
                 DO UPDATE SET steps_today = :steps
             """), {
                 "username": row[0],
                 "server": row[1],
+                "device_id": row[2],
                 "yesterday": yesterday,
-                "steps": row[2]
+                "steps": row[3]
             })
         conn.execute(text("""
             UPDATE step_ingest SET steps_today = 0 WHERE day = :today
