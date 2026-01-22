@@ -74,22 +74,6 @@ def init_db() -> None:
         WHERE minecraft_username IS NOT NULL AND server_name IS NOT NULL;
         """))
 
-        # Ensure unique constraint for rollover job upserts
-        conn.execute(text("""
-        DO $$
-        BEGIN
-            IF NOT EXISTS (
-                SELECT 1 FROM information_schema.table_constraints
-                WHERE table_name = 'step_ingest'
-                  AND constraint_type = 'UNIQUE'
-                  AND constraint_name = 'step_ingest_unique'
-            ) THEN
-                ALTER TABLE step_ingest
-                ADD CONSTRAINT step_ingest_unique UNIQUE (minecraft_username, server_name, day);
-            END IF;
-        END$$;
-        """))
-
         # 5) Create api_keys table for per-server authentication
         conn.execute(text("""
         CREATE TABLE IF NOT EXISTS api_keys (
