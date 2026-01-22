@@ -23,14 +23,17 @@ def admin_list_servers(_: bool = Depends(require_master_admin)):
                     ORDER BY created_at DESC
                 """),
             ).mappings().all()
+            def dt_to_str(dt):
+                return dt.isoformat() if dt is not None else None
+
             return JSONResponse(content={
                 "servers": [
                     {
                         "server_name": s["server_name"],
                         "api_key_hash": s["key"],
                         "active": s["active"],
-                        "created_at": s["created_at"],
-                        "last_used": s["last_used"]
+                        "created_at": dt_to_str(s["created_at"]),
+                        "last_used": dt_to_str(s["last_used"])
                     } for s in servers
                 ]
             })
