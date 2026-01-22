@@ -1,4 +1,6 @@
 import os
+import logging
+from datetime import datetime, timedelta
 from sqlalchemy import create_engine, text
 
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///fitcollector.db")
@@ -7,17 +9,17 @@ engine = create_engine(DATABASE_URL, future=True)
 
 def rollover_steps_to_yesterday():
     """Copy today's steps to yesterday for each player/server, then reset today's steps."""
+    logger = logging.getLogger("fitcollector.rollover")
     with engine.begin() as conn:
-        # Get all unique player/server combos for today
         today = datetime.now().date()
         yesterday = today - timedelta(days=1)
+        logger.info(f"Running rollover: {today} -> {yesterday}")
         rows = conn.execute(text("""
             SELECT minecraft_username, server_name, steps_today
             FROM step_ingest
             WHERE day = :today
         """), {"today": today}).fetchall()
-
-        # Insert yesterday's steps for each player/server
+        logger.info(f"Found {len(rows)} player/server combos for rollover.")
         for row in rows:
             conn.execute(text("""
                 INSERT INTO step_ingest (minecraft_username, server_name, day, steps_today)
@@ -30,11 +32,12 @@ def rollover_steps_to_yesterday():
                 "yesterday": yesterday,
                 "steps": row[2]
             })
-
-        # Reset today's steps to 0 for all players
         conn.execute(text("""
             UPDATE step_ingest SET steps_today = 0 WHERE day = :today
         """), {"today": today})
+        logger.info("Rollover complete. Today's steps reset to 0.")
+
+
 """Database schema definitions and initialization."""
 
 def init_db() -> None:
