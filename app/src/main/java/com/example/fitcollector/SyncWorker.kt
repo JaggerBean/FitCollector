@@ -13,11 +13,31 @@ import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.TimeUnit
+import retrofit2.HttpException
+import com.google.gson.JsonParser
 
 class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
 
     private val logTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
     private val dayFormatter = DateTimeFormatter.ISO_LOCAL_DATE
+
+    private fun parseErrorMessage(e: Throwable): String {
+        if (e is HttpException) {
+            try {
+                val errorBody = e.response()?.errorBody()?.string()
+                if (!errorBody.isNullOrBlank()) {
+                    val json = JsonParser.parseString(errorBody).asJsonObject
+                    return when {
+                        json.has("message") -> json.get("message").asString
+                        json.has("error") -> json.get("error").asString
+                        else -> errorBody
+                    }
+                }
+            } catch (_: Exception) {}
+            return "HTTP ${e.code()}: ${e.message()}"
+        }
+        return e.message ?: "Unknown error"
+    }
 
     override suspend fun doWork(): Result {
         val context = applicationContext
@@ -57,7 +77,6 @@ class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
 
         return try {
             // 5. Read steps using aggregate for better accuracy
-            // Use the device's local timezone to determine the start of "today"
             val deviceZone = ZoneId.systemDefault()
             val nowZoned = ZonedDateTime.now(deviceZone)
             val start = nowZoned.toLocalDate().atStartOfDay(deviceZone).toInstant()
@@ -79,10 +98,8 @@ class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
             val nowStr = nowZoned.format(logTimeFormatter)
 
             var successCount = 0
-            var failCount = 0
             val successServers = mutableListOf<String>()
-            val failedServers = mutableListOf<String>()
-            val errors = mutableListOf<String>()
+            val errorGroups = mutableMapOf<String, MutableList<String>>() // error -> list of servers
 
             val globalApi = buildApi(BASE_URL, "")
 
@@ -122,9 +139,7 @@ class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
                 try {
                     val key = getOrRecoverKey()
                     if (key == null) {
-                        failCount++
-                        failedServers.add(server)
-                        errors.add("Could not get key for $server")
+                        errorGroups.getOrPut("Could not get API key") { mutableListOf() }.add(server)
                         return@forEach
                     }
 
@@ -133,7 +148,7 @@ class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
                             successCount++
                             successServers.add(server)
                         }
-                    } catch (e: retrofit2.HttpException) {
+                    } catch (e: HttpException) {
                         if (e.code() == 401) {
                             try {
                                 val resp = globalApi.recoverKey(RegisterPayload(mcUsername, deviceId, server))
@@ -151,35 +166,33 @@ class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
                         throw e
                     }
                 } catch (e: Exception) {
-                    failCount++
-                    failedServers.add(server)
-                    errors.add("$server: ${e.message}")
+                    val errMsg = parseErrorMessage(e)
+                    errorGroups.getOrPut(errMsg) { mutableListOf() }.add(server)
                 }
             }
 
-            if (successCount > 0) {
-                Log.d("SyncWorker", "Background sync success: $totalSteps steps to ${successServers.joinToString(", ")}")
-                addSyncLogEntry(context, SyncLogEntry(
-                    timestamp = nowStr,
-                    steps = totalSteps,
-                    source = "Background",
-                    success = true,
-                    message = "Auto-synced to ${successServers.joinToString(", ")}"
-                ))
-            }
-            
-            if (failCount > 0) {
-                Log.e("SyncWorker", "Background sync failed for ${failedServers.joinToString(", ")}")
-                addSyncLogEntry(context, SyncLogEntry(
-                    timestamp = nowStr,
-                    steps = totalSteps,
-                    source = "Background",
-                    success = successCount > 0,
-                    message = if (successCount > 0) "Partial: ✓ ${successServers.joinToString(", ")} | ✗ ${failedServers.joinToString(", ")}" else "Failed: ${failedServers.joinToString(", ")}"
-                ))
+            val successMsg = if (successServers.isNotEmpty()) "Synced to ${successServers.joinToString(", ")}" else null
+            val errorMsg = if (errorGroups.isNotEmpty()) {
+                errorGroups.entries.joinToString(" | ") { (err, srvs) ->
+                    "Failed for ${srvs.joinToString(", ")}: $err"
+                }
+            } else null
+
+            val logMessage = when {
+                successMsg != null && errorMsg != null -> "Partial: $successMsg | $errorMsg"
+                successMsg != null -> successMsg
+                else -> errorMsg ?: "Unknown failure"
             }
 
-            if (successCount == 0 && failCount > 0) {
+            addSyncLogEntry(context, SyncLogEntry(
+                timestamp = nowStr,
+                steps = totalSteps,
+                source = "Background",
+                success = successServers.isNotEmpty(),
+                message = logMessage
+            ))
+
+            if (successCount == 0 && errorGroups.isNotEmpty()) {
                 Result.retry()
             } else {
                 Result.success()
@@ -192,7 +205,7 @@ class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
                 steps = 0,
                 source = "Background",
                 success = false,
-                message = "BG Sync Critical Failure: ${e.message}"
+                message = "BG Sync Critical Failure: ${parseErrorMessage(e)}"
             ))
             Result.retry()
         }

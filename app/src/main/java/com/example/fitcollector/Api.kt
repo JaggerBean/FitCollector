@@ -8,6 +8,7 @@ import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.Path
+import retrofit2.http.Query
 import okhttp3.Interceptor
 import java.net.URL
 import java.net.URLEncoder
@@ -69,6 +70,11 @@ data class RegisterResponse(
     val message: String
 )
 
+data class ClaimStatusResponse(
+    val claimed: Boolean,
+    val claimed_at: String?
+)
+
 data class MojangProfile(
     val id: String? = null,
     val name: String? = null,
@@ -93,6 +99,12 @@ interface FitApi {
 
     @POST("v1/players/recover-key")
     suspend fun recoverKey(@Body payload: RegisterPayload): RegisterResponse
+
+    @GET("v1/players/claim-status/{minecraft_username}")
+    suspend fun getClaimStatus(
+        @Path("minecraft_username") username: String,
+        @Query("server_name") serverName: String
+    ): ClaimStatusResponse
 }
 
 fun buildApi(baseUrl: String, apiKey: String): FitApi {

@@ -9,6 +9,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.DirectionsRun
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.filled.CardGiftcard
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -41,6 +42,8 @@ import androidx.health.connect.client.request.AggregateRequest
 import androidx.health.connect.client.records.StepsRecord
 import androidx.health.connect.client.time.TimeRangeFilter
 import androidx.health.connect.client.records.metadata.Metadata
+import retrofit2.HttpException
+import com.google.gson.JsonParser
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -58,10 +61,11 @@ fun DashboardScreen(
     var hcStatus by remember { mutableStateOf("Checking...") }
     var hasPerms by remember { mutableStateOf(false) }
     var stepsToday by remember { mutableStateOf<Long?>(getLastKnownSteps(context)) }
-    var syncResult by remember { mutableStateOf<String?>(null) }
+    var syncResult by remember { mutableStateOf<Pair<String?, String?>?>(null) }
     var lastSyncInstant by remember { mutableStateOf<Instant?>(null) }
     var client by remember { mutableStateOf<androidx.health.connect.client.HealthConnectClient?>(null) }
     var autoTimeDisabled by remember { mutableStateOf(false) }
+    var claimStatuses by remember { mutableStateOf<Map<String, Boolean>>(emptyMap()) }
 
     val deviceId = remember { getOrCreateDeviceId(context) }
     var mcUsername by remember { mutableStateOf(getMinecraftUsername(context)) }
@@ -134,9 +138,43 @@ fun DashboardScreen(
         }
     }
 
+    suspend fun refreshClaimStatuses() {
+        if (mcUsername.isBlank()) return
+        val selectedServers = getSelectedServers(context)
+        val globalApi = buildApi(BASE_URL, "")
+        val newStatuses = mutableMapOf<String, Boolean>()
+        selectedServers.forEach { server ->
+            try {
+                val resp = globalApi.getClaimStatus(mcUsername, server)
+                newStatuses[server] = resp.claimed
+            } catch (e: Exception) {
+                // Default to false or keep old status if it fails
+            }
+        }
+        claimStatuses = newStatuses
+    }
+
+    fun parseErrorMessage(e: Throwable): String {
+        if (e is HttpException) {
+            try {
+                val errorBody = e.response()?.errorBody()?.string()
+                if (!errorBody.isNullOrBlank()) {
+                    val json = JsonParser.parseString(errorBody).asJsonObject
+                    return when {
+                        json.has("message") -> json.get("message").asString
+                        json.has("error") -> json.get("error").asString
+                        else -> errorBody
+                    }
+                }
+            } catch (_: Exception) {}
+            return "HTTP ${e.code()}: ${e.message()}"
+        }
+        return e.message ?: "Unknown error"
+    }
+
     suspend fun syncSteps(steps: Long, source: String) {
         if (!isAutomaticTimeEnabled(context)) {
-            syncResult = "Sync failed: Automatic time is disabled"
+            syncResult = "Automatic time is disabled" to null
             autoTimeDisabled = true
             return
         }
@@ -146,13 +184,13 @@ fun DashboardScreen(
         val timestampStr = Instant.now().toString()
         val selectedServers = getSelectedServers(context)
         if (selectedServers.isEmpty()) {
-            syncResult = "No servers selected"
+            syncResult = "No servers selected" to null
             return
         }
-        var successCount = 0
-        var failCount = 0
+        
         val successServers = mutableListOf<String>()
-        val failedServers = mutableListOf<String>()
+        val errorGroups = mutableMapOf<String, MutableList<String>>() // error -> list of servers
+        
         val globalApi = buildApi(BASE_URL, "")
 
         selectedServers.forEach { server ->
@@ -188,16 +226,14 @@ fun DashboardScreen(
             try {
                 var key = getOrRecoverKey()
                 if (key == null) {
-                    failCount++
-                    failedServers.add(server)
+                    errorGroups.getOrPut("Could not get API key") { mutableListOf() }.add(server)
                     return@forEach
                 }
                 try {
                     if (performIngest(key)) {
-                        successCount++
                         successServers.add(server)
                     }
-                } catch (e: retrofit2.HttpException) {
+                } catch (e: HttpException) {
                     if (e.code() == 401) {
                         try {
                             val resp = globalApi.recoverKey(RegisterPayload(mcUsername, deviceId, server))
@@ -205,7 +241,6 @@ fun DashboardScreen(
                             if (newKey != null && newKey != key) {
                                 saveServerKey(context, mcUsername, server, newKey)
                                 if (performIngest(newKey)) {
-                                    successCount++
                                     successServers.add(server)
                                     return@forEach
                                 }
@@ -215,22 +250,33 @@ fun DashboardScreen(
                     throw e
                 }
             } catch (e: Exception) {
-                failCount++
-                failedServers.add(server)
+                val errMsg = parseErrorMessage(e)
+                errorGroups.getOrPut(errMsg) { mutableListOf() }.add(server)
             }
         }
+        
+        val successMsg = if (successServers.isNotEmpty()) {
+            "Synced to ${successServers.joinToString(", ")}"
+        } else null
+        
+        val errorMsg = if (errorGroups.isNotEmpty()) {
+            errorGroups.entries.joinToString("\n") { (err, srvs) ->
+                "Failed for ${srvs.joinToString(", ")}: $err"
+            }
+        } else null
+        
+        syncResult = successMsg to errorMsg
+        
         val logMessage = when {
-            successCount > 0 && failCount == 0 -> "Success: $steps steps to ${successServers.joinToString(", ")}"
-            successCount > 0 && failCount > 0 -> "Partial: ✓ ${successServers.joinToString(", ")} | ✗ ${failedServers.joinToString(", ")}"
-            else -> "Failed: ${failedServers.joinToString(", ")}"
+            successMsg != null && errorMsg != null -> "Partial: $successMsg | $errorMsg"
+            successMsg != null -> successMsg
+            else -> errorMsg ?: "Unknown failure"
         }
-        addSyncLogEntry(context, SyncLogEntry(nowStr, steps, source, successCount > 0, logMessage))
-        syncResult = when {
-            successCount > 0 && failCount == 0 -> "Synced to ${successServers.joinToString(", ")}"
-            successCount > 0 && failCount > 0 -> "✓ ${successServers.joinToString(", ")} | ✗ ${failedServers.joinToString(", ")}"
-            else -> "Failed: ${failedServers.joinToString(", ")}"
+        addSyncLogEntry(context, SyncLogEntry(nowStr, steps, source, successServers.isNotEmpty(), logMessage))
+        if (successServers.isNotEmpty()) {
+            lastSyncInstant = Instant.now()
+            refreshClaimStatuses()
         }
-        if (successCount > 0) lastSyncInstant = Instant.now()
     }
 
     LaunchedEffect(Unit) {
@@ -238,7 +284,6 @@ fun DashboardScreen(
         if (applied != null) {
             mcUsername = applied
         }
-        // No UUID fetch — use username-based avatar (Minotar)
         checkAvailability()
         val hc = client
         if (hc != null && refreshGrantedPermissions()) {
@@ -249,6 +294,7 @@ fun DashboardScreen(
                 }
             } catch (e: Exception) { }
         }
+        refreshClaimStatuses()
     }
 
     Scaffold(
@@ -301,7 +347,6 @@ fun DashboardScreen(
                     }
                 },
                 navigationIcon = {
-                    // Avatar moved to navigationIcon (left side)
                     val avatarUrl = remember(mcUsername) {
                         if (!mcUsername.isNullOrBlank()) {
                             val enc = URLEncoder.encode(mcUsername, "UTF-8")
@@ -341,6 +386,29 @@ fun DashboardScreen(
             item {
                 ResetTimer()
             }
+            
+            val unclaimedServers = claimStatuses.filter { !it.value }.keys
+            if (unclaimedServers.isNotEmpty()) {
+                item {
+                    Surface(
+                        color = Color(0xFFFFF9C4), // Light yellow
+                        shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.CardGiftcard, null, tint = Color(0xFFFBC02D))
+                            Spacer(Modifier.width(12.dp))
+                            Text(
+                                "Unclaimed rewards for yesterday on: ${unclaimedServers.joinToString(", ")}",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Color(0xFF574300),
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                }
+            }
+
             item {
                 ActivityCard(
                     stepsToday = stepsToday,
@@ -361,12 +429,23 @@ fun DashboardScreen(
             }
             item {
                 AnimatedVisibility(visible = syncResult != null) {
-                    syncResult?.let { msg ->
-                        SyncStatusBanner(
-                            msg = msg,
-                            isSuccess = !msg.contains("Failed") && !msg.startsWith("✗"),
-                            timestamp = lastSyncInstant
-                        )
+                    syncResult?.let { (successMsg, errorMsg) ->
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            if (successMsg != null) {
+                                SyncStatusBanner(
+                                    msg = successMsg,
+                                    isSuccess = true,
+                                    timestamp = lastSyncInstant
+                                )
+                            }
+                            if (errorMsg != null) {
+                                SyncStatusBanner(
+                                    msg = errorMsg,
+                                    isSuccess = false,
+                                    timestamp = null
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -384,9 +463,7 @@ fun DashboardScreen(
                         color = MaterialTheme.colorScheme.errorContainer,
                         shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
                         modifier = Modifier.fillMaxWidth().clickable {
-                            if (autoTimeDisabled) {
-                                // Potentially open settings here
-                            } else {
+                            if (!autoTimeDisabled) {
                                 onNavigate(com.example.fitcollector.AppScreen.Settings)
                             }
                         }
