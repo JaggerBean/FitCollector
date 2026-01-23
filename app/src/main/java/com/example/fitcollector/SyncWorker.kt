@@ -80,6 +80,8 @@ class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
 
             var successCount = 0
             var failCount = 0
+            val successServers = mutableListOf<String>()
+            val failedServers = mutableListOf<String>()
             val errors = mutableListOf<String>()
 
             val globalApi = buildApi(BASE_URL, "")
@@ -121,6 +123,7 @@ class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
                     val key = getOrRecoverKey()
                     if (key == null) {
                         failCount++
+                        failedServers.add(server)
                         errors.add("Could not get key for $server")
                         return@forEach
                     }
@@ -128,6 +131,7 @@ class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
                     try {
                         if (performIngest(key)) {
                             successCount++
+                            successServers.add(server)
                         }
                     } catch (e: retrofit2.HttpException) {
                         if (e.code() == 401) {
@@ -138,6 +142,7 @@ class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
                                 if (newKey != key) {
                                     if (performIngest(newKey)) {
                                         successCount++
+                                        successServers.add(server)
                                         return@forEach
                                     }
                                 }
@@ -147,29 +152,30 @@ class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
                     }
                 } catch (e: Exception) {
                     failCount++
+                    failedServers.add(server)
                     errors.add("$server: ${e.message}")
                 }
             }
 
             if (successCount > 0) {
-                Log.d("SyncWorker", "Background sync success: $totalSteps steps to $successCount servers")
+                Log.d("SyncWorker", "Background sync success: $totalSteps steps to ${successServers.joinToString(", ")}")
                 addSyncLogEntry(context, SyncLogEntry(
                     timestamp = nowStr,
                     steps = totalSteps,
                     source = "Background",
                     success = true,
-                    message = "Auto-synced to $successCount server(s)"
+                    message = "Auto-synced to ${successServers.joinToString(", ")}"
                 ))
             }
             
             if (failCount > 0) {
-                Log.e("SyncWorker", "Background sync failed for $failCount servers")
+                Log.e("SyncWorker", "Background sync failed for ${failedServers.joinToString(", ")}")
                 addSyncLogEntry(context, SyncLogEntry(
                     timestamp = nowStr,
                     steps = totalSteps,
                     source = "Background",
                     success = successCount > 0,
-                    message = "Failed for $failCount servers: ${errors.joinToString(", ")}"
+                    message = if (successCount > 0) "Partial: ✓ ${successServers.joinToString(", ")} | ✗ ${failedServers.joinToString(", ")}" else "Failed: ${failedServers.joinToString(", ")}"
                 ))
             }
 

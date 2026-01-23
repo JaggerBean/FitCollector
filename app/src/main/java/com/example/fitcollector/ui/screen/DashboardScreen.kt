@@ -151,6 +151,8 @@ fun DashboardScreen(
         }
         var successCount = 0
         var failCount = 0
+        val successServers = mutableListOf<String>()
+        val failedServers = mutableListOf<String>()
         val globalApi = buildApi(BASE_URL, "")
 
         selectedServers.forEach { server ->
@@ -187,11 +189,13 @@ fun DashboardScreen(
                 var key = getOrRecoverKey()
                 if (key == null) {
                     failCount++
+                    failedServers.add(server)
                     return@forEach
                 }
                 try {
                     if (performIngest(key)) {
                         successCount++
+                        successServers.add(server)
                     }
                 } catch (e: retrofit2.HttpException) {
                     if (e.code() == 401) {
@@ -202,6 +206,7 @@ fun DashboardScreen(
                                 saveServerKey(context, mcUsername, server, newKey)
                                 if (performIngest(newKey)) {
                                     successCount++
+                                    successServers.add(server)
                                     return@forEach
                                 }
                             }
@@ -211,15 +216,20 @@ fun DashboardScreen(
                 }
             } catch (e: Exception) {
                 failCount++
+                failedServers.add(server)
             }
         }
         val logMessage = when {
-            successCount > 0 && failCount == 0 -> "Success: $steps steps to all $successCount servers"
-            successCount > 0 && failCount > 0 -> "Partial Success: Synced to $successCount, Failed for $failCount"
-            else -> "Failed: Could not sync to any servers"
+            successCount > 0 && failCount == 0 -> "Success: $steps steps to ${successServers.joinToString(", ")}"
+            successCount > 0 && failCount > 0 -> "Partial: ✓ ${successServers.joinToString(", ")} | ✗ ${failedServers.joinToString(", ")}"
+            else -> "Failed: ${failedServers.joinToString(", ")}"
         }
         addSyncLogEntry(context, SyncLogEntry(nowStr, steps, source, successCount > 0, logMessage))
-        syncResult = if (successCount > 0) "Synced to $successCount server(s)" else "Sync failed"
+        syncResult = when {
+            successCount > 0 && failCount == 0 -> "Synced to ${successServers.joinToString(", ")}"
+            successCount > 0 && failCount > 0 -> "✓ ${successServers.joinToString(", ")} | ✗ ${failedServers.joinToString(", ")}"
+            else -> "Failed: ${failedServers.joinToString(", ")}"
+        }
         if (successCount > 0) lastSyncInstant = Instant.now()
     }
 
@@ -354,7 +364,7 @@ fun DashboardScreen(
                     syncResult?.let { msg ->
                         SyncStatusBanner(
                             msg = msg,
-                            isSuccess = !msg.contains("failed"),
+                            isSuccess = !msg.contains("Failed") && !msg.startsWith("✗"),
                             timestamp = lastSyncInstant
                         )
                     }
