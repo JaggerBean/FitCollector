@@ -268,7 +268,7 @@ def get_steps_yesterday(minecraft_username: str = Query(...), player_api_key: st
             server_name = row[0]
             steps_row = conn.execute(
                 text("""
-                    SELECT steps FROM step_ingest
+                    SELECT steps_today FROM step_ingest
                     WHERE minecraft_username = :username
                       AND server_name = :server_name
                       AND day = :yesterday
