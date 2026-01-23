@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -13,6 +14,7 @@ import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PhonelinkSetup
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Source
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -53,6 +55,7 @@ fun OnboardingScreen(
     var mcUsername by remember { mutableStateOf("") }
     var selectedServers by remember { mutableStateOf<Set<String>>(emptySet()) }
     var servers by remember { mutableStateOf<List<ServerInfo>>(emptyList()) }
+    var serverSearchQuery by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
     
@@ -120,7 +123,7 @@ fun OnboardingScreen(
     LaunchedEffect(Unit) {
         try {
             val resp = globalApi.getAvailableServers()
-            servers = resp.servers
+            servers = resp.servers.sortedBy { it.server_name.lowercase() }
         } catch (e: Exception) {
             error = "Could not fetch servers: ${e.message}"
         }
@@ -332,9 +335,29 @@ fun OnboardingScreen(
                         Text(error!!, color = Color.Red, style = MaterialTheme.typography.bodySmall)
                         Spacer(Modifier.height(8.dp))
                     }
+                    
                     Text("Select Servers:", style = MaterialTheme.typography.labelLarge)
-                    LazyColumn(modifier = Modifier.heightIn(max = 200.dp)) {
-                        items(servers) { server ->
+                    Spacer(Modifier.height(8.dp))
+                    
+                    OutlinedTextField(
+                        value = serverSearchQuery,
+                        onValueChange = { serverSearchQuery = it },
+                        label = { Text("Search Servers") },
+                        leadingIcon = { Icon(Icons.Default.Search, null) },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true
+                    )
+                    
+                    Spacer(Modifier.height(8.dp))
+                    
+                    val filteredServers = remember(serverSearchQuery, servers) {
+                        servers.filter { it.server_name.contains(serverSearchQuery, ignoreCase = true) }
+                    }
+                    
+                    LazyColumn(
+                        modifier = Modifier.heightIn(max = 200.dp)
+                    ) {
+                        items(filteredServers) { server ->
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()

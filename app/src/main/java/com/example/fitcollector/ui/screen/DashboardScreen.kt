@@ -369,7 +369,7 @@ fun DashboardScreen(
                             Text("🎁", fontSize = 24.sp)
                             Spacer(Modifier.width(12.dp))
                             Column {
-                                Text("Unclaimed rewards for yesterday on:", style = MaterialTheme.typography.labelSmall, color = Color(0xFF574300), fontWeight = FontWeight.Bold)
+                                Text("Unclaimed rewards for yesterday's steps:", style = MaterialTheme.typography.labelSmall, color = Color(0xFF574300), fontWeight = FontWeight.Bold)
                                 unclaimedServersWithSteps.forEach { (server, _) ->
                                     val steps = yesterdaySteps[server] ?: 0L
                                     Text("• $server: $steps steps", style = MaterialTheme.typography.bodySmall, color = Color(0xFF574300))
@@ -387,7 +387,7 @@ fun DashboardScreen(
                             Text("🎉", fontSize = 24.sp)
                             Spacer(Modifier.width(12.dp))
                             Column {
-                                Text("Rewards claimed for yesterday:", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onPrimaryContainer, fontWeight = FontWeight.Bold)
+                                Text("Rewards claimed for yesterday's steps:", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onPrimaryContainer, fontWeight = FontWeight.Bold)
                                 claimedServersWithSteps.forEach { (server, _) ->
                                     val steps = yesterdaySteps[server] ?: 0L
                                     Text("• $server: $steps steps", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onPrimaryContainer)
