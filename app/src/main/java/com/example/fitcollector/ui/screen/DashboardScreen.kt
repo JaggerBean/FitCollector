@@ -25,6 +25,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.fitcollector.*
+import com.example.fitcollector.GLOBAL_API_KEY
+import com.example.fitcollector.BASE_URL
 import com.example.fitcollector.ui.screen.components.ActivityCard
 import com.example.fitcollector.ui.screen.components.ResetTimer
 import com.example.fitcollector.ui.screen.components.SyncStatusBanner
@@ -152,17 +154,22 @@ fun DashboardScreen(
     suspend fun refreshClaimStatuses() {
         if (mcUsername.isBlank()) return
         val selectedServers = getSelectedServers(context)
-        val globalApi = buildApi(BASE_URL, "")
+        val globalApi = buildApi(BASE_URL, GLOBAL_API_KEY)
         val newStatuses = mutableMapOf<String, ClaimStatusResponse>()
         val newSteps = mutableMapOf<String, Long>()
         selectedServers.forEach { server ->
             try {
                 val status = globalApi.getClaimStatus(mcUsername, server)
                 newStatuses[server] = status
+                
+                newSteps[server] = 0L
+                
                 val key = getServerKey(context, mcUsername, server)
                 if (key != null) {
                     val stepsResp = globalApi.getStepsYesterday(mcUsername, key)
-                    newSteps[server] = stepsResp.steps_yesterday
+                    if (stepsResp.server_name == server) {
+                        newSteps[server] = stepsResp.steps_yesterday
+                    }
                 }
             } catch (e: Exception) { }
         }
@@ -198,14 +205,11 @@ fun DashboardScreen(
 
         val nowDevice = ZonedDateTime.now(deviceZone)
         val todayStr = nowDevice.format(DateTimeFormatter.ISO_LOCAL_DATE)
-        val yesterdayStr = nowDevice.minusDays(1).format(DateTimeFormatter.ISO_LOCAL_DATE)
         
         val todayStart = nowDevice.toLocalDate().atStartOfDay(deviceZone).toInstant()
-        val yesterdayStart = nowDevice.minusDays(1).toLocalDate().atStartOfDay(deviceZone).toInstant()
         val nowInstant = Instant.now()
 
         val stepsTodayVal = readStepsForRange(hc, todayStart, nowInstant)
-        val stepsYesterdayVal = readStepsForRange(hc, yesterdayStart, todayStart)
         
         stepsToday = stepsTodayVal
         saveLastKnownSteps(context, stepsTodayVal)
@@ -218,7 +222,7 @@ fun DashboardScreen(
 
         val successServers = mutableListOf<String>()
         val errorGroups = mutableMapOf<String, MutableList<String>>()
-        val globalApi = buildApi(BASE_URL, "")
+        val globalApi = buildApi(BASE_URL, GLOBAL_API_KEY)
 
         selectedServers.forEach { server ->
             suspend fun getOrRecoverKey(): String? {
@@ -250,7 +254,7 @@ fun DashboardScreen(
                 }
                 
                 try {
-                    performIngest(key, stepsYesterdayVal, yesterdayStr)
+                    // Sync ONLY today's steps to prevent inheriting yesterday's data on new servers
                     if (performIngest(key, stepsTodayVal, todayStr)) {
                         successServers.add(server)
                     }
@@ -261,7 +265,6 @@ fun DashboardScreen(
                             val newKey = resp.player_api_key
                             if (newKey != null && newKey != key) {
                                 saveServerKey(context, mcUsername, server, newKey)
-                                performIngest(newKey, stepsYesterdayVal, yesterdayStr)
                                 if (performIngest(newKey, stepsTodayVal, todayStr)) {
                                     successServers.add(server)
                                     return@forEach
@@ -355,10 +358,11 @@ fun DashboardScreen(
         LazyColumn(modifier = Modifier.fillMaxSize().padding(padding), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
             item { ResetTimer() }
             
-            val unclaimedServers = claimStatuses.filter { !it.value.claimed }
-            val claimedServers = claimStatuses.filter { it.value.claimed }
+            // Only show unclaimed servers that actually have recorded steps > 0
+            val unclaimedServersWithSteps = claimStatuses.filter { !it.value.claimed && (yesterdaySteps[it.key] ?: 0L) > 0 }
+            val claimedServersWithSteps = claimStatuses.filter { it.value.claimed && (yesterdaySteps[it.key] ?: 0L) > 0 }
 
-            if (unclaimedServers.isNotEmpty()) {
+            if (unclaimedServersWithSteps.isNotEmpty()) {
                 item {
                     Surface(color = Color(0xFFFFF9C4), shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth()) {
                         Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -366,7 +370,7 @@ fun DashboardScreen(
                             Spacer(Modifier.width(12.dp))
                             Column {
                                 Text("Unclaimed rewards for yesterday on:", style = MaterialTheme.typography.labelSmall, color = Color(0xFF574300), fontWeight = FontWeight.Bold)
-                                unclaimedServers.forEach { (server, _) ->
+                                unclaimedServersWithSteps.forEach { (server, _) ->
                                     val steps = yesterdaySteps[server] ?: 0L
                                     Text("• $server: $steps steps", style = MaterialTheme.typography.bodySmall, color = Color(0xFF574300))
                                 }
@@ -376,7 +380,7 @@ fun DashboardScreen(
                 }
             }
 
-            if (claimedServers.isNotEmpty()) {
+            if (claimedServersWithSteps.isNotEmpty()) {
                 item {
                     Surface(color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f), shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth()) {
                         Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -384,7 +388,7 @@ fun DashboardScreen(
                             Spacer(Modifier.width(12.dp))
                             Column {
                                 Text("Rewards claimed for yesterday:", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onPrimaryContainer, fontWeight = FontWeight.Bold)
-                                claimedServers.forEach { (server, _) ->
+                                claimedServersWithSteps.forEach { (server, _) ->
                                     val steps = yesterdaySteps[server] ?: 0L
                                     Text("• $server: $steps steps", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onPrimaryContainer)
                                 }
