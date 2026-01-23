@@ -6,8 +6,34 @@ import okhttp3.Response;
 import java.io.IOException;
 
 public class BackendClient {
+            // Server endpoint: get claim status for a player
+            public static String getClaimStatusForPlayer(String username) throws IOException {
+                Request request = new Request.Builder()
+                        .url(BASE_URL + "/v1/servers/players/" + username + "/claim-status")
+                        .header("X-API-Key", StepCraftConfig.getApiKey())
+                        .build();
+                try (Response response = client.newCall(request).execute()) {
+                    if (!response.isSuccessful()) {
+                        return "Error: " + response.code() + " - " + response.message();
+                    }
+                    return response.body() != null ? response.body().string() : "No response body";
+                }
+            }
+        // Server endpoint: get server info
+        public static String getServerInfo() throws IOException {
+            Request request = new Request.Builder()
+                    .url(BASE_URL + "/v1/servers/info")
+                    .header("X-API-Key", StepCraftConfig.getApiKey())
+                    .build();
+            try (Response response = client.newCall(request).execute()) {
+                if (!response.isSuccessful()) {
+                    return "Error: " + response.code();
+                }
+                return response.body() != null ? response.body().string() : "No response body";
+            }
+        }
     private static final OkHttpClient client = new OkHttpClient();
-    private static final String BASE_URL = "http://74.208.73.134"; // Change to your backend URL
+    private static final String BASE_URL = "https://api.stepcraft.org"; // Change to your backend URL
 
     public static String healthCheck() throws IOException {
         Request request = new Request.Builder()

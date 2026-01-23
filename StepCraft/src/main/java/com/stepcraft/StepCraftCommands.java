@@ -15,8 +15,12 @@ public class StepCraftCommands {
             .then(CommandManager.literal("info")
                 .requires(source -> source.hasPermissionLevel(4))
                 .executes(context -> {
-                    // TODO: Call backend to get server info and display
-                    context.getSource().sendFeedback(() -> Text.literal("[TODO] Server info"), false);
+                    try {
+                        String result = BackendClient.getServerInfo();
+                        context.getSource().sendFeedback(() -> Text.literal("Server info: " + result), false);
+                    } catch (Exception e) {
+                        context.getSource().sendError(Text.literal("Error: " + e.getMessage()));
+                    }
                     return Command.SINGLE_SUCCESS;
                 })
             )
@@ -24,9 +28,13 @@ public class StepCraftCommands {
             .then(CommandManager.literal("claim_status")
                 .then(CommandManager.argument("username", StringArgumentType.string())
                     .executes(context -> {
-                        // TODO: Call backend to get claim status for username
                         String username = StringArgumentType.getString(context, "username");
-                        context.getSource().sendFeedback(() -> Text.literal("[TODO] Claim status for " + username), false);
+                        try {
+                            String result = BackendClient.getClaimStatusForPlayer(username);
+                            context.getSource().sendFeedback(() -> Text.literal("Claim status for " + username + ": " + result), false);
+                        } catch (Exception e) {
+                            context.getSource().sendError(Text.literal("Error: " + e.getMessage()));
+                        }
                         return Command.SINGLE_SUCCESS;
                     })
                 )
@@ -34,8 +42,12 @@ public class StepCraftCommands {
             // /stepcraft players
             .then(CommandManager.literal("players")
                 .executes(context -> {
-                    // TODO: Call backend to get all player data for this server
-                    context.getSource().sendFeedback(() -> Text.literal("[TODO] List all server players"), false);
+                    try {
+                        String result = BackendClient.getAllPlayers();
+                        context.getSource().sendFeedback(() -> Text.literal("Players: " + result), false);
+                    } catch (Exception e) {
+                        context.getSource().sendError(Text.literal("Error: " + e.getMessage()));
+                    }
                     return Command.SINGLE_SUCCESS;
                 })
             )
