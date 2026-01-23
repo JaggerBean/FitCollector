@@ -69,16 +69,24 @@ public class StepCraftCommands {
             // /stepcraft bans
             .then(CommandManager.literal("bans")
                 .executes(context -> {
-                    // TODO: Call backend to get all bans for this server
-                    context.getSource().sendFeedback(() -> Text.literal("[TODO] List all server bans"), false);
+                    try {
+                        String result = BackendClient.getAllServerBans();
+                        context.getSource().sendFeedback(() -> Text.literal("Bans: " + result), false);
+                    } catch (Exception e) {
+                        context.getSource().sendError(Text.literal("Error: " + e.getMessage()));
+                    }
                     return Command.SINGLE_SUCCESS;
                 })
             )
             // /stepcraft players_list
             .then(CommandManager.literal("players_list")
                 .executes(context -> {
-                    // TODO: Call backend to list all registered players (paginated)
-                    context.getSource().sendFeedback(() -> Text.literal("[TODO] List registered players (paginated)"), false);
+                    try {
+                        String result = BackendClient.getPlayersList();
+                        context.getSource().sendFeedback(() -> Text.literal("Players list: " + result), false);
+                    } catch (Exception e) {
+                        context.getSource().sendError(Text.literal("Error: " + e.getMessage()));
+                    }
                     return Command.SINGLE_SUCCESS;
                 })
             )
@@ -86,9 +94,13 @@ public class StepCraftCommands {
             .then(CommandManager.literal("claim_reward")
                 .then(CommandManager.argument("username", StringArgumentType.string())
                     .executes(context -> {
-                        // TODO: Call backend to mark reward as claimed for username
                         String username = StringArgumentType.getString(context, "username");
-                        context.getSource().sendFeedback(() -> Text.literal("[TODO] Claim reward for " + username), false);
+                        try {
+                            String result = BackendClient.claimRewardForPlayer(username);
+                            context.getSource().sendFeedback(() -> Text.literal("Claim reward for " + username + ": " + result), false);
+                        } catch (Exception e) {
+                            context.getSource().sendError(Text.literal("Error: " + e.getMessage()));
+                        }
                         return Command.SINGLE_SUCCESS;
                     })
                 )
@@ -98,17 +110,26 @@ public class StepCraftCommands {
                 .then(CommandManager.argument("username", StringArgumentType.string())
                     .then(CommandManager.argument("reason", StringArgumentType.string())
                         .executes(context -> {
-                            // TODO: Call backend to ban player with reason
                             String username = StringArgumentType.getString(context, "username");
                             String reason = StringArgumentType.getString(context, "reason");
-                            context.getSource().sendFeedback(() -> Text.literal("[TODO] Ban player " + username + ": " + reason), false);
+                            try {
+                                String result = BackendClient.banPlayer(username, reason);
+                                context.getSource().sendFeedback(() -> Text.literal("Ban player " + username + ": " + result), false);
+                            } catch (Exception e) {
+                                context.getSource().sendError(Text.literal("Error: " + e.getMessage()));
+                            }
                             return Command.SINGLE_SUCCESS;
                         })
                     )
                     .executes(context -> {
-                        // TODO: Call backend to ban player with default reason
                         String username = StringArgumentType.getString(context, "username");
-                        context.getSource().sendFeedback(() -> Text.literal("[TODO] Ban player " + username), false);
+                        String defaultReason = "broke code of conduct";
+                        try {
+                            String result = BackendClient.banPlayer(username, defaultReason);
+                            context.getSource().sendFeedback(() -> Text.literal("Ban player " + username + ": " + result), false);
+                        } catch (Exception e) {
+                            context.getSource().sendError(Text.literal("Error: " + e.getMessage()));
+                        }
                         return Command.SINGLE_SUCCESS;
                     })
                 )
@@ -117,9 +138,13 @@ public class StepCraftCommands {
             .then(CommandManager.literal("delete_player")
                 .then(CommandManager.argument("username", StringArgumentType.string())
                     .executes(context -> {
-                        // TODO: Call backend to delete player data
                         String username = StringArgumentType.getString(context, "username");
-                        context.getSource().sendFeedback(() -> Text.literal("[TODO] Delete player " + username), false);
+                        try {
+                            String result = BackendClient.deletePlayer(username);
+                            context.getSource().sendFeedback(() -> Text.literal("Delete player " + username + ": " + result), false);
+                        } catch (Exception e) {
+                            context.getSource().sendError(Text.literal("Error: " + e.getMessage()));
+                        }
                         return Command.SINGLE_SUCCESS;
                     })
                 )
@@ -128,9 +153,13 @@ public class StepCraftCommands {
             .then(CommandManager.literal("unban")
                 .then(CommandManager.argument("username", StringArgumentType.string())
                     .executes(context -> {
-                        // TODO: Call backend to unban player
                         String username = StringArgumentType.getString(context, "username");
-                        context.getSource().sendFeedback(() -> Text.literal("[TODO] Unban player " + username), false);
+                        try {
+                            String result = BackendClient.unbanPlayer(username);
+                            context.getSource().sendFeedback(() -> Text.literal("Unban player " + username + ": " + result), false);
+                        } catch (Exception e) {
+                            context.getSource().sendError(Text.literal("Error: " + e.getMessage()));
+                        }
                         return Command.SINGLE_SUCCESS;
                     })
                 )
