@@ -24,6 +24,18 @@ public class StepCraftCommands {
                     return Command.SINGLE_SUCCESS;
                 })
             )
+            // /stepcraft gui_players
+            .then(CommandManager.literal("gui_players")
+                .executes(context -> {
+                    ServerCommandSource source = context.getSource();
+                    if (source.getEntity() instanceof net.minecraft.server.network.ServerPlayerEntity player) {
+                        StepCraftUIHelper.openPlayersList(player);
+                    } else {
+                        source.sendError(Text.literal("Only players can use this command."));
+                    }
+                    return Command.SINGLE_SUCCESS;
+                })
+            )
             // /stepcraft claim_status <username>
             .then(CommandManager.literal("claim_status")
                 .then(CommandManager.argument("username", StringArgumentType.string())
