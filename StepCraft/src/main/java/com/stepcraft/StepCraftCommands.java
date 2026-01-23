@@ -55,9 +55,13 @@ public class StepCraftCommands {
             .then(CommandManager.literal("yesterday_steps")
                 .then(CommandManager.argument("username", StringArgumentType.string())
                     .executes(context -> {
-                        // TODO: Call backend to get yesterday's steps for username
                         String username = StringArgumentType.getString(context, "username");
-                        context.getSource().sendFeedback(() -> Text.literal("[TODO] Yesterday's steps for " + username), false);
+                        try {
+                            String result = BackendClient.getYesterdayStepsForPlayer(username);
+                            context.getSource().sendFeedback(() -> Text.literal("Yesterday's steps for " + username + ": " + result), false);
+                        } catch (Exception e) {
+                            context.getSource().sendError(Text.literal("Error: " + e.getMessage()));
+                        }
                         return Command.SINGLE_SUCCESS;
                     })
                 )

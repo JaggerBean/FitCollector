@@ -6,6 +6,19 @@ import okhttp3.Response;
 import java.io.IOException;
 
 public class BackendClient {
+                // Server endpoint: get yesterday's step count for a player
+                public static String getYesterdayStepsForPlayer(String username) throws IOException {
+                    Request request = new Request.Builder()
+                            .url(BASE_URL + "/v1/servers/players/" + username + "/yesterday-steps")
+                            .header("X-API-Key", StepCraftConfig.getApiKey())
+                            .build();
+                    try (Response response = client.newCall(request).execute()) {
+                        if (!response.isSuccessful()) {
+                            return "Error: " + response.code() + " - " + response.message();
+                        }
+                        return response.body() != null ? response.body().string() : "No response body";
+                    }
+                }
             // Server endpoint: get claim status for a player
             public static String getClaimStatusForPlayer(String username) throws IOException {
                 Request request = new Request.Builder()
