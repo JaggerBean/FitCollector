@@ -1,6 +1,6 @@
 # Player endpoint: check and set claim status for today
 from datetime import datetime
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Query
 from sqlalchemy import text
 from database import engine
 from models import PlayerRegistrationRequest, PlayerApiKeyResponse, KeyRecoveryRequest
@@ -13,7 +13,7 @@ router = APIRouter()
 
 
 @router.get("/v1/players/claim-status/{minecraft_username}")
-def get_claim_status_player(minecraft_username: str, server_name: str):
+def get_claim_status_player(minecraft_username: str, server_name: str = Query(...)):
     """
     Check if the player has claimed their reward for today (app use).
     """
