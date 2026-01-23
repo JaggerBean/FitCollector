@@ -10,7 +10,6 @@ import androidx.compose.material.icons.automirrored.filled.DirectionsRun
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.filled.CardGiftcard
-import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -39,7 +38,6 @@ import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import androidx.health.connect.client.request.ReadRecordsRequest
-import androidx.health.connect.client.request.AggregateRequest
 import androidx.health.connect.client.records.StepsRecord
 import androidx.health.connect.client.time.TimeRangeFilter
 import androidx.health.connect.client.records.metadata.Metadata
@@ -67,6 +65,8 @@ fun DashboardScreen(
     var client by remember { mutableStateOf<androidx.health.connect.client.HealthConnectClient?>(null) }
     var autoTimeDisabled by remember { mutableStateOf(false) }
     var claimStatuses by remember { mutableStateOf<Map<String, ClaimStatusResponse>>(emptyMap()) }
+    var yesterdaySteps by remember { mutableStateOf<Map<String, Long>>(emptyMap()) }
+    var blockedSourcesWarning by remember { mutableStateOf<List<String>?>(null) }
 
     val deviceId = remember { getOrCreateDeviceId(context) }
     var mcUsername by remember { mutableStateOf(getMinecraftUsername(context)) }
@@ -100,39 +100,49 @@ fun DashboardScreen(
         }
     }
 
-    suspend fun readStepsToday(hc: androidx.health.connect.client.HealthConnectClient): Long {
+    suspend fun readStepsForRange(hc: androidx.health.connect.client.HealthConnectClient, start: Instant, end: Instant): Long {
         return try {
-            val nowDevice = ZonedDateTime.now(deviceZone)
-            val midnightDevice = nowDevice.toLocalDate().atStartOfDay(deviceZone).toInstant()
-            val nowInstant = Instant.now()
-            
-            // Safety check for clock drift
-            val start = if (midnightDevice.isAfter(nowInstant)) nowInstant else midnightDevice
-
             val allowedSources = getAllowedStepSources(context)
-
-            // We must query individual records to apply our custom filtering (Source check + Manual exclusion)
             var totalSteps = 0L
             var pageToken: String? = null
             
+            val foundSources = mutableSetOf<String>()
+            val blocked = mutableListOf<String>()
+
             do {
                 val response = hc.readRecords(
                     ReadRecordsRequest(
                         recordType = StepsRecord::class,
-                        timeRangeFilter = TimeRangeFilter.between(start, nowInstant),
+                        timeRangeFilter = TimeRangeFilter.between(start, end),
                         pageToken = pageToken
                     )
                 )
                 
                 for (record in response.records) {
+                    val pkg = record.metadata.dataOrigin.packageName
+                    foundSources.add(pkg)
+                    
                     if (isRecordValid(record, allowedSources)) {
                         totalSteps += record.count
+                    } else if (record.metadata.recordingMethod != Metadata.RECORDING_METHOD_MANUAL_ENTRY) {
+                        if (!blocked.contains(pkg)) blocked.add(pkg)
                     }
                 }
                 pageToken = response.pageToken
             } while (pageToken != null)
             
-            saveLastKnownSteps(context, totalSteps)
+            if (allowedSources.isEmpty() && foundSources.size == 1) {
+                val singleSource = foundSources.first()
+                setAllowedStepSources(context, setOf(singleSource))
+                return readStepsForRange(hc, start, end)
+            }
+
+            if (totalSteps == 0L && blocked.isNotEmpty()) {
+                blockedSourcesWarning = blocked
+            } else if (totalSteps > 0) {
+                blockedSourcesWarning = null
+            }
+            
             totalSteps
         } catch (e: Exception) {
             0L
@@ -144,13 +154,20 @@ fun DashboardScreen(
         val selectedServers = getSelectedServers(context)
         val globalApi = buildApi(BASE_URL, "")
         val newStatuses = mutableMapOf<String, ClaimStatusResponse>()
+        val newSteps = mutableMapOf<String, Long>()
         selectedServers.forEach { server ->
             try {
-                val resp = globalApi.getClaimStatus(mcUsername, server)
-                newStatuses[server] = resp
+                val status = globalApi.getClaimStatus(mcUsername, server)
+                newStatuses[server] = status
+                val key = getServerKey(context, mcUsername, server)
+                if (key != null) {
+                    val stepsResp = globalApi.getStepsYesterday(mcUsername, key)
+                    newSteps[server] = stepsResp.steps_yesterday
+                }
             } catch (e: Exception) { }
         }
         claimStatuses = newStatuses
+        yesterdaySteps = newSteps
     }
 
     fun parseErrorMessage(e: Throwable): String {
@@ -171,25 +188,36 @@ fun DashboardScreen(
         return e.message ?: "Unknown error"
     }
 
-    suspend fun syncSteps(steps: Long, source: String) {
+    suspend fun syncSteps(manual: Boolean = false) {
+        val hc = client ?: return
         if (!isAutomaticTimeEnabled(context)) {
             syncResult = "Automatic time is disabled" to null
             autoTimeDisabled = true
             return
         }
-        val nowZoned = ZonedDateTime.now(deviceZone)
-        val nowStr = nowZoned.format(logTimeFormatter)
-        val dayStr = nowZoned.format(DateTimeFormatter.ISO_LOCAL_DATE)
-        val timestampStr = Instant.now().toString()
+
+        val nowDevice = ZonedDateTime.now(deviceZone)
+        val todayStr = nowDevice.format(DateTimeFormatter.ISO_LOCAL_DATE)
+        val yesterdayStr = nowDevice.minusDays(1).format(DateTimeFormatter.ISO_LOCAL_DATE)
+        
+        val todayStart = nowDevice.toLocalDate().atStartOfDay(deviceZone).toInstant()
+        val yesterdayStart = nowDevice.minusDays(1).toLocalDate().atStartOfDay(deviceZone).toInstant()
+        val nowInstant = Instant.now()
+
+        val stepsTodayVal = readStepsForRange(hc, todayStart, nowInstant)
+        val stepsYesterdayVal = readStepsForRange(hc, yesterdayStart, todayStart)
+        
+        stepsToday = stepsTodayVal
+        saveLastKnownSteps(context, stepsTodayVal)
+
         val selectedServers = getSelectedServers(context)
         if (selectedServers.isEmpty()) {
             syncResult = "No servers selected" to null
             return
         }
-        
+
         val successServers = mutableListOf<String>()
-        val errorGroups = mutableMapOf<String, MutableList<String>>() // error -> list of servers
-        
+        val errorGroups = mutableMapOf<String, MutableList<String>>()
         val globalApi = buildApi(BASE_URL, "")
 
         selectedServers.forEach { server ->
@@ -209,27 +237,21 @@ fun DashboardScreen(
                 return null
             }
 
-            suspend fun performIngest(key: String): Boolean {
-                globalApi.ingest(IngestPayload(
-                    minecraft_username = mcUsername,
-                    device_id = deviceId,
-                    steps_today = steps,
-                    player_api_key = key,
-                    day = dayStr,
-                    source = "health_connect",
-                    timestamp = timestampStr
-                ))
+            suspend fun performIngest(key: String, steps: Long, day: String): Boolean {
+                globalApi.ingest(IngestPayload(mcUsername, deviceId, steps, key, day, "health_connect", nowInstant.toString()))
                 return true
             }
 
             try {
-                var key = getOrRecoverKey()
+                val key = getOrRecoverKey()
                 if (key == null) {
                     errorGroups.getOrPut("Could not get API key") { mutableListOf() }.add(server)
                     return@forEach
                 }
+                
                 try {
-                    if (performIngest(key)) {
+                    performIngest(key, stepsYesterdayVal, yesterdayStr)
+                    if (performIngest(key, stepsTodayVal, todayStr)) {
                         successServers.add(server)
                     }
                 } catch (e: HttpException) {
@@ -239,7 +261,8 @@ fun DashboardScreen(
                             val newKey = resp.player_api_key
                             if (newKey != null && newKey != key) {
                                 saveServerKey(context, mcUsername, server, newKey)
-                                if (performIngest(newKey)) {
+                                performIngest(newKey, stepsYesterdayVal, yesterdayStr)
+                                if (performIngest(newKey, stepsTodayVal, todayStr)) {
                                     successServers.add(server)
                                     return@forEach
                                 }
@@ -249,29 +272,25 @@ fun DashboardScreen(
                     throw e
                 }
             } catch (e: Exception) {
-                val errMsg = parseErrorMessage(e)
-                errorGroups.getOrPut(errMsg) { mutableListOf() }.add(server)
+                errorGroups.getOrPut(parseErrorMessage(e)) { mutableListOf() }.add(server)
             }
         }
-        
-        val successMsg = if (successServers.isNotEmpty()) {
-            "Synced to ${successServers.joinToString(", ")}"
-        } else null
-        
+
+        val successMsg = if (successServers.isNotEmpty()) "Synced to ${successServers.joinToString(", ")}" else null
         val errorMsg = if (errorGroups.isNotEmpty()) {
-            errorGroups.entries.joinToString("\n") { (err, srvs) ->
-                "Failed for ${srvs.joinToString(", ")}: $err"
-            }
+            errorGroups.entries.joinToString("\n") { (err, srvs) -> "Failed for ${srvs.joinToString(", ")}: $err" }
         } else null
         
         syncResult = successMsg to errorMsg
-        
         val logMessage = when {
             successMsg != null && errorMsg != null -> "Partial: $successMsg | $errorMsg"
             successMsg != null -> successMsg
             else -> errorMsg ?: "Unknown failure"
         }
-        addSyncLogEntry(context, SyncLogEntry(nowStr, steps, source, successServers.isNotEmpty(), logMessage))
+        
+        val nowStr = nowDevice.format(logTimeFormatter)
+        addSyncLogEntry(context, SyncLogEntry(nowStr, stepsTodayVal, if (manual) "Manual" else "Auto", successServers.isNotEmpty(), logMessage))
+        
         if (successServers.isNotEmpty()) {
             lastSyncInstant = Instant.now()
             refreshClaimStatuses()
@@ -280,18 +299,13 @@ fun DashboardScreen(
 
     LaunchedEffect(Unit) {
         val applied = applyQueuedUsernameIfPossible(context)
-        if (applied != null) {
-            mcUsername = applied
-        }
+        if (applied != null) mcUsername = applied
         checkAvailability()
-        val hc = client
-        if (hc != null && refreshGrantedPermissions()) {
-            try {
-                stepsToday = readStepsToday(hc)
-                if (autoSyncEnabled) {
-                    syncSteps(stepsToday!!, "Auto (Boot)")
-                }
-            } catch (e: Exception) { }
+        if (client != null && refreshGrantedPermissions()) {
+            if (autoSyncEnabled) syncSteps(false)
+            else {
+                stepsToday = readStepsForRange(client!!, ZonedDateTime.now(deviceZone).toLocalDate().atStartOfDay(deviceZone).toInstant(), Instant.now())
+            }
         }
         refreshClaimStatuses()
     }
@@ -300,49 +314,20 @@ fun DashboardScreen(
         topBar = {
             CenterAlignedTopAppBar(
                 title = {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Center
-                    ) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
                         val logoRes = remember { context.resources.getIdentifier("ic_custom_foreground", "drawable", context.packageName) }
                         if (logoRes != 0) {
-                            Image(
-                                painter = painterResource(id = logoRes),
-                                contentDescription = "App logo",
-                                modifier = Modifier.size(48.dp)
-                            )
+                            Image(painter = painterResource(id = logoRes), contentDescription = "App logo", modifier = Modifier.size(48.dp))
                         } else {
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.Center,
-                                modifier = Modifier.padding(top = 4.dp)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.AutoMirrored.Filled.DirectionsRun,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.size(24.dp).offset(y = 1.dp)
-                                )
-                                Box(
-                                    modifier = Modifier
-                                        .size(18.dp)
-                                        .clip(androidx.compose.foundation.shape.RoundedCornerShape(2.dp))
-                                        .background(MinecraftDirt)
-                                        .padding(1.dp)
-                                ) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center, modifier = Modifier.padding(top = 4.dp)) {
+                                Icon(imageVector = Icons.AutoMirrored.Filled.DirectionsRun, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(24.dp).offset(y = 1.dp))
+                                Box(modifier = Modifier.size(18.dp).clip(androidx.compose.foundation.shape.RoundedCornerShape(2.dp)).background(MinecraftDirt).padding(1.dp)) {
                                     Box(modifier = Modifier.fillMaxWidth().height(5.dp).background(MinecraftGrass))
                                 }
                             }
                         }
                         Spacer(Modifier.width(12.dp))
-                        Text(
-                            "StepCraft",
-                            fontWeight = FontWeight.Black,
-                            fontSize = 28.sp,
-                            fontFamily = FontFamily.Monospace,
-                            letterSpacing = (-1.5).sp,
-                            color = MaterialTheme.colorScheme.primary
-                        )
+                        Text("StepCraft", fontWeight = FontWeight.Black, fontSize = 28.sp, fontFamily = FontFamily.Monospace, letterSpacing = (-1.5).sp, color = MaterialTheme.colorScheme.primary)
                     }
                 },
                 navigationIcon = {
@@ -352,16 +337,9 @@ fun DashboardScreen(
                             "https://minotar.net/avatar/$enc/48"
                         } else null
                     }
-
                     avatarUrl?.let { url ->
                         Box(modifier = Modifier.padding(start = 12.dp)) {
-                            AsyncImage(
-                                model = url,
-                                contentDescription = "Minecraft avatar",
-                                modifier = Modifier
-                                    .size(36.dp)
-                                    .clip(androidx.compose.foundation.shape.RoundedCornerShape(6.dp))
-                            )
+                            AsyncImage(model = url, contentDescription = "Minecraft avatar", modifier = Modifier.size(36.dp).clip(androidx.compose.foundation.shape.RoundedCornerShape(6.dp)))
                         }
                     }
                 },
@@ -370,41 +348,29 @@ fun DashboardScreen(
                         Icon(Icons.Default.Settings, "Settings")
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    titleContentColor = MaterialTheme.colorScheme.primary
-                )
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface, titleContentColor = MaterialTheme.colorScheme.primary)
             )
         }
     ) { padding ->
-        LazyColumn(
-            modifier = Modifier.fillMaxSize().padding(padding),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            item {
-                ResetTimer()
-            }
+        LazyColumn(modifier = Modifier.fillMaxSize().padding(padding), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            item { ResetTimer() }
             
-            val unclaimedServers = claimStatuses.filter { !it.value.claimed }.keys
+            val unclaimedServers = claimStatuses.filter { !it.value.claimed }
             val claimedServers = claimStatuses.filter { it.value.claimed }
 
             if (unclaimedServers.isNotEmpty()) {
                 item {
-                    Surface(
-                        color = Color(0xFFFFF9C4), // Light yellow
-                        shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
+                    Surface(color = Color(0xFFFFF9C4), shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth()) {
                         Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Default.CardGiftcard, null, tint = Color(0xFFFBC02D))
+                            Text("🎁", fontSize = 24.sp)
                             Spacer(Modifier.width(12.dp))
-                            Text(
-                                "Unclaimed rewards for yesterday on: ${unclaimedServers.joinToString(", ")}",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = Color(0xFF574300),
-                                fontWeight = FontWeight.Bold
-                            )
+                            Column {
+                                Text("Unclaimed rewards for yesterday on:", style = MaterialTheme.typography.labelSmall, color = Color(0xFF574300), fontWeight = FontWeight.Bold)
+                                unclaimedServers.forEach { (server, _) ->
+                                    val steps = yesterdaySteps[server] ?: 0L
+                                    Text("• $server: $steps steps", style = MaterialTheme.typography.bodySmall, color = Color(0xFF574300))
+                                }
+                            }
                         }
                     }
                 }
@@ -412,27 +378,15 @@ fun DashboardScreen(
 
             if (claimedServers.isNotEmpty()) {
                 item {
-                    Surface(
-                        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f),
-                        shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
+                    Surface(color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f), shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth()) {
                         Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Default.CheckCircle, null, tint = MaterialTheme.colorScheme.primary)
+                            Text("🎉", fontSize = 24.sp)
                             Spacer(Modifier.width(12.dp))
                             Column {
-                                Text(
-                                    "Rewards claimed for yesterday:",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                                    fontWeight = FontWeight.Bold
-                                )
-                                claimedServers.forEach { (server, status) ->
-                                    Text(
-                                        "• $server: ${status.steps_claimed ?: 0} steps",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                                    )
+                                Text("Rewards claimed for yesterday:", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onPrimaryContainer, fontWeight = FontWeight.Bold)
+                                claimedServers.forEach { (server, _) ->
+                                    val steps = yesterdaySteps[server] ?: 0L
+                                    Text("• $server: $steps steps", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onPrimaryContainer)
                                 }
                             }
                         }
@@ -441,41 +395,37 @@ fun DashboardScreen(
             }
 
             item {
-                ActivityCard(
-                    stepsToday = stepsToday,
-                    isSyncEnabled = client != null && hasPerms && mcUsername.isNotBlank() && getSelectedServers(context).isNotEmpty() && !autoTimeDisabled,
-                    onSyncClick = {
-                        scope.launch {
-                            client?.let { hc ->
-                                if (refreshGrantedPermissions()) {
-                                    try {
-                                        stepsToday = readStepsToday(hc)
-                                        syncSteps(stepsToday!!, "Manual")
-                                    } catch (e: Exception) { }
-                                }
-                            }
+                ActivityCard(stepsToday = stepsToday, isSyncEnabled = client != null && hasPerms && mcUsername.isNotBlank() && getSelectedServers(context).isNotEmpty() && !autoTimeDisabled, onSyncClick = {
+                    scope.launch { syncSteps(true) }
+                })
+            }
+            
+            blockedSourcesWarning?.let { sources ->
+                item {
+                    Surface(
+                        color = MaterialTheme.colorScheme.errorContainer,
+                        shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
+                        modifier = Modifier.fillMaxWidth().clickable { onNavigate(com.example.fitcollector.AppScreen.Settings) }
+                    ) {
+                        Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.Warning, null, tint = MaterialTheme.colorScheme.error)
+                            Spacer(Modifier.width(12.dp))
+                            Text(
+                                "Step data found from ${sources.joinToString(", ")}, but it's not enabled in Settings.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onErrorContainer
+                            )
                         }
                     }
-                )
+                }
             }
+
             item {
                 AnimatedVisibility(visible = syncResult != null) {
                     syncResult?.let { (successMsg, errorMsg) ->
                         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            if (successMsg != null) {
-                                SyncStatusBanner(
-                                    msg = successMsg,
-                                    isSuccess = true,
-                                    timestamp = lastSyncInstant
-                                )
-                            }
-                            if (errorMsg != null) {
-                                SyncStatusBanner(
-                                    msg = errorMsg,
-                                    isSuccess = false,
-                                    timestamp = null
-                                )
-                            }
+                            if (successMsg != null) SyncStatusBanner(msg = successMsg, isSuccess = true, timestamp = lastSyncInstant)
+                            if (errorMsg != null) SyncStatusBanner(msg = errorMsg, isSuccess = false, timestamp = null)
                         }
                     }
                 }
@@ -490,15 +440,7 @@ fun DashboardScreen(
                         getSelectedServers(context).isEmpty() -> "Please select at least one server in Settings."
                         else -> ""
                     }
-                    Surface(
-                        color = MaterialTheme.colorScheme.errorContainer,
-                        shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
-                        modifier = Modifier.fillMaxWidth().clickable {
-                            if (!autoTimeDisabled) {
-                                onNavigate(com.example.fitcollector.AppScreen.Settings)
-                            }
-                        }
-                    ) {
+                    Surface(color = MaterialTheme.colorScheme.errorContainer, shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth().clickable { if (!autoTimeDisabled) onNavigate(com.example.fitcollector.AppScreen.Settings) }) {
                         Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
                             Icon(Icons.Default.Warning, null, tint = MaterialTheme.colorScheme.error)
                             Spacer(Modifier.width(12.dp))
@@ -507,7 +449,6 @@ fun DashboardScreen(
                     }
                 }
             }
-
             item {
                 val selectedCount = getSelectedServers(context).size
                 val syncStatus = when {
@@ -516,13 +457,7 @@ fun DashboardScreen(
                     backgroundSyncEnabled -> "Background-sync enabled."
                     else -> "Sync is disabled."
                 }
-                Text(
-                    syncStatus,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.fillMaxWidth(),
-                    textAlign = TextAlign.Center
-                )
+                Text(syncStatus, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
             }
         }
     }

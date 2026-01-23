@@ -73,7 +73,14 @@ data class RegisterResponse(
 data class ClaimStatusResponse(
     val claimed: Boolean,
     val claimed_at: String?,
-    val steps_claimed: Long? // Added to show claimed steps
+    val steps_claimed: Long?
+)
+
+data class StepsYesterdayResponse(
+    val minecraft_username: String,
+    val server_name: String,
+    val steps_yesterday: Long,
+    val day: String
 )
 
 data class MojangProfile(
@@ -106,6 +113,12 @@ interface FitApi {
         @Path("minecraft_username") username: String,
         @Query("server_name") serverName: String
     ): ClaimStatusResponse
+
+    @GET("v1/players/steps-yesterday")
+    suspend fun getStepsYesterday(
+        @Query("minecraft_username") username: String,
+        @Query("player_api_key") apiKey: String
+    ): StepsYesterdayResponse
 }
 
 fun buildApi(baseUrl: String, apiKey: String): FitApi {
