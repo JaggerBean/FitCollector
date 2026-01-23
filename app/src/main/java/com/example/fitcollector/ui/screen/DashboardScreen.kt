@@ -10,6 +10,7 @@ import androidx.compose.material.icons.automirrored.filled.DirectionsRun
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.filled.CardGiftcard
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -65,7 +66,7 @@ fun DashboardScreen(
     var lastSyncInstant by remember { mutableStateOf<Instant?>(null) }
     var client by remember { mutableStateOf<androidx.health.connect.client.HealthConnectClient?>(null) }
     var autoTimeDisabled by remember { mutableStateOf(false) }
-    var claimStatuses by remember { mutableStateOf<Map<String, Boolean>>(emptyMap()) }
+    var claimStatuses by remember { mutableStateOf<Map<String, ClaimStatusResponse>>(emptyMap()) }
 
     val deviceId = remember { getOrCreateDeviceId(context) }
     var mcUsername by remember { mutableStateOf(getMinecraftUsername(context)) }
@@ -142,14 +143,12 @@ fun DashboardScreen(
         if (mcUsername.isBlank()) return
         val selectedServers = getSelectedServers(context)
         val globalApi = buildApi(BASE_URL, "")
-        val newStatuses = mutableMapOf<String, Boolean>()
+        val newStatuses = mutableMapOf<String, ClaimStatusResponse>()
         selectedServers.forEach { server ->
             try {
                 val resp = globalApi.getClaimStatus(mcUsername, server)
-                newStatuses[server] = resp.claimed
-            } catch (e: Exception) {
-                // Default to false or keep old status if it fails
-            }
+                newStatuses[server] = resp
+            } catch (e: Exception) { }
         }
         claimStatuses = newStatuses
     }
@@ -387,7 +386,9 @@ fun DashboardScreen(
                 ResetTimer()
             }
             
-            val unclaimedServers = claimStatuses.filter { !it.value }.keys
+            val unclaimedServers = claimStatuses.filter { !it.value.claimed }.keys
+            val claimedServers = claimStatuses.filter { it.value.claimed }
+
             if (unclaimedServers.isNotEmpty()) {
                 item {
                     Surface(
@@ -404,6 +405,36 @@ fun DashboardScreen(
                                 color = Color(0xFF574300),
                                 fontWeight = FontWeight.Bold
                             )
+                        }
+                    }
+                }
+            }
+
+            if (claimedServers.isNotEmpty()) {
+                item {
+                    Surface(
+                        color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f),
+                        shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.CheckCircle, null, tint = MaterialTheme.colorScheme.primary)
+                            Spacer(Modifier.width(12.dp))
+                            Column {
+                                Text(
+                                    "Rewards claimed for yesterday:",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                claimedServers.forEach { (server, status) ->
+                                    Text(
+                                        "• $server: ${status.steps_claimed ?: 0} steps",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                                    )
+                                }
+                            }
                         }
                     }
                 }

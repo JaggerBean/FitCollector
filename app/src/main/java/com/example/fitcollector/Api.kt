@@ -72,7 +72,8 @@ data class RegisterResponse(
 
 data class ClaimStatusResponse(
     val claimed: Boolean,
-    val claimed_at: String?
+    val claimed_at: String?,
+    val steps_claimed: Long? // Added to show claimed steps
 )
 
 data class MojangProfile(

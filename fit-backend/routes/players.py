@@ -234,3 +234,43 @@ def recover_key(request: KeyRecoveryRequest) -> PlayerApiKeyResponse:
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to recover key: {str(e)}")
+
+@router.get("/v1/players/steps-yesterday")
+def get_steps_yesterday(minecraft_username: str = Query(...), device_id: str = Query(...), player_api_key: str = Query(...)):
+    """
+    Get the number of steps the player had yesterday.
+    Requires minecraft_username, device_id, and player_api_key (plaintext).
+    """
+    from auth import validate_and_get_server
+    from datetime import datetime, timedelta
+    from zoneinfo import ZoneInfo
+    CENTRAL_TZ = ZoneInfo("America/Chicago")
+    yesterday = (datetime.now(CENTRAL_TZ) - timedelta(days=1)).date()
+    try:
+        # Authenticate player
+        server_name, current_username = validate_and_get_server(device_id, player_api_key)
+        if current_username != minecraft_username:
+            raise HTTPException(status_code=401, detail="Username does not match token")
+        with engine.begin() as conn:
+            row = conn.execute(
+                text("""
+                    SELECT steps FROM step_ingest
+                    WHERE minecraft_username = :username
+                      AND server_name = :server_name
+                      AND device_id = :device_id
+                      AND day = :yesterday
+                    LIMIT 1
+                """),
+                {
+                    "username": minecraft_username,
+                    "server_name": server_name,
+                    "device_id": device_id,
+                    "yesterday": yesterday
+                }
+            ).fetchone()
+        steps = row[0] if row else 0
+        return {"minecraft_username": minecraft_username, "server_name": server_name, "steps_yesterday": steps, "day": str(yesterday)}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to fetch steps: {str(e)}")
