@@ -1,6 +1,10 @@
 package com.example.fitcollector.ui.screen
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -358,12 +362,18 @@ fun DashboardScreen(
         LazyColumn(modifier = Modifier.fillMaxSize().padding(padding), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
             item { ResetTimer() }
             
-            // Only show unclaimed servers that actually have recorded steps > 0
-            val unclaimedServersWithSteps = claimStatuses.filter { !it.value.claimed && (yesterdaySteps[it.key] ?: 0L) > 0 }
-            val claimedServersWithSteps = claimStatuses.filter { it.value.claimed && (yesterdaySteps[it.key] ?: 0L) > 0 }
+            // Shared animation specs
+            val animationSpec = fadeIn() + expandVertically()
+            val exitSpec = fadeOut() + shrinkVertically()
 
-            if (unclaimedServersWithSteps.isNotEmpty()) {
-                item {
+            // 1. Unclaimed Rewards
+            val unclaimedServersWithSteps = claimStatuses.filter { !it.value.claimed && (yesterdaySteps[it.key] ?: 0L) > 0 }
+            item {
+                AnimatedVisibility(
+                    visible = unclaimedServersWithSteps.isNotEmpty(),
+                    enter = animationSpec,
+                    exit = exitSpec
+                ) {
                     Surface(color = Color(0xFFFFF9C4), shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth()) {
                         Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
                             Text("🎁", fontSize = 24.sp)
@@ -374,14 +384,21 @@ fun DashboardScreen(
                                     val steps = yesterdaySteps[server] ?: 0L
                                     Text("• $server: $steps steps", style = MaterialTheme.typography.bodySmall, color = Color(0xFF574300))
                                 }
+                                Text("Join the server to claim rewards!", style = MaterialTheme.typography.labelSmall, color = Color(0xFF574300), fontWeight = FontWeight.Bold)
                             }
                         }
                     }
                 }
             }
 
-            if (claimedServersWithSteps.isNotEmpty()) {
-                item {
+            // 2. Claimed Rewards
+            val claimedServersWithSteps = claimStatuses.filter { it.value.claimed && (yesterdaySteps[it.key] ?: 0L) > 0 }
+            item {
+                AnimatedVisibility(
+                    visible = claimedServersWithSteps.isNotEmpty(),
+                    enter = animationSpec,
+                    exit = exitSpec
+                ) {
                     Surface(color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f), shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth()) {
                         Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
                             Text("🎉", fontSize = 24.sp)

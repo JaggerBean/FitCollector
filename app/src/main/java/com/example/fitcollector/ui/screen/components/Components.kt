@@ -406,7 +406,7 @@ fun ResetTimer() {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                "Time Until Reset: ",
+                "Time Until Daily Step Reset: ",
                 style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.secondary

@@ -101,7 +101,7 @@ class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
             val successServers = mutableListOf<String>()
             val errorGroups = mutableMapOf<String, MutableList<String>>() // error -> list of servers
 
-            val globalApi = buildApi(BASE_URL, "")
+            val globalApi = buildApi(BASE_URL, GLOBAL_API_KEY)
 
             selectedServers.forEach { server ->
                 suspend fun getOrRecoverKey(): String? {
@@ -217,6 +217,7 @@ class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
         fun schedule(context: Context) {
             val constraints = Constraints.Builder()
                 .setRequiredNetworkType(NetworkType.CONNECTED)
+                .setRequiresBatteryNotLow(true)
                 .build()
 
             val request = PeriodicWorkRequestBuilder<SyncWorker>(15, TimeUnit.MINUTES)
