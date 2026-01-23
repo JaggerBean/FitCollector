@@ -1,12 +1,14 @@
 # Player endpoint: check and set claim status for today
-from datetime import datetime
+from datetime import datetime, timedelta
 from fastapi import APIRouter, HTTPException, Depends, Query
 from sqlalchemy import text
+from zoneinfo import ZoneInfo
 from database import engine
 from models import PlayerRegistrationRequest, PlayerApiKeyResponse, KeyRecoveryRequest
 from utils import generate_opaque_token, hash_token
 from auth import require_api_key
 
+CENTRAL_TZ = ZoneInfo("America/Chicago")
 router = APIRouter()
 
 # ...existing code...
@@ -15,17 +17,18 @@ router = APIRouter()
 @router.get("/v1/players/claim-status/{minecraft_username}")
 def get_claim_status_player(minecraft_username: str, server_name: str = Query(...)):
     """
-    Check if the player has claimed their reward for today (app use).
+    Check if the player has claimed their reward for yesterday (app use).
+    Uses Central Time timezone to match server logic.
     """
-    today = datetime.now().date()
+    yesterday = (datetime.now(CENTRAL_TZ) - timedelta(days=1)).date()
     with engine.begin() as conn:
         row = conn.execute(
             text("""
                 SELECT claimed, claimed_at FROM step_claims
-                WHERE minecraft_username = :username AND server_name = :server AND day = :today
+                WHERE minecraft_username = :username AND server_name = :server AND day = :yesterday
                 LIMIT 1
             """),
-            {"username": minecraft_username, "server": server_name, "today": today}
+            {"username": minecraft_username, "server": server_name, "yesterday": yesterday}
         ).fetchone()
     if row:
         return {"claimed": row[0], "claimed_at": row[1]}
