@@ -6,6 +6,9 @@ import okhttp3.Response;
 import java.io.IOException;
 import com.google.gson.Gson;
 
+    
+
+
 public class BackendClient {
     private static final Gson gson = new Gson();
                             // Server endpoint: mark reward as claimed for a player
@@ -164,6 +167,17 @@ public class BackendClient {
                 return "Error: " + response.code();
             }
             return response.body() != null ? response.body().string() : "No response body";
+        }
+    }
+        // Called from the chest UI to send server info to the admin
+    public static void sendInfoCommand(net.minecraft.server.network.ServerPlayerEntity admin, String playerName) {
+        // For now, just call getServerInfo and send the result to the admin
+        // (You can later change this to a player-specific info endpoint if available)
+        try {
+            String result = getServerInfo();
+            admin.sendMessage(net.minecraft.text.Text.literal("Server info: " + result));
+        } catch (Exception e) {
+            admin.sendMessage(net.minecraft.text.Text.literal("Error: " + e.getMessage()));
         }
     }
 }
