@@ -24,8 +24,9 @@ public class StepCraftCommands {
                     return Command.SINGLE_SUCCESS;
                 })
             )
-            // /stepcraft gui_players
+            // /stepcraft gui_players (OPs only)
             .then(CommandManager.literal("gui_players")
+                .requires(source -> source.hasPermissionLevel(4))
                 .executes(context -> {
                     ServerCommandSource source = context.getSource();
                     if (source.getEntity() instanceof net.minecraft.server.network.ServerPlayerEntity player) {
@@ -36,8 +37,9 @@ public class StepCraftCommands {
                     return Command.SINGLE_SUCCESS;
                 })
             )
-            // /stepcraft claim_status <username>
+            // /stepcraft claim_status <username> (OPs only)
             .then(CommandManager.literal("claim_status")
+                .requires(source -> source.hasPermissionLevel(4))
                 .then(CommandManager.argument("username", StringArgumentType.string())
                     .executes(context -> {
                         String username = StringArgumentType.getString(context, "username");
@@ -51,8 +53,9 @@ public class StepCraftCommands {
                     })
                 )
             )
-            // /stepcraft players
+            // /stepcraft players (OPs only)
             .then(CommandManager.literal("players")
+                .requires(source -> source.hasPermissionLevel(4))
                 .executes(context -> {
                     try {
                         String result = BackendClient.getAllPlayers();
@@ -63,23 +66,45 @@ public class StepCraftCommands {
                     return Command.SINGLE_SUCCESS;
                 })
             )
-            // /stepcraft yesterday_steps <username>
+            // /stepcraft yesterday_steps [username]
             .then(CommandManager.literal("yesterday_steps")
+                .executes(context -> {
+                    ServerCommandSource source = context.getSource();
+                    String username = source.getPlayer().getName().getString();
+                    try {
+                        String result = BackendClient.getYesterdayStepsForPlayer(username);
+                        source.sendFeedback(() -> Text.literal("Yesterday's steps for " + username + ": " + result), false);
+                    } catch (Exception e) {
+                        source.sendError(Text.literal("Error: " + e.getMessage()));
+                    }
+                    return Command.SINGLE_SUCCESS;
+                })
                 .then(CommandManager.argument("username", StringArgumentType.string())
+                    .requires(source -> {
+                        if (source.hasPermissionLevel(4)) return true;
+                        String username = source.getName();
+                        return username.equalsIgnoreCase(source.getPlayer().getName().getString());
+                    })
                     .executes(context -> {
                         String username = StringArgumentType.getString(context, "username");
+                        ServerCommandSource source = context.getSource();
+                        if (!source.hasPermissionLevel(4) && !username.equalsIgnoreCase(source.getPlayer().getName().getString())) {
+                            source.sendError(Text.literal("You can only use this command for yourself."));
+                            return 0;
+                        }
                         try {
                             String result = BackendClient.getYesterdayStepsForPlayer(username);
-                            context.getSource().sendFeedback(() -> Text.literal("Yesterday's steps for " + username + ": " + result), false);
+                            source.sendFeedback(() -> Text.literal("Yesterday's steps for " + username + ": " + result), false);
                         } catch (Exception e) {
-                            context.getSource().sendError(Text.literal("Error: " + e.getMessage()));
+                            source.sendError(Text.literal("Error: " + e.getMessage()));
                         }
                         return Command.SINGLE_SUCCESS;
                     })
                 )
             )
-            // /stepcraft bans
+            // /stepcraft bans (OPs only)
             .then(CommandManager.literal("bans")
+                .requires(source -> source.hasPermissionLevel(4))
                 .executes(context -> {
                     try {
                         String result = BackendClient.getAllServerBans();
@@ -90,8 +115,9 @@ public class StepCraftCommands {
                     return Command.SINGLE_SUCCESS;
                 })
             )
-            // /stepcraft players_list
+            // /stepcraft players_list (OPs only)
             .then(CommandManager.literal("players_list")
+                .requires(source -> source.hasPermissionLevel(4))
                 .executes(context -> {
                     try {
                         String result = BackendClient.getPlayersList();
@@ -102,75 +128,137 @@ public class StepCraftCommands {
                     return Command.SINGLE_SUCCESS;
                 })
             )
-            // /stepcraft claim_reward <username>
+            // /stepcraft claim_reward [username]
             .then(CommandManager.literal("claim_reward")
+                .executes(context -> {
+                    ServerCommandSource source = context.getSource();
+                    String username = source.getPlayer().getName().getString();
+                    try {
+                        String result = BackendClient.claimRewardForPlayer(username);
+                        source.sendFeedback(() -> Text.literal("Claim reward for " + username + ": " + result), false);
+                    } catch (Exception e) {
+                        source.sendError(Text.literal("Error: " + e.getMessage()));
+                    }
+                    return Command.SINGLE_SUCCESS;
+                })
                 .then(CommandManager.argument("username", StringArgumentType.string())
+                    .requires(source -> {
+                        if (source.hasPermissionLevel(4)) return true;
+                        String username = source.getName();
+                        return username.equalsIgnoreCase(source.getPlayer().getName().getString());
+                    })
                     .executes(context -> {
                         String username = StringArgumentType.getString(context, "username");
+                        ServerCommandSource source = context.getSource();
+                        if (!source.hasPermissionLevel(4) && !username.equalsIgnoreCase(source.getPlayer().getName().getString())) {
+                            source.sendError(Text.literal("You can only use this command for yourself."));
+                            return 0;
+                        }
                         try {
                             String result = BackendClient.claimRewardForPlayer(username);
-                            context.getSource().sendFeedback(() -> Text.literal("Claim reward for " + username + ": " + result), false);
+                            source.sendFeedback(() -> Text.literal("Claim reward for " + username + ": " + result), false);
                         } catch (Exception e) {
-                            context.getSource().sendError(Text.literal("Error: " + e.getMessage()));
+                            source.sendError(Text.literal("Error: " + e.getMessage()));
                         }
                         return Command.SINGLE_SUCCESS;
                     })
                 )
             )
-            // /stepcraft ban <username> [reason]
+            // /stepcraft ban [username] [reason] (OPs only)
             .then(CommandManager.literal("ban")
+                .requires(source -> source.hasPermissionLevel(4))
+                .executes(context -> {
+                    ServerCommandSource source = context.getSource();
+                    String username = source.getPlayer().getName().getString();
+                    String defaultReason = "broke code of conduct";
+                    try {
+                        String result = BackendClient.banPlayer(username, defaultReason);
+                        source.sendFeedback(() -> Text.literal("Ban player " + username + ": " + result), false);
+                    } catch (Exception e) {
+                        source.sendError(Text.literal("Error: " + e.getMessage()));
+                    }
+                    return Command.SINGLE_SUCCESS;
+                })
                 .then(CommandManager.argument("username", StringArgumentType.string())
-                    .then(CommandManager.argument("reason", StringArgumentType.string())
-                        .executes(context -> {
-                            String username = StringArgumentType.getString(context, "username");
-                            String reason = StringArgumentType.getString(context, "reason");
-                            try {
-                                String result = BackendClient.banPlayer(username, reason);
-                                context.getSource().sendFeedback(() -> Text.literal("Ban player " + username + ": " + result), false);
-                            } catch (Exception e) {
-                                context.getSource().sendError(Text.literal("Error: " + e.getMessage()));
-                            }
-                            return Command.SINGLE_SUCCESS;
-                        })
-                    )
                     .executes(context -> {
+                        ServerCommandSource source = context.getSource();
                         String username = StringArgumentType.getString(context, "username");
                         String defaultReason = "broke code of conduct";
                         try {
                             String result = BackendClient.banPlayer(username, defaultReason);
-                            context.getSource().sendFeedback(() -> Text.literal("Ban player " + username + ": " + result), false);
+                            source.sendFeedback(() -> Text.literal("Ban player " + username + ": " + result), false);
                         } catch (Exception e) {
-                            context.getSource().sendError(Text.literal("Error: " + e.getMessage()));
+                            source.sendError(Text.literal("Error: " + e.getMessage()));
                         }
                         return Command.SINGLE_SUCCESS;
                     })
+                    .then(CommandManager.argument("reason", StringArgumentType.string())
+                        .executes(context -> {
+                            ServerCommandSource source = context.getSource();
+                            String username = StringArgumentType.getString(context, "username");
+                            String reason = StringArgumentType.getString(context, "reason");
+                            try {
+                                String result = BackendClient.banPlayer(username, reason);
+                                source.sendFeedback(() -> Text.literal("Ban player " + username + ": " + result), false);
+                            } catch (Exception e) {
+                                source.sendError(Text.literal("Error: " + e.getMessage()));
+                            }
+                            return Command.SINGLE_SUCCESS;
+                        })
+                    )
                 )
             )
-            // /stepcraft delete_player <username>
+            // /stepcraft delete_player [username] (OPs only)
             .then(CommandManager.literal("delete_player")
+                .requires(source -> source.hasPermissionLevel(4))
+                .executes(context -> {
+                    ServerCommandSource source = context.getSource();
+                    String username = source.getPlayer().getName().getString();
+                    try {
+                        String result = BackendClient.deletePlayer(username);
+                        source.sendFeedback(() -> Text.literal("Delete player " + username + ": " + result), false);
+                    } catch (Exception e) {
+                        source.sendError(Text.literal("Error: " + e.getMessage()));
+                    }
+                    return Command.SINGLE_SUCCESS;
+                })
                 .then(CommandManager.argument("username", StringArgumentType.string())
                     .executes(context -> {
+                        ServerCommandSource source = context.getSource();
                         String username = StringArgumentType.getString(context, "username");
                         try {
                             String result = BackendClient.deletePlayer(username);
-                            context.getSource().sendFeedback(() -> Text.literal("Delete player " + username + ": " + result), false);
+                            source.sendFeedback(() -> Text.literal("Delete player " + username + ": " + result), false);
                         } catch (Exception e) {
-                            context.getSource().sendError(Text.literal("Error: " + e.getMessage()));
+                            source.sendError(Text.literal("Error: " + e.getMessage()));
                         }
                         return Command.SINGLE_SUCCESS;
                     })
                 )
             )
-            // /stepcraft unban <username>
+            // /stepcraft unban [username] (OPs only)
             .then(CommandManager.literal("unban")
+                .requires(source -> source.hasPermissionLevel(4))
+                .executes(context -> {
+                    ServerCommandSource source = context.getSource();
+                    String username = source.getPlayer().getName().getString();
+                    try {
+                        String result = BackendClient.unbanPlayer(username);
+                        source.sendFeedback(() -> Text.literal("Unban player " + username + ": " + result), false);
+                    } catch (Exception e) {
+                        source.sendError(Text.literal("Error: " + e.getMessage()));
+                    }
+                    return Command.SINGLE_SUCCESS;
+                })
                 .then(CommandManager.argument("username", StringArgumentType.string())
                     .executes(context -> {
+                        ServerCommandSource source = context.getSource();
                         String username = StringArgumentType.getString(context, "username");
                         try {
                             String result = BackendClient.unbanPlayer(username);
-                            context.getSource().sendFeedback(() -> Text.literal("Unban player " + username + ": " + result), false);
+                            source.sendFeedback(() -> Text.literal("Unban player " + username + ": " + result), false);
                         } catch (Exception e) {
-                            context.getSource().sendError(Text.literal("Error: " + e.getMessage()));
+                            source.sendError(Text.literal("Error: " + e.getMessage()));
                         }
                         return Command.SINGLE_SUCCESS;
                     })
