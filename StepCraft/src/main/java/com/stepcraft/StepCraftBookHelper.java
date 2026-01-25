@@ -24,7 +24,7 @@ public final class StepCraftBookHelper {
 
         ItemStack book = new ItemStack(Items.WRITTEN_BOOK);
         try {
-            Object content = buildWrittenBookContent(title, author, pages);
+            Object content = buildWrittenBookContent(title, author, pages, false);
             if (content instanceof WrittenBookContentComponent written) {
                 book.set(DataComponentTypes.WRITTEN_BOOK_CONTENT, written);
                 return book;
@@ -33,6 +33,29 @@ public final class StepCraftBookHelper {
             // Fallback to writable book if written content fails
         }
 
+        book = new ItemStack(Items.WRITABLE_BOOK);
+        book.set(DataComponentTypes.WRITABLE_BOOK_CONTENT,
+                new WritableBookContentComponent(rawPages)
+        );
+        return book;
+    }
+
+    public static ItemStack createWrittenBookText(String title, String author, List<Text> pages) {
+        ItemStack book = new ItemStack(Items.WRITTEN_BOOK);
+        try {
+            Object content = buildWrittenBookContent(title, author, pages, true);
+            if (content instanceof WrittenBookContentComponent written) {
+                book.set(DataComponentTypes.WRITTEN_BOOK_CONTENT, written);
+                return book;
+            }
+        } catch (Throwable ignored) {
+            // Fallback to writable book if written content fails
+        }
+
+        List<RawFilteredPair<String>> rawPages = new ArrayList<>();
+        for (Text page : pages) {
+            rawPages.add(RawFilteredPair.of(page.getString()));
+        }
         book = new ItemStack(Items.WRITABLE_BOOK);
         book.set(DataComponentTypes.WRITABLE_BOOK_CONTENT,
                 new WritableBookContentComponent(rawPages)
@@ -112,7 +135,7 @@ public final class StepCraftBookHelper {
         return false;
     }
 
-    private static Object buildWrittenBookContent(String title, String author, List<String> pages) {
+    private static Object buildWrittenBookContent(String title, String author, List<?> pages, boolean pagesAreText) {
         try {
             Class<?> clazz = Class.forName("net.minecraft.component.type.WrittenBookContentComponent");
 
@@ -120,11 +143,12 @@ public final class StepCraftBookHelper {
             try {
                 Class<?> rawFilteredPair = Class.forName("net.minecraft.text.RawFilteredPair");
                 java.lang.reflect.Method of = rawFilteredPair.getMethod("of", Object.class);
-                Object titlePair = of.invoke(null, title);
-                Object authorPair = of.invoke(null, author);
+                Object titlePair = of.invoke(null, pagesAreText ? Text.literal(title) : title);
+                Object authorPair = of.invoke(null, pagesAreText ? Text.literal(author) : author);
                 List<Object> rawPages = new ArrayList<>();
-                for (String page : pages) {
-                    rawPages.add(of.invoke(null, page));
+                for (Object page : pages) {
+                    Object value = pagesAreText ? page : String.valueOf(page);
+                    rawPages.add(of.invoke(null, value));
                 }
                 return clazz.getConstructor(rawFilteredPair, rawFilteredPair, int.class, List.class, boolean.class)
                         .newInstance(titlePair, authorPair, 0, rawPages, true);
@@ -132,8 +156,12 @@ public final class StepCraftBookHelper {
 
             // Try constructor with (String, String, int, List<String>, boolean)
             try {
+                List<String> stringPages = new ArrayList<>();
+                for (Object page : pages) {
+                    stringPages.add(pagesAreText && page instanceof Text t ? t.getString() : String.valueOf(page));
+                }
                 return clazz.getConstructor(String.class, String.class, int.class, List.class, boolean.class)
-                        .newInstance(title, author, 0, pages, true);
+                        .newInstance(title, author, 0, stringPages, true);
             } catch (Exception ignored) {}
 
             // Try constructor with (RawFilteredPair<Text>, RawFilteredPair<Text>, int, List<RawFilteredPair<Text>>, boolean)
@@ -143,8 +171,9 @@ public final class StepCraftBookHelper {
                 Object titlePair = of.invoke(null, Text.literal(title));
                 Object authorPair = of.invoke(null, Text.literal(author));
                 List<Object> rawPages = new ArrayList<>();
-                for (String page : pages) {
-                    rawPages.add(of.invoke(null, Text.literal(page)));
+                for (Object page : pages) {
+                    Text value = (pagesAreText && page instanceof Text t) ? t : Text.literal(String.valueOf(page));
+                    rawPages.add(of.invoke(null, value));
                 }
                 return clazz.getConstructor(rawFilteredPair, rawFilteredPair, int.class, List.class, boolean.class)
                         .newInstance(titlePair, authorPair, 0, rawPages, true);
@@ -153,8 +182,8 @@ public final class StepCraftBookHelper {
             // Try constructor with (String, String, int, List<Text>, boolean)
             try {
                 List<Text> textPages = new ArrayList<>();
-                for (String page : pages) {
-                    textPages.add(Text.literal(page));
+                for (Object page : pages) {
+                    textPages.add(pagesAreText && page instanceof Text t ? t : Text.literal(String.valueOf(page)));
                 }
                 return clazz.getConstructor(String.class, String.class, int.class, List.class, boolean.class)
                         .newInstance(title, author, 0, textPages, true);

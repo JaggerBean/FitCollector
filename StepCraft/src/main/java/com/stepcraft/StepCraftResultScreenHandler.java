@@ -19,6 +19,9 @@ import net.minecraft.text.TextColor;
 import net.minecraft.util.Unit;
 import java.util.ArrayList;
 import java.util.List;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 
 public class StepCraftResultScreenHandler extends GenericContainerScreenHandler {
     private final SimpleInventory inventory;
@@ -75,7 +78,7 @@ public class StepCraftResultScreenHandler extends GenericContainerScreenHandler 
         }
 
         if (slot == SLOT_LECTERN) {
-            StepCraftLecternHelper.openLectern(serverPlayer, "Result", toPagesFromLines(lines));
+            StepCraftLecternHelper.openLectern(serverPlayer, "Result", toStyledPages(lines));
             return;
         }
 
@@ -107,11 +110,11 @@ public class StepCraftResultScreenHandler extends GenericContainerScreenHandler 
             JsonElement element = JsonParser.parseString(extracted != null ? extracted : message);
             element = unwrapJsonString(element);
             if (label != null && !label.isBlank()) {
-                lines.add(label);
+                lines.add(prettyTitle(label));
             } else {
                 lines.add("Result");
             }
-            lines.add("──────────────");
+            lines.add("──────────");
             formatJsonLines(element, "", lines);
         } catch (Exception ignored) {
             for (String line : message.split("\\n")) {
@@ -191,16 +194,54 @@ public class StepCraftResultScreenHandler extends GenericContainerScreenHandler 
         if (element.isJsonObject()) {
             for (String key : element.getAsJsonObject().keySet()) {
                 JsonElement value = element.getAsJsonObject().get(key);
+                String prettyKey = prettyKey(key);
                 if (value == null || value.isJsonNull()) {
-                    lines.add(indent + key + ": N/A");
+                    lines.add(indent + prettyKey + ": N/A");
                 } else if (value.isJsonPrimitive()) {
-                    lines.add(indent + key + ": " + value.getAsJsonPrimitive().getAsString());
+                    lines.add(indent + prettyKey + ": " + formatValue(value.getAsJsonPrimitive().getAsString()));
                 } else {
-                    lines.add(indent + key + ":");
+                    lines.add(indent + prettyKey + ":");
                     formatJsonLines(value, indent + "  ", lines);
                 }
             }
         }
+    }
+
+    private static String prettyKey(String key) {
+        if (key == null) return "";
+        String[] parts = key.replace("_", " ").split(" ");
+        StringBuilder sb = new StringBuilder();
+        for (String part : parts) {
+            if (part.isBlank()) continue;
+            if (sb.length() > 0) sb.append(' ');
+            sb.append(Character.toUpperCase(part.charAt(0)));
+            if (part.length() > 1) {
+                sb.append(part.substring(1));
+            }
+        }
+        return sb.toString();
+    }
+
+    private static String prettyTitle(String label) {
+        String trimmed = label == null ? "" : label.trim();
+        if (trimmed.isEmpty()) return "Result";
+        return prettyKey(trimmed);
+    }
+
+    private static String formatValue(String value) {
+        if (value == null) return "N/A";
+        String trimmed = value.trim();
+        try {
+            if (trimmed.contains("T") && (trimmed.endsWith("Z") || trimmed.contains("+"))) {
+                OffsetDateTime dt = OffsetDateTime.parse(trimmed);
+                DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+                String base = dt.withOffsetSameInstant(ZoneOffset.UTC).format(fmt);
+                return base + " UTC";
+            }
+        } catch (Exception ignored) {
+            // fall through
+        }
+        return trimmed;
     }
 
     private static List<String> toPagesFromLines(List<String> lines) {
@@ -225,6 +266,95 @@ public class StepCraftResultScreenHandler extends GenericContainerScreenHandler 
             pages.add(page.toString());
         }
         return pages;
+    }
+
+    private static List<Text> toStyledPages(List<String> lines) {
+        List<Text> pages = new ArrayList<>();
+        if (lines == null || lines.isEmpty()) {
+            pages.add(Text.literal("No result").setStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xFFFFFF)).withItalic(false)));
+            return pages;
+        }
+
+        List<Text> pageLines = new ArrayList<>();
+        int lineCount = 0;
+        for (int i = 0; i < lines.size(); i++) {
+            String line = lines.get(i);
+            Text lineText = styleLine(line, i == 0);
+            pageLines.add(lineText);
+            lineCount++;
+            if (lineCount >= 13) {
+                pages.add(joinPageLines(pageLines));
+                pageLines.clear();
+                lineCount = 0;
+            }
+        }
+        if (!pageLines.isEmpty()) {
+            pages.add(joinPageLines(pageLines));
+        }
+        return pages;
+    }
+
+    private static Text joinPageLines(List<Text> lines) {
+        Text text = Text.empty();
+        for (int i = 0; i < lines.size(); i++) {
+            text = text.copy().append(lines.get(i));
+            if (i < lines.size() - 1) {
+                text = text.copy().append(Text.literal("\n"));
+            }
+        }
+        return text;
+    }
+
+    private static Text styleLine(String line, boolean isTitle) {
+        if (line == null) {
+            return Text.literal("").setStyle(Style.EMPTY.withItalic(false));
+        }
+
+        if (isTitle) {
+            return Text.literal(line)
+                    .setStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xFFD54A)).withBold(true).withItalic(false));
+        }
+
+        if (line.chars().allMatch(ch -> ch == '─' || ch == '-' || ch == ' ')) {
+            return Text.literal(line)
+                    .setStyle(Style.EMPTY.withColor(TextColor.fromRgb(0x777777)).withItalic(false));
+        }
+
+        String trimmed = line.trim();
+        boolean isBullet = trimmed.startsWith("• ");
+        String content = isBullet ? trimmed.substring(2) : trimmed;
+
+        int colonIdx = content.indexOf(':');
+        if (colonIdx > 0) {
+            String key = content.substring(0, colonIdx).trim();
+            String value = content.substring(colonIdx + 1).trim();
+
+            Text keyText = Text.literal(key)
+                    .setStyle(Style.EMPTY.withColor(TextColor.fromRgb(0x55D6FF)).withBold(true).withItalic(false));
+            Text colonText = Text.literal(": ")
+                    .setStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xFFFFFF)).withItalic(false));
+            Text valueText = Text.literal(value)
+                    .setStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xFFFFFF)).withItalic(false));
+
+            if (isBullet) {
+                Text bullet = Text.literal("• ")
+                        .setStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xAAAAAA)).withItalic(false));
+                return Text.empty().append(bullet).append(keyText).append(colonText).append(valueText);
+            }
+
+            return Text.empty().append(keyText).append(colonText).append(valueText);
+        }
+
+        if (isBullet) {
+            Text bullet = Text.literal("• ")
+                    .setStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xAAAAAA)).withItalic(false));
+            Text valueText = Text.literal(content)
+                    .setStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xFFFFFF)).withItalic(false));
+            return Text.empty().append(bullet).append(valueText);
+        }
+
+        return Text.literal(line)
+                .setStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xFFFFFF)).withItalic(false));
     }
 
     private void renderPage() {

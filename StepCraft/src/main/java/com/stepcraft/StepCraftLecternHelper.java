@@ -18,8 +18,8 @@ import java.util.List;
 public final class StepCraftLecternHelper {
     private StepCraftLecternHelper() {}
 
-    public static void openLectern(ServerPlayerEntity player, String title, List<String> pages) {
-        ItemStack book = StepCraftBookHelper.createWrittenBook(title, "StepCraft", pages);
+    public static void openLectern(ServerPlayerEntity player, String title, List<Text> pages) {
+        ItemStack book = StepCraftBookHelper.createWrittenBookText(title, "StepCraft", pages);
 
         SimpleInventory inventory = new SimpleInventory(1);
         inventory.setStack(0, book);
@@ -32,8 +32,8 @@ public final class StepCraftLecternHelper {
                     try {
                         return new StepCraftLecternScreenHandler(syncId, inventory, properties);
                     } catch (Throwable ignored) {
-                        StepCraftBookHelper.openBook(player, title, toTextPages(pages));
-                        return new StepCraftResultScreenHandler(syncId, playerInv, String.join("\n", pages));
+                        StepCraftBookHelper.openBook(player, title, pages);
+                        return new StepCraftResultScreenHandler(syncId, playerInv, joinTextPages(pages));
                     }
                 },
                 Text.literal(title)
@@ -42,11 +42,12 @@ public final class StepCraftLecternHelper {
         player.openHandledScreen(factory);
     }
 
-    private static List<net.minecraft.text.Text> toTextPages(List<String> pages) {
-        List<net.minecraft.text.Text> result = new java.util.ArrayList<>();
-        for (String page : pages) {
-            result.add(net.minecraft.text.Text.literal(page));
+    private static String joinTextPages(List<Text> pages) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < pages.size(); i++) {
+            if (i > 0) sb.append("\n");
+            sb.append(pages.get(i).getString());
         }
-        return result;
+        return sb.toString();
     }
 }
