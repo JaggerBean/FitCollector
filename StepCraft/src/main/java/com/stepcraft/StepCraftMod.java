@@ -38,5 +38,7 @@ public class StepCraftMod implements ModInitializer {
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
             StepCraftCommands.register(dispatcher);
         });
+
+        StepCraftChatSearch.register();
     }
 }

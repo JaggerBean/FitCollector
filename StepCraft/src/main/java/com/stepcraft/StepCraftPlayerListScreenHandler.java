@@ -41,18 +41,20 @@ public class StepCraftPlayerListScreenHandler extends GenericContainerScreenHand
     private final int totalPlayers;
     private final ServerPlayerEntity viewer;
     private final Map<Integer, String> slotToPlayer = new HashMap<>();
+    private final StepCraftPlayerAction action;
 
-    public StepCraftPlayerListScreenHandler(int syncId, PlayerInventory playerInventory, List<String> players, String query, int page, int totalPlayers) {
-        this(syncId, playerInventory, new SimpleInventory(ROWS * 9), players, query, page, totalPlayers);
+    public StepCraftPlayerListScreenHandler(int syncId, PlayerInventory playerInventory, List<String> players, String query, int page, int totalPlayers, StepCraftPlayerAction action) {
+        this(syncId, playerInventory, new SimpleInventory(ROWS * 9), players, query, page, totalPlayers, action);
     }
 
-    private StepCraftPlayerListScreenHandler(int syncId, PlayerInventory playerInventory, SimpleInventory inventory, List<String> players, String query, int page, int totalPlayers) {
+    private StepCraftPlayerListScreenHandler(int syncId, PlayerInventory playerInventory, SimpleInventory inventory, List<String> players, String query, int page, int totalPlayers, StepCraftPlayerAction action) {
         super(ScreenHandlerType.GENERIC_9X6, syncId, playerInventory, inventory, ROWS);
         this.inventory = inventory;
         this.players = players;
         this.query = query == null ? "" : query;
         this.totalPlayers = Math.max(totalPlayers, players.size());
         this.viewer = (ServerPlayerEntity) playerInventory.player;
+        this.action = action == null ? StepCraftPlayerAction.NONE : action;
 
         int calculatedPages = Math.max(1, (int) Math.ceil(this.totalPlayers / (double) PAGE_SIZE));
         this.totalPages = calculatedPages;
@@ -139,17 +141,21 @@ public class StepCraftPlayerListScreenHandler extends GenericContainerScreenHand
 
         if (slotToPlayer.containsKey(slot)) {
             String target = slotToPlayer.get(slot);
-            StepCraftScreens.openActionMenu(serverPlayer, target);
+            if (action != StepCraftPlayerAction.NONE) {
+                StepCraftScreens.openConfirm(serverPlayer, action, target);
+            } else {
+                StepCraftScreens.openActionMenu(serverPlayer, target);
+            }
             return;
         }
 
         if (slot == SLOT_PREV && page > 0) {
-            StepCraftScreens.openPlayerList(serverPlayer, players, query, page - 1, totalPlayers);
+            StepCraftScreens.openPlayerList(serverPlayer, players, query, page - 1, totalPlayers, action);
             return;
         }
 
         if (slot == SLOT_NEXT && page < totalPages - 1) {
-            StepCraftScreens.openPlayerList(serverPlayer, players, query, page + 1, totalPlayers);
+            StepCraftScreens.openPlayerList(serverPlayer, players, query, page + 1, totalPlayers, action);
             return;
         }
 
@@ -159,15 +165,12 @@ public class StepCraftPlayerListScreenHandler extends GenericContainerScreenHand
         }
 
         if (slot == SLOT_SEARCH) {
-            serverPlayer.sendMessage(Text.literal("Click to search players")
-                .setStyle(Style.EMPTY.withClickEvent(
-                    new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/stepcraft players_gui ")
-                )));
+            StepCraftChatSearch.beginSearch(serverPlayer, action);
             return;
         }
 
         if (slot == SLOT_CLEAR) {
-            StepCraftUIHelper.openPlayerSelectList(serverPlayer, null, 0);
+            StepCraftUIHelper.openPlayerSelectList(serverPlayer, null, 0, action);
             return;
         }
     }

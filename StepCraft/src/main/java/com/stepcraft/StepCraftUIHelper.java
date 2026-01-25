@@ -91,7 +91,7 @@ public class StepCraftUIHelper {
         }
     }
 
-    public static void openPlayerSelectList(ServerPlayerEntity player, String query, int page) {
+    public static void openPlayerSelectList(ServerPlayerEntity player, String query, int page, StepCraftPlayerAction action) {
         String trimmedQuery = (query == null) ? "" : query.trim();
         int limit = StepCraftPlayerListScreenHandler.PAGE_SIZE;
         int offset = Math.max(0, page) * limit;
@@ -100,11 +100,11 @@ public class StepCraftUIHelper {
         CachedPage cached = PLAYER_PAGE_CACHE.get(cacheKey);
         long now = System.currentTimeMillis();
         if (cached != null && (now - cached.cachedAt) <= PLAYER_LIST_TTL_MS) {
-            player.getServer().execute(() -> renderPlayerList(player, trimmedQuery, page, cached.names, cached.total));
+            player.getServer().execute(() -> renderPlayerList(player, trimmedQuery, page, cached.names, cached.total, action));
             return;
         }
 
-        player.getServer().execute(() -> renderPlayerList(player, trimmedQuery, page, List.of(), 0));
+        player.getServer().execute(() -> renderPlayerList(player, trimmedQuery, page, List.of(), 0, action));
 
         CompletableFuture
                 .supplyAsync(() -> {
@@ -123,14 +123,14 @@ public class StepCraftUIHelper {
 
                     CachedPage entry = new CachedPage(pageData.names, pageData.total, System.currentTimeMillis());
                     PLAYER_PAGE_CACHE.put(cacheKey, entry);
-                    renderPlayerList(player, trimmedQuery, page, pageData.names, pageData.total);
+                    renderPlayerList(player, trimmedQuery, page, pageData.names, pageData.total, action);
                 }));
     }
 
-    private static void renderPlayerList(ServerPlayerEntity player, String query, int page, List<String> names, int total) {
+    private static void renderPlayerList(ServerPlayerEntity player, String query, int page, List<String> names, int total, StepCraftPlayerAction action) {
         List<String> sorted = new ArrayList<>(names);
         sorted.sort(Comparator.naturalOrder());
-        StepCraftScreens.openPlayerList(player, sorted, query, page, total);
+        StepCraftScreens.openPlayerList(player, sorted, query, page, total, action);
     }
 
     private static class CachedPage {

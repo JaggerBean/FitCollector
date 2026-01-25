@@ -53,15 +53,15 @@ public class StepCraftChestScreenHandler extends GenericContainerScreenHandler {
                 switch (slot) {
                     case 1 -> { sendBackend(serverPlayer, "Server info: ", BackendClient::getServerInfo); return; }
                     case 3 -> { sendBackend(serverPlayer, "Health check: ", BackendClient::healthCheck); return; }
-                    case 5 -> { StepCraftUIHelper.openPlayerSelectList(serverPlayer, null, 0); return; }
-                    case 7 -> { StepCraftUIHelper.openPlayerSelectList(serverPlayer, null, 0); return; }
-                    case 10 -> { StepCraftUIHelper.openPlayerSelectList(serverPlayer, null, 0); return; }
-                    case 12 -> { StepCraftUIHelper.openPlayerSelectList(serverPlayer, null, 0); return; }
-                    case 14 -> { StepCraftUIHelper.openPlayerSelectList(serverPlayer, null, 0); return; }
-                    case 16 -> { StepCraftUIHelper.openPlayerSelectList(serverPlayer, null, 0); return; }
+                    case 5 -> { StepCraftUIHelper.openPlayerSelectList(serverPlayer, null, 0, StepCraftPlayerAction.BAN); return; }
+                    case 7 -> { StepCraftUIHelper.openPlayerSelectList(serverPlayer, null, 0, StepCraftPlayerAction.DELETE); return; }
+                    case 10 -> { StepCraftUIHelper.openPlayerSelectList(serverPlayer, null, 0, StepCraftPlayerAction.UNBAN); return; }
+                    case 12 -> { StepCraftUIHelper.openPlayerSelectList(serverPlayer, null, 0, StepCraftPlayerAction.CLAIM_REWARD); return; }
+                    case 14 -> { StepCraftUIHelper.openPlayerSelectList(serverPlayer, null, 0, StepCraftPlayerAction.CLAIM_STATUS); return; }
+                    case 16 -> { StepCraftUIHelper.openPlayerSelectList(serverPlayer, null, 0, StepCraftPlayerAction.NONE); return; }
                     case 19 -> { sendBackend(serverPlayer, "Bans: ", BackendClient::getAllServerBans); return; }
                     case 21 -> { sendBackend(serverPlayer, "All players: ", BackendClient::getAllPlayers); return; }
-                    case 23 -> { StepCraftUIHelper.openPlayerSelectList(serverPlayer, null, 0); return; }
+                    case 23 -> { StepCraftUIHelper.openPlayerSelectList(serverPlayer, null, 0, StepCraftPlayerAction.YESTERDAY_STEPS); return; }
                 }
             }
         }

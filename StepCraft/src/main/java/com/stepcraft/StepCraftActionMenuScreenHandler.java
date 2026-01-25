@@ -96,7 +96,7 @@ public class StepCraftActionMenuScreenHandler extends GenericContainerScreenHand
                 return;
             }
             case 16 -> {
-                StepCraftUIHelper.openPlayerSelectList(serverPlayer, null, 0);
+                StepCraftUIHelper.openPlayerSelectList(serverPlayer, null, 0, StepCraftPlayerAction.NONE);
                 return;
             }
             default -> { return; }

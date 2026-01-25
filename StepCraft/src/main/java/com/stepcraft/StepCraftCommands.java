@@ -43,7 +43,7 @@ public class StepCraftCommands {
                 .executes(context -> {
                     ServerCommandSource source = context.getSource();
                     if (source.getEntity() instanceof net.minecraft.server.network.ServerPlayerEntity player) {
-                        StepCraftUIHelper.openPlayerSelectList(player, null, 0);
+                        StepCraftUIHelper.openPlayerSelectList(player, null, 0, StepCraftPlayerAction.NONE);
                     } else {
                         source.sendError(Text.literal("Only players can use this command."));
                     }
@@ -54,7 +54,7 @@ public class StepCraftCommands {
                         ServerCommandSource source = context.getSource();
                         String query = StringArgumentType.getString(context, "query");
                         if (source.getEntity() instanceof net.minecraft.server.network.ServerPlayerEntity player) {
-                            StepCraftUIHelper.openPlayerSelectList(player, query, 0);
+                            StepCraftUIHelper.openPlayerSelectList(player, query, 0, StepCraftPlayerAction.NONE);
                         } else {
                             source.sendError(Text.literal("Only players can use this command."));
                         }

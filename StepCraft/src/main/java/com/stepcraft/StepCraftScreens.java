@@ -28,10 +28,10 @@ public final class StepCraftScreens {
         ));
     }
 
-        public static void openPlayerList(ServerPlayerEntity player, List<String> players, String query, int page, int totalPlayers) {
+            public static void openPlayerList(ServerPlayerEntity player, List<String> players, String query, int page, int totalPlayers, StepCraftPlayerAction action) {
         player.openHandledScreen(new SimpleNamedScreenHandlerFactory(
                 (int syncId, PlayerInventory playerInv, PlayerEntity p) ->
-                new StepCraftPlayerListScreenHandler(syncId, playerInv, players, query, page, totalPlayers),
+                    new StepCraftPlayerListScreenHandler(syncId, playerInv, players, query, page, totalPlayers, action),
                 Text.literal("Select Player")
         ));
     }
@@ -40,6 +40,14 @@ public final class StepCraftScreens {
         player.openHandledScreen(new StepCraftActionMenuScreenFactory(
                 targetPlayer,
                 Text.literal("Manage " + targetPlayer)
+        ));
+    }
+
+    public static void openConfirm(ServerPlayerEntity player, StepCraftPlayerAction action, String targetPlayer) {
+        player.openHandledScreen(new StepCraftConfirmScreenFactory(
+                action,
+                targetPlayer,
+                Text.literal("Confirm " + action.getLabel())
         ));
     }
 }
