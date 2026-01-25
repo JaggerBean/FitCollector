@@ -10,7 +10,6 @@ import net.minecraft.screen.NamedScreenHandlerFactory;
 import net.minecraft.screen.PropertyDelegate;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.SimpleNamedScreenHandlerFactory;
-import net.minecraft.screen.LecternScreenHandler;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
 
@@ -31,7 +30,7 @@ public final class StepCraftLecternHelper {
         NamedScreenHandlerFactory factory = new SimpleNamedScreenHandlerFactory(
                 (int syncId, PlayerInventory playerInv, PlayerEntity p) -> {
                     try {
-                        return new LecternScreenHandler(syncId, inventory, properties);
+                        return new StepCraftLecternScreenHandler(syncId, inventory, properties);
                     } catch (Throwable ignored) {
                         StepCraftBookHelper.openBook(player, title, toTextPages(pages));
                         return new StepCraftResultScreenHandler(syncId, playerInv, String.join("\n", pages));
