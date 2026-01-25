@@ -165,7 +165,7 @@ public class StepCraftPlayerListScreenHandler extends GenericContainerScreenHand
         }
 
         if (slot == SLOT_SEARCH) {
-            StepCraftChatSearch.beginSearch(serverPlayer, action);
+            StepCraftSignSearch.beginSearch(serverPlayer, action);
             return;
         }
 

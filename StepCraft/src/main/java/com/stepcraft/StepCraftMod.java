@@ -39,6 +39,5 @@ public class StepCraftMod implements ModInitializer {
             StepCraftCommands.register(dispatcher);
         });
 
-        StepCraftChatSearch.register();
     }
 }

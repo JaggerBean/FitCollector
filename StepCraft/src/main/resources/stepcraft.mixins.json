@@ -3,7 +3,8 @@
 	"package": "com.stepcraft.mixin",
 	"compatibilityLevel": "JAVA_21",
 	"mixins": [
-		"StepCraftMixin"
+		"StepCraftMixin",
+		"StepCraftSignUpdateMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

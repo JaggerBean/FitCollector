@@ -97,6 +97,8 @@ public class StepCraftUIHelper {
         int offset = Math.max(0, page) * limit;
         String cacheKey = trimmedQuery.toLowerCase() + "::" + page;
 
+        player.sendMessage(Text.literal("Loading players: q='" + trimmedQuery + "' page=" + page));
+
         CachedPage cached = PLAYER_PAGE_CACHE.get(cacheKey);
         long now = System.currentTimeMillis();
         if (cached != null && (now - cached.cachedAt) <= PLAYER_LIST_TTL_MS) {
@@ -130,6 +132,21 @@ public class StepCraftUIHelper {
     private static void renderPlayerList(ServerPlayerEntity player, String query, int page, List<String> names, int total, StepCraftPlayerAction action) {
         List<String> sorted = new ArrayList<>(names);
         sorted.sort(Comparator.naturalOrder());
+
+        if (!query.isBlank()) {
+            List<String> filtered = new ArrayList<>();
+            String q = query.toLowerCase();
+            for (String name : sorted) {
+                if (name.toLowerCase().contains(q)) {
+                    filtered.add(name);
+                }
+            }
+            // Fallback in case backend query isn't deployed or applied.
+            sorted = filtered;
+            total = filtered.size();
+            page = 0;
+        }
+
         StepCraftScreens.openPlayerList(player, sorted, query, page, total, action);
     }
 

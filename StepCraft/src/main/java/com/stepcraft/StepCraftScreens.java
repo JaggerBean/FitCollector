@@ -50,4 +50,5 @@ public final class StepCraftScreens {
                 Text.literal("Confirm " + action.getLabel())
         ));
     }
+
 }
