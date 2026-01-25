@@ -108,4 +108,29 @@ public class StepCraftChestScreenHandler extends GenericContainerScreenHandler {
                 }));
     }
 
+    public static void sendBackendWithCallback(ServerPlayerEntity player, BackendCall call,
+                                                java.util.function.Consumer<String> onSuccess,
+                                                java.util.function.Consumer<String> onError) {
+        CompletableFuture
+                .supplyAsync(() -> {
+                    try {
+                        return call.run();
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                }, BACKEND_EXECUTOR)
+                .whenComplete((result, error) -> player.getServer().execute(() -> {
+                    if (error != null) {
+                        Throwable cause = error.getCause() != null ? error.getCause() : error;
+                        if (onError != null) {
+                            onError.accept(cause.getMessage());
+                        }
+                    } else {
+                        if (onSuccess != null) {
+                            onSuccess.accept(result);
+                        }
+                    }
+                }));
+    }
+
 }

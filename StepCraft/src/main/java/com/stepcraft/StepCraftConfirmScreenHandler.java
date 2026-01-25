@@ -46,28 +46,34 @@ public class StepCraftConfirmScreenHandler extends GenericContainerScreenHandler
         }
 
         if (slot == 5) {
+            StepCraftScreens.openResult(serverPlayer, "Processing...");
             switch (action) {
-                case BAN -> StepCraftChestScreenHandler.sendBackend(serverPlayer,
-                        "Ban player " + targetPlayer + ": ",
-                        () -> BackendClient.banPlayer(targetPlayer, "broke code of conduct"));
-                case UNBAN -> StepCraftChestScreenHandler.sendBackend(serverPlayer,
-                        "Unban player " + targetPlayer + ": ",
-                        () -> BackendClient.unbanPlayer(targetPlayer));
-                case DELETE -> StepCraftChestScreenHandler.sendBackend(serverPlayer,
-                        "Delete player " + targetPlayer + ": ",
-                        () -> BackendClient.deletePlayer(targetPlayer));
-                case CLAIM_REWARD -> StepCraftChestScreenHandler.sendBackend(serverPlayer,
-                        "Claim reward for " + targetPlayer + ": ",
-                        () -> BackendClient.claimRewardForPlayer(targetPlayer));
-                case CLAIM_STATUS -> StepCraftChestScreenHandler.sendBackend(serverPlayer,
-                        "Claim status for " + targetPlayer + ": ",
-                        () -> BackendClient.getClaimStatusForPlayer(targetPlayer));
-                case YESTERDAY_STEPS -> StepCraftChestScreenHandler.sendBackend(serverPlayer,
-                        "Yesterday steps for " + targetPlayer + ": ",
-                        () -> BackendClient.getYesterdayStepsForPlayer(targetPlayer));
+            case BAN -> StepCraftChestScreenHandler.sendBackendWithCallback(serverPlayer,
+                () -> BackendClient.banPlayer(targetPlayer, "broke code of conduct"),
+                result -> updateResult(serverPlayer, "Ban: " + result),
+                error -> updateResult(serverPlayer, "Error: " + error));
+            case UNBAN -> StepCraftChestScreenHandler.sendBackendWithCallback(serverPlayer,
+                () -> BackendClient.unbanPlayer(targetPlayer),
+                result -> updateResult(serverPlayer, "Unban: " + result),
+                error -> updateResult(serverPlayer, "Error: " + error));
+            case DELETE -> StepCraftChestScreenHandler.sendBackendWithCallback(serverPlayer,
+                () -> BackendClient.deletePlayer(targetPlayer),
+                result -> updateResult(serverPlayer, "Delete: " + result),
+                error -> updateResult(serverPlayer, "Error: " + error));
+            case CLAIM_REWARD -> StepCraftChestScreenHandler.sendBackendWithCallback(serverPlayer,
+                () -> BackendClient.claimRewardForPlayer(targetPlayer),
+                result -> updateResult(serverPlayer, "Claim reward: " + result),
+                error -> updateResult(serverPlayer, "Error: " + error));
+            case CLAIM_STATUS -> StepCraftChestScreenHandler.sendBackendWithCallback(serverPlayer,
+                () -> BackendClient.getClaimStatusForPlayer(targetPlayer),
+                result -> updateResult(serverPlayer, "Claim status: " + result),
+                error -> updateResult(serverPlayer, "Error: " + error));
+            case YESTERDAY_STEPS -> StepCraftChestScreenHandler.sendBackendWithCallback(serverPlayer,
+                () -> BackendClient.getYesterdayStepsForPlayer(targetPlayer),
+                result -> updateResult(serverPlayer, "Yesterday steps: " + result),
+                error -> updateResult(serverPlayer, "Error: " + error));
                 default -> {}
             }
-            StepCraftUIHelper.openPlayersList(serverPlayer);
             return;
         }
     }
@@ -78,5 +84,13 @@ public class StepCraftConfirmScreenHandler extends GenericContainerScreenHandler
                 Text.literal(label).setStyle(Style.EMPTY.withColor(TextColor.fromRgb(rgb)).withItalic(false))
         );
         return stack;
+    }
+
+    private void updateResult(ServerPlayerEntity player, String message) {
+        if (player.currentScreenHandler instanceof StepCraftResultScreenHandler result) {
+            result.setResult(message);
+        } else {
+            StepCraftScreens.openResult(player, message);
+        }
     }
 }

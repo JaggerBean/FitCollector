@@ -51,4 +51,11 @@ public final class StepCraftScreens {
         ));
     }
 
+    public static void openResult(ServerPlayerEntity player, String message) {
+        player.openHandledScreen(new StepCraftResultScreenFactory(
+                message,
+                Text.literal("Result")
+        ));
+    }
+
 }

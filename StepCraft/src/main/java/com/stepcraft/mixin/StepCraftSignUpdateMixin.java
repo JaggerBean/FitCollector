@@ -18,6 +18,8 @@ public class StepCraftSignUpdateMixin {
     private void onUpdateSign(UpdateSignC2SPacket packet, CallbackInfo ci) {
         if (StepCraftSignSearch.handleSignUpdate(player, packet)) {
             ci.cancel();
+            return;
         }
+
     }
 }
