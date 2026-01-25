@@ -102,18 +102,105 @@ public class StepCraftResultScreenHandler extends GenericContainerScreenHandler 
         }
 
         try {
-            JsonElement element = JsonParser.parseString(message);
-            Gson gson = new GsonBuilder().setPrettyPrinting().create();
-            String formatted = gson.toJson(element);
-            for (String line : formatted.split("\\n")) {
+            String extracted = extractJsonSubstring(message);
+            String label = extractLeadingLabel(message, extracted);
+            JsonElement element = JsonParser.parseString(extracted != null ? extracted : message);
+            element = unwrapJsonString(element);
+            if (label != null && !label.isBlank()) {
+                lines.add(label);
+            } else {
+                lines.add("Result");
+            }
+            lines.add("──────────────");
+            formatJsonLines(element, "", lines);
+        } catch (Exception ignored) {
+            for (String line : message.split("\\n")) {
                 if (!line.isBlank()) {
                     lines.add(line.trim());
                 }
             }
-        } catch (Exception ignored) {
-            lines.add(message);
         }
         return lines;
+    }
+
+    private static String extractJsonSubstring(String message) {
+        if (message == null) return null;
+        int firstObj = message.indexOf('{');
+        int lastObj = message.lastIndexOf('}');
+        if (firstObj >= 0 && lastObj > firstObj) {
+            return message.substring(firstObj, lastObj + 1);
+        }
+        int firstArr = message.indexOf('[');
+        int lastArr = message.lastIndexOf(']');
+        if (firstArr >= 0 && lastArr > firstArr) {
+            return message.substring(firstArr, lastArr + 1);
+        }
+        return null;
+    }
+
+    private static String extractLeadingLabel(String message, String extractedJson) {
+        if (message == null || extractedJson == null) return null;
+        int idx = message.indexOf(extractedJson);
+        if (idx <= 0) return null;
+        String label = message.substring(0, idx).trim();
+        if (label.endsWith(":")) {
+            label = label.substring(0, label.length() - 1).trim();
+        }
+        return label.isBlank() ? null : label;
+    }
+
+    private static JsonElement unwrapJsonString(JsonElement element) {
+        if (element != null && element.isJsonPrimitive() && element.getAsJsonPrimitive().isString()) {
+            String raw = element.getAsString().trim();
+            if ((raw.startsWith("{") && raw.endsWith("}")) || (raw.startsWith("[") && raw.endsWith("]"))) {
+                try {
+                    return JsonParser.parseString(raw);
+                } catch (Exception ignored) {
+                    return element;
+                }
+            }
+        }
+        return element;
+    }
+
+    private static void formatJsonLines(JsonElement element, String indent, List<String> lines) {
+        if (element == null || element.isJsonNull()) {
+            lines.add(indent + "N/A");
+            return;
+        }
+
+        if (element.isJsonPrimitive()) {
+            lines.add(indent + element.getAsJsonPrimitive().getAsString());
+            return;
+        }
+
+        if (element.isJsonArray()) {
+            int index = 1;
+            for (JsonElement item : element.getAsJsonArray()) {
+                if (item.isJsonPrimitive()) {
+                    lines.add(indent + "• " + item.getAsJsonPrimitive().getAsString());
+                } else {
+                    lines.add(indent + "• Item " + index + ":");
+                    formatJsonLines(item, indent + "  ", lines);
+                }
+                index++;
+            }
+            return;
+        }
+
+        if (element.isJsonObject()) {
+            for (String key : element.getAsJsonObject().keySet()) {
+                JsonElement value = element.getAsJsonObject().get(key);
+                if (value == null || value.isJsonNull()) {
+                    lines.add(indent + key + ": N/A");
+                } else if (value.isJsonPrimitive()) {
+                    lines.add(indent + key + ": " + value.getAsJsonPrimitive().getAsString());
+                } else {
+                    lines.add(indent + key + ":");
+                    formatJsonLines(value, indent + "  ", lines);
+                }
+            }
+        }
     }
 
     private static List<String> toPagesFromLines(List<String> lines) {
