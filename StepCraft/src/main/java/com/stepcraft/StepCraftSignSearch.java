@@ -51,7 +51,6 @@ public final class StepCraftSignSearch {
             return false;
         }
 
-        debugPacket(packet, player);
         String query = extractQuery(packet);
         restore(player.getWorld(), pending);
 
@@ -64,44 +63,6 @@ public final class StepCraftSignSearch {
         return true;
     }
 
-    private static void debugPacket(Object packet, ServerPlayerEntity player) {
-        try {
-            StringBuilder sb = new StringBuilder("Sign packet debug: ");
-            sb.append(packet.getClass().getName());
-            player.sendMessage(Text.literal(sb.toString()));
-
-            for (java.lang.reflect.Method method : packet.getClass().getMethods()) {
-                if (method.getParameterCount() == 0 && method.getName().startsWith("get")) {
-                    try {
-                        Object value = method.invoke(packet);
-                        if (value != null) {
-                            String val = value.toString();
-                            if (val.length() > 120) val = val.substring(0, 120) + "...";
-                            player.sendMessage(Text.literal(method.getName() + " = " + val));
-                        }
-                    } catch (Exception ignored) {
-                        // ignore
-                    }
-                }
-            }
-
-            for (java.lang.reflect.Field field : packet.getClass().getDeclaredFields()) {
-                try {
-                    field.setAccessible(true);
-                    Object value = field.get(packet);
-                    if (value != null) {
-                        String val = value.toString();
-                        if (val.length() > 120) val = val.substring(0, 120) + "...";
-                        player.sendMessage(Text.literal("field " + field.getName() + " = " + val));
-                    }
-                } catch (Exception ignored) {
-                    // ignore
-                }
-            }
-        } catch (Exception ignored) {
-            // ignore
-        }
-    }
 
     private static void restore(World world, Pending pending) {
         world.setBlockState(pending.pos, pending.originalState, 3);

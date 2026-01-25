@@ -31,10 +31,8 @@ public class StepCraftSearchScreenHandler extends AnvilScreenHandler {
         if (player instanceof ServerPlayerEntity serverPlayer) {
             String query = readRenameText();
             if (query == null || query.isBlank()) {
-                serverPlayer.sendMessage(Text.literal("Search query captured: <empty>"));
                 StepCraftUIHelper.openPlayerSelectList(serverPlayer, null, 0, action);
             } else {
-                serverPlayer.sendMessage(Text.literal("Search query captured: " + query.trim()));
                 StepCraftUIHelper.openPlayerSelectList(serverPlayer, query.trim(), 0, action);
             }
         }

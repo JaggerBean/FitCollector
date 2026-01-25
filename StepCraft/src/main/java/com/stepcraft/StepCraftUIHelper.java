@@ -97,7 +97,6 @@ public class StepCraftUIHelper {
         int offset = Math.max(0, page) * limit;
         String cacheKey = trimmedQuery.toLowerCase() + "::" + page;
 
-        player.sendMessage(Text.literal("Loading players: q='" + trimmedQuery + "' page=" + page));
 
         CachedPage cached = PLAYER_PAGE_CACHE.get(cacheKey);
         long now = System.currentTimeMillis();
