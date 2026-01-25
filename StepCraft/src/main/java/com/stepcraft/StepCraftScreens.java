@@ -1,0 +1,28 @@
+package com.stepcraft;
+
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.inventory.SimpleInventory;
+import net.minecraft.item.ItemStack;
+import net.minecraft.screen.SimpleNamedScreenHandlerFactory;
+import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.text.Text;
+import net.minecraft.util.collection.DefaultedList;
+
+public final class StepCraftScreens {
+    private StepCraftScreens() {}
+
+    public static void openAdminChest(ServerPlayerEntity player, DefaultedList<ItemStack> items, Text title) {
+        SimpleInventory inv = new SimpleInventory(27);
+        for (int i = 0; i < 27; i++) {
+            ItemStack stack = (items != null && i < items.size()) ? items.get(i) : ItemStack.EMPTY;
+            inv.setStack(i, stack);
+        }
+
+        player.openHandledScreen(new SimpleNamedScreenHandlerFactory(
+                (int syncId, PlayerInventory playerInv, PlayerEntity p) ->
+                        new StepCraftChestScreenHandler(syncId, playerInv, inv),
+                title
+        ));
+    }
+}

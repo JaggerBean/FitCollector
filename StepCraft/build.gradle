@@ -35,19 +35,20 @@ dependencies {
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
 	mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
 	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
-
-	// Fabric API. This is technically optional, but you probably want it anyway.
-	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+modImplementation "net.fabricmc.fabric-api:fabric-api:0.97.8+1.20.6"
 	implementation "com.squareup.okhttp3:okhttp:4.10.0"
 	implementation "com.google.code.gson:gson:2.10.1"
-// Ensure OkHttp is bundled in the mod jar
+}
+
 configurations {
 	includeLibs
 }
 
-dependencies {
-	includeLibs "com.squareup.okhttp3:okhttp:4.10.0"
-	includeLibs "com.google.code.gson:gson:2.10.1"
+afterEvaluate {
+	dependencies {
+		includeLibs "com.squareup.okhttp3:okhttp:4.10.0"
+		includeLibs "com.google.code.gson:gson:2.10.1"
+	}
 }
 
 jar {
@@ -55,7 +56,6 @@ jar {
 	from {
 		configurations.includeLibs.collect { it.isDirectory() ? it : zipTree(it) }
 	}
-}
 }
 
 processResources {
