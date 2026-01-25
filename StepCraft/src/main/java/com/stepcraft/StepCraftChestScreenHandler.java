@@ -29,17 +29,17 @@ public class StepCraftChestScreenHandler extends GenericContainerScreenHandler {
                     && serverPlayer.hasPermissionLevel(4)) {
 
                 switch (slot) {
-                    case 0 -> { BackendClient.sendInfoCommand(serverPlayer, ""); return; }
-                    case 1 -> { serverPlayer.sendMessage(Text.literal("Ban command selected (implement logic)")); return; }
-                    case 2 -> { serverPlayer.sendMessage(Text.literal("Unban command selected (implement logic)")); return; }
-                    case 3 -> { serverPlayer.sendMessage(Text.literal("Delete command selected (implement logic)")); return; }
-                    case 4 -> { serverPlayer.sendMessage(Text.literal("Yesterday Steps command selected (implement logic)")); return; }
-                    case 5 -> { serverPlayer.sendMessage(Text.literal("Claim Status command selected (implement logic)")); return; }
-                    case 6 -> { serverPlayer.sendMessage(Text.literal("Claim Reward command selected (implement logic)")); return; }
-                    case 7 -> { serverPlayer.sendMessage(Text.literal("Players List command selected (implement logic)")); return; }
-                    case 8 -> { serverPlayer.sendMessage(Text.literal("All Server Bans command selected (implement logic)")); return; }
-                    case 9 -> { serverPlayer.sendMessage(Text.literal("All Players command selected (implement logic)")); return; }
-                    case 10 -> { serverPlayer.sendMessage(Text.literal("Health Check command selected (implement logic)")); return; }
+                    case 1 -> { BackendClient.sendInfoCommand(serverPlayer, ""); return; }
+                    case 3 -> { serverPlayer.sendMessage(Text.literal("Health Check command selected (implement logic)")); return; }
+                    case 5 -> { serverPlayer.sendMessage(Text.literal("Ban command selected (implement logic)")); return; }
+                    case 7 -> { serverPlayer.sendMessage(Text.literal("Delete command selected (implement logic)")); return; }
+                    case 10 -> { serverPlayer.sendMessage(Text.literal("Unban command selected (implement logic)")); return; }
+                    case 12 -> { serverPlayer.sendMessage(Text.literal("Claim Reward command selected (implement logic)")); return; }
+                    case 14 -> { serverPlayer.sendMessage(Text.literal("Claim Status command selected (implement logic)")); return; }
+                    case 16 -> { serverPlayer.sendMessage(Text.literal("Players List command selected (implement logic)")); return; }
+                    case 19 -> { serverPlayer.sendMessage(Text.literal("All Server Bans command selected (implement logic)")); return; }
+                    case 21 -> { serverPlayer.sendMessage(Text.literal("All Players command selected (implement logic)")); return; }
+                    case 23 -> { serverPlayer.sendMessage(Text.literal("Yesterday Steps command selected (implement logic)")); return; }
                 }
             }
         }

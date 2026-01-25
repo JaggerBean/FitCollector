@@ -49,7 +49,13 @@ public class StepCraftUIHelper {
                     {Items.FEATHER, "Yesterday Steps", "Fetch yesterday step count", Formatting.AQUA},
             };
 
-            for (int i = 0; i < commandItems.length && i < 27; i++) {
+            int[] slotLayout = new int[]{
+                    1, 3, 5, 7,
+                    10, 12, 14, 16,
+                    19, 21, 23
+            };
+
+            for (int i = 0; i < commandItems.length && i < slotLayout.length; i++) {
                 Item item = (Item) commandItems[i][0];
                 String name = (String) commandItems[i][1];
                 String lore = (String) commandItems[i][2];
@@ -61,7 +67,7 @@ public class StepCraftUIHelper {
                 stack.set(DataComponentTypes.CUSTOM_NAME, menuName(name, color));
                 stack.set(DataComponentTypes.LORE, new LoreComponent(List.of(menuLore(lore))));
 
-                items.set(i, stack);
+                items.set(slotLayout[i], stack);
             }
 
             StepCraftChestScreenHandler.open(player, items, Text.literal("Admin Commands"));
