@@ -11,6 +11,7 @@ import net.minecraft.text.Text;
 import net.minecraft.text.TextColor;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.collection.DefaultedList;
+import net.minecraft.util.Unit;
 
 import java.util.List;
 
@@ -70,7 +71,16 @@ public class StepCraftUIHelper {
                 items.set(slotLayout[i], stack);
             }
 
-            StepCraftChestScreenHandler.open(player, items, Text.literal("Admin Commands"));
+                ItemStack glass = new ItemStack(Items.PURPLE_STAINED_GLASS_PANE);
+                glass.set(DataComponentTypes.HIDE_TOOLTIP, Unit.INSTANCE);
+
+            for (int slot = 0; slot < items.size(); slot++) {
+                if (items.get(slot).isEmpty()) {
+                    items.set(slot, glass.copy());
+                }
+            }
+
+            StepCraftChestScreenHandler.open(player, items, Text.literal("StepCraft Admin Commands"));
         } catch (Exception e) {
             player.sendMessage(Text.literal("Error opening UI: " + e.getMessage()));
         }

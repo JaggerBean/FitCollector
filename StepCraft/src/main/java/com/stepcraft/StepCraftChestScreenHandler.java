@@ -28,6 +28,10 @@ public class StepCraftChestScreenHandler extends GenericContainerScreenHandler {
                     && player instanceof ServerPlayerEntity serverPlayer
                     && serverPlayer.hasPermissionLevel(4)) {
 
+                if (clicked.isOf(net.minecraft.item.Items.PURPLE_STAINED_GLASS_PANE)) {
+                    return;
+                }
+
                 switch (slot) {
                     case 1 -> { BackendClient.sendInfoCommand(serverPlayer, ""); return; }
                     case 3 -> { serverPlayer.sendMessage(Text.literal("Health Check command selected (implement logic)")); return; }
