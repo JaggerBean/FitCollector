@@ -9,6 +9,8 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
 import net.minecraft.util.collection.DefaultedList;
 
+import java.util.List;
+
 public final class StepCraftScreens {
     private StepCraftScreens() {}
 
@@ -23,6 +25,21 @@ public final class StepCraftScreens {
                 (int syncId, PlayerInventory playerInv, PlayerEntity p) ->
                         new StepCraftChestScreenHandler(syncId, playerInv, inv),
                 title
+        ));
+    }
+
+    public static void openPlayerList(ServerPlayerEntity player, List<String> players, String query, int page) {
+        player.openHandledScreen(new SimpleNamedScreenHandlerFactory(
+                (int syncId, PlayerInventory playerInv, PlayerEntity p) ->
+                        new StepCraftPlayerListScreenHandler(syncId, playerInv, players, query, page),
+                Text.literal("Select Player")
+        ));
+    }
+
+    public static void openActionMenu(ServerPlayerEntity player, String targetPlayer) {
+        player.openHandledScreen(new StepCraftActionMenuScreenFactory(
+                targetPlayer,
+                Text.literal("Manage " + targetPlayer)
         ));
     }
 }

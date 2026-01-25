@@ -1,0 +1,180 @@
+package com.stepcraft;
+
+import net.minecraft.component.DataComponentTypes;
+import net.minecraft.component.type.LoreComponent;
+import net.minecraft.component.type.ProfileComponent;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.inventory.SimpleInventory;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
+import net.minecraft.screen.GenericContainerScreenHandler;
+import net.minecraft.screen.ScreenHandlerType;
+import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.text.Style;
+import net.minecraft.text.Text;
+import net.minecraft.text.TextColor;
+import net.minecraft.text.ClickEvent;
+import net.minecraft.util.Unit;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import com.mojang.authlib.GameProfile;
+
+public class StepCraftPlayerListScreenHandler extends GenericContainerScreenHandler {
+    private static final int ROWS = 6;
+    private static final int PAGE_SIZE = 45;
+    private static final int SLOT_PREV = 45;
+    private static final int SLOT_BACK = 46;
+    private static final int SLOT_PAGE = 48;
+    private static final int SLOT_SEARCH = 49;
+    private static final int SLOT_CLEAR = 50;
+    private static final int SLOT_NEXT = 53;
+
+    private final SimpleInventory inventory;
+    private final List<String> players;
+    private final String query;
+    private final int page;
+    private final int totalPages;
+    private final Map<Integer, String> slotToPlayer = new HashMap<>();
+
+    public StepCraftPlayerListScreenHandler(int syncId, PlayerInventory playerInventory, List<String> players, String query, int page) {
+        this(syncId, playerInventory, new SimpleInventory(ROWS * 9), players, query, page);
+    }
+
+    private StepCraftPlayerListScreenHandler(int syncId, PlayerInventory playerInventory, SimpleInventory inventory, List<String> players, String query, int page) {
+        super(ScreenHandlerType.GENERIC_9X6, syncId, playerInventory, inventory, ROWS);
+        this.inventory = inventory;
+        this.players = players;
+        this.query = query == null ? "" : query;
+
+        int calculatedPages = Math.max(1, (int) Math.ceil(players.size() / (double) PAGE_SIZE));
+        this.totalPages = calculatedPages;
+        this.page = Math.max(0, Math.min(page, totalPages - 1));
+
+        buildPage();
+    }
+
+    private void buildPage() {
+        slotToPlayer.clear();
+        inventory.clear();
+
+        int start = page * PAGE_SIZE;
+        for (int i = 0; i < PAGE_SIZE; i++) {
+            int index = start + i;
+            if (index >= players.size()) break;
+            String name = players.get(index);
+            ItemStack head = createPlayerHead(name);
+            inventory.setStack(i, head);
+            slotToPlayer.put(i, name);
+        }
+
+        ItemStack pane = new ItemStack(Items.PURPLE_STAINED_GLASS_PANE);
+        pane.set(DataComponentTypes.HIDE_TOOLTIP, Unit.INSTANCE);
+        for (int slot = PAGE_SIZE; slot < inventory.size(); slot++) {
+            inventory.setStack(slot, pane.copy());
+        }
+
+        if (page > 0) {
+            inventory.setStack(SLOT_PREV, menuItem(Items.ARROW, "Previous", 0xAAAAAA));
+        }
+
+        inventory.setStack(SLOT_BACK, menuItem(Items.BOOK, "Back", 0xFFFFFF));
+
+        String pageLabel = "Page " + (page + 1) + " / " + totalPages;
+        ItemStack pageItem = menuItem(Items.PAPER, pageLabel, 0xCCCCCC);
+        if (!query.isEmpty()) {
+            pageItem.set(DataComponentTypes.LORE, new LoreComponent(List.of(
+                    Text.literal("Filter: " + query).setStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xAAAAAA)).withItalic(false))
+            )));
+        }
+        inventory.setStack(SLOT_PAGE, pageItem);
+
+        inventory.setStack(SLOT_SEARCH, menuItem(Items.COMPASS, "Search", 0x55FFFF));
+        if (!query.isEmpty()) {
+            inventory.setStack(SLOT_CLEAR, menuItem(Items.BARRIER, "Clear Search", 0xFF5555));
+        }
+
+        if (page < totalPages - 1) {
+            inventory.setStack(SLOT_NEXT, menuItem(Items.ARROW, "Next", 0xAAAAAA));
+        }
+    }
+
+    @Override
+    public void onSlotClick(int slot, int button, net.minecraft.screen.slot.SlotActionType actionType, PlayerEntity player) {
+        if (!(player instanceof ServerPlayerEntity serverPlayer)) {
+            super.onSlotClick(slot, button, actionType, player);
+            return;
+        }
+
+        if (slot < 0 || slot >= inventory.size()) {
+            super.onSlotClick(slot, button, actionType, player);
+            return;
+        }
+
+        ItemStack clicked = inventory.getStack(slot);
+        if (clicked.isEmpty()) return;
+
+        if (slotToPlayer.containsKey(slot)) {
+            String target = slotToPlayer.get(slot);
+            StepCraftScreens.openActionMenu(serverPlayer, target);
+            return;
+        }
+
+        if (slot == SLOT_PREV && page > 0) {
+            StepCraftScreens.openPlayerList(serverPlayer, players, query, page - 1);
+            return;
+        }
+
+        if (slot == SLOT_NEXT && page < totalPages - 1) {
+            StepCraftScreens.openPlayerList(serverPlayer, players, query, page + 1);
+            return;
+        }
+
+        if (slot == SLOT_BACK) {
+            StepCraftUIHelper.openPlayersList(serverPlayer);
+            return;
+        }
+
+        if (slot == SLOT_SEARCH) {
+            serverPlayer.sendMessage(Text.literal("Click to search players")
+                .setStyle(Style.EMPTY.withClickEvent(
+                    new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/stepcraft players_gui ")
+                )));
+            return;
+        }
+
+        if (slot == SLOT_CLEAR) {
+            StepCraftUIHelper.openPlayerSelectList(serverPlayer, null, 0);
+            return;
+        }
+    }
+
+    private static ItemStack menuItem(net.minecraft.item.Item item, String label, int rgb) {
+        ItemStack stack = new ItemStack(item);
+        stack.set(DataComponentTypes.CUSTOM_NAME,
+                Text.literal(label).setStyle(Style.EMPTY.withColor(TextColor.fromRgb(rgb)).withItalic(false))
+        );
+        return stack;
+    }
+
+    private static ItemStack createPlayerHead(String username) {
+        ItemStack head = new ItemStack(Items.PLAYER_HEAD);
+        head.set(DataComponentTypes.CUSTOM_NAME,
+                Text.literal(username).setStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xFFFFFF)).withItalic(false))
+        );
+
+        GameProfile profile = new GameProfile(
+            UUID.nameUUIDFromBytes(("OfflinePlayer:" + username).getBytes()),
+            username
+        );
+        head.set(DataComponentTypes.PROFILE, new ProfileComponent(profile));
+
+        head.set(DataComponentTypes.LORE, new LoreComponent(List.of(
+                Text.literal("Click to manage").setStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xAAAAAA)).withItalic(false))
+        )));
+        return head;
+    }
+}

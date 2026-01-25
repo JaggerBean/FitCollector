@@ -10,10 +10,9 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
 import net.minecraft.util.collection.DefaultedList;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -23,6 +22,11 @@ public class StepCraftChestScreenHandler extends GenericContainerScreenHandler {
     private final SimpleInventory inventory;
     private static final ScheduledExecutorService SCHEDULER = Executors.newSingleThreadScheduledExecutor(r -> {
         Thread t = new Thread(r, "stepcraft-ui");
+        t.setDaemon(true);
+        return t;
+    });
+    private static final ExecutorService BACKEND_EXECUTOR = Executors.newFixedThreadPool(4, r -> {
+        Thread t = new Thread(r, "stepcraft-backend");
         t.setDaemon(true);
         return t;
     });
@@ -49,48 +53,15 @@ public class StepCraftChestScreenHandler extends GenericContainerScreenHandler {
                 switch (slot) {
                     case 1 -> { sendBackend(serverPlayer, "Server info: ", BackendClient::getServerInfo); return; }
                     case 3 -> { sendBackend(serverPlayer, "Health check: ", BackendClient::healthCheck); return; }
-                    case 5 -> {
-                        String target = resolveSingleOtherPlayer(serverPlayer, "ban");
-                        if (target == null) return;
-                        sendBackend(serverPlayer, "Ban player " + target + ": ",
-                                () -> BackendClient.banPlayer(target, "broke code of conduct"));
-                        return;
-                    }
-                    case 7 -> {
-                        String target = resolveSingleOtherPlayer(serverPlayer, "delete_player");
-                        if (target == null) return;
-                        sendBackend(serverPlayer, "Delete player " + target + ": ",
-                                () -> BackendClient.deletePlayer(target));
-                        return;
-                    }
-                    case 10 -> {
-                        String target = resolveSingleOtherPlayer(serverPlayer, "unban");
-                        if (target == null) return;
-                        sendBackend(serverPlayer, "Unban player " + target + ": ",
-                                () -> BackendClient.unbanPlayer(target));
-                        return;
-                    }
-                    case 12 -> {
-                        String username = serverPlayer.getName().getString();
-                        sendBackend(serverPlayer, "Claim reward for " + username + ": ",
-                                () -> BackendClient.claimRewardForPlayer(username));
-                        return;
-                    }
-                    case 14 -> {
-                        String username = serverPlayer.getName().getString();
-                        sendBackend(serverPlayer, "Claim status for " + username + ": ",
-                                () -> BackendClient.getClaimStatusForPlayer(username));
-                        return;
-                    }
-                    case 16 -> { sendBackend(serverPlayer, "Players list: ", BackendClient::getPlayersList); return; }
+                    case 5 -> { StepCraftUIHelper.openPlayerSelectList(serverPlayer, null, 0); return; }
+                    case 7 -> { StepCraftUIHelper.openPlayerSelectList(serverPlayer, null, 0); return; }
+                    case 10 -> { StepCraftUIHelper.openPlayerSelectList(serverPlayer, null, 0); return; }
+                    case 12 -> { StepCraftUIHelper.openPlayerSelectList(serverPlayer, null, 0); return; }
+                    case 14 -> { StepCraftUIHelper.openPlayerSelectList(serverPlayer, null, 0); return; }
+                    case 16 -> { StepCraftUIHelper.openPlayerSelectList(serverPlayer, null, 0); return; }
                     case 19 -> { sendBackend(serverPlayer, "Bans: ", BackendClient::getAllServerBans); return; }
                     case 21 -> { sendBackend(serverPlayer, "All players: ", BackendClient::getAllPlayers); return; }
-                    case 23 -> {
-                        String username = serverPlayer.getName().getString();
-                        sendBackend(serverPlayer, "Yesterday steps for " + username + ": ",
-                                () -> BackendClient.getYesterdayStepsForPlayer(username));
-                        return;
-                    }
+                    case 23 -> { StepCraftUIHelper.openPlayerSelectList(serverPlayer, null, 0); return; }
                 }
             }
         }
@@ -103,11 +74,11 @@ public class StepCraftChestScreenHandler extends GenericContainerScreenHandler {
         StepCraftScreens.openAdminChest(player, items, title);
     }
 
-    private interface BackendCall {
+    public interface BackendCall {
         String run() throws Exception;
     }
 
-    private static void sendBackend(ServerPlayerEntity player, String prefix, BackendCall call) {
+    public static void sendBackend(ServerPlayerEntity player, String prefix, BackendCall call) {
         AtomicBoolean completed = new AtomicBoolean(false);
         ScheduledFuture<?> pendingMessage = SCHEDULER.schedule(() -> {
             if (!completed.get()) {
@@ -124,7 +95,7 @@ public class StepCraftChestScreenHandler extends GenericContainerScreenHandler {
                     } catch (Exception e) {
                         throw new RuntimeException(e);
                     }
-                })
+                }, BACKEND_EXECUTOR)
                 .whenComplete((result, error) -> player.getServer().execute(() -> {
                     completed.set(true);
                     pendingMessage.cancel(false);
@@ -137,24 +108,4 @@ public class StepCraftChestScreenHandler extends GenericContainerScreenHandler {
                 }));
     }
 
-    private static String resolveSingleOtherPlayer(ServerPlayerEntity admin, String action) {
-        List<ServerPlayerEntity> others = new ArrayList<>();
-        for (ServerPlayerEntity p : admin.getServer().getPlayerManager().getPlayerList()) {
-            if (!p.getUuid().equals(admin.getUuid())) {
-                others.add(p);
-            }
-        }
-
-        if (others.isEmpty()) {
-            admin.sendMessage(Text.literal("No target player online. Use /stepcraft " + action + " <username>."));
-            return null;
-        }
-
-        if (others.size() > 1) {
-            admin.sendMessage(Text.literal("Multiple players online. Use /stepcraft " + action + " <username>."));
-            return null;
-        }
-
-        return others.get(0).getName().getString();
-    }
 }

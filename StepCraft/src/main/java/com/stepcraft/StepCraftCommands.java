@@ -37,6 +37,31 @@ public class StepCraftCommands {
                     return Command.SINGLE_SUCCESS;
                 })
             )
+            // /stepcraft players_gui [query] (OPs only)
+            .then(CommandManager.literal("players_gui")
+                .requires(source -> source.hasPermissionLevel(4))
+                .executes(context -> {
+                    ServerCommandSource source = context.getSource();
+                    if (source.getEntity() instanceof net.minecraft.server.network.ServerPlayerEntity player) {
+                        StepCraftUIHelper.openPlayerSelectList(player, null, 0);
+                    } else {
+                        source.sendError(Text.literal("Only players can use this command."));
+                    }
+                    return Command.SINGLE_SUCCESS;
+                })
+                .then(CommandManager.argument("query", StringArgumentType.greedyString())
+                    .executes(context -> {
+                        ServerCommandSource source = context.getSource();
+                        String query = StringArgumentType.getString(context, "query");
+                        if (source.getEntity() instanceof net.minecraft.server.network.ServerPlayerEntity player) {
+                            StepCraftUIHelper.openPlayerSelectList(player, query, 0);
+                        } else {
+                            source.sendError(Text.literal("Only players can use this command."));
+                        }
+                        return Command.SINGLE_SUCCESS;
+                    })
+                )
+            )
             // /stepcraft claim_status <username> (OPs only)
             .then(CommandManager.literal("claim_status")
                 .requires(source -> source.hasPermissionLevel(4))

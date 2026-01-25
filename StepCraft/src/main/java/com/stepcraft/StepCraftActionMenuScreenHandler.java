@@ -5,39 +5,101 @@ import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.inventory.SimpleInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
+import net.minecraft.component.DataComponentTypes;
 import net.minecraft.screen.GenericContainerScreenHandler;
 import net.minecraft.screen.ScreenHandlerType;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
-import net.minecraft.util.collection.DefaultedList;
+import net.minecraft.text.TextColor;
+import net.minecraft.text.Style;
+import net.minecraft.util.Unit;
 
 public class StepCraftActionMenuScreenHandler extends GenericContainerScreenHandler {
     private final String targetPlayer;
+    private final SimpleInventory inventory;
+    private static final int ROWS = 2;
 
     public StepCraftActionMenuScreenHandler(int syncId, PlayerInventory playerInventory, String targetPlayer) {
-        super(ScreenHandlerType.GENERIC_9X1, syncId, playerInventory, new SimpleInventory(9), 1);
+        super(ScreenHandlerType.GENERIC_9X2, syncId, playerInventory, new SimpleInventory(ROWS * 9), ROWS);
         this.targetPlayer = targetPlayer;
-        // Fill with action items
-        this.getInventory().setStack(0, makeActionItem(new ItemStack(Items.IRON_SWORD), "Ban Player"));
-        this.getInventory().setStack(1, makeActionItem(new ItemStack(Items.PAPER), "Unban Player"));
-        this.getInventory().setStack(2, makeActionItem(new ItemStack(Items.BARRIER), "Delete Player"));
+        this.inventory = (SimpleInventory) this.getInventory();
+
+        ItemStack pane = new ItemStack(Items.PURPLE_STAINED_GLASS_PANE);
+        pane.set(DataComponentTypes.HIDE_TOOLTIP, Unit.INSTANCE);
+        for (int i = 0; i < inventory.size(); i++) {
+            inventory.setStack(i, pane.copy());
+        }
+
+        inventory.setStack(0, makeActionItem(new ItemStack(Items.IRON_SWORD), "Ban Player", 0xFF5555));
+        inventory.setStack(2, makeActionItem(new ItemStack(Items.PAPER), "Unban Player", 0x55FF55));
+        inventory.setStack(4, makeActionItem(new ItemStack(Items.BARRIER), "Delete Player", 0xAA0000));
+
+        inventory.setStack(9, makeActionItem(new ItemStack(Items.EMERALD), "Claim Reward", 0x55FF55));
+        inventory.setStack(11, makeActionItem(new ItemStack(Items.MAP), "Claim Status", 0xFFAA00));
+        inventory.setStack(13, makeActionItem(new ItemStack(Items.FEATHER), "Yesterday Steps", 0x55FFFF));
+        inventory.setStack(16, makeActionItem(new ItemStack(Items.BOOK), "Back", 0xFFFFFF));
     }
 
-    private ItemStack makeActionItem(ItemStack stack, String name) {
-        net.minecraft.nbt.NbtCompound display = new net.minecraft.nbt.NbtCompound();
-        display.putString("Name", "{\"text\":\"" + name + "\"}");
-        net.minecraft.nbt.NbtCompound tag = new net.minecraft.nbt.NbtCompound();
-        tag.put("display", display);
-        try {
-            java.lang.reflect.Method setTag = ItemStack.class.getMethod("setTag", net.minecraft.nbt.NbtCompound.class);
-            setTag.invoke(stack, tag);
-        } catch (Exception e) {
-            // fallback: do nothing or log
-        }
+    private ItemStack makeActionItem(ItemStack stack, String name, int rgb) {
+        stack.set(DataComponentTypes.CUSTOM_NAME,
+            net.minecraft.text.Text.literal(name)
+                .setStyle(Style.EMPTY.withColor(TextColor.fromRgb(rgb)).withItalic(false))
+        );
         return stack;
     }
 
     public String getTargetPlayer() {
         return targetPlayer;
+    }
+
+    @Override
+    public void onSlotClick(int slot, int button, net.minecraft.screen.slot.SlotActionType actionType, PlayerEntity player) {
+        if (!(player instanceof ServerPlayerEntity serverPlayer)) {
+            super.onSlotClick(slot, button, actionType, player);
+            return;
+        }
+
+        if (slot < 0 || slot >= this.getInventory().size()) {
+            super.onSlotClick(slot, button, actionType, player);
+            return;
+        }
+
+        switch (slot) {
+            case 0 -> {
+                StepCraftChestScreenHandler.sendBackend(serverPlayer, "Ban player " + targetPlayer + ": ",
+                        () -> BackendClient.banPlayer(targetPlayer, "broke code of conduct"));
+                return;
+            }
+            case 2 -> {
+                StepCraftChestScreenHandler.sendBackend(serverPlayer, "Unban player " + targetPlayer + ": ",
+                        () -> BackendClient.unbanPlayer(targetPlayer));
+                return;
+            }
+            case 4 -> {
+                StepCraftChestScreenHandler.sendBackend(serverPlayer, "Delete player " + targetPlayer + ": ",
+                        () -> BackendClient.deletePlayer(targetPlayer));
+                return;
+            }
+            case 9 -> {
+                StepCraftChestScreenHandler.sendBackend(serverPlayer, "Claim reward for " + targetPlayer + ": ",
+                        () -> BackendClient.claimRewardForPlayer(targetPlayer));
+                return;
+            }
+            case 11 -> {
+                StepCraftChestScreenHandler.sendBackend(serverPlayer, "Claim status for " + targetPlayer + ": ",
+                        () -> BackendClient.getClaimStatusForPlayer(targetPlayer));
+                return;
+            }
+            case 13 -> {
+                StepCraftChestScreenHandler.sendBackend(serverPlayer, "Yesterday steps for " + targetPlayer + ": ",
+                        () -> BackendClient.getYesterdayStepsForPlayer(targetPlayer));
+                return;
+            }
+            case 16 -> {
+                StepCraftUIHelper.openPlayerSelectList(serverPlayer, null, 0);
+                return;
+            }
+            default -> { return; }
+        }
     }
 }

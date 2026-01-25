@@ -13,9 +13,15 @@ import net.minecraft.util.Formatting;
 import net.minecraft.util.collection.DefaultedList;
 import net.minecraft.util.Unit;
 
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 public class StepCraftUIHelper {
+    private static final long PLAYER_LIST_TTL_MS = 10_000;
+    private static List<String> cachedPlayerNames = new ArrayList<>();
+    private static long cachedPlayerNamesAt = 0L;
 
     // Open the admin chest GUI (server-only safe; vanilla client compatible)
     public static void openPlayersList(ServerPlayerEntity player) {
@@ -84,6 +90,48 @@ public class StepCraftUIHelper {
         } catch (Exception e) {
             player.sendMessage(Text.literal("Error opening UI: " + e.getMessage()));
         }
+    }
+
+    public static void openPlayerSelectList(ServerPlayerEntity player, String query, int page) {
+        String trimmedQuery = (query == null) ? "" : query.trim();
+        long now = System.currentTimeMillis();
+        if (!cachedPlayerNames.isEmpty() && (now - cachedPlayerNamesAt) <= PLAYER_LIST_TTL_MS) {
+            List<String> names = new ArrayList<>(cachedPlayerNames);
+            player.getServer().execute(() -> renderPlayerList(player, trimmedQuery, page, names));
+            return;
+        }
+
+        CompletableFuture
+                .supplyAsync(() -> {
+                    try {
+                        return BackendClient.getRegisteredPlayerNames();
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                })
+                .whenComplete((names, error) -> player.getServer().execute(() -> {
+                    if (error != null) {
+                        Throwable cause = error.getCause() != null ? error.getCause() : error;
+                        player.sendMessage(Text.literal("Error loading players: " + cause.getMessage()));
+                        return;
+                    }
+                    cachedPlayerNames = new ArrayList<>(names);
+                    cachedPlayerNamesAt = System.currentTimeMillis();
+                    renderPlayerList(player, trimmedQuery, page, names);
+                }));
+    }
+
+    private static void renderPlayerList(ServerPlayerEntity player, String query, int page, List<String> names) {
+        List<String> filtered = new ArrayList<>();
+        String q = query.toLowerCase();
+        for (String name : names) {
+            if (query.isEmpty() || name.toLowerCase().contains(q)) {
+                filtered.add(name);
+            }
+        }
+
+        filtered.sort(Comparator.naturalOrder());
+        StepCraftScreens.openPlayerList(player, filtered, query, page);
     }
 
     private static Text menuName(String label, Formatting color) {
