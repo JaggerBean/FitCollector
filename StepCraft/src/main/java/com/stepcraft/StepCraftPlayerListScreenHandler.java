@@ -11,6 +11,7 @@ import net.minecraft.item.Items;
 import net.minecraft.screen.GenericContainerScreenHandler;
 import net.minecraft.screen.ScreenHandlerType;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 import net.minecraft.text.TextColor;
@@ -20,12 +21,11 @@ import net.minecraft.util.Unit;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import com.mojang.authlib.GameProfile;
 
 public class StepCraftPlayerListScreenHandler extends GenericContainerScreenHandler {
     private static final int ROWS = 6;
-    private static final int PAGE_SIZE = 45;
+    public static final int PAGE_SIZE = 45;
     private static final int SLOT_PREV = 45;
     private static final int SLOT_BACK = 46;
     private static final int SLOT_PAGE = 48;
@@ -38,19 +38,23 @@ public class StepCraftPlayerListScreenHandler extends GenericContainerScreenHand
     private final String query;
     private final int page;
     private final int totalPages;
+    private final int totalPlayers;
+    private final ServerPlayerEntity viewer;
     private final Map<Integer, String> slotToPlayer = new HashMap<>();
 
-    public StepCraftPlayerListScreenHandler(int syncId, PlayerInventory playerInventory, List<String> players, String query, int page) {
-        this(syncId, playerInventory, new SimpleInventory(ROWS * 9), players, query, page);
+    public StepCraftPlayerListScreenHandler(int syncId, PlayerInventory playerInventory, List<String> players, String query, int page, int totalPlayers) {
+        this(syncId, playerInventory, new SimpleInventory(ROWS * 9), players, query, page, totalPlayers);
     }
 
-    private StepCraftPlayerListScreenHandler(int syncId, PlayerInventory playerInventory, SimpleInventory inventory, List<String> players, String query, int page) {
+    private StepCraftPlayerListScreenHandler(int syncId, PlayerInventory playerInventory, SimpleInventory inventory, List<String> players, String query, int page, int totalPlayers) {
         super(ScreenHandlerType.GENERIC_9X6, syncId, playerInventory, inventory, ROWS);
         this.inventory = inventory;
         this.players = players;
         this.query = query == null ? "" : query;
+        this.totalPlayers = Math.max(totalPlayers, players.size());
+        this.viewer = (ServerPlayerEntity) playerInventory.player;
 
-        int calculatedPages = Math.max(1, (int) Math.ceil(players.size() / (double) PAGE_SIZE));
+        int calculatedPages = Math.max(1, (int) Math.ceil(this.totalPlayers / (double) PAGE_SIZE));
         this.totalPages = calculatedPages;
         this.page = Math.max(0, Math.min(page, totalPages - 1));
 
@@ -61,12 +65,28 @@ public class StepCraftPlayerListScreenHandler extends GenericContainerScreenHand
         slotToPlayer.clear();
         inventory.clear();
 
+        if (players.isEmpty() && totalPlayers == 0) {
+            ItemStack loading = menuItem(Items.CLOCK, "Loading...", 0xAAAAAA);
+            inventory.setStack(22, loading);
+
+            ItemStack pane = new ItemStack(Items.PURPLE_STAINED_GLASS_PANE);
+            pane.set(DataComponentTypes.HIDE_TOOLTIP, Unit.INSTANCE);
+            for (int slot = 0; slot < inventory.size(); slot++) {
+                if (inventory.getStack(slot).isEmpty()) {
+                    inventory.setStack(slot, pane.copy());
+                }
+            }
+            return;
+        }
+
+        boolean useSkins = true;
+
         int start = page * PAGE_SIZE;
         for (int i = 0; i < PAGE_SIZE; i++) {
             int index = start + i;
             if (index >= players.size()) break;
             String name = players.get(index);
-            ItemStack head = createPlayerHead(name);
+            ItemStack head = createPlayerHead(name, useSkins, viewer.getServer(), i, this);
             inventory.setStack(i, head);
             slotToPlayer.put(i, name);
         }
@@ -124,12 +144,12 @@ public class StepCraftPlayerListScreenHandler extends GenericContainerScreenHand
         }
 
         if (slot == SLOT_PREV && page > 0) {
-            StepCraftScreens.openPlayerList(serverPlayer, players, query, page - 1);
+            StepCraftScreens.openPlayerList(serverPlayer, players, query, page - 1, totalPlayers);
             return;
         }
 
         if (slot == SLOT_NEXT && page < totalPages - 1) {
-            StepCraftScreens.openPlayerList(serverPlayer, players, query, page + 1);
+            StepCraftScreens.openPlayerList(serverPlayer, players, query, page + 1, totalPlayers);
             return;
         }
 
@@ -160,21 +180,31 @@ public class StepCraftPlayerListScreenHandler extends GenericContainerScreenHand
         return stack;
     }
 
-    private static ItemStack createPlayerHead(String username) {
+    private static ItemStack createPlayerHead(String username, boolean useSkins, MinecraftServer server, int slot, StepCraftPlayerListScreenHandler handler) {
+        // Avoid reusing cached heads while skins are resolving to prevent shared texture state.
+
         ItemStack head = new ItemStack(Items.PLAYER_HEAD);
         head.set(DataComponentTypes.CUSTOM_NAME,
                 Text.literal(username).setStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xFFFFFF)).withItalic(false))
         );
 
-        GameProfile profile = new GameProfile(
-            UUID.nameUUIDFromBytes(("OfflinePlayer:" + username).getBytes()),
-            username
-        );
-        head.set(DataComponentTypes.PROFILE, new ProfileComponent(profile));
+        if (useSkins && server != null) {
+            StepCraftSkinService.fetchProfile(username).thenAccept(resolved -> server.execute(() -> {
+                if (resolved == null) {
+                    return;
+                }
+                ItemStack refreshed = handler.getInventory().getStack(slot).copy();
+                refreshed.set(DataComponentTypes.PROFILE, new ProfileComponent(resolved));
+                handler.getInventory().setStack(slot, refreshed);
+                handler.getInventory().markDirty();
+                handler.sendContentUpdates();
+            }));
+        }
 
         head.set(DataComponentTypes.LORE, new LoreComponent(List.of(
                 Text.literal("Click to manage").setStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xAAAAAA)).withItalic(false))
         )));
         return head;
     }
+
 }

@@ -1,9 +1,14 @@
 package com.stepcraft;
 
+import okhttp3.Cache;
+import okhttp3.ConnectionPool;
+import okhttp3.Dns;
+import okhttp3.Dispatcher;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 import java.io.IOException;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import com.google.gson.Gson;
@@ -11,12 +16,21 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import java.util.concurrent.TimeUnit;
+import java.net.Inet4Address;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import java.util.concurrent.ConcurrentHashMap;
 
     
 
 
 public class BackendClient {
     private static final Gson gson = new Gson();
+    private static final Logger LOGGER = LoggerFactory.getLogger("stepcraft-backend");
+    private static final long DNS_TTL_MS = 60_000;
+    private static final ConcurrentHashMap<String, DnsEntry> DNS_CACHE = new ConcurrentHashMap<>();
 
     private static String executeRequest(Request request, boolean retryable) throws IOException {
         int maxAttempts = retryable ? 3 : 1;
@@ -24,9 +38,13 @@ public class BackendClient {
         IOException lastIo = null;
 
         for (int attempt = 1; attempt <= maxAttempts; attempt++) {
+            long startNs = System.nanoTime();
             try (Response response = client.newCall(request).execute()) {
                 int code = response.code();
                 String body = response.body() != null ? response.body().string() : "";
+                long elapsedMs = (System.nanoTime() - startNs) / 1_000_000L;
+                LOGGER.info("HTTP {} {} -> {} in {} ms (attempt {}/{})",
+                        request.method(), request.url(), code, elapsedMs, attempt, maxAttempts);
 
                 if (response.isSuccessful()) {
                     return body.isEmpty() ? "No response body" : body;
@@ -44,6 +62,9 @@ public class BackendClient {
                 }
                 return message;
             } catch (IOException e) {
+                long elapsedMs = (System.nanoTime() - startNs) / 1_000_000L;
+                LOGGER.warn("HTTP {} {} failed in {} ms (attempt {}/{}): {}",
+                        request.method(), request.url(), elapsedMs, attempt, maxAttempts, e.getMessage());
                 lastIo = e;
                 if (retryable && attempt < maxAttempts) {
                     backoffSleep(backoffMs);
@@ -118,19 +139,40 @@ public class BackendClient {
                                     .build();
                             return executeRequest(request, true);
                         }
-                    public static List<String> getRegisteredPlayerNames() throws IOException {
-                        String json = getPlayersList();
+
+                        public static String getPlayersList(int limit, int offset, String query) throws IOException {
+                            StringBuilder url = new StringBuilder(BASE_URL + "/v1/servers/players/list")
+                                    .append("?limit=").append(limit)
+                                    .append("&offset=").append(offset);
+                            if (query != null && !query.isBlank()) {
+                                url.append("&q=").append(java.net.URLEncoder.encode(query, java.nio.charset.StandardCharsets.UTF_8));
+                            }
+
+                            Request request = new Request.Builder()
+                                    .url(url.toString())
+                                    .header("X-API-Key", StepCraftConfig.getApiKey())
+                                    .build();
+                            return executeRequest(request, true);
+                        }
+                    public static PlayerListPage getRegisteredPlayerNamesPage(int limit, int offset, String query) throws IOException {
+                        String json = getPlayersList(limit, offset, query);
                         List<String> names = new ArrayList<>();
+                        int total = 0;
 
                         try {
                             JsonObject root = gson.fromJson(json, JsonObject.class);
-                            if (root != null && root.has("players") && root.get("players").isJsonArray()) {
-                                JsonArray players = root.getAsJsonArray("players");
-                                for (JsonElement element : players) {
-                                    if (element != null && element.isJsonObject()) {
-                                        JsonObject player = element.getAsJsonObject();
-                                        if (player.has("minecraft_username")) {
-                                            names.add(player.get("minecraft_username").getAsString());
+                            if (root != null) {
+                                if (root.has("total_players")) {
+                                    total = root.get("total_players").getAsInt();
+                                }
+                                if (root.has("players") && root.get("players").isJsonArray()) {
+                                    JsonArray players = root.getAsJsonArray("players");
+                                    for (JsonElement element : players) {
+                                        if (element != null && element.isJsonObject()) {
+                                            JsonObject player = element.getAsJsonObject();
+                                            if (player.has("minecraft_username")) {
+                                                names.add(player.get("minecraft_username").getAsString());
+                                            }
                                         }
                                     }
                                 }
@@ -139,7 +181,17 @@ public class BackendClient {
                             // Fallback: return empty list on parse errors
                         }
 
-                        return names;
+                        return new PlayerListPage(names, total);
+                    }
+
+                    public static class PlayerListPage {
+                        public final List<String> names;
+                        public final int total;
+
+                        public PlayerListPage(List<String> names, int total) {
+                            this.names = names;
+                            this.total = total;
+                        }
                     }
                     // Server endpoint: get all bans for this server
                     public static String getAllServerBans() throws IOException {
@@ -178,7 +230,52 @@ public class BackendClient {
             .readTimeout(8, TimeUnit.SECONDS)
             .writeTimeout(5, TimeUnit.SECONDS)
             .callTimeout(10, TimeUnit.SECONDS)
+                .retryOnConnectionFailure(true)
+                .connectionPool(new ConnectionPool(10, 5, TimeUnit.MINUTES))
+                .dispatcher(buildDispatcher())
+                .cache(new Cache(new File("config/stepcraft-http-cache"), 10L * 1024L * 1024L))
+                .dns(new Dns() {
+                    @Override
+                    public List<InetAddress> lookup(String hostname) throws UnknownHostException {
+                        long now = System.currentTimeMillis();
+                        DnsEntry cached = DNS_CACHE.get(hostname);
+                        if (cached != null && (now - cached.cachedAt) <= DNS_TTL_MS) {
+                            return cached.addresses;
+                        }
+
+                        List<InetAddress> all = Dns.SYSTEM.lookup(hostname);
+                        List<InetAddress> v4 = new ArrayList<>();
+                        List<InetAddress> v6 = new ArrayList<>();
+                        for (InetAddress addr : all) {
+                            if (addr instanceof Inet4Address) {
+                                v4.add(addr);
+                            } else {
+                                v6.add(addr);
+                            }
+                        }
+                        v4.addAll(v6);
+                        DNS_CACHE.put(hostname, new DnsEntry(v4, now));
+                        return v4;
+                    }
+                })
             .build();
+
+        private static Dispatcher buildDispatcher() {
+            Dispatcher dispatcher = new Dispatcher();
+            dispatcher.setMaxRequests(64);
+            dispatcher.setMaxRequestsPerHost(16);
+            return dispatcher;
+        }
+
+        private static class DnsEntry {
+            private final List<InetAddress> addresses;
+            private final long cachedAt;
+
+            private DnsEntry(List<InetAddress> addresses, long cachedAt) {
+                this.addresses = addresses;
+                this.cachedAt = cachedAt;
+            }
+        }
     private static final String BASE_URL = "https://api.stepcraft.org";
     public static String healthCheck() throws IOException {
         Request request = new Request.Builder()

@@ -20,8 +20,7 @@ import java.util.concurrent.CompletableFuture;
 
 public class StepCraftUIHelper {
     private static final long PLAYER_LIST_TTL_MS = 10_000;
-    private static List<String> cachedPlayerNames = new ArrayList<>();
-    private static long cachedPlayerNamesAt = 0L;
+    private static final java.util.Map<String, CachedPage> PLAYER_PAGE_CACHE = new java.util.HashMap<>();
 
     // Open the admin chest GUI (server-only safe; vanilla client compatible)
     public static void openPlayersList(ServerPlayerEntity player) {
@@ -94,44 +93,56 @@ public class StepCraftUIHelper {
 
     public static void openPlayerSelectList(ServerPlayerEntity player, String query, int page) {
         String trimmedQuery = (query == null) ? "" : query.trim();
+        int limit = StepCraftPlayerListScreenHandler.PAGE_SIZE;
+        int offset = Math.max(0, page) * limit;
+        String cacheKey = trimmedQuery.toLowerCase() + "::" + page;
+
+        CachedPage cached = PLAYER_PAGE_CACHE.get(cacheKey);
         long now = System.currentTimeMillis();
-        if (!cachedPlayerNames.isEmpty() && (now - cachedPlayerNamesAt) <= PLAYER_LIST_TTL_MS) {
-            List<String> names = new ArrayList<>(cachedPlayerNames);
-            player.getServer().execute(() -> renderPlayerList(player, trimmedQuery, page, names));
+        if (cached != null && (now - cached.cachedAt) <= PLAYER_LIST_TTL_MS) {
+            player.getServer().execute(() -> renderPlayerList(player, trimmedQuery, page, cached.names, cached.total));
             return;
         }
+
+        player.getServer().execute(() -> renderPlayerList(player, trimmedQuery, page, List.of(), 0));
 
         CompletableFuture
                 .supplyAsync(() -> {
                     try {
-                        return BackendClient.getRegisteredPlayerNames();
+                        return BackendClient.getRegisteredPlayerNamesPage(limit, offset, trimmedQuery);
                     } catch (Exception e) {
                         throw new RuntimeException(e);
                     }
                 })
-                .whenComplete((names, error) -> player.getServer().execute(() -> {
+                .whenComplete((pageData, error) -> player.getServer().execute(() -> {
                     if (error != null) {
                         Throwable cause = error.getCause() != null ? error.getCause() : error;
                         player.sendMessage(Text.literal("Error loading players: " + cause.getMessage()));
                         return;
                     }
-                    cachedPlayerNames = new ArrayList<>(names);
-                    cachedPlayerNamesAt = System.currentTimeMillis();
-                    renderPlayerList(player, trimmedQuery, page, names);
+
+                    CachedPage entry = new CachedPage(pageData.names, pageData.total, System.currentTimeMillis());
+                    PLAYER_PAGE_CACHE.put(cacheKey, entry);
+                    renderPlayerList(player, trimmedQuery, page, pageData.names, pageData.total);
                 }));
     }
 
-    private static void renderPlayerList(ServerPlayerEntity player, String query, int page, List<String> names) {
-        List<String> filtered = new ArrayList<>();
-        String q = query.toLowerCase();
-        for (String name : names) {
-            if (query.isEmpty() || name.toLowerCase().contains(q)) {
-                filtered.add(name);
-            }
-        }
+    private static void renderPlayerList(ServerPlayerEntity player, String query, int page, List<String> names, int total) {
+        List<String> sorted = new ArrayList<>(names);
+        sorted.sort(Comparator.naturalOrder());
+        StepCraftScreens.openPlayerList(player, sorted, query, page, total);
+    }
 
-        filtered.sort(Comparator.naturalOrder());
-        StepCraftScreens.openPlayerList(player, filtered, query, page);
+    private static class CachedPage {
+        private final List<String> names;
+        private final int total;
+        private final long cachedAt;
+
+        private CachedPage(List<String> names, int total, long cachedAt) {
+            this.names = new ArrayList<>(names);
+            this.total = total;
+            this.cachedAt = cachedAt;
+        }
     }
 
     private static Text menuName(String label, Formatting color) {

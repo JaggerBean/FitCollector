@@ -5,6 +5,8 @@ import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.CompletableFuture;
+
 public class StepCraftMod implements ModInitializer {
     public static final Logger LOGGER = LoggerFactory.getLogger("stepcraft");
 
@@ -22,6 +24,15 @@ public class StepCraftMod implements ModInitializer {
         } catch (Exception e) {
             LOGGER.error("Failed to contact backend: ", e);
         }
+
+        // Warm-up backend connection (async)
+        CompletableFuture.runAsync(() -> {
+            try {
+                BackendClient.healthCheck();
+            } catch (Exception e) {
+                LOGGER.warn("Backend warm-up failed: {}", e.getMessage());
+            }
+        });
 
         // Register admin command(s)
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
