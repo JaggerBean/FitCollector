@@ -176,6 +176,9 @@ public class StepCraftChestScreenHandler extends GenericContainerScreenHandler {
                         }
                         String rewardsJson = BackendClient.getServerRewards();
                         RewardTier tier = pickTier(parseRewardTiers(rewardsJson), steps);
+                        // if (claimStatus.claimed) {
+                        //     return new ClaimContext(steps, tier, false, null);
+                        // }
                         return new ClaimContext(steps, tier, false, null);
                     } catch (Exception e) {
                         throw new RuntimeException(e);
