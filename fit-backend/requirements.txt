@@ -4,4 +4,5 @@ uvicorn[standard]
 sqlalchemy
 pydantic
 email-validator
+google-auth
 psycopg2-binary

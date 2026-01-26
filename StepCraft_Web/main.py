@@ -5,6 +5,7 @@
 from fastapi_mail import FastMail, MessageSchema, ConnectionConfig
 import os
 import json
+import urllib.parse
 import httpx
 from fastapi import FastAPI, Form, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -21,6 +22,9 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 app.add_middleware(SessionMiddleware, secret_key=os.getenv("STEPCRAFT_WEB_SECRET", "change-me"))
 
 BACKEND_URL = os.getenv("BACKEND_URL", "https://api.stepcraft.org")
+GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
+GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
+GOOGLE_REDIRECT_URI = os.getenv("GOOGLE_REDIRECT_URI", "https://stepcraft.org/account/google/callback")
 
 # Contact info page
 @app.get("/contact-info", response_class=HTMLResponse)
@@ -119,6 +123,77 @@ async def account_register_submit(request: Request, name: str = Form(...), email
         return templates.TemplateResponse("register_account.html", {"request": request, "error": error})
 
     return RedirectResponse(url="/account/login", status_code=302)
+
+
+@app.get("/account/google/start")
+def google_oauth_start(request: Request):
+    if not GOOGLE_CLIENT_ID:
+        return RedirectResponse(url="/account/login", status_code=302)
+
+    state = os.urandom(16).hex()
+    request.session["google_state"] = state
+    params = {
+        "client_id": GOOGLE_CLIENT_ID,
+        "redirect_uri": GOOGLE_REDIRECT_URI,
+        "response_type": "code",
+        "scope": "openid email profile",
+        "state": state,
+        "access_type": "offline",
+        "prompt": "consent",
+    }
+    query = urllib.parse.urlencode(params)
+    return RedirectResponse(url=f"https://accounts.google.com/o/oauth2/v2/auth?{query}", status_code=302)
+
+
+@app.get("/account/google/callback", response_class=HTMLResponse)
+async def google_oauth_callback(request: Request):
+    if not GOOGLE_CLIENT_ID or not GOOGLE_CLIENT_SECRET:
+        return templates.TemplateResponse("login.html", {"request": request, "error": "Google OAuth not configured."})
+
+    code = request.query_params.get("code")
+    state = request.query_params.get("state")
+    if not code or not state or state != request.session.get("google_state"):
+        return templates.TemplateResponse("login.html", {"request": request, "error": "Invalid OAuth state."})
+    request.session.pop("google_state", None)
+
+    async with httpx.AsyncClient() as client:
+        try:
+            token_resp = await client.post(
+                "https://oauth2.googleapis.com/token",
+                data={
+                    "code": code,
+                    "client_id": GOOGLE_CLIENT_ID,
+                    "client_secret": GOOGLE_CLIENT_SECRET,
+                    "redirect_uri": GOOGLE_REDIRECT_URI,
+                    "grant_type": "authorization_code",
+                },
+                timeout=10,
+            )
+        except Exception as e:
+            return templates.TemplateResponse("login.html", {"request": request, "error": f"Google token error: {e}"})
+
+    if token_resp.status_code != 200:
+        return templates.TemplateResponse("login.html", {"request": request, "error": token_resp.text})
+
+    id_token = token_resp.json().get("id_token")
+    if not id_token:
+        return templates.TemplateResponse("login.html", {"request": request, "error": "Missing id_token from Google."})
+
+    async with httpx.AsyncClient() as client:
+        try:
+            resp = await client.post(
+                f"{BACKEND_URL}/v1/auth/google",
+                json={"id_token": id_token},
+                timeout=10,
+            )
+        except Exception as e:
+            return templates.TemplateResponse("login.html", {"request": request, "error": f"Backend error: {e}"})
+
+    if resp.status_code != 200:
+        return templates.TemplateResponse("login.html", {"request": request, "error": resp.text})
+
+    request.session["user_token"] = resp.json().get("token")
+    return RedirectResponse(url="/dashboard", status_code=302)
 
 
 @app.post("/logout")
