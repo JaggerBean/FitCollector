@@ -17,13 +17,24 @@
             max-width: 1000px;
         .tier-card {
             border: 1px solid #C8E6C9;
-            border-radius: 14px;
-            padding: 16px;
+            border-radius: 16px;
+            padding: 14px;
             background: #F7FBF7;
+            box-shadow: 0 6px 18px rgba(44, 67, 54, 0.10);
+        }
+        .tier-header {
+            background: #E8F5E9;
+            border: 1px solid #C8E6C9;
+            border-radius: 12px;
+            padding: 8px 12px;
+            margin-bottom: 12px;
         }
         .tier-card .form-label,
         .tier-card strong {
             color: #2E7D32;
+        }
+        .command-input {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
         }
         .reward-item {
             display: flex;
@@ -77,8 +88,13 @@
                 box-shadow: 0 8px 32px rgba(44, 67, 54, 0.32);
             }
             .tier-card {
+                background: #1E1E1E;
+                border-color: #3C4043;
+                box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+            }
+            .tier-header {
                 background: #23272A;
-                border-color: #81C784;
+                border-color: #3C4043;
             }
             .reward-item input {
                 background: #1E1E1E;
@@ -155,7 +171,7 @@
                 {% if data and data.tiers %}
                     {% for tier in data.tiers %}
                         <div class="tier-card mb-3" data-tier>
-                            <div class="d-flex justify-content-between align-items-center mb-2">
+                            <div class="d-flex justify-content-between align-items-center tier-header">
                                 <strong>Tier</strong>
                                 <button class="btn btn-sm btn-outline-danger" type="button" data-remove-tier>Remove</button>
                             </div>
@@ -173,7 +189,7 @@
                             <div data-rewards>
                                 {% for reward in tier.rewards %}
                                     <div class="reward-item" data-reward>
-                                        <input class="form-control" type="text" value="{{ reward }}" placeholder="give {player} minecraft:diamond 1">
+                                        <input class="form-control command-input" type="text" value="{{ reward }}" placeholder="give {player} minecraft:diamond 1">
                                         <button class="btn btn-sm btn-outline-danger" type="button" data-remove-reward>Remove</button>
                                     </div>
                                 {% endfor %}
@@ -210,7 +226,7 @@
             row.className = 'reward-item';
             row.dataset.reward = 'true';
             row.innerHTML = `
-                <input class="form-control" type="text" placeholder="give {player} minecraft:diamond 1" value="${value.replace(/"/g, '&quot;')}">
+                <input class="form-control command-input" type="text" placeholder="give {player} minecraft:diamond 1" value="${value.replace(/"/g, '&quot;')}">
                 <button class="btn btn-sm btn-outline-danger" type="button" data-remove-reward>Remove</button>
             `;
             return row;
@@ -221,7 +237,7 @@
             card.className = 'tier-card mb-3';
             card.dataset.tier = 'true';
             card.innerHTML = `
-                <div class="d-flex justify-content-between align-items-center mb-2">
+                <div class="d-flex justify-content-between align-items-center tier-header">
                     <strong>Tier</strong>
                     <button class="btn btn-sm btn-outline-danger" type="button" data-remove-tier>Remove</button>
                 </div>
