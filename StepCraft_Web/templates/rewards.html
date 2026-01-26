@@ -15,11 +15,29 @@
         }
         .wrap {
             max-width: 1000px;
+        .tier-card {
+            border: 1px solid #C8E6C9;
+            border-radius: 14px;
+            padding: 16px;
+            background: #F7FBF7;
+        }
+        .reward-item {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .reward-item input {
+            flex: 1;
+        }
             margin: 36px auto;
             padding: 24px;
             background: white;
             border-radius: 20px;
             border: 2px solid #2E7D32;
+        .btn-danger {
+            border: none;
+        }
             box-shadow: 0 8px 32px rgba(44, 67, 54, 0.18);
         }
         textarea {
@@ -53,6 +71,15 @@
                 background: #23272A;
                 border: 2px solid #81C784;
                 box-shadow: 0 8px 32px rgba(44, 67, 54, 0.32);
+            }
+            .tier-card {
+                background: #1E1E1E;
+                border-color: #81C784;
+            }
+            .reward-item input {
+                background: #23272A;
+                color: #E1E1E1;
+                border-color: #3C4043;
             }
             .title {
                 color: #81C784;
@@ -89,9 +116,47 @@
             </div>
         {% endif %}
 
-        <form method="post" action="/rewards/update?server={{ server_name }}">
-            <label class="form-label">Rewards JSON</label>
-            <textarea class="form-control" name="rewards_json" spellcheck="false">{{ raw_json }}</textarea>
+        <form id="rewards-form" method="post" action="/rewards/update?server={{ server_name }}">
+            <input type="hidden" name="rewards_json" id="rewards_json">
+
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <label class="form-label mb-0">Reward Tiers</label>
+                <button class="btn btn-outline-secondary btn-sm" type="button" id="add-tier">Add Tier</button>
+            </div>
+
+            <div id="tiers-list" data-raw-json='{{ raw_json|tojson }}'>
+                {% if data and data.tiers %}
+                    {% for tier in data.tiers %}
+                        <div class="tier-card mb-3" data-tier>
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <strong>Tier</strong>
+                                <button class="btn btn-sm btn-outline-danger" type="button" data-remove-tier>Remove</button>
+                            </div>
+                            <div class="row g-2 mb-2">
+                                <div class="col-md-4">
+                                    <label class="form-label">Min Steps</label>
+                                    <input class="form-control" type="number" min="0" step="1" data-min-steps value="{{ tier.min_steps }}">
+                                </div>
+                                <div class="col-md-8">
+                                    <label class="form-label">Label</label>
+                                    <input class="form-control" type="text" data-label value="{{ tier.label }}">
+                                </div>
+                            </div>
+                            <label class="form-label">Reward Commands</label>
+                            <div data-rewards>
+                                {% for reward in tier.rewards %}
+                                    <div class="reward-item" data-reward>
+                                        <input class="form-control" type="text" value="{{ reward }}" placeholder="give {player} minecraft:diamond 1">
+                                        <button class="btn btn-sm btn-outline-danger" type="button" data-remove-reward>Remove</button>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                            <button class="btn btn-sm btn-outline-secondary" type="button" data-add-reward>Add Reward Command</button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            </div>
+
             <div class="d-flex gap-2 mt-3">
                 <button class="btn btn-primary" type="submit">Save</button>
                 <button class="btn btn-outline-secondary" type="submit" form="default-rewards-form">Use Default</button>
@@ -101,14 +166,125 @@
         <form id="default-rewards-form" method="post" action="/rewards/default?server={{ server_name }}"></form>
 
         <hr>
-        <h6>Format</h6>
-        <pre class="bg-light p-3 rounded small">{
-  "tiers": [
-    {"min_steps": 1000, "label": "Starter", "rewards": ["give {player} minecraft:bread 3"]},
-    {"min_steps": 5000, "label": "Walker",  "rewards": ["give {player} minecraft:iron_ingot 3"]},
-    {"min_steps": 10000, "label": "Legend", "rewards": ["give {player} minecraft:diamond 1"]}
-  ]
-}</pre>
+        <h6>Examples</h6>
+        <pre class="bg-light p-3 rounded small">Starter tier
+ Min Steps: 1000
+ Label: Starter
+ Reward Commands:
+  - give {player} minecraft:bread 3
+  - say Congrats {player}!</pre>
     </div>
+    <script>
+        const tiersList = document.getElementById('tiers-list');
+        const addTierBtn = document.getElementById('add-tier');
+
+        function createRewardItem(value = '') {
+            const row = document.createElement('div');
+            row.className = 'reward-item';
+            row.dataset.reward = 'true';
+            row.innerHTML = `
+                <input class="form-control" type="text" placeholder="give {player} minecraft:diamond 1" value="${value.replace(/"/g, '&quot;')}">
+                <button class="btn btn-sm btn-outline-danger" type="button" data-remove-reward>Remove</button>
+            `;
+            return row;
+        }
+
+        function createTierCard(tier = {}) {
+            const card = document.createElement('div');
+            card.className = 'tier-card mb-3';
+            card.dataset.tier = 'true';
+            card.innerHTML = `
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <strong>Tier</strong>
+                    <button class="btn btn-sm btn-outline-danger" type="button" data-remove-tier>Remove</button>
+                </div>
+                <div class="row g-2 mb-2">
+                    <div class="col-md-4">
+                        <label class="form-label">Min Steps</label>
+                        <input class="form-control" type="number" min="0" step="1" data-min-steps value="${tier.min_steps ?? ''}">
+                    </div>
+                    <div class="col-md-8">
+                        <label class="form-label">Label</label>
+                        <input class="form-control" type="text" data-label value="${(tier.label ?? '').replace(/"/g, '&quot;')}">
+                    </div>
+                </div>
+                <label class="form-label">Reward Commands</label>
+                <div data-rewards></div>
+                <button class="btn btn-sm btn-outline-secondary" type="button" data-add-reward>Add Reward Command</button>
+            `;
+
+            const rewardsWrap = card.querySelector('[data-rewards]');
+            const rewards = Array.isArray(tier.rewards) ? tier.rewards : [];
+            if (rewards.length === 0) {
+                rewardsWrap.appendChild(createRewardItem(''));
+            } else {
+                rewards.forEach(r => rewardsWrap.appendChild(createRewardItem(r)));
+            }
+            return card;
+        }
+
+        function ensureAtLeastOneTier() {
+            if (!tiersList.querySelector('[data-tier]')) {
+                tiersList.appendChild(createTierCard());
+            }
+        }
+
+        addTierBtn.addEventListener('click', () => {
+            tiersList.appendChild(createTierCard());
+        });
+
+        tiersList.addEventListener('click', (event) => {
+            if (event.target.matches('[data-remove-tier]')) {
+                event.target.closest('[data-tier]').remove();
+                ensureAtLeastOneTier();
+            }
+            if (event.target.matches('[data-add-reward]')) {
+                const rewardsWrap = event.target.closest('[data-tier]').querySelector('[data-rewards]');
+                rewardsWrap.appendChild(createRewardItem(''));
+            }
+            if (event.target.matches('[data-remove-reward]')) {
+                const tier = event.target.closest('[data-tier]');
+                const rewardsWrap = tier.querySelector('[data-rewards]');
+                event.target.closest('[data-reward]').remove();
+                if (!rewardsWrap.querySelector('[data-reward]')) {
+                    rewardsWrap.appendChild(createRewardItem(''));
+                }
+            }
+        });
+
+        document.getElementById('rewards-form').addEventListener('submit', (event) => {
+            const tiers = Array.from(tiersList.querySelectorAll('[data-tier]')).map(tierEl => {
+                const minSteps = parseInt(tierEl.querySelector('[data-min-steps]').value || '0', 10);
+                const label = tierEl.querySelector('[data-label]').value.trim();
+                const rewards = Array.from(tierEl.querySelectorAll('[data-reward] input'))
+                    .map(input => input.value.trim())
+                    .filter(Boolean);
+                return { min_steps: minSteps, label, rewards };
+            }).filter(t => t.label || t.rewards.length > 0 || t.min_steps > 0);
+
+            const payload = { tiers };
+            document.getElementById('rewards_json').value = JSON.stringify(payload, null, 2);
+        });
+
+        (function initFromRawJson() {
+            const raw = tiersList.dataset.rawJson;
+            if (!raw) {
+                ensureAtLeastOneTier();
+                return;
+            }
+            try {
+                const parsed = JSON.parse(raw);
+                if (Array.isArray(parsed.tiers) && parsed.tiers.length > 0) {
+                    if (!tiersList.querySelector('[data-tier]')) {
+                        parsed.tiers.forEach(t => tiersList.appendChild(createTierCard(t)));
+                    }
+                } else if (!tiersList.querySelector('[data-tier]')) {
+                    ensureAtLeastOneTier();
+                }
+            } catch {
+                ensureAtLeastOneTier();
+            }
+        })();
+    </script>
 </body>
 </html>
