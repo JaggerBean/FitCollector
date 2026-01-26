@@ -31,19 +31,36 @@ GOOGLE_REDIRECT_URI = os.getenv("GOOGLE_REDIRECT_URI", "https://stepcraft.org/ac
 async def contact_info(request: Request):
     return templates.TemplateResponse("contact-info.html", {"request": request})
 
+def _truthy_env(value: str | None, default: bool) -> bool:
+    if value is None:
+        return default
+    return value.strip().lower() in {"1", "true", "yes", "on"}
+
+
 def build_mail_conf():
-    user = os.getenv("GMAIL_USER")
-    pwd = os.getenv("GMAIL_PASS")
+    user = os.getenv("GMAIL_USER") or os.getenv("SMTP_USER") or os.getenv("MAIL_USER")
+    pwd = os.getenv("GMAIL_PASS") or os.getenv("SMTP_PASS") or os.getenv("MAIL_PASS")
     if not user or not pwd:
+        import logging
+        logging.warning("Email is disabled: missing SMTP credentials (GMAIL_USER/GMAIL_PASS or SMTP_USER/SMTP_PASS).")
         return None
+
+    mail_from = os.getenv("SMTP_FROM") or os.getenv("MAIL_FROM") or user
+    server = os.getenv("SMTP_SERVER", "smtp.gmail.com")
+    port = int(os.getenv("SMTP_PORT", "587"))
+    starttls = _truthy_env(os.getenv("SMTP_STARTTLS"), True)
+    ssl_tls = _truthy_env(os.getenv("SMTP_SSL_TLS"), False)
+    if starttls and ssl_tls:
+        ssl_tls = False
+
     return ConnectionConfig(
         MAIL_USERNAME=user,
         MAIL_PASSWORD=pwd,
-        MAIL_FROM=user,
-        MAIL_PORT=587,
-        MAIL_SERVER="smtp.gmail.com",
-        MAIL_STARTTLS=True,
-        MAIL_SSL_TLS=False,
+        MAIL_FROM=mail_from,
+        MAIL_PORT=port,
+        MAIL_SERVER=server,
+        MAIL_STARTTLS=starttls,
+        MAIL_SSL_TLS=ssl_tls,
         USE_CREDENTIALS=True,
     )
 
