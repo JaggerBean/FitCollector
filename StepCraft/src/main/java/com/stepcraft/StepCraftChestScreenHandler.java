@@ -7,10 +7,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.screen.GenericContainerScreenHandler;
 import net.minecraft.screen.ScreenHandlerType;
 import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.ClickEvent;
-import net.minecraft.text.Style;
 import net.minecraft.text.Text;
-import net.minecraft.text.TextColor;
 import net.minecraft.util.collection.DefaultedList;
 
 import java.util.concurrent.CompletableFuture;
@@ -65,16 +62,7 @@ public class StepCraftChestScreenHandler extends GenericContainerScreenHandler {
                     case 19 -> { sendBackendToLectern(serverPlayer, "Server bans", BackendClient::getAllServerBans); return; }
                     case 21 -> { sendBackendToLectern(serverPlayer, "All players", BackendClient::getAllPlayers); return; }
                     case 23 -> { StepCraftUIHelper.openPlayerSelectList(serverPlayer, null, 0, StepCraftPlayerAction.YESTERDAY_STEPS); return; }
-                    case 25 -> {
-                        serverPlayer.closeHandledScreen();
-                        Text message = Text.literal("Click to paste: /stepcraft set_api_key ")
-                                .setStyle(Style.EMPTY
-                                        .withColor(TextColor.fromRgb(0x55FF55))
-                                        .withClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/stepcraft set_api_key "))
-                                        .withItalic(false));
-                        serverPlayer.sendMessage(message);
-                        return;
-                    }
+                    case 25 -> { StepCraftScreens.openSettings(serverPlayer); return; }
                 }
             }
         }

@@ -68,4 +68,12 @@ public final class StepCraftScreens {
         ));
     }
 
+    public static void openSettings(ServerPlayerEntity player) {
+        player.openHandledScreen(new SimpleNamedScreenHandlerFactory(
+                (int syncId, PlayerInventory playerInv, PlayerEntity p) ->
+                        new StepCraftSettingsScreenHandler(syncId, playerInv),
+                Text.literal("Settings")
+        ));
+    }
+
 }

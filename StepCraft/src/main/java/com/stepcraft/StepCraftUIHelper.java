@@ -55,7 +55,7 @@ public class StepCraftUIHelper {
                     {Items.FEATHER, "Yesterday Steps", "Fetch yesterday step count", Formatting.AQUA},
 
                         // Settings
-                            {Items.COMPASS, "Settings", "Use /stepcraft set_api_key", Formatting.LIGHT_PURPLE},
+                                {Items.COMPASS, "Settings", "API key + status", Formatting.LIGHT_PURPLE},
             };
 
             int[] slotLayout = new int[]{
