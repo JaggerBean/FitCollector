@@ -31,18 +31,26 @@ GOOGLE_REDIRECT_URI = os.getenv("GOOGLE_REDIRECT_URI", "https://stepcraft.org/ac
 async def contact_info(request: Request):
     return templates.TemplateResponse("contact-info.html", {"request": request})
 
-mail_conf = ConnectionConfig(
-    MAIL_USERNAME = os.getenv("GMAIL_USER"),
-    MAIL_PASSWORD = os.getenv("GMAIL_PASS"),
-    MAIL_FROM = os.getenv("GMAIL_USER"),
-    MAIL_PORT = 587,
-    MAIL_SERVER = "smtp.gmail.com",
-    MAIL_STARTTLS = True,
-    MAIL_SSL_TLS = False,
-    USE_CREDENTIALS = True
-)
+def build_mail_conf():
+    user = os.getenv("GMAIL_USER")
+    pwd = os.getenv("GMAIL_PASS")
+    if not user or not pwd:
+        return None
+    return ConnectionConfig(
+        MAIL_USERNAME=user,
+        MAIL_PASSWORD=pwd,
+        MAIL_FROM=user,
+        MAIL_PORT=587,
+        MAIL_SERVER="smtp.gmail.com",
+        MAIL_STARTTLS=True,
+        MAIL_SSL_TLS=False,
+        USE_CREDENTIALS=True,
+    )
 
 async def send_api_key_email(email, server_name, api_key, message):
+    mail_conf = build_mail_conf()
+    if mail_conf is None:
+        return
     subject = "Your StepCraft API Key"
     body = f"""Thank you for registering your server: {server_name}\nYour API Key: {api_key}\n{message}"""
     msg = MessageSchema(
