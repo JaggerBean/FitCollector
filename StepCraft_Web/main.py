@@ -113,7 +113,10 @@ async def account_register_submit(request: Request, name: str = Form(...), email
             error = resp.json().get("error")
         except Exception:
             error = resp.text
-        return templates.TemplateResponse("register_account.html", {"request": request, "error": error or "Registration failed."})
+        if not error:
+            error = "Registration failed."
+        error = f"{resp.status_code}: {error}"
+        return templates.TemplateResponse("register_account.html", {"request": request, "error": error})
 
     return RedirectResponse(url="/account/login", status_code=302)
 
