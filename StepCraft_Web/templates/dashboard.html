@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StepCraft Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        body {
+            min-height: 100vh;
+            background: #f5f7fb;
+            font-family: 'Roboto', Arial, sans-serif;
+        }
+        .hero {
+            max-width: 900px;
+            margin: 48px auto;
+            padding: 28px;
+            border-radius: 18px;
+            background: white;
+            box-shadow: 0 8px 32px rgba(44, 67, 54, 0.12);
+        }
+        .title {
+            font-family: 'Montserrat', monospace;
+            color: #2E7D32;
+            font-size: 2rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="hero">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <div class="title">StepCraft Dashboard</div>
+                {% if server %}
+                    <div class="text-muted">Server: {{ server.server_name }}</div>
+                {% else %}
+                    <div class="text-muted">Server: Unknown</div>
+                {% endif %}
+            </div>
+            <form method="post" action="/logout">
+                <button class="btn btn-outline-secondary">Logout</button>
+            </form>
+        </div>
+        <hr>
+        <div class="row g-3">
+            <div class="col-md-6">
+                <div class="card p-3 h-100">
+                    <h5>Rewards</h5>
+                    <p class="text-muted">Configure step-based rewards.</p>
+                    <a class="btn btn-success" href="/rewards">Manage Rewards</a>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card p-3 h-100">
+                    <h5>Server Info</h5>
+                    {% if server %}
+                        <ul class="small text-muted mb-0">
+                            <li>Players: {{ server.current_players }}</li>
+                            <li>Max: {{ server.max_players if server.max_players is not none else 'Unlimited' }}</li>
+                            <li>Last used: {{ server.last_used }}</li>
+                        </ul>
+                    {% else %}
+                        <div class="text-muted small">Unable to load server info.</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

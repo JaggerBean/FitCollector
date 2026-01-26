@@ -4,11 +4,13 @@
 
 from fastapi_mail import FastMail, MessageSchema, ConnectionConfig
 import os
+import json
 import httpx
 from fastapi import FastAPI, Form, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
+from starlette.middleware.sessions import SessionMiddleware
 
 templates = Jinja2Templates(directory="templates")
 
@@ -16,6 +18,9 @@ templates = Jinja2Templates(directory="templates")
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
+app.add_middleware(SessionMiddleware, secret_key=os.getenv("STEPCRAFT_WEB_SECRET", "change-me"))
+
+BACKEND_URL = os.getenv("BACKEND_URL", "https://api.stepcraft.org")
 
 # Contact info page
 @app.get("/contact-info", response_class=HTMLResponse)
@@ -53,6 +58,163 @@ async def send_api_key_email(email, server_name, api_key, message):
 @app.get("/", response_class=HTMLResponse)
 def landing_page(request: Request):
     return templates.TemplateResponse("landing.html", {"request": request})
+
+
+@app.get("/login", response_class=HTMLResponse)
+def login_form(request: Request):
+    return templates.TemplateResponse("login.html", {"request": request})
+
+
+@app.post("/login", response_class=HTMLResponse)
+async def login_submit(request: Request, api_key: str = Form(...)):
+    api_key = api_key.strip()
+    if not api_key:
+        return templates.TemplateResponse("login.html", {"request": request, "error": "API key is required."})
+
+    async with httpx.AsyncClient() as client:
+        try:
+            resp = await client.get(
+                f"{BACKEND_URL}/v1/servers/info",
+                headers={"X-API-Key": api_key},
+                timeout=10,
+            )
+        except Exception as e:
+            return templates.TemplateResponse("login.html", {"request": request, "error": f"Backend error: {e}"})
+
+    if resp.status_code != 200:
+        error = None
+        try:
+            error = resp.json().get("error")
+        except Exception:
+            error = resp.text
+        return templates.TemplateResponse("login.html", {"request": request, "error": error or "Invalid API key."})
+
+    request.session["api_key"] = api_key
+    return RedirectResponse(url="/dashboard", status_code=302)
+
+
+@app.post("/logout")
+def logout(request: Request):
+    request.session.clear()
+    return RedirectResponse(url="/", status_code=302)
+
+
+@app.get("/dashboard", response_class=HTMLResponse)
+async def dashboard(request: Request):
+    api_key = request.session.get("api_key")
+    if not api_key:
+        return RedirectResponse(url="/login", status_code=302)
+
+    server_info = None
+    async with httpx.AsyncClient() as client:
+        try:
+            resp = await client.get(
+                f"{BACKEND_URL}/v1/servers/info",
+                headers={"X-API-Key": api_key},
+                timeout=10,
+            )
+            if resp.status_code == 200:
+                server_info = resp.json()
+        except Exception:
+            server_info = None
+
+    return templates.TemplateResponse("dashboard.html", {"request": request, "server": server_info})
+
+
+@app.get("/rewards", response_class=HTMLResponse)
+async def rewards_page(request: Request):
+    api_key = request.session.get("api_key")
+    if not api_key:
+        return RedirectResponse(url="/login", status_code=302)
+
+    data = None
+    error = None
+    async with httpx.AsyncClient() as client:
+        try:
+            resp = await client.get(
+                f"{BACKEND_URL}/v1/servers/rewards",
+                headers={"X-API-Key": api_key},
+                timeout=10,
+            )
+            if resp.status_code == 200:
+                data = resp.json()
+            else:
+                error = resp.text
+        except Exception as e:
+            error = str(e)
+
+    raw_json = ""
+    if data is not None:
+        raw_json = json.dumps({"tiers": data.get("tiers", [])}, indent=2)
+
+    return templates.TemplateResponse(
+        "rewards.html",
+        {"request": request, "data": data, "raw_json": raw_json, "error": error}
+    )
+
+
+@app.post("/rewards/update")
+async def rewards_update(request: Request, rewards_json: str = Form(...)):
+    api_key = request.session.get("api_key")
+    if not api_key:
+        return RedirectResponse(url="/login", status_code=302)
+
+    try:
+        payload = json.loads(rewards_json)
+        if "tiers" not in payload:
+            payload = {"tiers": payload}
+    except Exception as e:
+        return templates.TemplateResponse("rewards.html", {
+            "request": request,
+            "data": None,
+            "raw_json": rewards_json,
+            "error": f"Invalid JSON: {e}",
+        })
+
+    async with httpx.AsyncClient() as client:
+        try:
+            resp = await client.put(
+                f"{BACKEND_URL}/v1/servers/rewards",
+                headers={"X-API-Key": api_key},
+                json=payload,
+                timeout=10,
+            )
+        except Exception as e:
+            return templates.TemplateResponse("rewards.html", {
+                "request": request,
+                "data": None,
+                "raw_json": rewards_json,
+                "error": f"Backend error: {e}",
+            })
+
+    if resp.status_code != 200:
+        return templates.TemplateResponse("rewards.html", {
+            "request": request,
+            "data": None,
+            "raw_json": rewards_json,
+            "error": resp.text,
+        })
+
+    return RedirectResponse(url="/rewards", status_code=302)
+
+
+@app.post("/rewards/default")
+async def rewards_default(request: Request):
+    api_key = request.session.get("api_key")
+    if not api_key:
+        return RedirectResponse(url="/login", status_code=302)
+
+    async with httpx.AsyncClient() as client:
+        try:
+            await client.post(
+                f"{BACKEND_URL}/v1/servers/rewards/default",
+                headers={"X-API-Key": api_key},
+                timeout=10,
+            )
+        except Exception:
+            pass
+
+    return RedirectResponse(url="/rewards", status_code=302)
 
 # Registration form at /register
 @app.get("/register", response_class=HTMLResponse)

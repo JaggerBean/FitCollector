@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rewards - StepCraft</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        body {
+            min-height: 100vh;
+            background: #f5f7fb;
+            font-family: 'Roboto', Arial, sans-serif;
+        }
+        .wrap {
+            max-width: 1000px;
+            margin: 36px auto;
+            padding: 24px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(44, 67, 54, 0.12);
+        }
+        textarea {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+            font-size: 0.95rem;
+            min-height: 320px;
+        }
+        .title {
+            font-family: 'Montserrat', monospace;
+            color: #2E7D32;
+            font-size: 1.6rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="wrap">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div class="title">Reward Tiers</div>
+            <a class="btn btn-outline-secondary" href="/dashboard">Back</a>
+        </div>
+
+        {% if error %}
+        <div class="alert alert-danger">{{ error }}</div>
+        {% endif %}
+
+        {% if data %}
+            <div class="mb-3">
+                <div class="small text-muted">Server: {{ data.server_name }}{% if data.is_default %} (default){% endif %}</div>
+            </div>
+        {% endif %}
+
+        <form method="post" action="/rewards/update">
+            <label class="form-label">Rewards JSON</label>
+            <textarea class="form-control" name="rewards_json" spellcheck="false">{{ raw_json }}</textarea>
+            <div class="d-flex gap-2 mt-3">
+                <button class="btn btn-success" type="submit">Save</button>
+                <button class="btn btn-outline-warning" type="submit" form="default-rewards-form">Use Default</button>
+            </div>
+        </form>
+
+        <form id="default-rewards-form" method="post" action="/rewards/default"></form>
+
+        <hr>
+        <h6>Format</h6>
+        <pre class="bg-light p-3 rounded small">{
+  "tiers": [
+    {"min_steps": 1000, "label": "Starter", "rewards": ["give {player} minecraft:bread 3"]},
+    {"min_steps": 5000, "label": "Walker",  "rewards": ["give {player} minecraft:iron_ingot 3"]},
+    {"min_steps": 10000, "label": "Legend", "rewards": ["give {player} minecraft:diamond 1"]}
+  ]
+}</pre>
+    </div>
+</body>
+</html>

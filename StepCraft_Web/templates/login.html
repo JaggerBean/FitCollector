@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StepCraft Admin Login</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #E3F2FD 0%, #E8F5E9 100%);
+            font-family: 'Roboto', Arial, sans-serif;
+        }
+        .card {
+            max-width: 520px;
+            margin: 64px auto;
+            padding: 32px;
+            border-radius: 18px;
+            border: 2px solid #2E7D32;
+            box-shadow: 0 8px 32px rgba(44, 67, 54, 0.18);
+        }
+        .title {
+            font-family: 'Montserrat', monospace;
+            color: #2E7D32;
+            font-size: 2rem;
+            text-align: center;
+            margin-bottom: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="card bg-white">
+        <div class="title">StepCraft Admin</div>
+        <p class="text-center text-muted">Paste your server API key to manage rewards.</p>
+        {% if error %}
+        <div class="alert alert-danger">{{ error }}</div>
+        {% endif %}
+        <form method="post" action="/login">
+            <div class="mb-3">
+                <label class="form-label">Server API Key</label>
+                <input type="password" name="api_key" class="form-control" placeholder="sk_..." required>
+            </div>
+            <button class="btn btn-success w-100" type="submit">Continue</button>
+        </form>
+        <div class="text-center mt-3">
+            <a href="/">Back to home</a>
+        </div>
+    </div>
+</body>
+</html>
