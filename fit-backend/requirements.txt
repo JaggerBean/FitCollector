@@ -5,4 +5,5 @@ sqlalchemy
 pydantic
 email-validator
 google-auth
+requests
 psycopg2-binary
