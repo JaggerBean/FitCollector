@@ -92,9 +92,34 @@ def init_db() -> None:
         ADD COLUMN IF NOT EXISTS max_players INTEGER;
         """))
 
+        # 5b) Migration: add owner_user_id if missing
+        conn.execute(text("""
+        ALTER TABLE api_keys
+        ADD COLUMN IF NOT EXISTS owner_user_id BIGINT;
+        """))
+
         conn.execute(text("""
         CREATE INDEX IF NOT EXISTS idx_api_keys_key
         ON api_keys(key);
+        """))
+
+        # 5c) Create servers table for metadata + ownership
+        conn.execute(text("""
+        CREATE TABLE IF NOT EXISTS servers (
+            id BIGSERIAL PRIMARY KEY,
+            server_name TEXT UNIQUE NOT NULL,
+            owner_user_id BIGINT NOT NULL,
+            owner_name TEXT NOT NULL,
+            owner_email TEXT NOT NULL,
+            server_address TEXT,
+            server_version TEXT,
+            created_at TIMESTAMPTZ DEFAULT NOW()
+        );
+        """))
+
+        conn.execute(text("""
+        CREATE INDEX IF NOT EXISTS idx_servers_owner
+        ON servers(owner_user_id);
         """))
 
         # 6) Create player_keys table for per-player authentication
@@ -159,6 +184,33 @@ def init_db() -> None:
         conn.execute(text("""
         CREATE INDEX IF NOT EXISTS idx_key_recovery_device_server
         ON key_recovery_audit(device_id, server_name);
+        """))
+
+        # 10) Create users and sessions for web login
+        conn.execute(text("""
+        CREATE TABLE IF NOT EXISTS users (
+            id BIGSERIAL PRIMARY KEY,
+            email TEXT UNIQUE NOT NULL,
+            name TEXT NOT NULL,
+            password_hash TEXT NOT NULL,
+            password_salt TEXT NOT NULL,
+            created_at TIMESTAMPTZ DEFAULT NOW()
+        );
+        """))
+
+        conn.execute(text("""
+        CREATE TABLE IF NOT EXISTS user_sessions (
+            id BIGSERIAL PRIMARY KEY,
+            user_id BIGINT NOT NULL,
+            token_hash TEXT UNIQUE NOT NULL,
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            last_used TIMESTAMPTZ
+        );
+        """))
+
+        conn.execute(text("""
+        CREATE INDEX IF NOT EXISTS idx_user_sessions_user
+        ON user_sessions(user_id);
         """))
 
         # 9) Create server_rewards table for reward tiers

@@ -48,6 +48,44 @@ def require_master_admin(x_admin_key: str | None = Header(default=None, alias="X
     return True
 
 
+def require_user(
+    authorization: str | None = Header(default=None, alias="Authorization"),
+    x_user_token: str | None = Header(default=None, alias="X-User-Token")
+) -> dict:
+    """Validate user session token and return user info."""
+    token = None
+    if x_user_token:
+        token = x_user_token.strip()
+    elif authorization and authorization.lower().startswith("bearer "):
+        token = authorization.split(" ", 1)[1].strip()
+
+    if not token:
+        raise HTTPException(status_code=401, detail="Missing user token")
+
+    token_hash = hash_token(token)
+    with engine.begin() as conn:
+        row = conn.execute(
+            text("""
+                SELECT u.id, u.email, u.name
+                FROM user_sessions s
+                JOIN users u ON u.id = s.user_id
+                WHERE s.token_hash = :token_hash
+                LIMIT 1
+            """),
+            {"token_hash": token_hash}
+        ).fetchone()
+
+        if not row:
+            raise HTTPException(status_code=401, detail="Invalid user token")
+
+        conn.execute(
+            text("UPDATE user_sessions SET last_used = NOW() WHERE token_hash = :token_hash"),
+            {"token_hash": token_hash}
+        )
+
+    return {"id": row[0], "email": row[1], "name": row[2]}
+
+
 def validate_and_get_server(device_id: str, player_api_key: str) -> tuple[str, str]:
     """
     Validate user token (opaque token) and return (server_name, minecraft_username).

@@ -7,14 +7,14 @@ from zoneinfo import ZoneInfo
 from database import engine
 from models import ServerRegistrationRequest, ApiKeyResponse
 from utils import generate_opaque_token, hash_token
-from auth import require_api_key
+from auth import require_api_key, require_user
 
 CENTRAL_TZ = ZoneInfo("America/Chicago")
 router = APIRouter()
 
 
 @router.post("/v1/servers/register")
-def register_server(request: ServerRegistrationRequest) -> ApiKeyResponse:
+def register_server(request: ServerRegistrationRequest, user=Depends(require_user)) -> ApiKeyResponse:
     """
     Register a new Minecraft server and get an API key (opaque token).
     
@@ -41,15 +41,31 @@ def register_server(request: ServerRegistrationRequest) -> ApiKeyResponse:
             # Insert new API key (hashed)
             conn.execute(
                 text("""
-                    INSERT INTO api_keys (key, server_name, active)
-                    VALUES (:key_hash, :server_name, :active)
+                    INSERT INTO api_keys (key, server_name, active, owner_user_id)
+                    VALUES (:key_hash, :server_name, :active, :owner_user_id)
                 """),
-                {"key_hash": key_hash, "server_name": request.server_name, "active": True}
+                {
+                    "key_hash": key_hash,
+                    "server_name": request.server_name,
+                    "active": True,
+                    "owner_user_id": user["id"],
+                }
             )
-            
-            # TODO: Store additional server metadata (owner_name, owner_email, server_address, etc.)
-            # For now, we're just using server_name in the api_keys table
-            # You might want to create a separate 'servers' table for this metadata
+
+            conn.execute(
+                text("""
+                    INSERT INTO servers (server_name, owner_user_id, owner_name, owner_email, server_address, server_version)
+                    VALUES (:server_name, :owner_user_id, :owner_name, :owner_email, :server_address, :server_version)
+                """),
+                {
+                    "server_name": request.server_name,
+                    "owner_user_id": user["id"],
+                    "owner_name": request.owner_name,
+                    "owner_email": request.owner_email,
+                    "server_address": request.server_address,
+                    "server_version": request.server_version,
+                }
+            )
             
             # TODO: Send email to owner_email with the API key
             # Example: send_email(request.owner_email, plaintext_key, request.server_name)

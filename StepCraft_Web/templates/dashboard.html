@@ -32,11 +32,7 @@
         <div class="d-flex justify-content-between align-items-center">
             <div>
                 <div class="title">StepCraft Dashboard</div>
-                {% if server %}
-                    <div class="text-muted">Server: {{ server.server_name }}</div>
-                {% else %}
-                    <div class="text-muted">Server: Unknown</div>
-                {% endif %}
+                <div class="text-muted">Your servers</div>
             </div>
             <form method="post" action="/logout">
                 <button class="btn btn-outline-secondary">Logout</button>
@@ -44,24 +40,24 @@
         </div>
         <hr>
         <div class="row g-3">
-            <div class="col-md-6">
-                <div class="card p-3 h-100">
-                    <h5>Rewards</h5>
-                    <p class="text-muted">Configure step-based rewards.</p>
-                    <a class="btn btn-success" href="/rewards">Manage Rewards</a>
-                </div>
-            </div>
-            <div class="col-md-6">
-                <div class="card p-3 h-100">
-                    <h5>Server Info</h5>
-                    {% if server %}
-                        <ul class="small text-muted mb-0">
-                            <li>Players: {{ server.current_players }}</li>
-                            <li>Max: {{ server.max_players if server.max_players is not none else 'Unlimited' }}</li>
-                            <li>Last used: {{ server.last_used }}</li>
-                        </ul>
+            <div class="col-12">
+                <div class="card p-3">
+                    <h5>Servers</h5>
+                    {% if servers and servers|length > 0 %}
+                        <div class="list-group">
+                            {% for s in servers %}
+                                <div class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <div class="fw-bold">{{ s.server_name }}</div>
+                                        <div class="small text-muted">{{ s.server_address }} · {{ s.server_version }}</div>
+                                    </div>
+                                    <a class="btn btn-success" href="/rewards?server={{ s.server_name }}">Manage Rewards</a>
+                                </div>
+                            {% endfor %}
+                        </div>
                     {% else %}
-                        <div class="text-muted small">Unable to load server info.</div>
+                        <div class="text-muted">No servers registered yet.</div>
+                        <a class="btn btn-outline-primary mt-3" href="/register">Register a server</a>
                     {% endif %}
                 </div>
             </div>

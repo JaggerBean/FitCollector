@@ -35,7 +35,7 @@
 <body>
     <div class="wrap">
         <div class="d-flex justify-content-between align-items-center mb-3">
-            <div class="title">Reward Tiers</div>
+            <div class="title">Reward Tiers {% if server_name %}· {{ server_name }}{% endif %}</div>
             <a class="btn btn-outline-secondary" href="/dashboard">Back</a>
         </div>
 
@@ -49,7 +49,7 @@
             </div>
         {% endif %}
 
-        <form method="post" action="/rewards/update">
+        <form method="post" action="/rewards/update?server={{ server_name }}">
             <label class="form-label">Rewards JSON</label>
             <textarea class="form-control" name="rewards_json" spellcheck="false">{{ raw_json }}</textarea>
             <div class="d-flex gap-2 mt-3">
@@ -58,7 +58,7 @@
             </div>
         </form>
 
-        <form id="default-rewards-form" method="post" action="/rewards/default"></form>
+        <form id="default-rewards-form" method="post" action="/rewards/default?server={{ server_name }}"></form>
 
         <hr>
         <h6>Format</h6>

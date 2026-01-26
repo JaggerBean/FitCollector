@@ -60,22 +60,18 @@ def landing_page(request: Request):
     return templates.TemplateResponse("landing.html", {"request": request})
 
 
-@app.get("/login", response_class=HTMLResponse)
-def login_form(request: Request):
+@app.get("/account/login", response_class=HTMLResponse)
+def account_login_form(request: Request):
     return templates.TemplateResponse("login.html", {"request": request})
 
 
-@app.post("/login", response_class=HTMLResponse)
-async def login_submit(request: Request, api_key: str = Form(...)):
-    api_key = api_key.strip()
-    if not api_key:
-        return templates.TemplateResponse("login.html", {"request": request, "error": "API key is required."})
-
+@app.post("/account/login", response_class=HTMLResponse)
+async def account_login_submit(request: Request, email: str = Form(...), password: str = Form(...)):
     async with httpx.AsyncClient() as client:
         try:
-            resp = await client.get(
-                f"{BACKEND_URL}/v1/servers/info",
-                headers={"X-API-Key": api_key},
+            resp = await client.post(
+                f"{BACKEND_URL}/v1/auth/login",
+                json={"email": email, "password": password},
                 timeout=10,
             )
         except Exception as e:
@@ -87,10 +83,39 @@ async def login_submit(request: Request, api_key: str = Form(...)):
             error = resp.json().get("error")
         except Exception:
             error = resp.text
-        return templates.TemplateResponse("login.html", {"request": request, "error": error or "Invalid API key."})
+        return templates.TemplateResponse("login.html", {"request": request, "error": error or "Invalid credentials."})
 
-    request.session["api_key"] = api_key
+    token = resp.json().get("token")
+    request.session["user_token"] = token
     return RedirectResponse(url="/dashboard", status_code=302)
+
+
+@app.get("/account/register", response_class=HTMLResponse)
+def account_register_form(request: Request):
+    return templates.TemplateResponse("register_account.html", {"request": request})
+
+
+@app.post("/account/register", response_class=HTMLResponse)
+async def account_register_submit(request: Request, name: str = Form(...), email: str = Form(...), password: str = Form(...)):
+    async with httpx.AsyncClient() as client:
+        try:
+            resp = await client.post(
+                f"{BACKEND_URL}/v1/auth/register",
+                json={"name": name, "email": email, "password": password},
+                timeout=10,
+            )
+        except Exception as e:
+            return templates.TemplateResponse("register_account.html", {"request": request, "error": f"Backend error: {e}"})
+
+    if resp.status_code != 200:
+        error = None
+        try:
+            error = resp.json().get("error")
+        except Exception:
+            error = resp.text
+        return templates.TemplateResponse("register_account.html", {"request": request, "error": error or "Registration failed."})
+
+    return RedirectResponse(url="/account/login", status_code=302)
 
 
 @app.post("/logout")
@@ -101,39 +126,43 @@ def logout(request: Request):
 
 @app.get("/dashboard", response_class=HTMLResponse)
 async def dashboard(request: Request):
-    api_key = request.session.get("api_key")
-    if not api_key:
-        return RedirectResponse(url="/login", status_code=302)
+    user_token = request.session.get("user_token")
+    if not user_token:
+        return RedirectResponse(url="/account/login", status_code=302)
 
-    server_info = None
+    servers = []
     async with httpx.AsyncClient() as client:
         try:
             resp = await client.get(
-                f"{BACKEND_URL}/v1/servers/info",
-                headers={"X-API-Key": api_key},
+                f"{BACKEND_URL}/v1/owner/servers",
+                headers={"Authorization": f"Bearer {user_token}"},
                 timeout=10,
             )
             if resp.status_code == 200:
-                server_info = resp.json()
+                servers = resp.json().get("servers", [])
         except Exception:
-            server_info = None
+            servers = []
 
-    return templates.TemplateResponse("dashboard.html", {"request": request, "server": server_info})
+    return templates.TemplateResponse("dashboard.html", {"request": request, "servers": servers})
 
 
 @app.get("/rewards", response_class=HTMLResponse)
 async def rewards_page(request: Request):
-    api_key = request.session.get("api_key")
-    if not api_key:
-        return RedirectResponse(url="/login", status_code=302)
+    user_token = request.session.get("user_token")
+    if not user_token:
+        return RedirectResponse(url="/account/login", status_code=302)
+
+    server_name = request.query_params.get("server")
+    if not server_name:
+        return RedirectResponse(url="/dashboard", status_code=302)
 
     data = None
     error = None
     async with httpx.AsyncClient() as client:
         try:
             resp = await client.get(
-                f"{BACKEND_URL}/v1/servers/rewards",
-                headers={"X-API-Key": api_key},
+                f"{BACKEND_URL}/v1/owner/servers/{server_name}/rewards",
+                headers={"Authorization": f"Bearer {user_token}"},
                 timeout=10,
             )
             if resp.status_code == 200:
@@ -149,15 +178,19 @@ async def rewards_page(request: Request):
 
     return templates.TemplateResponse(
         "rewards.html",
-        {"request": request, "data": data, "raw_json": raw_json, "error": error}
+        {"request": request, "data": data, "raw_json": raw_json, "error": error, "server_name": server_name}
     )
 
 
 @app.post("/rewards/update")
 async def rewards_update(request: Request, rewards_json: str = Form(...)):
-    api_key = request.session.get("api_key")
-    if not api_key:
-        return RedirectResponse(url="/login", status_code=302)
+    user_token = request.session.get("user_token")
+    if not user_token:
+        return RedirectResponse(url="/account/login", status_code=302)
+
+    server_name = request.query_params.get("server")
+    if not server_name:
+        return RedirectResponse(url="/dashboard", status_code=302)
 
     try:
         payload = json.loads(rewards_json)
@@ -174,8 +207,8 @@ async def rewards_update(request: Request, rewards_json: str = Form(...)):
     async with httpx.AsyncClient() as client:
         try:
             resp = await client.put(
-                f"{BACKEND_URL}/v1/servers/rewards",
-                headers={"X-API-Key": api_key},
+                f"{BACKEND_URL}/v1/owner/servers/{server_name}/rewards",
+                headers={"Authorization": f"Bearer {user_token}"},
                 json=payload,
                 timeout=10,
             )
@@ -185,6 +218,7 @@ async def rewards_update(request: Request, rewards_json: str = Form(...)):
                 "data": None,
                 "raw_json": rewards_json,
                 "error": f"Backend error: {e}",
+                "server_name": server_name,
             })
 
     if resp.status_code != 200:
@@ -193,33 +227,40 @@ async def rewards_update(request: Request, rewards_json: str = Form(...)):
             "data": None,
             "raw_json": rewards_json,
             "error": resp.text,
+            "server_name": server_name,
         })
 
-    return RedirectResponse(url="/rewards", status_code=302)
+    return RedirectResponse(url=f"/rewards?server={server_name}", status_code=302)
 
 
 @app.post("/rewards/default")
 async def rewards_default(request: Request):
-    api_key = request.session.get("api_key")
-    if not api_key:
-        return RedirectResponse(url="/login", status_code=302)
+    user_token = request.session.get("user_token")
+    if not user_token:
+        return RedirectResponse(url="/account/login", status_code=302)
+
+    server_name = request.query_params.get("server")
+    if not server_name:
+        return RedirectResponse(url="/dashboard", status_code=302)
 
     async with httpx.AsyncClient() as client:
         try:
             await client.post(
-                f"{BACKEND_URL}/v1/servers/rewards/default",
-                headers={"X-API-Key": api_key},
+                f"{BACKEND_URL}/v1/owner/servers/{server_name}/rewards/default",
+                headers={"Authorization": f"Bearer {user_token}"},
                 timeout=10,
             )
         except Exception:
             pass
 
-    return RedirectResponse(url="/rewards", status_code=302)
+    return RedirectResponse(url=f"/rewards?server={server_name}", status_code=302)
 
 # Registration form at /register
 @app.get("/register", response_class=HTMLResponse)
 def register_form(request: Request):
     import datetime
+    if not request.session.get("user_token"):
+        return RedirectResponse(url="/account/login", status_code=302)
     year = datetime.datetime.now().year
     return templates.TemplateResponse("register.html", {"request": request, "year": year})
 
@@ -242,6 +283,9 @@ async def register_server(request: Request,
     ]
     response = None
     last_error = None
+    user_token = request.session.get("user_token")
+    if not user_token:
+        return RedirectResponse(url="/account/login", status_code=302)
     async with httpx.AsyncClient() as client:
         for url in backend_urls:
             try:
@@ -254,7 +298,8 @@ async def register_server(request: Request,
                         "owner_email": owner_email,
                         "server_address": server_address,
                         "server_version": server_version
-                    }
+                    },
+                    headers={"Authorization": f"Bearer {user_token}"}
                 )
                 logging.info(f"Response status: {response.status_code}, body: {response.text}")
                 if response.status_code == 200:
