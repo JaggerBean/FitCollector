@@ -39,6 +39,32 @@
             transform: translateY(-2px) scale(1.03);
             box-shadow: 0 4px 16px rgba(44, 67, 54, 0.18);
         }
+        @media (prefers-color-scheme: dark) {
+            body {
+                background: linear-gradient(135deg, #121212 0%, #1E1E1E 100%);
+                color: #E1E1E1;
+            }
+            .hero {
+                background: #23272A;
+                border: 2px solid #81C784;
+                box-shadow: 0 8px 32px rgba(44, 67, 54, 0.32);
+            }
+            .title {
+                color: #81C784;
+            }
+            .card {
+                background: #1E1E1E;
+                border: 1px solid #2E7D32;
+            }
+            .btn-primary {
+                background: linear-gradient(90deg, #64B5F6 60%, #81C784 100%);
+                color: #23272A;
+            }
+            .btn-primary:hover, .btn-primary:focus {
+                background: linear-gradient(90deg, #81C784 60%, #64B5F6 100%);
+                color: #23272A;
+            }
+        }
     </style>
 </head>
 <body>
