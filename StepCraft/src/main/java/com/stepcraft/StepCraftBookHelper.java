@@ -139,55 +139,60 @@ public final class StepCraftBookHelper {
         try {
             Class<?> clazz = Class.forName("net.minecraft.component.type.WrittenBookContentComponent");
 
+            if (pagesAreText) {
+                // Prefer Text-based constructors to preserve styling
+                try {
+                    Class<?> rawFilteredPair = Class.forName("net.minecraft.text.RawFilteredPair");
+                    java.lang.reflect.Method of = rawFilteredPair.getMethod("of", Object.class);
+                    Object titlePair = of.invoke(null, Text.literal(title));
+                    Object authorPair = of.invoke(null, Text.literal(author));
+                    List<Object> rawPages = new ArrayList<>();
+                    for (Object page : pages) {
+                        Text value = page instanceof Text t ? t : Text.literal(String.valueOf(page));
+                        rawPages.add(of.invoke(null, value));
+                    }
+                    return clazz.getConstructor(rawFilteredPair, rawFilteredPair, int.class, List.class, boolean.class)
+                            .newInstance(titlePair, authorPair, 0, rawPages, true);
+                } catch (Exception ignored) {}
+
+                try {
+                    List<Text> textPages = new ArrayList<>();
+                    for (Object page : pages) {
+                        textPages.add(page instanceof Text t ? t : Text.literal(String.valueOf(page)));
+                    }
+                    return clazz.getConstructor(String.class, String.class, int.class, List.class, boolean.class)
+                            .newInstance(title, author, 0, textPages, true);
+                } catch (Exception ignored) {}
+            }
+
             // Try constructor with (RawFilteredPair<String>, RawFilteredPair<String>, int, List<RawFilteredPair<String>>, boolean)
-            try {
-                Class<?> rawFilteredPair = Class.forName("net.minecraft.text.RawFilteredPair");
-                java.lang.reflect.Method of = rawFilteredPair.getMethod("of", Object.class);
-                Object titlePair = of.invoke(null, pagesAreText ? Text.literal(title) : title);
-                Object authorPair = of.invoke(null, pagesAreText ? Text.literal(author) : author);
-                List<Object> rawPages = new ArrayList<>();
-                for (Object page : pages) {
-                    Object value = pagesAreText ? page : String.valueOf(page);
-                    rawPages.add(of.invoke(null, value));
-                }
-                return clazz.getConstructor(rawFilteredPair, rawFilteredPair, int.class, List.class, boolean.class)
-                        .newInstance(titlePair, authorPair, 0, rawPages, true);
-            } catch (Exception ignored) {}
+            if (!pagesAreText) {
+                try {
+                    Class<?> rawFilteredPair = Class.forName("net.minecraft.text.RawFilteredPair");
+                    java.lang.reflect.Method of = rawFilteredPair.getMethod("of", Object.class);
+                    Object titlePair = of.invoke(null, title);
+                    Object authorPair = of.invoke(null, author);
+                    List<Object> rawPages = new ArrayList<>();
+                    for (Object page : pages) {
+                        Object value = String.valueOf(page);
+                        rawPages.add(of.invoke(null, value));
+                    }
+                    return clazz.getConstructor(rawFilteredPair, rawFilteredPair, int.class, List.class, boolean.class)
+                            .newInstance(titlePair, authorPair, 0, rawPages, true);
+                } catch (Exception ignored) {}
+            }
 
             // Try constructor with (String, String, int, List<String>, boolean)
-            try {
-                List<String> stringPages = new ArrayList<>();
-                for (Object page : pages) {
-                    stringPages.add(pagesAreText && page instanceof Text t ? t.getString() : String.valueOf(page));
-                }
-                return clazz.getConstructor(String.class, String.class, int.class, List.class, boolean.class)
-                        .newInstance(title, author, 0, stringPages, true);
-            } catch (Exception ignored) {}
-
-            // Try constructor with (RawFilteredPair<Text>, RawFilteredPair<Text>, int, List<RawFilteredPair<Text>>, boolean)
-            try {
-                Class<?> rawFilteredPair = Class.forName("net.minecraft.text.RawFilteredPair");
-                java.lang.reflect.Method of = rawFilteredPair.getMethod("of", Object.class);
-                Object titlePair = of.invoke(null, Text.literal(title));
-                Object authorPair = of.invoke(null, Text.literal(author));
-                List<Object> rawPages = new ArrayList<>();
-                for (Object page : pages) {
-                    Text value = (pagesAreText && page instanceof Text t) ? t : Text.literal(String.valueOf(page));
-                    rawPages.add(of.invoke(null, value));
-                }
-                return clazz.getConstructor(rawFilteredPair, rawFilteredPair, int.class, List.class, boolean.class)
-                        .newInstance(titlePair, authorPair, 0, rawPages, true);
-            } catch (Exception ignored) {}
-
-            // Try constructor with (String, String, int, List<Text>, boolean)
-            try {
-                List<Text> textPages = new ArrayList<>();
-                for (Object page : pages) {
-                    textPages.add(pagesAreText && page instanceof Text t ? t : Text.literal(String.valueOf(page)));
-                }
-                return clazz.getConstructor(String.class, String.class, int.class, List.class, boolean.class)
-                        .newInstance(title, author, 0, textPages, true);
-            } catch (Exception ignored) {}
+            if (!pagesAreText) {
+                try {
+                    List<String> stringPages = new ArrayList<>();
+                    for (Object page : pages) {
+                        stringPages.add(String.valueOf(page));
+                    }
+                    return clazz.getConstructor(String.class, String.class, int.class, List.class, boolean.class)
+                            .newInstance(title, author, 0, stringPages, true);
+                } catch (Exception ignored) {}
+            }
 
         } catch (Exception ignored) {
             // ignore

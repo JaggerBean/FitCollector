@@ -47,7 +47,17 @@ public final class StepCraftScreens {
         player.openHandledScreen(new StepCraftConfirmScreenFactory(
                 action,
                 targetPlayer,
-                Text.literal("Confirm " + action.getLabel())
+                Text.literal("Confirm " + action.getLabel()),
+                false
+        ));
+    }
+
+    public static void openConfirm(ServerPlayerEntity player, StepCraftPlayerAction action, String targetPlayer, boolean returnToPlayerList) {
+        player.openHandledScreen(new StepCraftConfirmScreenFactory(
+                action,
+                targetPlayer,
+                Text.literal("Confirm " + action.getLabel()),
+                returnToPlayerList
         ));
     }
 

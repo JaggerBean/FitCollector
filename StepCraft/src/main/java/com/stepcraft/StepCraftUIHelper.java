@@ -53,12 +53,15 @@ public class StepCraftUIHelper {
 
                     // Stats / data
                     {Items.FEATHER, "Yesterday Steps", "Fetch yesterday step count", Formatting.AQUA},
+
+                        // Settings
+                            {Items.COMPASS, "Settings", "Use /stepcraft set_api_key", Formatting.LIGHT_PURPLE},
             };
 
             int[] slotLayout = new int[]{
                     1, 3, 5, 7,
                     10, 12, 14, 16,
-                    19, 21, 23
+                    19, 21, 23, 25
             };
 
             for (int i = 0; i < commandItems.length && i < slotLayout.length; i++) {

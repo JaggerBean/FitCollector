@@ -37,6 +37,18 @@ public class StepCraftCommands {
                     return Command.SINGLE_SUCCESS;
                 })
             )
+            // /stepcraft set_api_key <key> (OPs only)
+            .then(CommandManager.literal("set_api_key")
+                .requires(source -> source.hasPermissionLevel(4))
+                .then(CommandManager.argument("key", StringArgumentType.greedyString())
+                    .executes(context -> {
+                        String key = StringArgumentType.getString(context, "key");
+                        StepCraftConfig.setApiKey(key.trim());
+                        context.getSource().sendFeedback(() -> Text.literal("API key saved."), true);
+                        return Command.SINGLE_SUCCESS;
+                    })
+                )
+            )
             // /stepcraft players_gui [query] (OPs only)
             .then(CommandManager.literal("players_gui")
                 .requires(source -> source.hasPermissionLevel(4))

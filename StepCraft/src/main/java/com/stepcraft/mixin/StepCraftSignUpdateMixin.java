@@ -1,5 +1,6 @@
 package com.stepcraft.mixin;
 
+import com.stepcraft.StepCraftApiKeyInput;
 import com.stepcraft.StepCraftSignSearch;
 import net.minecraft.network.packet.c2s.play.UpdateSignC2SPacket;
 import net.minecraft.server.network.ServerPlayNetworkHandler;
@@ -16,6 +17,11 @@ public class StepCraftSignUpdateMixin {
 
     @Inject(method = "onUpdateSign", at = @At("HEAD"), cancellable = true)
     private void onUpdateSign(UpdateSignC2SPacket packet, CallbackInfo ci) {
+        if (StepCraftApiKeyInput.handleSignUpdate(player, packet)) {
+            ci.cancel();
+            return;
+        }
+
         if (StepCraftSignSearch.handleSignUpdate(player, packet)) {
             ci.cancel();
             return;

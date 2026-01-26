@@ -142,7 +142,15 @@ public class StepCraftPlayerListScreenHandler extends GenericContainerScreenHand
         if (slotToPlayer.containsKey(slot)) {
             String target = slotToPlayer.get(slot);
             if (action != StepCraftPlayerAction.NONE) {
-                StepCraftScreens.openConfirm(serverPlayer, action, target);
+                if (action == StepCraftPlayerAction.CLAIM_STATUS) {
+                    StepCraftChestScreenHandler.sendBackendToLectern(serverPlayer, "Claim Status",
+                            () -> BackendClient.getClaimStatusForPlayer(target));
+                } else if (action == StepCraftPlayerAction.YESTERDAY_STEPS) {
+                    StepCraftChestScreenHandler.sendBackendToLectern(serverPlayer, "Yesterday Steps",
+                            () -> BackendClient.getYesterdayStepsForPlayer(target));
+                } else {
+                    StepCraftScreens.openConfirm(serverPlayer, action, target, true);
+                }
             } else {
                 StepCraftScreens.openActionMenu(serverPlayer, target);
             }

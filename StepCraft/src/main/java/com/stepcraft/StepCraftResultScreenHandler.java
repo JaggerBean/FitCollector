@@ -4,6 +4,8 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonArray;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
@@ -78,7 +80,7 @@ public class StepCraftResultScreenHandler extends GenericContainerScreenHandler 
         }
 
         if (slot == SLOT_LECTERN) {
-            StepCraftLecternHelper.openLectern(serverPlayer, "Result", toStyledPages(lines));
+            StepCraftLecternHelper.openLectern(serverPlayer, "Result", toPagesFromLines(lines));
             return;
         }
 
@@ -104,18 +106,32 @@ public class StepCraftResultScreenHandler extends GenericContainerScreenHandler 
             return lines;
         }
 
+        if (message.contains("Error:") || message.contains("error:")) {
+            for (String line : message.split("\n")) {
+                if (!line.isBlank()) {
+                    lines.add(line.trim());
+                }
+            }
+            return lines;
+        }
+
         try {
             String extracted = extractJsonSubstring(message);
             String label = extractLeadingLabel(message, extracted);
             JsonElement element = JsonParser.parseString(extracted != null ? extracted : message);
             element = unwrapJsonString(element);
-            if (label != null && !label.isBlank()) {
-                lines.add(prettyTitle(label));
+            List<String> filtered = filterLinesForLabel(label, element);
+            if (filtered != null && !filtered.isEmpty()) {
+                lines.addAll(filtered);
             } else {
-                lines.add("Result");
+                if (label != null && !label.isBlank()) {
+                    lines.add(prettyTitle(label));
+                } else {
+                    lines.add("Result");
+                }
+                lines.add("──────────");
+                formatJsonLines(element, "", lines);
             }
-            lines.add("──────────");
-            formatJsonLines(element, "", lines);
         } catch (Exception ignored) {
             for (String line : message.split("\\n")) {
                 if (!line.isBlank()) {
@@ -124,6 +140,182 @@ public class StepCraftResultScreenHandler extends GenericContainerScreenHandler 
             }
         }
         return lines;
+    }
+
+    private static List<String> filterLinesForLabel(String label, JsonElement element) {
+        if (element == null || !element.isJsonObject()) {
+            return null;
+        }
+
+        String key = label == null ? "" : label.trim().toLowerCase();
+        JsonObject obj = element.getAsJsonObject();
+
+        if (key.contains("health")) {
+            List<String> lines = new ArrayList<>();
+            lines.add("Health Check");
+            lines.add("──────────");
+            boolean ok = obj.has("ok") && obj.get("ok").isJsonPrimitive() && obj.get("ok").getAsBoolean();
+            lines.add("Status: " + (ok ? "OK" : "FAIL"));
+            return lines;
+        }
+
+        if (key.contains("server info")) {
+            List<String> lines = new ArrayList<>();
+            lines.add("Server Info");
+            lines.add("──────────");
+            addLine(lines, "Server Name", getAsString(obj, "server_name"));
+            addLine(lines, "Active", getAsString(obj, "active"));
+            addLine(lines, "Current Players", getAsString(obj, "current_players"));
+            String maxPlayers = obj.has("max_players") && !obj.get("max_players").isJsonNull()
+                    ? getAsString(obj, "max_players") : "Unlimited";
+            addLine(lines, "Max Players", maxPlayers);
+            String slots = obj.has("slots_available") && !obj.get("slots_available").isJsonNull()
+                    ? getAsString(obj, "slots_available") : "Unlimited";
+            addLine(lines, "Slots Available", slots);
+            addLine(lines, "Created", formatValue(getAsString(obj, "created_at")));
+            addLine(lines, "Last Used", formatValue(getAsString(obj, "last_used")));
+            return lines;
+        }
+
+        if (key.contains("server bans")) {
+            List<String> lines = new ArrayList<>();
+            lines.add("Server Bans");
+            lines.add("──────────");
+            addLine(lines, "Server", getAsString(obj, "server_name"));
+            int total = getAsInt(obj, "total_bans");
+            addLine(lines, "Total", String.valueOf(total));
+
+            if (obj.has("bans") && obj.get("bans").isJsonArray()) {
+                JsonArray bans = obj.getAsJsonArray("bans");
+                int limit = Math.min(10, bans.size());
+                for (int i = 0; i < limit; i++) {
+                    JsonObject ban = bans.get(i).getAsJsonObject();
+                    String user = getAsString(ban, "username");
+                    String reason = getAsString(ban, "reason");
+                    String when = formatValue(getAsString(ban, "banned_at"));
+                    if (user == null || user.isBlank()) {
+                        user = "(device ban)";
+                    }
+                    lines.add("• " + user + " - " + reason);
+                    if (when != null && !when.isBlank()) {
+                        lines.add("  " + when);
+                    }
+                }
+                if (bans.size() > limit) {
+                    lines.add("… and " + (bans.size() - limit) + " more");
+                }
+            }
+            return lines;
+        }
+
+        if (key.contains("all players")) {
+            List<String> lines = new ArrayList<>();
+            lines.add("All Players");
+            lines.add("──────────");
+            addLine(lines, "Server", getAsString(obj, "server_name"));
+            addLine(lines, "Players", getAsString(obj, "player_count"));
+            addLine(lines, "Records", getAsString(obj, "total_records"));
+
+            if (obj.has("data") && obj.get("data").isJsonArray()) {
+                JsonArray data = obj.getAsJsonArray("data");
+                int limit = Math.min(10, data.size());
+                for (int i = 0; i < limit; i++) {
+                    JsonObject row = data.get(i).getAsJsonObject();
+                    String user = getAsString(row, "minecraft_username");
+                    String day = getAsString(row, "day");
+                    String steps = getAsString(row, "steps_today");
+                    lines.add("• " + user + " - " + steps + " (" + day + ")");
+                }
+                if (data.size() > limit) {
+                    lines.add("… and " + (data.size() - limit) + " more");
+                }
+            }
+            return lines;
+        }
+
+        if (key.contains("claim status")) {
+            List<String> lines = new ArrayList<>();
+            lines.add("Claim Status");
+            lines.add("──────────");
+            addLine(lines, "Claimed", getAsString(obj, "claimed"));
+            addLine(lines, "Claimed At", formatValue(getAsString(obj, "claimed_at")));
+            return lines;
+        }
+
+        if (key.contains("claim reward")) {
+            List<String> lines = new ArrayList<>();
+            lines.add("Claim Reward");
+            lines.add("──────────");
+            addLine(lines, "Claimed", getAsString(obj, "claimed"));
+            addLine(lines, "Claimed At", formatValue(getAsString(obj, "claimed_at")));
+            return lines;
+        }
+
+        if (key.contains("yesterday steps")) {
+            List<String> lines = new ArrayList<>();
+            lines.add("Yesterday Steps");
+            lines.add("──────────");
+            addLine(lines, "Minecraft Username", getAsString(obj, "minecraft_username"));
+            addLine(lines, "Server Name", getAsString(obj, "server_name"));
+            addLine(lines, "Day", getAsString(obj, "day"));
+            addLine(lines, "Steps Yesterday", getAsString(obj, "steps_yesterday"));
+            return lines;
+        }
+
+        if (key.contains("ban") || key.contains("unban") || key.contains("delete")) {
+            List<String> lines = new ArrayList<>();
+            lines.add(prettyTitle(label));
+            lines.add("──────────");
+            addLine(lines, "Player", getAsString(obj, "minecraft_username"));
+            addLine(lines, "Server", getAsString(obj, "server_name"));
+            addLine(lines, "Action", getAsString(obj, "action"));
+            addLine(lines, "Message", getAsString(obj, "message"));
+            if (obj.has("bans_removed")) {
+                addLine(lines, "Bans Removed", getAsString(obj, "bans_removed"));
+            }
+            if (obj.has("steps_deleted")) {
+                addLine(lines, "Steps Deleted", getAsString(obj, "steps_deleted"));
+            }
+            if (obj.has("keys_deleted")) {
+                addLine(lines, "Keys Deleted", getAsString(obj, "keys_deleted"));
+            }
+            return lines;
+        }
+
+        return null;
+    }
+
+    private static void addLine(List<String> lines, String label, String value) {
+        if (value == null || value.isBlank() || "null".equalsIgnoreCase(value)) {
+            return;
+        }
+        lines.add(label + ": " + value);
+    }
+
+    private static String getAsString(JsonObject obj, String key) {
+        if (obj == null || key == null || !obj.has(key) || obj.get(key).isJsonNull()) {
+            return null;
+        }
+        try {
+            return obj.get(key).getAsString();
+        } catch (Exception ignored) {
+            return obj.get(key).toString();
+        }
+    }
+
+    private static int getAsInt(JsonObject obj, String key) {
+        if (obj == null || key == null || !obj.has(key) || obj.get(key).isJsonNull()) {
+            return 0;
+        }
+        try {
+            return obj.get(key).getAsInt();
+        } catch (Exception ignored) {
+            try {
+                return Integer.parseInt(obj.get(key).getAsString());
+            } catch (Exception ignoredAgain) {
+                return 0;
+            }
+        }
     }
 
     private static String extractJsonSubstring(String message) {
@@ -244,7 +436,7 @@ public class StepCraftResultScreenHandler extends GenericContainerScreenHandler 
         return trimmed;
     }
 
-    private static List<String> toPagesFromLines(List<String> lines) {
+    public static List<String> toPagesFromLines(List<String> lines) {
         List<String> pages = new ArrayList<>();
         if (lines == null || lines.isEmpty()) {
             pages.add("No result");
@@ -268,94 +460,6 @@ public class StepCraftResultScreenHandler extends GenericContainerScreenHandler 
         return pages;
     }
 
-    private static List<Text> toStyledPages(List<String> lines) {
-        List<Text> pages = new ArrayList<>();
-        if (lines == null || lines.isEmpty()) {
-            pages.add(Text.literal("No result").setStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xFFFFFF)).withItalic(false)));
-            return pages;
-        }
-
-        List<Text> pageLines = new ArrayList<>();
-        int lineCount = 0;
-        for (int i = 0; i < lines.size(); i++) {
-            String line = lines.get(i);
-            Text lineText = styleLine(line, i == 0);
-            pageLines.add(lineText);
-            lineCount++;
-            if (lineCount >= 13) {
-                pages.add(joinPageLines(pageLines));
-                pageLines.clear();
-                lineCount = 0;
-            }
-        }
-        if (!pageLines.isEmpty()) {
-            pages.add(joinPageLines(pageLines));
-        }
-        return pages;
-    }
-
-    private static Text joinPageLines(List<Text> lines) {
-        Text text = Text.empty();
-        for (int i = 0; i < lines.size(); i++) {
-            text = text.copy().append(lines.get(i));
-            if (i < lines.size() - 1) {
-                text = text.copy().append(Text.literal("\n"));
-            }
-        }
-        return text;
-    }
-
-    private static Text styleLine(String line, boolean isTitle) {
-        if (line == null) {
-            return Text.literal("").setStyle(Style.EMPTY.withItalic(false));
-        }
-
-        if (isTitle) {
-            return Text.literal(line)
-                    .setStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xFFD54A)).withBold(true).withItalic(false));
-        }
-
-        if (line.chars().allMatch(ch -> ch == '─' || ch == '-' || ch == ' ')) {
-            return Text.literal(line)
-                    .setStyle(Style.EMPTY.withColor(TextColor.fromRgb(0x777777)).withItalic(false));
-        }
-
-        String trimmed = line.trim();
-        boolean isBullet = trimmed.startsWith("• ");
-        String content = isBullet ? trimmed.substring(2) : trimmed;
-
-        int colonIdx = content.indexOf(':');
-        if (colonIdx > 0) {
-            String key = content.substring(0, colonIdx).trim();
-            String value = content.substring(colonIdx + 1).trim();
-
-            Text keyText = Text.literal(key)
-                    .setStyle(Style.EMPTY.withColor(TextColor.fromRgb(0x55D6FF)).withBold(true).withItalic(false));
-            Text colonText = Text.literal(": ")
-                    .setStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xFFFFFF)).withItalic(false));
-            Text valueText = Text.literal(value)
-                    .setStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xFFFFFF)).withItalic(false));
-
-            if (isBullet) {
-                Text bullet = Text.literal("• ")
-                        .setStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xAAAAAA)).withItalic(false));
-                return Text.empty().append(bullet).append(keyText).append(colonText).append(valueText);
-            }
-
-            return Text.empty().append(keyText).append(colonText).append(valueText);
-        }
-
-        if (isBullet) {
-            Text bullet = Text.literal("• ")
-                    .setStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xAAAAAA)).withItalic(false));
-            Text valueText = Text.literal(content)
-                    .setStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xFFFFFF)).withItalic(false));
-            return Text.empty().append(bullet).append(valueText);
-        }
-
-        return Text.literal(line)
-                .setStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xFFFFFF)).withItalic(false));
-    }
 
     private void renderPage() {
         for (int i = 0; i < inventory.size(); i++) {

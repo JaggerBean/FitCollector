@@ -37,4 +37,27 @@ public class StepCraftConfig {
     public static String getApiKey() {
         return apiKey;
     }
+
+    public static synchronized void setApiKey(String newKey) {
+        apiKey = newKey;
+        save();
+    }
+
+    private static synchronized void save() {
+        Properties props = new Properties();
+        props.setProperty(API_KEY_PROPERTY, apiKey == null ? "" : apiKey);
+
+        File file = new File(CONFIG_FILE);
+        try {
+            if (!file.exists()) {
+                file.getParentFile().mkdirs();
+                file.createNewFile();
+            }
+            try (FileWriter writer = new FileWriter(file)) {
+                props.store(writer, "StepCraft Mod Configuration");
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 }

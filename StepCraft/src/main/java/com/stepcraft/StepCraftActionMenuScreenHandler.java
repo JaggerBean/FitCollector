@@ -66,32 +66,28 @@ public class StepCraftActionMenuScreenHandler extends GenericContainerScreenHand
 
         switch (slot) {
             case 0 -> {
-                StepCraftChestScreenHandler.sendBackend(serverPlayer, "Ban player " + targetPlayer + ": ",
-                        () -> BackendClient.banPlayer(targetPlayer, "broke code of conduct"));
+                StepCraftScreens.openConfirm(serverPlayer, StepCraftPlayerAction.BAN, targetPlayer);
                 return;
             }
             case 2 -> {
-                StepCraftChestScreenHandler.sendBackend(serverPlayer, "Unban player " + targetPlayer + ": ",
-                        () -> BackendClient.unbanPlayer(targetPlayer));
+                StepCraftScreens.openConfirm(serverPlayer, StepCraftPlayerAction.UNBAN, targetPlayer);
                 return;
             }
             case 4 -> {
-                StepCraftChestScreenHandler.sendBackend(serverPlayer, "Delete player " + targetPlayer + ": ",
-                        () -> BackendClient.deletePlayer(targetPlayer));
+                StepCraftScreens.openConfirm(serverPlayer, StepCraftPlayerAction.DELETE, targetPlayer);
                 return;
             }
             case 9 -> {
-                StepCraftChestScreenHandler.sendBackend(serverPlayer, "Claim reward for " + targetPlayer + ": ",
-                        () -> BackendClient.claimRewardForPlayer(targetPlayer));
+                StepCraftScreens.openConfirm(serverPlayer, StepCraftPlayerAction.CLAIM_REWARD, targetPlayer);
                 return;
             }
             case 11 -> {
-                StepCraftChestScreenHandler.sendBackend(serverPlayer, "Claim status for " + targetPlayer + ": ",
+                StepCraftChestScreenHandler.sendBackendToLectern(serverPlayer, "Claim Status",
                         () -> BackendClient.getClaimStatusForPlayer(targetPlayer));
                 return;
             }
             case 13 -> {
-                StepCraftChestScreenHandler.sendBackend(serverPlayer, "Yesterday steps for " + targetPlayer + ": ",
+                StepCraftChestScreenHandler.sendBackendToLectern(serverPlayer, "Yesterday Steps",
                         () -> BackendClient.getYesterdayStepsForPlayer(targetPlayer));
                 return;
             }

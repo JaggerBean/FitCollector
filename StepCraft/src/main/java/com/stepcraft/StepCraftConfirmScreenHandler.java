@@ -17,11 +17,13 @@ import net.minecraft.util.Unit;
 public class StepCraftConfirmScreenHandler extends GenericContainerScreenHandler {
     private final StepCraftPlayerAction action;
     private final String targetPlayer;
+    private final boolean returnToPlayerList;
 
-    public StepCraftConfirmScreenHandler(int syncId, PlayerInventory playerInventory, StepCraftPlayerAction action, String targetPlayer) {
+    public StepCraftConfirmScreenHandler(int syncId, PlayerInventory playerInventory, StepCraftPlayerAction action, String targetPlayer, boolean returnToPlayerList) {
         super(ScreenHandlerType.GENERIC_9X1, syncId, playerInventory, new SimpleInventory(9), 1);
         this.action = action;
         this.targetPlayer = targetPlayer;
+        this.returnToPlayerList = returnToPlayerList;
 
         ItemStack pane = new ItemStack(Items.PURPLE_STAINED_GLASS_PANE);
         pane.set(DataComponentTypes.HIDE_TOOLTIP, Unit.INSTANCE);
@@ -41,12 +43,20 @@ public class StepCraftConfirmScreenHandler extends GenericContainerScreenHandler
         }
 
         if (slot == 3) {
-            StepCraftUIHelper.openPlayerSelectList(serverPlayer, null, 0, action);
+            if (returnToPlayerList) {
+                StepCraftUIHelper.openPlayerSelectList(serverPlayer, null, 0, action);
+            } else {
+                StepCraftScreens.openActionMenu(serverPlayer, targetPlayer);
+            }
             return;
         }
 
         if (slot == 5) {
-            StepCraftScreens.openResult(serverPlayer, "Processing...");
+            serverPlayer.getServer().execute(() -> StepCraftLecternHelper.openLectern(serverPlayer, "Result",
+                StepCraftResultScreenHandler.toPagesFromLines(
+                    StepCraftResultScreenHandler.toDisplayLines("Processing...")
+                )
+            ));
             switch (action) {
             case BAN -> StepCraftChestScreenHandler.sendBackendWithCallback(serverPlayer,
                 () -> BackendClient.banPlayer(targetPlayer, "broke code of conduct"),
@@ -87,10 +97,10 @@ public class StepCraftConfirmScreenHandler extends GenericContainerScreenHandler
     }
 
     private void updateResult(ServerPlayerEntity player, String message) {
-        if (player.currentScreenHandler instanceof StepCraftResultScreenHandler result) {
-            result.setResult(message);
-        } else {
-            StepCraftScreens.openResult(player, message);
-        }
+        StepCraftLecternHelper.openLectern(player, "Result",
+            StepCraftResultScreenHandler.toPagesFromLines(
+                StepCraftResultScreenHandler.toDisplayLines(message)
+            )
+        );
     }
 }

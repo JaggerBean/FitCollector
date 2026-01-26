@@ -7,25 +7,44 @@ import net.minecraft.screen.PropertyDelegate;
 import net.minecraft.screen.slot.SlotActionType;
 
 public class StepCraftLecternScreenHandler extends LecternScreenHandler {
+    private final long openedAtMs;
     public StepCraftLecternScreenHandler(int syncId, Inventory inventory, PropertyDelegate propertyDelegate) {
         super(syncId, inventory, propertyDelegate);
+        this.openedAtMs = System.currentTimeMillis();
     }
 
     @Override
     public boolean onButtonClick(PlayerEntity player, int id) {
-        // Block "Take Book" button (typically id 3)
+        // Use "Take Book" button (typically id 3) as exit
         if (id == 3) {
-            return false;
+            if (player instanceof net.minecraft.server.network.ServerPlayerEntity serverPlayer) {
+                serverPlayer.closeHandledScreen();
+            }
+            return true;
         }
         return super.onButtonClick(player, id);
     }
 
     @Override
     public void onSlotClick(int slotIndex, int button, SlotActionType actionType, PlayerEntity player) {
-        // Prevent taking the book from the lectern slot
+        // Clicking the book slot exits the GUI
         if (slotIndex == 0) {
+            if (player instanceof net.minecraft.server.network.ServerPlayerEntity serverPlayer) {
+                serverPlayer.closeHandledScreen();
+            }
             return;
         }
         super.onSlotClick(slotIndex, button, actionType, player);
+    }
+
+    @Override
+    public void onClosed(PlayerEntity player) {
+        super.onClosed(player);
+        if (System.currentTimeMillis() - openedAtMs < 400) {
+            return;
+        }
+        if (player instanceof net.minecraft.server.network.ServerPlayerEntity serverPlayer) {
+            serverPlayer.getServer().execute(() -> StepCraftUIHelper.openPlayersList(serverPlayer));
+        }
     }
 }

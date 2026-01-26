@@ -7,7 +7,10 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.screen.GenericContainerScreenHandler;
 import net.minecraft.screen.ScreenHandlerType;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.text.ClickEvent;
+import net.minecraft.text.Style;
 import net.minecraft.text.Text;
+import net.minecraft.text.TextColor;
 import net.minecraft.util.collection.DefaultedList;
 
 import java.util.concurrent.CompletableFuture;
@@ -51,17 +54,27 @@ public class StepCraftChestScreenHandler extends GenericContainerScreenHandler {
                 }
 
                 switch (slot) {
-                    case 1 -> { sendBackend(serverPlayer, "Server info: ", BackendClient::getServerInfo); return; }
-                    case 3 -> { sendBackend(serverPlayer, "Health check: ", BackendClient::healthCheck); return; }
+                    case 1 -> { sendBackendToLectern(serverPlayer, "Server info", BackendClient::getServerInfo); return; }
+                    case 3 -> { sendBackendToLectern(serverPlayer, "Health check", BackendClient::healthCheck); return; }
                     case 5 -> { StepCraftUIHelper.openPlayerSelectList(serverPlayer, null, 0, StepCraftPlayerAction.BAN); return; }
                     case 7 -> { StepCraftUIHelper.openPlayerSelectList(serverPlayer, null, 0, StepCraftPlayerAction.DELETE); return; }
                     case 10 -> { StepCraftUIHelper.openPlayerSelectList(serverPlayer, null, 0, StepCraftPlayerAction.UNBAN); return; }
                     case 12 -> { StepCraftUIHelper.openPlayerSelectList(serverPlayer, null, 0, StepCraftPlayerAction.CLAIM_REWARD); return; }
                     case 14 -> { StepCraftUIHelper.openPlayerSelectList(serverPlayer, null, 0, StepCraftPlayerAction.CLAIM_STATUS); return; }
                     case 16 -> { StepCraftUIHelper.openPlayerSelectList(serverPlayer, null, 0, StepCraftPlayerAction.NONE); return; }
-                    case 19 -> { sendBackend(serverPlayer, "Bans: ", BackendClient::getAllServerBans); return; }
-                    case 21 -> { sendBackend(serverPlayer, "All players: ", BackendClient::getAllPlayers); return; }
+                    case 19 -> { sendBackendToLectern(serverPlayer, "Server bans", BackendClient::getAllServerBans); return; }
+                    case 21 -> { sendBackendToLectern(serverPlayer, "All players", BackendClient::getAllPlayers); return; }
                     case 23 -> { StepCraftUIHelper.openPlayerSelectList(serverPlayer, null, 0, StepCraftPlayerAction.YESTERDAY_STEPS); return; }
+                    case 25 -> {
+                        serverPlayer.closeHandledScreen();
+                        Text message = Text.literal("Click to paste: /stepcraft set_api_key ")
+                                .setStyle(Style.EMPTY
+                                        .withColor(TextColor.fromRgb(0x55FF55))
+                                        .withClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/stepcraft set_api_key "))
+                                        .withItalic(false));
+                        serverPlayer.sendMessage(message);
+                        return;
+                    }
                 }
             }
         }
@@ -107,6 +120,22 @@ public class StepCraftChestScreenHandler extends GenericContainerScreenHandler {
                     }
                 }));
     }
+
+        public static void sendBackendToLectern(ServerPlayerEntity player, String title, BackendCall call) {
+        openLecternMessage(player, title + ": (processing...)");
+        sendBackendWithCallback(player, call,
+            result -> openLecternMessage(player, title + ": " + result),
+            error -> openLecternMessage(player, "Error: " + error)
+        );
+        }
+
+        private static void openLecternMessage(ServerPlayerEntity player, String message) {
+        StepCraftLecternHelper.openLectern(player, "Result",
+            StepCraftResultScreenHandler.toPagesFromLines(
+                StepCraftResultScreenHandler.toDisplayLines(message)
+            )
+        );
+        }
 
     public static void sendBackendWithCallback(ServerPlayerEntity player, BackendCall call,
                                                 java.util.function.Consumer<String> onSuccess,
