@@ -378,7 +378,8 @@ def register_form(request: Request):
     return templates.TemplateResponse("register.html", {
         "request": request,
         "year": year,
-        "owner_email": request.session.get("user_email")
+        "owner_email": request.session.get("user_email"),
+        "owner_name": request.session.get("user_name")
     })
 
 
