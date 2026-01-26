@@ -13,20 +13,28 @@
             font-family: 'Roboto', Arial, sans-serif;
             color: #222;
         }
-        .card {
+        .contact-container {
             max-width: 520px;
             margin: 64px auto;
-            padding: 32px;
+            background: #fff;
+            padding: 36px 28px 28px 28px;
             border-radius: 20px;
-            border: 2px solid #2E7D32;
             box-shadow: 0 8px 32px rgba(44, 67, 54, 0.18);
+            border: 2px solid #2E7D32;
+            animation: fadeInUp 0.7s cubic-bezier(.42,0,.58,1);
         }
-        .title {
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(40px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .stepcraft-title {
             font-family: 'Montserrat', monospace;
+            font-weight: 700;
+            font-size: 2.3rem;
+            letter-spacing: -1.5px;
             color: #2E7D32;
-            font-size: 2rem;
             text-align: center;
-            margin-bottom: 16px;
+            margin-bottom: 8px;
         }
         .btn-primary {
             background: linear-gradient(90deg, #1565C0 60%, #2E7D32 100%);
@@ -45,12 +53,12 @@
                 background: linear-gradient(135deg, #121212 0%, #1E1E1E 100%);
                 color: #E1E1E1;
             }
-            .card {
+            .contact-container {
                 background: #23272A;
                 border: 2px solid #81C784;
                 box-shadow: 0 8px 32px rgba(44, 67, 54, 0.32);
             }
-            .title {
+            .stepcraft-title {
                 color: #81C784;
             }
             .form-label {
@@ -68,9 +76,9 @@
     </style>
 </head>
 <body>
-    <div class="card bg-white">
-        <div class="title">StepCraft Admin</div>
-        <p class="text-center text-muted">Log in to manage your servers and rewards.</p>
+    <div class="contact-container">
+        <div class="stepcraft-title">StepCraft Admin</div>
+        <p class="text-center mt-3">Log in to manage your servers and rewards.</p>
         {% if error %}
         <div class="alert alert-danger">{{ error }}</div>
         {% endif %}
@@ -85,7 +93,7 @@
             </div>
             <button class="btn btn-primary w-100" type="submit">Continue</button>
         </form>
-        <div class="text-center my-3 text-muted">or</div>
+        <div class="text-center my-3">or</div>
         <a class="btn btn-outline-secondary w-100" href="/account/google/start">Continue with Google</a>
         <div class="text-center mt-3">
             <a href="/account/register">Create account</a>
