@@ -160,3 +160,21 @@ def init_db() -> None:
         CREATE INDEX IF NOT EXISTS idx_key_recovery_device_server
         ON key_recovery_audit(device_id, server_name);
         """))
+
+        # 9) Create server_rewards table for reward tiers
+        conn.execute(text("""
+        CREATE TABLE IF NOT EXISTS server_rewards (
+            id BIGSERIAL PRIMARY KEY,
+            server_name TEXT NOT NULL,
+            min_steps BIGINT NOT NULL,
+            label TEXT NOT NULL,
+            rewards_json TEXT NOT NULL,
+            position INTEGER NOT NULL DEFAULT 0,
+            created_at TIMESTAMPTZ DEFAULT NOW()
+        );
+        """))
+
+        conn.execute(text("""
+        CREATE INDEX IF NOT EXISTS idx_server_rewards_server
+        ON server_rewards(server_name);
+        """))

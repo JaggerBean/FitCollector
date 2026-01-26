@@ -95,6 +95,25 @@ public class BackendClient {
                                 return executeRequest(request, false);
                             }
 
+                            // Server endpoint: get rewards configuration
+                            public static String getServerRewards() throws IOException {
+                                Request request = new Request.Builder()
+                                        .url(BASE_URL + "/v1/servers/rewards")
+                                        .header("X-API-Key", StepCraftConfig.getApiKey())
+                                        .build();
+                                return executeRequest(request, true);
+                            }
+
+                            // Server endpoint: seed default rewards configuration
+                            public static String seedServerRewards() throws IOException {
+                                Request request = new Request.Builder()
+                                        .url(BASE_URL + "/v1/servers/rewards/default")
+                                        .header("X-API-Key", StepCraftConfig.getApiKey())
+                                        .post(okhttp3.RequestBody.create(new byte[0]))
+                                        .build();
+                                return executeRequest(request, false);
+                            }
+
                             // Server endpoint: ban a player (with optional reason)
                             public static String banPlayer(String username, String reason) throws IOException {
                                 okhttp3.MediaType JSON = okhttp3.MediaType.parse("application/json; charset=utf-8");

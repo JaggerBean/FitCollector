@@ -20,6 +20,7 @@ import java.util.List;
 
 public class StepCraftSettingsScreenHandler extends GenericContainerScreenHandler {
     private static final int ROWS = 1;
+    private static final int SLOT_REWARDS = 0;
     private static final int SLOT_SET_KEY = 2;
     private static final int SLOT_STATUS = 4;
     private static final int SLOT_BACK = 6;
@@ -38,6 +39,7 @@ public class StepCraftSettingsScreenHandler extends GenericContainerScreenHandle
             inventory.setStack(i, pane.copy());
         }
 
+        inventory.setStack(SLOT_REWARDS, menuItem(Items.EMERALD, "Rewards", 0x55FF55));
         inventory.setStack(SLOT_SET_KEY, menuItem(Items.COMPASS, "Set API Key", 0xAA88FF));
         inventory.setStack(SLOT_BACK, menuItem(Items.BOOK, "Back", 0xFFFFFF));
 
@@ -54,6 +56,11 @@ public class StepCraftSettingsScreenHandler extends GenericContainerScreenHandle
 
         if (slot < 0 || slot >= inventory.size()) {
             super.onSlotClick(slot, button, actionType, player);
+            return;
+        }
+
+        if (slot == SLOT_REWARDS) {
+            StepCraftScreens.openRewards(serverPlayer);
             return;
         }
 

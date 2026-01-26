@@ -76,4 +76,12 @@ public final class StepCraftScreens {
         ));
     }
 
+        public static void openRewards(ServerPlayerEntity player) {
+        player.openHandledScreen(new SimpleNamedScreenHandlerFactory(
+            (int syncId, PlayerInventory playerInv, PlayerEntity p) ->
+                new StepCraftRewardsScreenHandler(syncId, playerInv),
+            Text.literal("Rewards")
+        ));
+        }
+
 }
