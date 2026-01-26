@@ -70,8 +70,8 @@ public class StepCraftConfirmScreenHandler extends GenericContainerScreenHandler
                 () -> BackendClient.deletePlayer(targetPlayer),
                 result -> updateResult(serverPlayer, "Delete: " + result),
                 error -> updateResult(serverPlayer, "Error: " + error));
-            case CLAIM_REWARD -> StepCraftChestScreenHandler.sendBackendWithCallback(serverPlayer,
-                () -> BackendClient.claimRewardForPlayer(targetPlayer),
+            case CLAIM_REWARD -> StepCraftChestScreenHandler.claimRewardWithCommands(serverPlayer,
+                targetPlayer,
                 result -> updateResult(serverPlayer, "Claim reward: " + result),
                 error -> updateResult(serverPlayer, "Error: " + error));
             case CLAIM_STATUS -> StepCraftChestScreenHandler.sendBackendWithCallback(serverPlayer,
