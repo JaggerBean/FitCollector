@@ -286,6 +286,8 @@ async def register_server(request: Request,
     user_token = request.session.get("user_token")
     if not user_token:
         return RedirectResponse(url="/account/login", status_code=302)
+    import datetime
+    year = datetime.datetime.now().year
     async with httpx.AsyncClient() as client:
         for url in backend_urls:
             try:
@@ -318,8 +320,6 @@ async def register_server(request: Request,
         except Exception as e:
             import logging
             logging.error(f"Failed to send email: {e}")
-        import datetime
-        year = datetime.datetime.now().year
         return templates.TemplateResponse("confirmation.html", {"request": request, "api_key": api_key, "server_name": server_name_val, "message": message_val, "year": year})
     else:
         error = None
@@ -331,7 +331,9 @@ async def register_server(request: Request,
                 error = response.text
         if not error:
             error = last_error or "No backend response"
+        if response is not None:
+            error = f"{response.status_code}: {error}"
         logging.error(f"Registration failed: {error}")
-        return templates.TemplateResponse("register.html", {"request": request, "error": error})
+        return templates.TemplateResponse("register.html", {"request": request, "error": error, "year": year})
 
 ## Optionally remove or refactor /admin if not needed
