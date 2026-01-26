@@ -12,7 +12,7 @@ services:
       db:
         condition: service_healthy
     env_file:
-      - FitCollector/.env
+        - ../.env
     restart: unless-stopped
 
   db:
