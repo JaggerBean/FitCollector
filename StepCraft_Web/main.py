@@ -99,6 +99,19 @@ async def account_login_submit(request: Request, email: str = Form(...), passwor
 
     token = resp.json().get("token")
     request.session["user_token"] = token
+    request.session["user_email"] = None
+    async with httpx.AsyncClient() as client:
+        try:
+            me = await client.get(
+                f"{BACKEND_URL}/v1/auth/me",
+                headers={"Authorization": f"Bearer {token}"},
+                timeout=10,
+            )
+            if me.status_code == 200:
+                request.session["user_email"] = me.json().get("email")
+                request.session["user_name"] = me.json().get("name")
+        except Exception:
+            pass
     return RedirectResponse(url="/dashboard", status_code=302)
 
 
@@ -201,6 +214,20 @@ async def google_oauth_callback(request: Request):
         return templates.TemplateResponse("login.html", {"request": request, "error": resp.text})
 
     request.session["user_token"] = resp.json().get("token")
+    token = request.session.get("user_token")
+    if token:
+        async with httpx.AsyncClient() as client:
+            try:
+                me = await client.get(
+                    f"{BACKEND_URL}/v1/auth/me",
+                    headers={"Authorization": f"Bearer {token}"},
+                    timeout=10,
+                )
+                if me.status_code == 200:
+                    request.session["user_email"] = me.json().get("email")
+                    request.session["user_name"] = me.json().get("name")
+            except Exception:
+                pass
     return RedirectResponse(url="/dashboard", status_code=302)
 
 
@@ -348,7 +375,11 @@ def register_form(request: Request):
     if not request.session.get("user_token"):
         return RedirectResponse(url="/account/login", status_code=302)
     year = datetime.datetime.now().year
-    return templates.TemplateResponse("register.html", {"request": request, "year": year})
+    return templates.TemplateResponse("register.html", {
+        "request": request,
+        "year": year,
+        "owner_email": request.session.get("user_email")
+    })
 
 
 @app.post("/registered", response_class=HTMLResponse)

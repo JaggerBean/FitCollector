@@ -126,7 +126,7 @@
             </div>
             <div class="mb-3">
                 <label for="owner_email" class="form-label">Owner Email</label>
-                <input type="email" class="form-control" id="owner_email" name="owner_email" required minlength="5" maxlength="255">
+                <input type="email" class="form-control" id="owner_email" name="owner_email" required minlength="5" maxlength="255" value="{{ owner_email or '' }}">
                 <div class="invalid-feedback">5–255 characters, must be a valid email</div>
             </div>
             <div class="mb-3">
