@@ -86,6 +86,8 @@ async def send_api_key_email(email, server_name, api_key, message):
 # Serve landing page at root
 @app.get("/", response_class=HTMLResponse)
 def landing_page(request: Request):
+    if request.session.get("user_token"):
+        return RedirectResponse(url="/dashboard", status_code=302)
     return templates.TemplateResponse("landing.html", {"request": request})
 
 
