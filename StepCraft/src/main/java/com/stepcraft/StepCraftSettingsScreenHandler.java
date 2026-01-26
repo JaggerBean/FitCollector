@@ -73,7 +73,8 @@ public class StepCraftSettingsScreenHandler extends GenericContainerScreenHandle
             return;
         }
 
-        super.onSlotClick(slot, button, actionType, player);
+        // Prevent item movement in settings UI.
+        return;
     }
 
     private void checkApiKeyStatus() {
@@ -87,14 +88,14 @@ public class StepCraftSettingsScreenHandler extends GenericContainerScreenHandle
                 result -> {
                     if (!isViewerHere()) return;
                     if (result != null && result.startsWith("Error:")) {
-                        setStatusNotWorking();
+                        applyErrorStatus(result);
                     } else {
                         setStatusWorking();
                     }
                 },
                 error -> {
                     if (!isViewerHere()) return;
-                    setStatusNotWorking();
+                    applyErrorStatus(error);
                 });
     }
 
@@ -103,7 +104,7 @@ public class StepCraftSettingsScreenHandler extends GenericContainerScreenHandle
     }
 
     private void setStatusChecking() {
-        ItemStack item = menuItem(Items.YELLOW_WOOL, "API Key Status", 0xFFFF55);
+        ItemStack item = menuItem(Items.LIGHT_BLUE_WOOL, "API Key Status", 0x55AAFF);
         item.set(DataComponentTypes.LORE, new LoreComponent(List.of(loreLine("checking"))));
         setStatusItem(item);
     }
@@ -124,6 +125,40 @@ public class StepCraftSettingsScreenHandler extends GenericContainerScreenHandle
         ItemStack item = menuItem(Items.GRAY_WOOL, "API Key Status", 0xAAAAAA);
         item.set(DataComponentTypes.LORE, new LoreComponent(List.of(loreLine("not set"))));
         setStatusItem(item);
+    }
+
+    private void setStatusMaybeWorking() {
+        ItemStack item = menuItem(Items.YELLOW_WOOL, "API Key Status", 0xFFFF55);
+        item.set(DataComponentTypes.LORE, new LoreComponent(List.of(loreLine("may work (backend unreachable)"))));
+        setStatusItem(item);
+    }
+
+    private void applyErrorStatus(String message) {
+        String msg = message == null ? "" : message.toLowerCase();
+
+        if (msg.contains("401") || msg.contains("403") || msg.contains("unauthorized") || msg.contains("forbidden")) {
+            setStatusNotWorking();
+            return;
+        }
+
+        if (msg.contains("timeout")
+                || msg.contains("timed out")
+                || msg.contains("unknownhost")
+                || msg.contains("failed to connect")
+                || msg.contains("connection refused")
+                || msg.contains("connection reset")
+                || msg.contains("network")
+                || msg.contains("ssl")) {
+            setStatusMaybeWorking();
+            return;
+        }
+
+        if (msg.contains("502") || msg.contains("503") || msg.contains("504") || msg.contains("500")) {
+            setStatusMaybeWorking();
+            return;
+        }
+
+        setStatusNotWorking();
     }
 
     private void setStatusItem(ItemStack item) {
