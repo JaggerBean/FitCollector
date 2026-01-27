@@ -44,15 +44,21 @@
         }
         .ghost-text {
             position: absolute;
-            top: 50%;
-            left: 12px;
-            transform: translateY(-50%);
+            top: 0;
+            left: 0;
             pointer-events: none;
             color: #b0b6b1;
             font-family: inherit;
             font-size: 1rem;
             white-space: pre;
             z-index: 1;
+            height: 100%;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            padding-left: 12px;
+            line-height: inherit;
+            font-weight: inherit;
         }
         .ghost-input {
               position: relative;
@@ -274,11 +280,13 @@
                 ghost.style.left = input.offsetLeft + 'px';
                 ghost.style.top = input.offsetTop + 'px';
                 ghost.style.height = style.height;
+                ghost.style.width = style.width;
                 ghost.style.paddingLeft = style.paddingLeft;
                 ghost.style.fontSize = style.fontSize;
                 ghost.style.fontFamily = style.fontFamily;
                 ghost.style.letterSpacing = style.letterSpacing;
                 ghost.style.lineHeight = style.lineHeight;
+                ghost.style.fontWeight = style.fontWeight;
             }
 
             async function loadPlayers() {
