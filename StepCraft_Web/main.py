@@ -22,6 +22,13 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 app.add_middleware(SessionMiddleware, secret_key=os.getenv("STEPCRAFT_WEB_SECRET", "change-me"))
 
 BACKEND_URL = os.getenv("BACKEND_URL", "https://api.stepcraft.org")
+
+
+def get_server_key_from_session(request: Request, server_name: str | None) -> str | None:
+    if not server_name:
+        return None
+    keys = request.session.get("server_keys") or {}
+    return keys.get(server_name)
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
 GOOGLE_REDIRECT_URI = os.getenv("GOOGLE_REDIRECT_URI", "https://stepcraft.org/account/google/callback")
@@ -275,7 +282,28 @@ async def dashboard(request: Request):
         except Exception:
             servers = []
 
-    return templates.TemplateResponse("dashboard.html", {"request": request, "servers": servers})
+    server_keys = request.session.get("server_keys") or {}
+    return templates.TemplateResponse("dashboard.html", {
+        "request": request,
+        "servers": servers,
+        "server_keys": server_keys,
+    })
+
+
+@app.post("/server/key/save")
+async def save_server_key(request: Request, server_name: str = Form(...), api_key: str = Form(...)):
+    user_token = request.session.get("user_token")
+    if not user_token:
+        return RedirectResponse(url="/account/login", status_code=302)
+
+    clean_name = server_name.strip()
+    clean_key = api_key.strip()
+    if clean_name and clean_key:
+        keys = request.session.get("server_keys") or {}
+        keys[clean_name] = clean_key
+        request.session["server_keys"] = keys
+
+    return RedirectResponse(url="/dashboard", status_code=302)
 
 
 @app.get("/server/manage", response_class=HTMLResponse)
@@ -394,11 +422,15 @@ async def push_notifications_page(request: Request):
 
     items = []
     error = None
+    server_key = get_server_key_from_session(request, server_name)
     async with httpx.AsyncClient() as client:
         try:
+            headers = {"Authorization": f"Bearer {user_token}"}
+            if server_key:
+                headers["X-API-Key"] = server_key
             resp = await client.get(
                 f"{BACKEND_URL}/v1/owner/servers/{server_name}/push",
-                headers={"Authorization": f"Bearer {user_token}"},
+                headers=headers,
                 timeout=10,
             )
             if resp.status_code == 200:
@@ -488,11 +520,15 @@ async def push_notifications_create(
         return RedirectResponse(url="/dashboard", status_code=302)
 
     error = None
+    server_key = get_server_key_from_session(request, server_name)
     async with httpx.AsyncClient() as client:
         try:
+            headers = {"Authorization": f"Bearer {user_token}"}
+            if server_key:
+                headers["X-API-Key"] = server_key
             resp = await client.post(
                 f"{BACKEND_URL}/v1/owner/servers/{server_name}/push",
-                headers={"Authorization": f"Bearer {user_token}"},
+                headers=headers,
                 json={"message": message, "scheduled_at": scheduled_at, "timezone": timezone},
                 timeout=10,
             )
@@ -522,11 +558,15 @@ async def rewards_page(request: Request):
 
     data = None
     error = None
+    server_key = get_server_key_from_session(request, server_name)
     async with httpx.AsyncClient() as client:
         try:
+            headers = {"Authorization": f"Bearer {user_token}"}
+            if server_key:
+                headers["X-API-Key"] = server_key
             resp = await client.get(
                 f"{BACKEND_URL}/v1/owner/servers/{server_name}/rewards",
-                headers={"Authorization": f"Bearer {user_token}"},
+                headers=headers,
                 timeout=10,
             )
             if resp.status_code == 200:
@@ -568,11 +608,15 @@ async def rewards_update(request: Request, rewards_json: str = Form(...)):
             "error": f"Invalid JSON: {e}",
         })
 
+    server_key = get_server_key_from_session(request, server_name)
     async with httpx.AsyncClient() as client:
         try:
+            headers = {"Authorization": f"Bearer {user_token}"}
+            if server_key:
+                headers["X-API-Key"] = server_key
             resp = await client.put(
                 f"{BACKEND_URL}/v1/owner/servers/{server_name}/rewards",
-                headers={"Authorization": f"Bearer {user_token}"},
+                headers=headers,
                 json=payload,
                 timeout=10,
             )
@@ -607,11 +651,15 @@ async def rewards_default(request: Request):
     if not server_name:
         return RedirectResponse(url="/dashboard", status_code=302)
 
+    server_key = get_server_key_from_session(request, server_name)
     async with httpx.AsyncClient() as client:
         try:
+            headers = {"Authorization": f"Bearer {user_token}"}
+            if server_key:
+                headers["X-API-Key"] = server_key
             await client.post(
                 f"{BACKEND_URL}/v1/owner/servers/{server_name}/rewards/default",
-                headers={"Authorization": f"Bearer {user_token}"},
+                headers=headers,
                 timeout=10,
             )
         except Exception:
@@ -683,6 +731,10 @@ async def register_server(request: Request,
         api_key = data.get("api_key")
         server_name_val = data.get("server_name")
         message_val = data.get("message")
+        if api_key and server_name_val:
+            keys = request.session.get("server_keys") or {}
+            keys[server_name_val] = api_key
+            request.session["server_keys"] = keys
         # Send email with API key
         try:
             await send_api_key_email(owner_email, server_name_val, api_key, message_val)

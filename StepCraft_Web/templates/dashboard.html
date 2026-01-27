@@ -101,6 +101,17 @@
                                     <div>
                                         <div class="fw-bold">{{ s.server_name }}</div>
                                         <div class="small text-muted">{{ s.server_address }} · {{ s.server_version }}</div>
+                                        {% set has_key = server_keys and server_keys.get(s.server_name) %}
+                                        {% if not has_key %}
+                                            <details class="mt-2">
+                                                <summary class="small text-muted">Save API key</summary>
+                                                <form method="post" action="/server/key/save" class="mt-2 d-flex flex-wrap gap-2">
+                                                    <input type="hidden" name="server_name" value="{{ s.server_name }}">
+                                                    <input class="form-control form-control-sm" type="text" name="api_key" placeholder="Paste API key" required>
+                                                    <button class="btn btn-outline-secondary btn-sm" type="submit">Save</button>
+                                                </form>
+                                            </details>
+                                        {% endif %}
                                     </div>
                                     <div class="d-flex gap-2">
                                         <a class="btn btn-primary" href="/server/manage?server={{ s.server_name }}">Manage</a>
