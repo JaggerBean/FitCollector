@@ -92,10 +92,15 @@
                 <div class="form-text">One message per day. Max 240 characters.</div>
             </div>
             <div class="mb-3">
+                <label class="form-label">Schedule date</label>
+                <input type="date" class="form-control" name="scheduled_date" id="scheduled_date" required>
+            </div>
+            <div class="mb-3">
                 <label class="form-label">Schedule time</label>
-                <input type="datetime-local" class="form-control" name="scheduled_at" id="scheduled_at" required>
+                <input type="time" class="form-control" name="scheduled_time" id="scheduled_time" required>
                 <div class="form-text">Pick a time in your selected timezone.</div>
             </div>
+            <input type="hidden" name="scheduled_at" id="scheduled_at">
             <div class="mb-3">
                 <label class="form-label">Timezone</label>
                 <select class="form-select" name="timezone" id="timezone" required>
@@ -127,12 +132,24 @@
     </div>
     <script>
         (function () {
-            const input = document.getElementById('scheduled_at');
-            if (!input) return;
+            const dateInput = document.getElementById('scheduled_date');
+            const timeInput = document.getElementById('scheduled_time');
+            const hidden = document.getElementById('scheduled_at');
+            if (!dateInput || !timeInput || !hidden) return;
             const now = new Date();
             const pad = (n) => String(n).padStart(2, '0');
-            const min = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
-            input.min = min;
+            const minDate = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+            dateInput.min = minDate;
+            const minTime = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+            timeInput.value = minTime;
+
+            const form = dateInput.closest('form');
+            form?.addEventListener('submit', (e) => {
+                const dateVal = dateInput.value;
+                const timeVal = timeInput.value;
+                if (!dateVal || !timeVal) return;
+                hidden.value = `${dateVal}T${timeVal}`;
+            });
 
             const tzSelect = document.getElementById('timezone');
             if (tzSelect && Intl && Intl.DateTimeFormat) {
