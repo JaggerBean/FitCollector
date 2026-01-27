@@ -307,24 +307,52 @@ async def push_notifications_page(request: Request):
     try:
         from zoneinfo import available_timezones, ZoneInfo
         from datetime import datetime
+        preferred = [
+            "UTC",
+            "America/New_York",
+            "America/Chicago",
+            "America/Denver",
+            "America/Los_Angeles",
+            "Europe/London",
+            "Europe/Paris",
+            "Europe/Berlin",
+            "Europe/Warsaw",
+            "Asia/Tokyo",
+            "Australia/Sydney",
+        ]
+
         tz_items = []
         now_utc = datetime.now(ZoneInfo("UTC"))
-        for tz in sorted(available_timezones()):
+        by_offset = {}
+
+        def offset_label(minutes: int) -> str:
+            sign = "+" if minutes >= 0 else "-"
+            hours = abs(minutes) // 60
+            mins = abs(minutes) % 60
+            return f"UTC{sign}{hours:02d}:{mins:02d}"
+
+        def maybe_pick(tz_name: str):
             try:
-                now_local = now_utc.astimezone(ZoneInfo(tz))
+                now_local = now_utc.astimezone(ZoneInfo(tz_name))
                 offset = now_local.utcoffset()
                 if offset is None:
-                    continue
+                    return
                 total_minutes = int(offset.total_seconds() // 60)
-                sign = "+" if total_minutes >= 0 else "-"
-                hours = abs(total_minutes) // 60
-                minutes = abs(total_minutes) % 60
-                offset_str = f"UTC{sign}{hours:02d}:{minutes:02d}"
                 time_str = now_local.strftime("%H:%M")
-                label = f"{offset_str} · {tz} · {time_str}"
-                tz_items.append({"value": tz, "label": label})
+                label = f"{offset_label(total_minutes)} · {tz_name} · {time_str}"
+                current = by_offset.get(total_minutes)
+                if current is None:
+                    by_offset[total_minutes] = {"value": tz_name, "label": label}
             except Exception:
-                continue
+                return
+
+        for tz in preferred:
+            maybe_pick(tz)
+
+        for tz in sorted(available_timezones()):
+            maybe_pick(tz)
+
+        tz_items = [by_offset[k] for k in sorted(by_offset.keys())]
     except Exception:
         tz_items = []
 
