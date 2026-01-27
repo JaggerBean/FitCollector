@@ -204,7 +204,7 @@
                     <label class="form-label">Minecraft Username</label>
                     <div class="ghost-wrap">
                         <span class="ghost-text" data-ghost></span>
-                        <input class="form-control ghost-input" type="text" name="username" placeholder="PLAYER_NAME" required list="player-suggestions" data-player-input>
+                        <input class="form-control ghost-input" type="text" name="username" placeholder="PLAYER_NAME" required list="player-suggestions" data-player-input autocomplete="off">
                     </div>
                     <datalist id="player-suggestions"></datalist>
                 </div>
@@ -243,24 +243,29 @@
             let players = [];
             const serverName = "{{ server.server_name }}";
 
-            function setGhost(text) {
-                ghost.textContent = text || '';
+            function setGhost(typed, ghostText) {
+                // Render typed text in transparent color, ghost text in ghost color
+                if (!ghostText) {
+                    ghost.textContent = '';
+                    return;
+                }
+                ghost.innerHTML = `<span style='visibility:hidden'>${typed}</span><span>${ghostText}</span>`;
             }
 
             function updateGhost() {
                 const value = input.value || '';
                 if (!value) {
-                    setGhost('');
+                    setGhost('', '');
                     return;
                 }
                 const lower = value.toLowerCase();
                 const match = players.find(p => p.toLowerCase().startsWith(lower));
                 if (!match || match.length === value.length) {
-                    setGhost('');
+                    setGhost(value, '');
                     return;
                 }
                 // Only show the remaining part, not what is already typed
-                setGhost(match.substring(value.length));
+                setGhost(value, match.substring(value.length));
             }
 
             function syncGhostPosition() {
