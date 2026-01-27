@@ -8,7 +8,7 @@ import json
 import urllib.parse
 import httpx
 from fastapi import FastAPI, Form, Request
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
@@ -29,6 +29,43 @@ def get_server_key_from_session(request: Request, server_name: str | None) -> st
         return None
     keys = request.session.get("server_keys") or {}
     return keys.get(server_name)
+
+
+@app.get("/server/players", response_class=HTMLResponse)
+async def server_players(request: Request):
+    user_token = request.session.get("user_token")
+    if not user_token:
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+
+    server_name = request.query_params.get("server")
+    if not server_name:
+        return JSONResponse({"error": "Missing server"}, status_code=400)
+
+    server_key = get_server_key_from_session(request, server_name)
+    if not server_key:
+        return JSONResponse({"error": "Missing API key"}, status_code=400)
+
+    headers = {"X-API-Key": server_key}
+    async with httpx.AsyncClient() as client:
+        try:
+            resp = await client.get(
+                f"{BACKEND_URL}/v1/servers/players/list",
+                headers=headers,
+                params={"limit": 500, "offset": 0},
+                timeout=10,
+            )
+        except Exception as e:
+            return JSONResponse({"error": str(e)}, status_code=500)
+
+    if resp.status_code != 200:
+        return JSONResponse({"error": resp.text}, status_code=resp.status_code)
+
+    try:
+        data = resp.json()
+        players = [p.get("minecraft_username") for p in data.get("players", []) if p.get("minecraft_username")]
+        return JSONResponse({"players": players})
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
 GOOGLE_REDIRECT_URI = os.getenv("GOOGLE_REDIRECT_URI", "https://stepcraft.org/account/google/callback")

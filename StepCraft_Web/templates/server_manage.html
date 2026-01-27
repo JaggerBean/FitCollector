@@ -173,7 +173,8 @@
                 <input type="hidden" name="server_name" value="{{ server.server_name }}">
                 <div class="col-md-4">
                     <label class="form-label">Minecraft Username</label>
-                    <input class="form-control" type="text" name="username" placeholder="PLAYER_NAME" required>
+                    <input class="form-control" type="text" name="username" placeholder="PLAYER_NAME" required list="player-suggestions" data-player-input>
+                    <datalist id="player-suggestions"></datalist>
                 </div>
                 <div class="col-md-8">
                     <label class="form-label">Ban Reason (optional)</label>
@@ -199,5 +200,32 @@
             </form>
         </div>
     </div>
+    <script>
+        (function () {
+            const input = document.querySelector('[data-player-input]');
+            const list = document.getElementById('player-suggestions');
+            if (!input || !list) return;
+
+            let loaded = false;
+            const serverName = "{{ server.server_name }}";
+
+            async function loadPlayers() {
+                if (loaded) return;
+                loaded = true;
+                try {
+                    const resp = await fetch(`/server/players?server=${encodeURIComponent(serverName)}`);
+                    if (!resp.ok) return;
+                    const data = await resp.json();
+                    const players = Array.isArray(data.players) ? data.players : [];
+                    list.innerHTML = players.map(p => `<option value="${p}"></option>`).join('');
+                } catch (e) {
+                    // ignore
+                }
+            }
+
+            input.addEventListener('focus', loadPlayers);
+            input.addEventListener('click', loadPlayers);
+        })();
+    </script>
 </body>
 </html>
