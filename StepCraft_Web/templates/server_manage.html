@@ -299,7 +299,14 @@
                 }
             }
 
-            input.addEventListener('focus', () => { syncGhostPosition(); loadPlayers(); });
+            input.addEventListener('focus', () => {
+                syncGhostPosition();
+                loadPlayers();
+                ghost.style.zIndex = 3;
+            });
+            input.addEventListener('blur', () => {
+                ghost.style.zIndex = 1;
+            });
             input.addEventListener('click', () => { syncGhostPosition(); loadPlayers(); });
             input.addEventListener('input', updateGhost);
             window.addEventListener('resize', syncGhostPosition);
@@ -312,6 +319,8 @@
                 }
             });
 
+            // Set initial z-index
+            ghost.style.zIndex = 1;
             syncGhostPosition();
         })();
     </script>
