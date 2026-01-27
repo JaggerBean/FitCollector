@@ -303,12 +303,12 @@
                 syncGhostPosition();
                 loadPlayers();
                 ghost.style.zIndex = 3;
-                ghost.style.visibility = 'visible';
+                ghost.style.display = 'flex';
                 updateGhost();
             });
             input.addEventListener('blur', () => {
                 ghost.style.zIndex = 1;
-                ghost.style.visibility = 'hidden';
+                ghost.style.display = 'none';
                 ghost.textContent = '';
             });
             input.addEventListener('click', () => { syncGhostPosition(); loadPlayers(); });
@@ -325,7 +325,7 @@
 
             // Set initial z-index
             ghost.style.zIndex = 1;
-            ghost.style.visibility = 'hidden';
+            ghost.style.display = 'none';
             ghost.textContent = '';
         })();
     </script>
