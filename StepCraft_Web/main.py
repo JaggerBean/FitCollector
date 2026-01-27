@@ -697,9 +697,7 @@ async def register_server(request: Request,
     import logging
     logging.basicConfig(level=logging.INFO)
     backend_urls = [
-        #"http://fitcollector_api:8000/v1/servers/register",
-        "https://api.stepcraft.org/v1/servers/register"
-        #"http://74.208.73.134/v1/servers/register"
+        f"{BACKEND_URL}/v1/servers/register"
     ]
     response = None
     last_error = None
