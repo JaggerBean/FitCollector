@@ -19,6 +19,7 @@ private const val KEY_QUEUED_USER = "queued_minecraft_username"
 private const val KEY_QUEUED_DATE = "queued_date"
 private const val KEY_AUTO_SYNC = "auto_sync_enabled"
 private const val KEY_BACKGROUND_SYNC = "background_sync_enabled"
+private const val KEY_BACKGROUND_SYNC_INTERVAL = "background_sync_interval_minutes"
 private const val KEY_SYNC_LOG = "sync_log"
 private const val KEY_LAST_STEPS = "last_known_steps"
 private const val KEY_LAST_STEPS_DATE = "last_known_steps_date"
@@ -119,6 +120,28 @@ fun isBackgroundSyncEnabled(context: Context): Boolean {
 fun setBackgroundSyncEnabled(context: Context, enabled: Boolean) {
     val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
     prefs.edit().putBoolean(KEY_BACKGROUND_SYNC, enabled).apply()
+}
+
+fun getBackgroundSyncIntervalMinutes(context: Context): Int {
+    val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    val value = prefs.getInt(KEY_BACKGROUND_SYNC_INTERVAL, 15)
+    return when {
+        value < 15 -> 15
+        value > 120 -> 120
+        value % 15 != 0 -> (value / 15) * 15
+        else -> value
+    }
+}
+
+fun setBackgroundSyncIntervalMinutes(context: Context, minutes: Int) {
+    val safe = when {
+        minutes < 15 -> 15
+        minutes > 120 -> 120
+        minutes % 15 != 0 -> (minutes / 15) * 15
+        else -> minutes
+    }
+    val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    prefs.edit().putInt(KEY_BACKGROUND_SYNC_INTERVAL, safe).apply()
 }
 
 fun saveLastKnownSteps(context: Context, steps: Long) {

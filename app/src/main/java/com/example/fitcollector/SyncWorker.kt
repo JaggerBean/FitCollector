@@ -229,21 +229,28 @@ class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
         private const val PUSH_CHANNEL_ID = "stepcraft_push"
 
         fun schedule(context: Context) {
+            if (!isBackgroundSyncEnabled(context)) {
+                cancel(context)
+                Log.d("SyncWorker", "Background sync disabled; worker canceled.")
+                return
+            }
+
+            val intervalMinutes = getBackgroundSyncIntervalMinutes(context).toLong()
             val constraints = Constraints.Builder()
                 .setRequiredNetworkType(NetworkType.CONNECTED)
                 .setRequiresBatteryNotLow(true)
                 .build()
 
-            val request = PeriodicWorkRequestBuilder<SyncWorker>(15, TimeUnit.MINUTES)
+            val request = PeriodicWorkRequestBuilder<SyncWorker>(intervalMinutes, TimeUnit.MINUTES)
                 .setConstraints(constraints)
                 .build()
 
             WorkManager.getInstance(context).enqueueUniquePeriodicWork(
                 WORK_NAME,
-                ExistingPeriodicWorkPolicy.KEEP,
+                ExistingPeriodicWorkPolicy.REPLACE,
                 request
             )
-            Log.d("SyncWorker", "Worker scheduled for 15 minute intervals.")
+            Log.d("SyncWorker", "Worker scheduled for $intervalMinutes minute intervals.")
         }
 
         fun runOnce(context: Context) {

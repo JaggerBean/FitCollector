@@ -42,6 +42,7 @@ import androidx.health.connect.client.records.StepsRecord
 import androidx.health.connect.client.time.TimeRangeFilter
 import androidx.health.connect.client.HealthConnectClient
 import retrofit2.HttpException
+import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -59,6 +60,7 @@ fun SettingsScreen(
     var mcUsername by remember { mutableStateOf(getMinecraftUsername(context)) }
     var autoSyncEnabled by remember { mutableStateOf(isAutoSyncEnabled(context)) }
     var backgroundSyncEnabled by remember { mutableStateOf(isBackgroundSyncEnabled(context)) }
+    var backgroundSyncInterval by remember { mutableStateOf(getBackgroundSyncIntervalMinutes(context)) }
     var currentTheme by remember { mutableStateOf(getThemeMode(context)) }
     
     var mcDraft by remember { mutableStateOf(mcUsername) }
@@ -385,13 +387,42 @@ fun SettingsScreen(
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Column(modifier = Modifier.weight(1f)) {
                                 Text("Background Sync", style = MaterialTheme.typography.labelLarge)
-                                Text("Periodic sync every 15 mins while app is closed.", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                                val description = if (backgroundSyncEnabled) {
+                                    "Periodic sync every ${backgroundSyncInterval} mins while app is closed."
+                                } else {
+                                    "Disabled. No periodic sync while app is closed."
+                                }
+                                Text(description, style = MaterialTheme.typography.bodySmall, color = Color.Gray)
                             }
                             Switch(
                                 checked = backgroundSyncEnabled,
                                 onCheckedChange = {
                                     backgroundSyncEnabled = it
                                     setBackgroundSyncEnabled(context, it)
+                                    if (it) {
+                                        SyncWorker.schedule(context)
+                                    } else {
+                                        SyncWorker.cancel(context)
+                                    }
+                                }
+                            )
+                        }
+
+                        if (backgroundSyncEnabled) {
+                            Spacer(Modifier.height(12.dp))
+                            Text("Sync Frequency", style = MaterialTheme.typography.labelLarge)
+                            Text("Every ${backgroundSyncInterval} minutes", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                            Slider(
+                                value = backgroundSyncInterval.toFloat(),
+                                onValueChange = { value ->
+                                    val snapped = (value / 15f).roundToInt() * 15
+                                    backgroundSyncInterval = snapped.coerceIn(15, 120)
+                                },
+                                valueRange = 15f..120f,
+                                steps = 6,
+                                onValueChangeFinished = {
+                                    setBackgroundSyncIntervalMinutes(context, backgroundSyncInterval)
+                                    SyncWorker.schedule(context)
                                 }
                             )
                         }
