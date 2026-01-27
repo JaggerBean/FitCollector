@@ -259,12 +259,16 @@
                     setGhost('');
                     return;
                 }
-                setGhost(match);
+                // Only show the remaining part, not what is already typed
+                setGhost(match.substring(value.length));
             }
 
             function syncGhostPosition() {
-                // Keep ghost text aligned with the input text start
+                // Align ghost text exactly with input text
                 const style = getComputedStyle(input);
+                ghost.style.left = input.offsetLeft + 'px';
+                ghost.style.top = input.offsetTop + 'px';
+                ghost.style.height = style.height;
                 ghost.style.paddingLeft = style.paddingLeft;
                 ghost.style.fontSize = style.fontSize;
                 ghost.style.fontFamily = style.fontFamily;
