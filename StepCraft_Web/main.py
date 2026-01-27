@@ -311,7 +311,12 @@ async def push_notifications_page(request: Request):
 
 
 @app.post("/push/create", response_class=HTMLResponse)
-async def push_notifications_create(request: Request, message: str = Form(...), scheduled_at: str = Form(...)):
+async def push_notifications_create(
+    request: Request,
+    message: str = Form(...),
+    scheduled_at: str = Form(...),
+    timezone: str = Form(...),
+):
     user_token = request.session.get("user_token")
     if not user_token:
         return RedirectResponse(url="/account/login", status_code=302)
@@ -326,7 +331,7 @@ async def push_notifications_create(request: Request, message: str = Form(...), 
             resp = await client.post(
                 f"{BACKEND_URL}/v1/owner/servers/{server_name}/push",
                 headers={"Authorization": f"Bearer {user_token}"},
-                json={"message": message, "scheduled_at": scheduled_at},
+                json={"message": message, "scheduled_at": scheduled_at, "timezone": timezone},
                 timeout=10,
             )
             if resp.status_code != 200:

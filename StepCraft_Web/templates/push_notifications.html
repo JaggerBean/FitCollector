@@ -93,8 +93,23 @@
             </div>
             <div class="mb-3">
                 <label class="form-label">Schedule time</label>
-                <input type="datetime-local" class="form-control" name="scheduled_at" required>
-                <div class="form-text">Uses your local time.</div>
+                <input type="datetime-local" class="form-control" name="scheduled_at" id="scheduled_at" required>
+                <div class="form-text">Pick a time in your selected timezone.</div>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Timezone</label>
+                <select class="form-select" name="timezone" required>
+                    <option value="America/New_York">America/New_York (Eastern)</option>
+                    <option value="America/Chicago">America/Chicago (Central)</option>
+                    <option value="America/Denver">America/Denver (Mountain)</option>
+                    <option value="America/Los_Angeles">America/Los_Angeles (Pacific)</option>
+                    <option value="Europe/London">Europe/London (UK)</option>
+                    <option value="Europe/Berlin">Europe/Berlin (EU)</option>
+                    <option value="Europe/Paris">Europe/Paris (EU)</option>
+                    <option value="Europe/Warsaw">Europe/Warsaw (EU)</option>
+                    <option value="Asia/Tokyo">Asia/Tokyo (JP)</option>
+                    <option value="Australia/Sydney">Australia/Sydney (AU)</option>
+                </select>
             </div>
             <button class="btn btn-primary" type="submit">Schedule Notification</button>
         </form>
@@ -113,5 +128,15 @@
             <div class="text-muted">No scheduled notifications yet.</div>
         {% endif %}
     </div>
+    <script>
+        (function () {
+            const input = document.getElementById('scheduled_at');
+            if (!input) return;
+            const now = new Date();
+            const pad = (n) => String(n).padStart(2, '0');
+            const min = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
+            input.min = min;
+        })();
+    </script>
 </body>
 </html>

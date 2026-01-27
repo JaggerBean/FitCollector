@@ -5,6 +5,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import text
 import json
 from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
 
 from database import engine
 from auth import require_user
@@ -25,6 +26,7 @@ class RewardsPayload(BaseModel):
 class PushPayload(BaseModel):
     message: str = Field(..., min_length=1, max_length=240)
     scheduled_at: str = Field(..., min_length=1)
+    timezone: str = Field(..., min_length=1)
 
 
 DEFAULT_REWARDS = [
@@ -150,9 +152,22 @@ def schedule_push_notification(server_name: str, payload: PushPayload, user=Depe
     except Exception:
         raise HTTPException(status_code=400, detail="Invalid scheduled_at format")
 
+    try:
+        tz = ZoneInfo(payload.timezone)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid timezone")
+
     if scheduled.tzinfo is None:
-        scheduled = scheduled.replace(tzinfo=timezone.utc)
+        scheduled = scheduled.replace(tzinfo=tz)
+    else:
+        scheduled = scheduled.astimezone(tz)
+
+    now_local = datetime.now(tz)
+    if scheduled <= now_local:
+        raise HTTPException(status_code=400, detail="Scheduled time must be in the future")
+
     scheduled_date = scheduled.date()
+    scheduled_utc = scheduled.astimezone(timezone.utc)
 
     with engine.begin() as conn:
         existing = conn.execute(
@@ -176,7 +191,7 @@ def schedule_push_notification(server_name: str, payload: PushPayload, user=Depe
             {
                 "server": server_name,
                 "message": payload.message.strip(),
-                "scheduled_at": scheduled,
+                "scheduled_at": scheduled_utc,
                 "scheduled_date": scheduled_date,
                 "created_by": user["id"],
             },

@@ -313,7 +313,7 @@ class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
         )
 
         val notification = NotificationCompat.Builder(context, PUSH_CHANNEL_ID)
-            .setSmallIcon(android.R.drawable.ic_dialog_info)
+            .setSmallIcon(R.drawable.ic_stat_stepcraft)
             .setContentTitle("StepCraft · $serverName")
             .setContentText(message)
             .setStyle(NotificationCompat.BigTextStyle().bigText(message))
