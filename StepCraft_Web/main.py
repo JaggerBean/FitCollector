@@ -278,6 +278,71 @@ async def dashboard(request: Request):
     return templates.TemplateResponse("dashboard.html", {"request": request, "servers": servers})
 
 
+@app.get("/push", response_class=HTMLResponse)
+async def push_notifications_page(request: Request):
+    user_token = request.session.get("user_token")
+    if not user_token:
+        return RedirectResponse(url="/account/login", status_code=302)
+
+    server_name = request.query_params.get("server")
+    if not server_name:
+        return RedirectResponse(url="/dashboard", status_code=302)
+
+    items = []
+    error = None
+    async with httpx.AsyncClient() as client:
+        try:
+            resp = await client.get(
+                f"{BACKEND_URL}/v1/owner/servers/{server_name}/push",
+                headers={"Authorization": f"Bearer {user_token}"},
+                timeout=10,
+            )
+            if resp.status_code == 200:
+                items = resp.json().get("items", [])
+            else:
+                error = resp.text
+        except Exception as e:
+            error = str(e)
+
+    return templates.TemplateResponse(
+        "push_notifications.html",
+        {"request": request, "server_name": server_name, "items": items, "error": error},
+    )
+
+
+@app.post("/push/create", response_class=HTMLResponse)
+async def push_notifications_create(request: Request, message: str = Form(...), scheduled_at: str = Form(...)):
+    user_token = request.session.get("user_token")
+    if not user_token:
+        return RedirectResponse(url="/account/login", status_code=302)
+
+    server_name = request.query_params.get("server")
+    if not server_name:
+        return RedirectResponse(url="/dashboard", status_code=302)
+
+    error = None
+    async with httpx.AsyncClient() as client:
+        try:
+            resp = await client.post(
+                f"{BACKEND_URL}/v1/owner/servers/{server_name}/push",
+                headers={"Authorization": f"Bearer {user_token}"},
+                json={"message": message, "scheduled_at": scheduled_at},
+                timeout=10,
+            )
+            if resp.status_code != 200:
+                error = resp.text
+        except Exception as e:
+            error = str(e)
+
+    if error:
+        return templates.TemplateResponse(
+            "push_notifications.html",
+            {"request": request, "server_name": server_name, "items": [], "error": error, "message": message},
+        )
+
+    return RedirectResponse(url=f"/push?server={server_name}", status_code=302)
+
+
 @app.get("/rewards", response_class=HTMLResponse)
 async def rewards_page(request: Request):
     user_token = request.session.get("user_token")

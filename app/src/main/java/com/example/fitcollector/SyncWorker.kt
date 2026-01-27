@@ -8,6 +8,13 @@ import androidx.health.connect.client.records.StepsRecord
 import androidx.health.connect.client.request.AggregateRequest
 import androidx.health.connect.client.time.TimeRangeFilter
 import androidx.work.*
+import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
+import android.content.Intent
+import android.os.Build
 import java.time.Instant
 import java.time.ZoneId
 import java.time.ZonedDateTime
@@ -192,6 +199,12 @@ class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
                 message = logMessage
             ))
 
+            try {
+                checkPushNotifications(context, mcUsername, deviceId, selectedServers)
+            } catch (e: Exception) {
+                Log.e("SyncWorker", "Push check failed: ${e.message}")
+            }
+
             if (successCount == 0 && errorGroups.isNotEmpty()) {
                 Result.retry()
             } else {
@@ -213,6 +226,7 @@ class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
 
     companion object {
         private const val WORK_NAME = "StepCraftSyncWork"
+        private const val PUSH_CHANNEL_ID = "stepcraft_push"
 
         fun schedule(context: Context) {
             val constraints = Constraints.Builder()
@@ -243,5 +257,71 @@ class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
             WorkManager.getInstance(context).cancelUniqueWork(WORK_NAME)
             Log.d("SyncWorker", "Worker canceled.")
         }
+    }
+
+    private suspend fun checkPushNotifications(
+        context: Context,
+        mcUsername: String,
+        deviceId: String,
+        servers: List<String>
+    ) {
+        val api = buildApi(BASE_URL, GLOBAL_API_KEY)
+        createPushChannel(context)
+
+        servers.forEach { server ->
+            val key = getServerKey(context, mcUsername, server)
+            if (key.isNullOrBlank()) return@forEach
+
+            try {
+                val resp = api.getNextPush(
+                    username = mcUsername,
+                    deviceId = deviceId,
+                    serverName = server,
+                    apiKey = key
+                )
+                val message = resp.message
+                if (!message.isNullOrBlank()) {
+                    showPushNotification(context, server, message)
+                }
+            } catch (e: Exception) {
+                Log.e("SyncWorker", "Push poll failed for $server: ${e.message}")
+            }
+        }
+    }
+
+    private fun createPushChannel(context: Context) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(
+                PUSH_CHANNEL_ID,
+                "StepCraft Notifications",
+                NotificationManager.IMPORTANCE_DEFAULT
+            )
+            val manager = context.getSystemService(NotificationManager::class.java)
+            manager.createNotificationChannel(channel)
+        }
+    }
+
+    private fun showPushNotification(context: Context, serverName: String, message: String) {
+        val intent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        }
+        val pendingIntent = PendingIntent.getActivity(
+            context,
+            0,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val notification = NotificationCompat.Builder(context, PUSH_CHANNEL_ID)
+            .setSmallIcon(android.R.drawable.ic_dialog_info)
+            .setContentTitle("StepCraft · $serverName")
+            .setContentText(message)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(message))
+            .setContentIntent(pendingIntent)
+            .setAutoCancel(true)
+            .build()
+
+        val id = (serverName + message).hashCode()
+        NotificationManagerCompat.from(context).notify(id, notification)
     }
 }

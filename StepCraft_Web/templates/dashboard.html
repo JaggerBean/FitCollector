@@ -102,7 +102,10 @@
                                         <div class="fw-bold">{{ s.server_name }}</div>
                                         <div class="small text-muted">{{ s.server_address }} · {{ s.server_version }}</div>
                                     </div>
-                                    <a class="btn btn-primary" href="/rewards?server={{ s.server_name }}">Manage Rewards</a>
+                                    <div class="d-flex gap-2">
+                                        <a class="btn btn-primary" href="/rewards?server={{ s.server_name }}">Manage Rewards</a>
+                                        <a class="btn btn-outline-secondary" href="/push?server={{ s.server_name }}">Push Notifications</a>
+                                    </div>
                                 </div>
                             {% endfor %}
                         </div>
@@ -112,6 +115,22 @@
                     {% endif %}
                 </div>
             </div>
+            {% if servers and servers|length > 0 %}
+            <div class="col-12" id="push">
+                <div class="card p-3">
+                    <h5>Push Notifications</h5>
+                    <p class="text-muted mb-3">Schedule one message per day for each server.</p>
+                    <div class="list-group">
+                        {% for s in servers %}
+                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                <div class="fw-bold">{{ s.server_name }}</div>
+                                <a class="btn btn-outline-secondary" href="/push?server={{ s.server_name }}">Manage</a>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
         </div>
     </div>
 </body>

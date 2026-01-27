@@ -230,3 +230,44 @@ def init_db() -> None:
         CREATE INDEX IF NOT EXISTS idx_server_rewards_server
         ON server_rewards(server_name);
         """))
+
+        # 11) Create push_notifications table for scheduled server messages
+        conn.execute(text("""
+        CREATE TABLE IF NOT EXISTS push_notifications (
+            id BIGSERIAL PRIMARY KEY,
+            server_name TEXT NOT NULL,
+            message TEXT NOT NULL,
+            scheduled_at TIMESTAMPTZ NOT NULL,
+            scheduled_date DATE NOT NULL,
+            created_by BIGINT,
+            created_at TIMESTAMPTZ DEFAULT NOW()
+        );
+        """))
+
+        conn.execute(text("""
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_push_notifications_server_day
+        ON push_notifications(server_name, scheduled_date);
+        """))
+
+        conn.execute(text("""
+        CREATE INDEX IF NOT EXISTS idx_push_notifications_server_time
+        ON push_notifications(server_name, scheduled_at);
+        """))
+
+        # 12) Track deliveries per device to avoid duplicate push messages
+        conn.execute(text("""
+        CREATE TABLE IF NOT EXISTS push_deliveries (
+            id BIGSERIAL PRIMARY KEY,
+            notification_id BIGINT NOT NULL,
+            device_id TEXT NOT NULL,
+            minecraft_username TEXT NOT NULL,
+            server_name TEXT NOT NULL,
+            delivered_at TIMESTAMPTZ DEFAULT NOW(),
+            UNIQUE(notification_id, device_id)
+        );
+        """))
+
+        conn.execute(text("""
+        CREATE INDEX IF NOT EXISTS idx_push_deliveries_device
+        ON push_deliveries(device_id, server_name);
+        """))

@@ -84,6 +84,13 @@ data class StepsYesterdayResponse(
     val day: String
 )
 
+data class PushNextResponse(
+    val id: Long? = null,
+    val server_name: String? = null,
+    val message: String? = null,
+    val scheduled_at: String? = null
+)
+
 data class MojangProfile(
     val id: String? = null,
     val name: String? = null,
@@ -120,6 +127,14 @@ interface FitApi {
         @Query("minecraft_username") username: String,
         @Query("player_api_key") apiKey: String
     ): StepsYesterdayResponse
+
+    @GET("v1/players/push/next")
+    suspend fun getNextPush(
+        @Query("minecraft_username") username: String,
+        @Query("device_id") deviceId: String,
+        @Query("server_name") serverName: String,
+        @Query("player_api_key") apiKey: String
+    ): PushNextResponse
 }
 
 fun buildApi(baseUrl: String, apiKey: String): FitApi {

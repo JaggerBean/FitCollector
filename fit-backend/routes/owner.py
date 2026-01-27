@@ -4,6 +4,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel, Field
 from sqlalchemy import text
 import json
+from datetime import datetime, timezone
 
 from database import engine
 from auth import require_user
@@ -19,6 +20,11 @@ class RewardTier(BaseModel):
 
 class RewardsPayload(BaseModel):
     tiers: list[RewardTier] = Field(default_factory=list)
+
+
+class PushPayload(BaseModel):
+    message: str = Field(..., min_length=1, max_length=240)
+    scheduled_at: str = Field(..., min_length=1)
 
 
 DEFAULT_REWARDS = [
@@ -116,6 +122,67 @@ def replace_rewards(server_name: str, payload: RewardsPayload, user=Depends(requ
             )
 
     return {"server_name": server_name, "tiers": [t.model_dump() for t in payload.tiers]}
+
+
+@router.get("/v1/owner/servers/{server_name}/push")
+def list_push_notifications(server_name: str, user=Depends(require_user)):
+    _ensure_owner(server_name, user["id"])
+    with engine.begin() as conn:
+        rows = conn.execute(
+            text("""
+                SELECT id, message, scheduled_at, created_at
+                FROM push_notifications
+                WHERE server_name = :server
+                ORDER BY scheduled_at DESC
+                LIMIT 20
+            """),
+            {"server": server_name},
+        ).mappings().all()
+
+    return {"server_name": server_name, "items": list(rows)}
+
+
+@router.post("/v1/owner/servers/{server_name}/push")
+def schedule_push_notification(server_name: str, payload: PushPayload, user=Depends(require_user)):
+    _ensure_owner(server_name, user["id"])
+    try:
+        scheduled = datetime.fromisoformat(payload.scheduled_at)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid scheduled_at format")
+
+    if scheduled.tzinfo is None:
+        scheduled = scheduled.replace(tzinfo=timezone.utc)
+    scheduled_date = scheduled.date()
+
+    with engine.begin() as conn:
+        existing = conn.execute(
+            text("""
+                SELECT id FROM push_notifications
+                WHERE server_name = :server AND scheduled_date = :scheduled_date
+                LIMIT 1
+            """),
+            {"server": server_name, "scheduled_date": scheduled_date},
+        ).fetchone()
+
+        if existing:
+            raise HTTPException(status_code=409, detail="A notification is already scheduled for that day")
+
+        row = conn.execute(
+            text("""
+                INSERT INTO push_notifications (server_name, message, scheduled_at, scheduled_date, created_by)
+                VALUES (:server, :message, :scheduled_at, :scheduled_date, :created_by)
+                RETURNING id, message, scheduled_at, created_at
+            """),
+            {
+                "server": server_name,
+                "message": payload.message.strip(),
+                "scheduled_at": scheduled,
+                "scheduled_date": scheduled_date,
+                "created_by": user["id"],
+            },
+        ).mappings().first()
+
+    return {"server_name": server_name, "item": dict(row)}
 
 
 def _ensure_owner(server_name: str, user_id: int) -> None:

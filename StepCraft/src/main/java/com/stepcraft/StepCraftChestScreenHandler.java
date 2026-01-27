@@ -12,7 +12,10 @@ import net.minecraft.screen.GenericContainerScreenHandler;
 import net.minecraft.screen.ScreenHandlerType;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.command.ServerCommandSource;
+import net.minecraft.text.ClickEvent;
+import net.minecraft.text.Style;
 import net.minecraft.text.Text;
+import net.minecraft.text.TextColor;
 import net.minecraft.util.collection.DefaultedList;
 
 import java.util.ArrayList;
@@ -38,6 +41,7 @@ public class StepCraftChestScreenHandler extends GenericContainerScreenHandler {
         t.setDaemon(true);
         return t;
     });
+    private static final String DASHBOARD_URL = "https://stepcraft.org/dashboard#push";
 
     // Server constructor only (client uses vanilla screen + vanilla type)
     public StepCraftChestScreenHandler(int syncId, PlayerInventory playerInventory, SimpleInventory inventory) {
@@ -70,6 +74,17 @@ public class StepCraftChestScreenHandler extends GenericContainerScreenHandler {
                     case 28 -> { StepCraftUIHelper.openPlayerSelectList(serverPlayer, null, 0, StepCraftPlayerAction.BAN); return; }
                     case 30 -> { StepCraftUIHelper.openPlayerSelectList(serverPlayer, null, 0, StepCraftPlayerAction.UNBAN); return; }
                     case 32 -> { StepCraftUIHelper.openPlayerSelectList(serverPlayer, null, 0, StepCraftPlayerAction.DELETE); return; }
+                    case 34 -> {
+                        serverPlayer.closeHandledScreen();
+                        Text message = Text.literal("Open Push Notifications Dashboard")
+                                .setStyle(Style.EMPTY
+                                        .withColor(TextColor.fromRgb(0x55AAFF))
+                                        .withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, DASHBOARD_URL))
+                                        .withUnderline(true)
+                                        .withItalic(false));
+                        serverPlayer.sendMessage(message);
+                        return;
+                    }
                     case 49 -> { StepCraftScreens.openSettings(serverPlayer); return; }
                 }
             }
