@@ -239,14 +239,14 @@ public class StepCraftPlayerListScreenHandler extends GenericContainerScreenHand
                             .setStyle(Style.EMPTY.withColor(TextColor.fromRgb(0x777777)).withItalic(false)));
 
                         if (error != null) {
-                            lore.add(Text.literal("Steps: error")
-                                .setStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xFF5555)).withItalic(false)));
+                            lore.add(Text.literal("Steps: None")
+                                .setStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xAAAAAA)).withItalic(false)));
                             lore.add(Text.literal("Claim: error")
                                 .setStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xFF5555)).withItalic(false)));
                         } else {
                             if (stats.stepsError) {
-                                lore.add(Text.literal("Steps: error")
-                                    .setStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xFF5555)).withItalic(false)));
+                                lore.add(Text.literal("Steps: None")
+                                    .setStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xAAAAAA)).withItalic(false)));
                             } else {
                                 long steps = stats.steps;
                                 String stepsText = steps >= 0 ? String.valueOf(steps) : "n/a";
