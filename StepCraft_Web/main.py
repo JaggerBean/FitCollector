@@ -354,7 +354,7 @@ async def server_manage(request: Request):
             "method": "POST",
             "path": "/v1/servers/players/{minecraft_username}/ban",
             "description": "Ban a player (and their devices).",
-            "curl": f"curl -X POST \"{base}/v1/servers/players/PLAYER_NAME/ban\" -H \"X-API-Key: YOUR_API_KEY\" -H \"Content-Type: application/json\" -d '{\"reason\": \"broke code of conduct\"}'",
+            "curl": f"curl -X POST \"{base}/v1/servers/players/PLAYER_NAME/ban\" -H \"X-API-Key: YOUR_API_KEY\" -H \"Content-Type: application/json\" -d '{{\"reason\": \"broke code of conduct\"}}'",
         },
         {
             "name": "Unban Player",
