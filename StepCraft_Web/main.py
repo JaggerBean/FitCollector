@@ -304,9 +304,39 @@ async def push_notifications_page(request: Request):
         except Exception as e:
             error = str(e)
 
+    try:
+        from zoneinfo import available_timezones, ZoneInfo
+        from datetime import datetime
+        tz_items = []
+        now_utc = datetime.now(ZoneInfo("UTC"))
+        for tz in sorted(available_timezones()):
+            try:
+                now_local = now_utc.astimezone(ZoneInfo(tz))
+                offset = now_local.utcoffset()
+                if offset is None:
+                    continue
+                total_minutes = int(offset.total_seconds() // 60)
+                sign = "+" if total_minutes >= 0 else "-"
+                hours = abs(total_minutes) // 60
+                minutes = abs(total_minutes) % 60
+                offset_str = f"UTC{sign}{hours:02d}:{minutes:02d}"
+                time_str = now_local.strftime("%H:%M")
+                label = f"{offset_str} · {tz} · {time_str}"
+                tz_items.append({"value": tz, "label": label})
+            except Exception:
+                continue
+    except Exception:
+        tz_items = []
+
     return templates.TemplateResponse(
         "push_notifications.html",
-        {"request": request, "server_name": server_name, "items": items, "error": error},
+        {
+            "request": request,
+            "server_name": server_name,
+            "items": items,
+            "error": error,
+            "timezones": tz_items,
+        },
     )
 
 
