@@ -52,10 +52,12 @@
             font-family: inherit;
             font-size: 1rem;
             white-space: pre;
+            z-index: 1;
         }
         .ghost-input {
             position: relative;
             background: transparent;
+            z-index: 2;
         }
         .output-block {
             background: #f6f8f6;
@@ -261,6 +263,7 @@
                 ghost.style.fontSize = style.fontSize;
                 ghost.style.fontFamily = style.fontFamily;
                 ghost.style.letterSpacing = style.letterSpacing;
+                ghost.style.lineHeight = style.lineHeight;
             }
 
             async function loadPlayers() {
