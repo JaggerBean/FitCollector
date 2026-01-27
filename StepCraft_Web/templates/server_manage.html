@@ -244,9 +244,10 @@
             let loaded = false;
             let players = [];
             const serverName = "{{ server.server_name }}";
+            let currentGhost = '';
 
             function setGhost(typed, ghostText) {
-                // Render typed text in transparent color, ghost text in ghost color
+                currentGhost = ghostText || '';
                 if (!ghostText) {
                     ghost.textContent = '';
                     return;
@@ -266,12 +267,10 @@
                     setGhost(value, '');
                     return;
                 }
-                // Only show the remaining part, not what is already typed
                 setGhost(value, match.substring(value.length));
             }
 
             function syncGhostPosition() {
-                // Align ghost text exactly with input text
                 const style = getComputedStyle(input);
                 ghost.style.left = input.offsetLeft + 'px';
                 ghost.style.top = input.offsetTop + 'px';
@@ -304,6 +303,14 @@
             input.addEventListener('click', () => { syncGhostPosition(); loadPlayers(); });
             input.addEventListener('input', updateGhost);
             window.addEventListener('resize', syncGhostPosition);
+
+            input.addEventListener('keydown', function(e) {
+                if (e.key === 'Tab' && currentGhost) {
+                    e.preventDefault();
+                    input.value += currentGhost;
+                    updateGhost();
+                }
+            });
 
             syncGhostPosition();
         })();
