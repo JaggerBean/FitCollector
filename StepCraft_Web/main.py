@@ -278,6 +278,110 @@ async def dashboard(request: Request):
     return templates.TemplateResponse("dashboard.html", {"request": request, "servers": servers})
 
 
+@app.get("/server/manage", response_class=HTMLResponse)
+async def server_manage(request: Request):
+    user_token = request.session.get("user_token")
+    if not user_token:
+        return RedirectResponse(url="/account/login", status_code=302)
+
+    server_name = request.query_params.get("server")
+    if not server_name:
+        return RedirectResponse(url="/dashboard", status_code=302)
+
+    servers = []
+    async with httpx.AsyncClient() as client:
+        try:
+            resp = await client.get(
+                f"{BACKEND_URL}/v1/owner/servers",
+                headers={"Authorization": f"Bearer {user_token}"},
+                timeout=10,
+            )
+            if resp.status_code == 200:
+                servers = resp.json().get("servers", [])
+        except Exception:
+            servers = []
+
+    server = next((s for s in servers if s.get("server_name") == server_name), None)
+    if not server:
+        return RedirectResponse(url="/dashboard", status_code=302)
+
+    base = BACKEND_URL.rstrip("/")
+    commands = [
+        {
+            "name": "Get Server Info",
+            "method": "GET",
+            "path": "/v1/servers/info",
+            "description": "Verify API key and server status.",
+            "curl": f"curl -X GET \"{base}/v1/servers/info\" -H \"X-API-Key: YOUR_API_KEY\"",
+        },
+        {
+            "name": "List Players (Paginated)",
+            "method": "GET",
+            "path": "/v1/servers/players/list?limit=100&offset=0",
+            "description": "List registered players with pagination.",
+            "curl": f"curl -X GET \"{base}/v1/servers/players/list?limit=100&offset=0\" -H \"X-API-Key: YOUR_API_KEY\"",
+        },
+        {
+            "name": "Yesterday Steps for Player",
+            "method": "GET",
+            "path": "/v1/servers/players/{minecraft_username}/yesterday-steps",
+            "description": "Fetch yesterday's step count for a player.",
+            "curl": f"curl -X GET \"{base}/v1/servers/players/PLAYER_NAME/yesterday-steps\" -H \"X-API-Key: YOUR_API_KEY\"",
+        },
+        {
+            "name": "Claim Status for Player",
+            "method": "GET",
+            "path": "/v1/servers/players/{minecraft_username}/claim-status",
+            "description": "Check if yesterday's reward was claimed.",
+            "curl": f"curl -X GET \"{base}/v1/servers/players/PLAYER_NAME/claim-status\" -H \"X-API-Key: YOUR_API_KEY\"",
+        },
+        {
+            "name": "Mark Reward Claimed",
+            "method": "POST",
+            "path": "/v1/servers/players/{minecraft_username}/claim-reward",
+            "description": "Mark yesterday's reward as claimed.",
+            "curl": f"curl -X POST \"{base}/v1/servers/players/PLAYER_NAME/claim-reward\" -H \"X-API-Key: YOUR_API_KEY\"",
+        },
+        {
+            "name": "List Bans",
+            "method": "GET",
+            "path": "/v1/servers/bans",
+            "description": "List banned usernames and devices.",
+            "curl": f"curl -X GET \"{base}/v1/servers/bans\" -H \"X-API-Key: YOUR_API_KEY\"",
+        },
+        {
+            "name": "Ban Player",
+            "method": "POST",
+            "path": "/v1/servers/players/{minecraft_username}/ban",
+            "description": "Ban a player (and their devices).",
+            "curl": f"curl -X POST \"{base}/v1/servers/players/PLAYER_NAME/ban\" -H \"X-API-Key: YOUR_API_KEY\" -H \"Content-Type: application/json\" -d '{\"reason\": \"broke code of conduct\"}'",
+        },
+        {
+            "name": "Unban Player",
+            "method": "DELETE",
+            "path": "/v1/servers/players/{minecraft_username}/ban",
+            "description": "Unban a player and their devices.",
+            "curl": f"curl -X DELETE \"{base}/v1/servers/players/PLAYER_NAME/ban\" -H \"X-API-Key: YOUR_API_KEY\"",
+        },
+        {
+            "name": "Wipe Player",
+            "method": "DELETE",
+            "path": "/v1/servers/players/{minecraft_username}",
+            "description": "Delete all player data and keys for this server.",
+            "curl": f"curl -X DELETE \"{base}/v1/servers/players/PLAYER_NAME\" -H \"X-API-Key: YOUR_API_KEY\"",
+        },
+    ]
+
+    return templates.TemplateResponse(
+        "server_manage.html",
+        {
+            "request": request,
+            "server": server,
+            "commands": commands,
+        },
+    )
+
+
 @app.get("/push", response_class=HTMLResponse)
 async def push_notifications_page(request: Request):
     user_token = request.session.get("user_token")

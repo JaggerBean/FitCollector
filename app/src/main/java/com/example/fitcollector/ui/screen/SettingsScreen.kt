@@ -431,8 +431,21 @@ fun SettingsScreen(
 
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Column(modifier = Modifier.weight(1f)) {
-                                Text("High Reliability Mode", style = MaterialTheme.typography.labelLarge)
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text("High Reliability Mode", style = MaterialTheme.typography.labelLarge)
+                                    if (backgroundSyncEnabled && !isIgnoringBatteryOptimizations) {
+                                        Spacer(Modifier.width(6.dp))
+                                        Icon(
+                                            Icons.Default.Warning,
+                                            contentDescription = "Recommended for background sync",
+                                            tint = Color(0xFFFFC107)
+                                        )
+                                    }
+                                }
                                 Text("Ignore battery optimizations to keep sync running smoothly.", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                                if (backgroundSyncEnabled && !isIgnoringBatteryOptimizations) {
+                                    Text("Recommended for background sync success.", style = MaterialTheme.typography.bodySmall, color = Color(0xFFFFC107))
+                                }
                             }
                             Switch(
                                 checked = isIgnoringBatteryOptimizations,

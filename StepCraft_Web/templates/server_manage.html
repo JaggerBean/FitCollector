@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StepCraft Dashboard</title>
+    <title>Manage Server - StepCraft</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
     <style>
@@ -14,7 +14,7 @@
             color: #222;
         }
         .hero {
-            max-width: 900px;
+            max-width: 980px;
             margin: 48px auto;
             padding: 28px;
             border-radius: 20px;
@@ -25,7 +25,7 @@
         .title {
             font-family: 'Montserrat', monospace;
             color: #2E7D32;
-            font-size: 2rem;
+            font-size: 1.8rem;
         }
         .btn-primary {
             background: linear-gradient(90deg, #1565C0 60%, #2E7D32 100%);
@@ -38,6 +38,10 @@
             background: linear-gradient(90deg, #2E7D32 60%, #1565C0 100%);
             transform: translateY(-2px) scale(1.03);
             box-shadow: 0 4px 16px rgba(44, 67, 54, 0.18);
+        }
+        pre {
+            white-space: pre-wrap;
+            word-break: break-all;
         }
         @media (prefers-color-scheme: dark) {
             body {
@@ -72,6 +76,10 @@
                 background: linear-gradient(90deg, #81C784 60%, #64B5F6 100%);
                 color: #23272A;
             }
+            pre {
+                background: #1E1E1E !important;
+                color: #E1E1E1;
+            }
         }
     </style>
 </head>
@@ -79,42 +87,59 @@
     <div class="hero">
         <div class="d-flex justify-content-between align-items-center">
             <div>
-                <div class="title">StepCraft Dashboard</div>
-                <div class="text-muted">Your servers</div>
+                <div class="title">Manage · {{ server.server_name }}</div>
+                <div class="text-muted">{{ server.server_address }} · {{ server.server_version }}</div>
             </div>
-            <div class="d-flex gap-2">
-                <a class="btn btn-primary" href="/register">Register New Server</a>
-                <form method="post" action="/logout">
-                    <button class="btn btn-outline-secondary">Logout</button>
-                </form>
-            </div>
+            <a class="btn btn-outline-secondary" href="/dashboard">Back</a>
         </div>
         <hr>
-        <div class="row g-3">
-            <div class="col-12">
-                <div class="card p-3">
-                    <h5>Servers</h5>
-                    {% if servers and servers|length > 0 %}
-                        <div class="list-group">
-                            {% for s in servers %}
-                                <div class="list-group-item d-flex justify-content-between align-items-center">
-                                    <div>
-                                        <div class="fw-bold">{{ s.server_name }}</div>
-                                        <div class="small text-muted">{{ s.server_address }} · {{ s.server_version }}</div>
-                                    </div>
-                                    <div class="d-flex gap-2">
-                                        <a class="btn btn-primary" href="/server/manage?server={{ s.server_name }}">Manage</a>
-                                    </div>
-                                </div>
-                            {% endfor %}
+
+        <div class="card p-3 mb-3">
+            <h5>Quick Actions</h5>
+            <div class="d-flex flex-wrap gap-2">
+                <a class="btn btn-primary" href="/rewards?server={{ server.server_name }}">Rewards</a>
+                <a class="btn btn-outline-secondary" href="/push?server={{ server.server_name }}">Push Notifications</a>
+            </div>
+        </div>
+
+        <div class="card p-3">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Server API Commands</h5>
+                <div class="text-muted small">Replace YOUR_API_KEY and PLAYER_NAME</div>
+            </div>
+            <div class="list-group mt-3">
+                {% for cmd in commands %}
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-start gap-3">
+                            <div>
+                                <div class="fw-bold">{{ cmd.name }}</div>
+                                <div class="small text-muted">{{ cmd.method }} {{ cmd.path }}</div>
+                                <div class="small">{{ cmd.description }}</div>
+                            </div>
+                            <button class="btn btn-outline-secondary btn-sm copy-btn" data-curl="{{ cmd.curl | e }}">Copy curl</button>
                         </div>
-                    {% else %}
-                        <div class="text-muted">No servers registered yet.</div>
-                        <a class="btn btn-outline-secondary mt-3" href="/register">Register a server</a>
-                    {% endif %}
-                </div>
+                        <pre class="bg-light p-2 mt-2 small mb-0"><code>{{ cmd.curl }}</code></pre>
+                    </div>
+                {% endfor %}
             </div>
         </div>
     </div>
+    <script>
+        (function () {
+            document.querySelectorAll('.copy-btn').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    const text = btn.getAttribute('data-curl');
+                    try {
+                        await navigator.clipboard.writeText(text);
+                        const original = btn.textContent;
+                        btn.textContent = 'Copied!';
+                        setTimeout(() => btn.textContent = original, 1200);
+                    } catch (e) {
+                        alert('Copy failed.');
+                    }
+                });
+            });
+        })();
+    </script>
 </body>
 </html>
