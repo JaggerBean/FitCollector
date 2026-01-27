@@ -29,7 +29,7 @@ def get_claim_status_server(minecraft_username: str, server_name: str = Depends(
     if row:
         return {"claimed": row[0], "claimed_at": row[1]}
     else:
-        raise HTTPException(status_code=404, detail=f"No claim record found for {minecraft_username} on {str(yesterday)}.")
+        return {"claimed": False, "claimed_at": None}
 
 @router.post("/v1/servers/players/{minecraft_username}/claim-reward")
 def claim_reward_server(minecraft_username: str, server_name: str = Depends(require_api_key)):

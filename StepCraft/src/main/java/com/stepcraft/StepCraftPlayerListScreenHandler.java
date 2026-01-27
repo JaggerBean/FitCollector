@@ -239,20 +239,31 @@ public class StepCraftPlayerListScreenHandler extends GenericContainerScreenHand
                             .setStyle(Style.EMPTY.withColor(TextColor.fromRgb(0x777777)).withItalic(false)));
 
                         if (error != null) {
-                                    lore.add(Text.literal("Steps: error")
-                                        .setStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xFF5555)).withItalic(false)));
-                                lore.add(Text.literal("Claim: error")
-                                    .setStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xFF5555)).withItalic(false)));
+                            lore.add(Text.literal("Steps: error")
+                                .setStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xFF5555)).withItalic(false)));
+                            lore.add(Text.literal("Claim: error")
+                                .setStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xFF5555)).withItalic(false)));
                         } else {
-                            long steps = stats.steps;
-                            String stepsText = steps >= 0 ? String.valueOf(steps) : "n/a";
+                            if (stats.stepsError) {
+                                lore.add(Text.literal("Steps: error")
+                                    .setStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xFF5555)).withItalic(false)));
+                            } else {
+                                long steps = stats.steps;
+                                String stepsText = steps >= 0 ? String.valueOf(steps) : "n/a";
                                 lore.add(Text.literal("Steps: " + stepsText)
                                     .setStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xFFAA55)).withItalic(false)));
+                            }
+
+                            if (stats.claimError || stats.claimStatus == null) {
+                                lore.add(Text.literal("Claim: error")
+                                    .setStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xFF5555)).withItalic(false)));
+                            } else {
                                 boolean claimed = stats.claimStatus.claimed;
                                 String claimText = claimed ? "claimed" : "not claimed";
                                 int claimColor = claimed ? 0x55FF55 : 0xFF5555;
                                 lore.add(Text.literal("Claim: " + claimText)
                                     .setStyle(Style.EMPTY.withColor(TextColor.fromRgb(claimColor)).withItalic(false)));
+                            }
                         }
 
                         refreshed.set(DataComponentTypes.LORE, new LoreComponent(lore));
@@ -265,15 +276,26 @@ public class StepCraftPlayerListScreenHandler extends GenericContainerScreenHand
     }
 
     private static PlayerStats fetchPlayerStats(String username) {
+        long steps = -1;
+        boolean stepsError = false;
+        boolean claimError = false;
+        ClaimStatus claimStatus = null;
+
         try {
             String stepsJson = BackendClient.getYesterdayStepsForPlayer(username);
-            long steps = extractSteps(stepsJson);
-            String claimJson = BackendClient.getClaimStatusForPlayer(username);
-            ClaimStatus claimStatus = extractClaimStatus(claimJson);
-            return new PlayerStats(steps, claimStatus);
+            steps = extractSteps(stepsJson);
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            stepsError = true;
         }
+
+        try {
+            String claimJson = BackendClient.getClaimStatusForPlayer(username);
+            claimStatus = extractClaimStatus(claimJson);
+        } catch (Exception e) {
+            claimError = true;
+        }
+
+        return new PlayerStats(steps, claimStatus, stepsError, claimError);
     }
 
     private static long extractSteps(String stepsJson) {
@@ -307,10 +329,14 @@ public class StepCraftPlayerListScreenHandler extends GenericContainerScreenHand
     private static class PlayerStats {
         final long steps;
         final ClaimStatus claimStatus;
+        final boolean stepsError;
+        final boolean claimError;
 
-        PlayerStats(long steps, ClaimStatus claimStatus) {
+        PlayerStats(long steps, ClaimStatus claimStatus, boolean stepsError, boolean claimError) {
             this.steps = steps;
             this.claimStatus = claimStatus;
+            this.stepsError = stepsError;
+            this.claimError = claimError;
         }
     }
 
