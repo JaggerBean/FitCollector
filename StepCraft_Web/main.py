@@ -273,7 +273,7 @@ async def dashboard(request: Request):
     async with httpx.AsyncClient() as client:
         try:
             resp = await client.get(
-                f"{BACKEND_URL}/v1/owner/servers",
+                f"{BACKEND_URL}/v1/servers/owned",
                 headers={"Authorization": f"Bearer {user_token}"},
                 timeout=10,
             )
@@ -320,7 +320,7 @@ async def server_manage(request: Request):
     async with httpx.AsyncClient() as client:
         try:
             resp = await client.get(
-                f"{BACKEND_URL}/v1/owner/servers",
+                f"{BACKEND_URL}/v1/servers/owned",
                 headers={"Authorization": f"Bearer {user_token}"},
                 timeout=10,
             )
@@ -429,7 +429,7 @@ async def push_notifications_page(request: Request):
             if server_key:
                 headers["X-API-Key"] = server_key
             resp = await client.get(
-                f"{BACKEND_URL}/v1/owner/servers/{server_name}/push",
+                f"{BACKEND_URL}/v1/servers/push",
                 headers=headers,
                 timeout=10,
             )
@@ -527,7 +527,7 @@ async def push_notifications_create(
             if server_key:
                 headers["X-API-Key"] = server_key
             resp = await client.post(
-                f"{BACKEND_URL}/v1/owner/servers/{server_name}/push",
+                f"{BACKEND_URL}/v1/servers/push",
                 headers=headers,
                 json={"message": message, "scheduled_at": scheduled_at, "timezone": timezone},
                 timeout=10,
@@ -565,8 +565,9 @@ async def rewards_page(request: Request):
             if server_key:
                 headers["X-API-Key"] = server_key
             resp = await client.get(
-                f"{BACKEND_URL}/v1/owner/servers/{server_name}/rewards",
+                f"{BACKEND_URL}/v1/servers/rewards",
                 headers=headers,
+                params={"server": server_name},
                 timeout=10,
             )
             if resp.status_code == 200:
@@ -615,9 +616,10 @@ async def rewards_update(request: Request, rewards_json: str = Form(...)):
             if server_key:
                 headers["X-API-Key"] = server_key
             resp = await client.put(
-                f"{BACKEND_URL}/v1/owner/servers/{server_name}/rewards",
+                f"{BACKEND_URL}/v1/servers/rewards",
                 headers=headers,
                 json=payload,
+                params={"server": server_name},
                 timeout=10,
             )
         except Exception as e:
@@ -658,8 +660,9 @@ async def rewards_default(request: Request):
             if server_key:
                 headers["X-API-Key"] = server_key
             await client.post(
-                f"{BACKEND_URL}/v1/owner/servers/{server_name}/rewards/default",
+                f"{BACKEND_URL}/v1/servers/rewards/default",
                 headers=headers,
+                params={"server": server_name},
                 timeout=10,
             )
         except Exception:

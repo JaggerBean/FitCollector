@@ -1,13 +1,43 @@
 """Server rewards configuration endpoints."""
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Header, Query
 from pydantic import BaseModel, Field
 from sqlalchemy import text
 import json
 from database import engine
-from auth import require_api_key
+from auth import require_api_key, require_user
 
 router = APIRouter()
+
+
+def _ensure_owner(server_name: str, user_id: int) -> None:
+    with engine.begin() as conn:
+        row = conn.execute(
+            text("SELECT id FROM servers WHERE server_name = :server AND owner_user_id = :user_id"),
+            {"server": server_name, "user_id": user_id}
+        ).fetchone()
+        if not row:
+            raise HTTPException(status_code=403, detail="Not authorized for this server")
+
+
+def require_server_access(
+    x_api_key: str | None = Header(default=None, alias="X-API-Key"),
+    authorization: str | None = Header(default=None, alias="Authorization"),
+    x_user_token: str | None = Header(default=None, alias="X-User-Token"),
+    server: str | None = Query(default=None),
+) -> str:
+    if x_api_key:
+        try:
+            return require_api_key(x_api_key)
+        except HTTPException:
+            if not authorization and not x_user_token:
+                raise
+
+    user = require_user(authorization=authorization, x_user_token=x_user_token)
+    if not server:
+        raise HTTPException(status_code=400, detail="Missing server")
+    _ensure_owner(server, user["id"])
+    return server
 
 
 class RewardTier(BaseModel):
@@ -28,7 +58,7 @@ DEFAULT_REWARDS = [
 
 
 @router.get("/v1/servers/rewards")
-def get_server_rewards(server_name: str = Depends(require_api_key)):
+def get_server_rewards(server_name: str = Depends(require_server_access)):
     with engine.begin() as conn:
         rows = conn.execute(
             text("""
@@ -60,7 +90,7 @@ def get_server_rewards(server_name: str = Depends(require_api_key)):
 
 
 @router.post("/v1/servers/rewards/default")
-def seed_default_rewards(server_name: str = Depends(require_api_key)):
+def seed_default_rewards(server_name: str = Depends(require_server_access)):
     with engine.begin() as conn:
         conn.execute(
             text("DELETE FROM server_rewards WHERE server_name = :server"),
@@ -90,7 +120,7 @@ def seed_default_rewards(server_name: str = Depends(require_api_key)):
 
 
 @router.put("/v1/servers/rewards")
-def replace_rewards(payload: RewardsPayload, server_name: str = Depends(require_api_key)):
+def replace_rewards(payload: RewardsPayload, server_name: str = Depends(require_server_access)):
     if not payload.tiers:
         with engine.begin() as conn:
             conn.execute(
