@@ -65,14 +65,18 @@
             position: relative;
             background: #fff;
             z-index: 2;
-            color: #222;
+            color: #222 !important;
             box-shadow: none;
             border: 1px solid #ced4da;
             caret-color: #2E7D32;
         }
-        .ghost-input::placeholder {
-            color: #888;
-            opacity: 1;
+        .ghost-input:focus {
+            color: #222 !important;
+            background: #fff !important;
+        }
+        .ghost-input:not(:focus) {
+            color: #222 !important;
+            background: #fff !important;
         }
         @media (prefers-color-scheme: dark) {
             body {
@@ -121,12 +125,16 @@
                 color: #7b7f7c;
             }
             .ghost-input {
-                color: #E1E1E1;
+                color: #E1E1E1 !important;
                 border: 1px solid #81C784;
             }
-            .ghost-input::placeholder {
-                color: #A0AEC0;
-                opacity: 1;
+            .ghost-input:focus {
+                color: #E1E1E1 !important;
+                background: #23272A !important;
+            }
+            .ghost-input:not(:focus) {
+                color: #E1E1E1 !important;
+                background: #23272A !important;
             }
         }
     </style>
