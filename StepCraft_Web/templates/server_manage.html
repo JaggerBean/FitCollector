@@ -102,44 +102,85 @@
             </div>
         </div>
 
+        {% if not has_key %}
+            <div class="alert alert-warning">Missing API key for this server. Save it on the dashboard to use the tools below.</div>
+        {% endif %}
+
+        {% if action_error %}
+            <div class="alert alert-danger">{{ action_error }}</div>
+        {% endif %}
+        {% if action_output %}
+            <div class="card p-3 mb-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">Result: {{ action_name }}</h6>
+                </div>
+                <pre class="bg-light p-2 mt-2 small mb-0"><code>{{ action_output }}</code></pre>
+            </div>
+        {% endif %}
+
+        <div class="card p-3 mb-3">
+            <h5>Server Info</h5>
+            <form method="post" action="/server/manage/action">
+                <input type="hidden" name="server_name" value="{{ server.server_name }}">
+                <input type="hidden" name="action" value="info">
+                <button class="btn btn-outline-secondary" type="submit">Get Server Info</button>
+            </form>
+        </div>
+
+        <div class="card p-3 mb-3">
+            <h5>Players</h5>
+            <form method="post" action="/server/manage/action" class="row g-2 align-items-end">
+                <input type="hidden" name="server_name" value="{{ server.server_name }}">
+                <input type="hidden" name="action" value="list_players">
+                <div class="col-md-4">
+                    <label class="form-label">Search</label>
+                    <input class="form-control" type="text" name="query" placeholder="Optional username filter">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Limit</label>
+                    <input class="form-control" type="number" name="limit" min="1" max="500" value="100">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Offset</label>
+                    <input class="form-control" type="number" name="offset" min="0" value="0">
+                </div>
+                <div class="col-md-2">
+                    <button class="btn btn-outline-secondary w-100" type="submit">List Players</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="card p-3 mb-3">
+            <h5>Player Actions</h5>
+            <form method="post" action="/server/manage/action" class="row g-2">
+                <input type="hidden" name="server_name" value="{{ server.server_name }}">
+                <div class="col-md-4">
+                    <label class="form-label">Minecraft Username</label>
+                    <input class="form-control" type="text" name="username" placeholder="PLAYER_NAME" required>
+                </div>
+                <div class="col-md-8">
+                    <label class="form-label">Ban Reason (optional)</label>
+                    <input class="form-control" type="text" name="reason" placeholder="broke code of conduct">
+                </div>
+                <div class="col-12 d-flex flex-wrap gap-2 mt-2">
+                    <button class="btn btn-outline-secondary" name="action" value="yesterday_steps" type="submit">Yesterday Steps</button>
+                    <button class="btn btn-outline-secondary" name="action" value="claim_status" type="submit">Claim Status</button>
+                    <button class="btn btn-outline-secondary" name="action" value="claim_reward" type="submit">Mark Claimed</button>
+                    <button class="btn btn-outline-warning" name="action" value="ban_player" type="submit">Ban Player</button>
+                    <button class="btn btn-outline-secondary" name="action" value="unban_player" type="submit">Unban Player</button>
+                    <button class="btn btn-outline-danger" name="action" value="wipe_player" type="submit">Wipe Player</button>
+                </div>
+            </form>
+        </div>
+
         <div class="card p-3">
-            <div class="d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">Server API Commands</h5>
-                <div class="text-muted small">Replace YOUR_API_KEY and PLAYER_NAME</div>
-            </div>
-            <div class="list-group mt-3">
-                {% for cmd in commands %}
-                    <div class="list-group-item">
-                        <div class="d-flex justify-content-between align-items-start gap-3">
-                            <div>
-                                <div class="fw-bold">{{ cmd.name }}</div>
-                                <div class="small text-muted">{{ cmd.method }} {{ cmd.path }}</div>
-                                <div class="small">{{ cmd.description }}</div>
-                            </div>
-                            <button class="btn btn-outline-secondary btn-sm copy-btn" data-curl="{{ cmd.curl | e }}">Copy curl</button>
-                        </div>
-                        <pre class="bg-light p-2 mt-2 small mb-0"><code>{{ cmd.curl }}</code></pre>
-                    </div>
-                {% endfor %}
-            </div>
+            <h5>Bans</h5>
+            <form method="post" action="/server/manage/action">
+                <input type="hidden" name="server_name" value="{{ server.server_name }}">
+                <input type="hidden" name="action" value="list_bans">
+                <button class="btn btn-outline-secondary" type="submit">List Bans</button>
+            </form>
         </div>
     </div>
-    <script>
-        (function () {
-            document.querySelectorAll('.copy-btn').forEach(btn => {
-                btn.addEventListener('click', async () => {
-                    const text = btn.getAttribute('data-curl');
-                    try {
-                        await navigator.clipboard.writeText(text);
-                        const original = btn.textContent;
-                        btn.textContent = 'Copied!';
-                        setTimeout(() => btn.textContent = original, 1200);
-                    } catch (e) {
-                        alert('Copy failed.');
-                    }
-                });
-            });
-        })();
-    </script>
 </body>
 </html>
