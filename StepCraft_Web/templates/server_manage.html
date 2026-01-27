@@ -39,6 +39,24 @@
             transform: translateY(-2px) scale(1.03);
             box-shadow: 0 4px 16px rgba(44, 67, 54, 0.18);
         }
+        .ghost-wrap {
+            position: relative;
+        }
+        .ghost-text {
+            position: absolute;
+            top: 50%;
+            left: 12px;
+            transform: translateY(-50%);
+            pointer-events: none;
+            color: #b0b6b1;
+            font-family: inherit;
+            font-size: 1rem;
+            white-space: pre;
+        }
+        .ghost-input {
+            position: relative;
+            background: transparent;
+        }
         .output-block {
             background: #f6f8f6;
             color: #1f2a24;
@@ -96,6 +114,9 @@
                 color: #8CFFA3;
                 border-color: #81C784;
                 box-shadow: inset 0 0 0 1px rgba(129, 199, 132, 0.35);
+            }
+            .ghost-text {
+                color: #7b7f7c;
             }
         }
     </style>
@@ -173,7 +194,10 @@
                 <input type="hidden" name="server_name" value="{{ server.server_name }}">
                 <div class="col-md-4">
                     <label class="form-label">Minecraft Username</label>
-                    <input class="form-control" type="text" name="username" placeholder="PLAYER_NAME" required list="player-suggestions" data-player-input>
+                    <div class="ghost-wrap">
+                        <span class="ghost-text" data-ghost></span>
+                        <input class="form-control ghost-input" type="text" name="username" placeholder="PLAYER_NAME" required list="player-suggestions" data-player-input>
+                    </div>
                     <datalist id="player-suggestions"></datalist>
                 </div>
                 <div class="col-md-8">
@@ -204,10 +228,40 @@
         (function () {
             const input = document.querySelector('[data-player-input]');
             const list = document.getElementById('player-suggestions');
-            if (!input || !list) return;
+            const ghost = document.querySelector('[data-ghost]');
+            if (!input || !list || !ghost) return;
 
             let loaded = false;
+            let players = [];
             const serverName = "{{ server.server_name }}";
+
+            function setGhost(text) {
+                ghost.textContent = text || '';
+            }
+
+            function updateGhost() {
+                const value = input.value || '';
+                if (!value) {
+                    setGhost('');
+                    return;
+                }
+                const lower = value.toLowerCase();
+                const match = players.find(p => p.toLowerCase().startsWith(lower));
+                if (!match || match.length === value.length) {
+                    setGhost('');
+                    return;
+                }
+                setGhost(match);
+            }
+
+            function syncGhostPosition() {
+                // Keep ghost text aligned with the input text start
+                const style = getComputedStyle(input);
+                ghost.style.paddingLeft = style.paddingLeft;
+                ghost.style.fontSize = style.fontSize;
+                ghost.style.fontFamily = style.fontFamily;
+                ghost.style.letterSpacing = style.letterSpacing;
+            }
 
             async function loadPlayers() {
                 if (loaded) return;
@@ -216,15 +270,20 @@
                     const resp = await fetch(`/server/players?server=${encodeURIComponent(serverName)}`);
                     if (!resp.ok) return;
                     const data = await resp.json();
-                    const players = Array.isArray(data.players) ? data.players : [];
+                    players = Array.isArray(data.players) ? data.players : [];
                     list.innerHTML = players.map(p => `<option value="${p}"></option>`).join('');
+                    updateGhost();
                 } catch (e) {
                     // ignore
                 }
             }
 
-            input.addEventListener('focus', loadPlayers);
-            input.addEventListener('click', loadPlayers);
+            input.addEventListener('focus', () => { syncGhostPosition(); loadPlayers(); });
+            input.addEventListener('click', () => { syncGhostPosition(); loadPlayers(); });
+            input.addEventListener('input', updateGhost);
+            window.addEventListener('resize', syncGhostPosition);
+
+            syncGhostPosition();
         })();
     </script>
 </body>
