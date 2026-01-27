@@ -55,9 +55,15 @@
             z-index: 1;
         }
         .ghost-input {
-            position: relative;
-            background: transparent;
-            z-index: 2;
+              position: relative;
+              background: none;
+              z-index: 2;
+              color: inherit;
+              box-shadow: none;
+              border: 1px solid #ced4da;
+              caret-color: #2E7D32;
+              /* Make input text overlay ghost, but not hide it */
+              mix-blend-mode: difference;
         }
         .output-block {
             background: #f6f8f6;
