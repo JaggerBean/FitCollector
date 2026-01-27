@@ -216,9 +216,10 @@ public class StepCraftPlayerListScreenHandler extends GenericContainerScreenHand
         }
 
         head.set(DataComponentTypes.LORE, new LoreComponent(List.of(
-                Text.literal("Click to manage").setStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xAAAAAA)).withItalic(false)),
-                Text.literal("Steps (yesterday): loading...").setStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xAAAAAA)).withItalic(false)),
-                Text.literal("Claim: loading...").setStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xAAAAAA)).withItalic(false))
+            Text.literal("Click to manage").setStyle(Style.EMPTY.withColor(TextColor.fromRgb(0x55AAFF)).withItalic(false)),
+            Text.literal("----------------").setStyle(Style.EMPTY.withColor(TextColor.fromRgb(0x777777)).withItalic(false)),
+            Text.literal("Steps: loading...").setStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xFFAA55)).withItalic(false)),
+            Text.literal("Claim: loading...").setStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xFF5555)).withItalic(false))
         )));
 
         if (server != null) {
@@ -233,21 +234,25 @@ public class StepCraftPlayerListScreenHandler extends GenericContainerScreenHand
                         ItemStack refreshed = handler.getInventory().getStack(slot).copy();
                         List<Text> lore = new java.util.ArrayList<>();
                         lore.add(Text.literal("Click to manage")
-                                .setStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xAAAAAA)).withItalic(false)));
+                            .setStyle(Style.EMPTY.withColor(TextColor.fromRgb(0x55AAFF)).withItalic(false)));
+                        lore.add(Text.literal("----------------")
+                            .setStyle(Style.EMPTY.withColor(TextColor.fromRgb(0x777777)).withItalic(false)));
 
                         if (error != null) {
-                            lore.add(Text.literal("Steps (yesterday): error")
-                                    .setStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xFF7777)).withItalic(false)));
-                            lore.add(Text.literal("Claim: error")
-                                    .setStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xFF7777)).withItalic(false)));
+                                    lore.add(Text.literal("Steps: error")
+                                        .setStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xFF5555)).withItalic(false)));
+                                lore.add(Text.literal("Claim: error")
+                                    .setStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xFF5555)).withItalic(false)));
                         } else {
                             long steps = stats.steps;
                             String stepsText = steps >= 0 ? String.valueOf(steps) : "n/a";
-                            lore.add(Text.literal("Steps (yesterday): " + stepsText)
-                                    .setStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xAAAAAA)).withItalic(false)));
-                            String claimText = stats.claimStatus.claimed ? "claimed" : "not claimed";
-                            lore.add(Text.literal("Claim: " + claimText)
-                                    .setStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xAAAAAA)).withItalic(false)));
+                                lore.add(Text.literal("Steps: " + stepsText)
+                                    .setStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xFFAA55)).withItalic(false)));
+                                boolean claimed = stats.claimStatus.claimed;
+                                String claimText = claimed ? "claimed" : "not claimed";
+                                int claimColor = claimed ? 0x55FF55 : 0xFF5555;
+                                lore.add(Text.literal("Claim: " + claimText)
+                                    .setStyle(Style.EMPTY.withColor(TextColor.fromRgb(claimColor)).withItalic(false)));
                         }
 
                         refreshed.set(DataComponentTypes.LORE, new LoreComponent(lore));
@@ -260,11 +265,15 @@ public class StepCraftPlayerListScreenHandler extends GenericContainerScreenHand
     }
 
     private static PlayerStats fetchPlayerStats(String username) {
-        String stepsJson = BackendClient.getYesterdayStepsForPlayer(username);
-        long steps = extractSteps(stepsJson);
-        String claimJson = BackendClient.getClaimStatusForPlayer(username);
-        ClaimStatus claimStatus = extractClaimStatus(claimJson);
-        return new PlayerStats(steps, claimStatus);
+        try {
+            String stepsJson = BackendClient.getYesterdayStepsForPlayer(username);
+            long steps = extractSteps(stepsJson);
+            String claimJson = BackendClient.getClaimStatusForPlayer(username);
+            ClaimStatus claimStatus = extractClaimStatus(claimJson);
+            return new PlayerStats(steps, claimStatus);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private static long extractSteps(String stepsJson) {
