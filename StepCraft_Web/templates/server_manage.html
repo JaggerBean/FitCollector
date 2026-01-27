@@ -309,7 +309,7 @@
             input.addEventListener('blur', () => {
                 ghost.style.zIndex = 1;
                 ghost.style.display = 'none';
-                ghost.textContent = '';
+                ghost.innerHTML = '';
             });
             input.addEventListener('click', () => { syncGhostPosition(); loadPlayers(); });
             input.addEventListener('input', updateGhost);
@@ -326,7 +326,7 @@
             // Set initial z-index
             ghost.style.zIndex = 1;
             ghost.style.display = 'none';
-            ghost.textContent = '';
+            ghost.innerHTML = '';
         })();
     </script>
 </body>
