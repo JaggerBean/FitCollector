@@ -251,9 +251,9 @@ public class StepCraftResultScreenHandler extends GenericContainerScreenHandler 
             return lines;
         }
 
-        if (key.contains("yesterday steps")) {
+        if (key.contains("yesterday's steps")) {
             List<String> lines = new ArrayList<>();
-            lines.add("Yesterday Steps");
+            lines.add("Yesterday's Steps");
             lines.add("──────────");
             addLine(lines, "Minecraft Username", getAsString(obj, "minecraft_username"));
             addLine(lines, "Server Name", getAsString(obj, "server_name"));

@@ -5,6 +5,8 @@ import net.minecraft.component.type.LoreComponent;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
+import net.minecraft.component.type.PotionContentsComponent;
+import net.minecraft.potion.Potions;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
@@ -28,41 +30,34 @@ public class StepCraftUIHelper {
             // If you use this later, keep it. For now it can remain unused.
             // String playersJson = BackendClient.getPlayersList();
 
-            DefaultedList<ItemStack> items = DefaultedList.ofSize(27, ItemStack.EMPTY);
+            DefaultedList<ItemStack> items = DefaultedList.ofSize(54, ItemStack.EMPTY);
 
-            Object[][] commandItems = new Object[][]{
+                Object[][] commandItems = new Object[][]{
                     // Info / system
                     {Items.BOOK, "Info", "Show backend + server info", Formatting.AQUA},
                     {Items.HEART_OF_THE_SEA, "Health Check", "Ping backend health", Formatting.LIGHT_PURPLE},
 
-                    // Moderation (dangerous)
-                    {Items.IRON_SWORD, "Ban Player", "Ban a player", Formatting.RED},
-                    {Items.BARRIER, "Delete Player", "Delete player record", Formatting.DARK_RED},
-
-                    // Moderation (reversal / safe)
-                    {Items.PAPER, "Unban Player", "Unban a player", Formatting.GREEN},
-
-                    // Rewards / economy
-                    {Items.EMERALD, "Claim Reward", "Grant today's reward", Formatting.GREEN},
-                    {Items.MAP, "Claim Status", "Check claim status", Formatting.GOLD},
-
                     // Player / server queries
                     {Items.PLAYER_HEAD, "Players List", "Show all players", Formatting.GOLD},
-                    {Items.NAME_TAG, "All Server Bans", "List banned players", Formatting.GOLD},
                     {Items.WRITABLE_BOOK, "All Players", "Dump all player data", Formatting.GOLD},
 
-                    // Stats / data
-                    {Items.FEATHER, "Yesterday Steps", "Fetch yesterday step count", Formatting.AQUA},
+                    // Stats / rewards
+                    {Items.FEATHER, "Yesterday's Steps", "Fetch yesterday's step count for a player", Formatting.AQUA},
+                    {Items.POTION, "Claim Status", "Check claim status", Formatting.GOLD},
+                    {Items.EMERALD, "Claim Reward", "Grant today's reward", Formatting.GREEN},
+                    {Items.NAME_TAG, "All Server Bans", "List banned players", Formatting.GOLD},
 
-                        // Settings
-                                {Items.COMPASS, "Settings", "API key + status", Formatting.LIGHT_PURPLE},
-            };
+                    // Moderation
+                    {Items.IRON_SWORD, "Ban Player", "Ban a player", Formatting.RED},
+                    {Items.PAPER, "Unban Player", "Unban a player", Formatting.GREEN},
+                    {Items.BARRIER, "Delete Player", "Delete player record", Formatting.DARK_RED},
+                };
 
-            int[] slotLayout = new int[]{
-                    1, 3, 5, 7,
-                    10, 12, 14, 16,
-                    19, 21, 23, 25
-            };
+                            int[] slotLayout = new int[]{
+                                10, 12, 14, 16,
+                                19, 21, 23, 25,
+                                28, 30, 32, 34
+                            };
 
             for (int i = 0; i < commandItems.length && i < slotLayout.length; i++) {
                 Item item = (Item) commandItems[i][0];
@@ -72,12 +67,21 @@ public class StepCraftUIHelper {
 
                 ItemStack stack = new ItemStack(item);
 
+                if (item == Items.POTION && "Claim Status".equals(name)) {
+                    stack.set(DataComponentTypes.POTION_CONTENTS, PotionContentsComponent.of(Potions.POISON));
+                }
+
                 // ✅ Force explicit RGB color (prevents vanilla rarity/lore colors from taking over)
                 stack.set(DataComponentTypes.CUSTOM_NAME, menuName(name, color));
                 stack.set(DataComponentTypes.LORE, new LoreComponent(List.of(menuLore(lore))));
 
                 items.set(slotLayout[i], stack);
             }
+
+            ItemStack settings = new ItemStack(Items.COMPASS);
+            settings.set(DataComponentTypes.CUSTOM_NAME, menuName("Settings", Formatting.LIGHT_PURPLE));
+            settings.set(DataComponentTypes.LORE, new LoreComponent(List.of(menuLore("API key + Rewards"))));
+            items.set(49, settings);
 
                 ItemStack glass = new ItemStack(Items.PURPLE_STAINED_GLASS_PANE);
                 glass.set(DataComponentTypes.HIDE_TOOLTIP, Unit.INSTANCE);

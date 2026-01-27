@@ -146,7 +146,7 @@ public class StepCraftPlayerListScreenHandler extends GenericContainerScreenHand
                     StepCraftChestScreenHandler.sendBackendToLectern(serverPlayer, "Claim Status",
                             () -> BackendClient.getClaimStatusForPlayer(target));
                 } else if (action == StepCraftPlayerAction.YESTERDAY_STEPS) {
-                    StepCraftChestScreenHandler.sendBackendToLectern(serverPlayer, "Yesterday Steps",
+                    StepCraftChestScreenHandler.sendBackendToLectern(serverPlayer, "Yesterday's Steps",
                             () -> BackendClient.getYesterdayStepsForPlayer(target));
                 } else {
                     StepCraftScreens.openConfirm(serverPlayer, action, target, true);

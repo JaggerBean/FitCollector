@@ -9,16 +9,21 @@ import net.minecraft.item.Items;
 import net.minecraft.screen.GenericContainerScreenHandler;
 import net.minecraft.screen.ScreenHandlerType;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.text.ClickEvent;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 import net.minecraft.text.TextColor;
 import net.minecraft.util.Unit;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class StepCraftRewardsScreenHandler extends GenericContainerScreenHandler {
     private static final int ROWS = 1;
     private static final int SLOT_VIEW = 2;
     private static final int SLOT_SEED = 4;
     private static final int SLOT_BACK = 6;
+    private static final String DASHBOARD_URL = "https://stepcraft.org/dashboard";
 
     private final SimpleInventory inventory;
 
@@ -32,8 +37,8 @@ public class StepCraftRewardsScreenHandler extends GenericContainerScreenHandler
             inventory.setStack(i, pane.copy());
         }
 
-        inventory.setStack(SLOT_VIEW, menuItem(Items.BOOK, "View Rewards", 0x55AAFF));
-        inventory.setStack(SLOT_SEED, menuItem(Items.EMERALD, "Use Default", 0x55FF55));
+        inventory.setStack(SLOT_VIEW, menuItem(Items.BOOK, "View Rewards Structure", 0x55AAFF));
+        inventory.setStack(SLOT_SEED, menuItem(Items.COMPASS, "Open Web Dashboard", 0x55AAFF));
         inventory.setStack(SLOT_BACK, menuItem(Items.BOOK, "Back", 0xFFFFFF));
     }
 
@@ -50,12 +55,34 @@ public class StepCraftRewardsScreenHandler extends GenericContainerScreenHandler
         }
 
         if (slot == SLOT_VIEW) {
-            StepCraftChestScreenHandler.sendBackendToLectern(serverPlayer, "Rewards", BackendClient::getServerRewards);
+            StepCraftChestScreenHandler.sendBackendWithCallback(serverPlayer, BackendClient::getServerRewards,
+                result -> {
+                    List<String> lines;
+                    try {
+                        lines = formatRewardLines(result);
+                    } catch (Exception e) {
+                        lines = StepCraftResultScreenHandler.toDisplayLines("Error: " + e.getMessage());
+                    }
+                    StepCraftLecternHelper.openLectern(serverPlayer, "Rewards",
+                        StepCraftResultScreenHandler.toPagesFromLines(lines));
+                },
+                error -> StepCraftLecternHelper.openLectern(serverPlayer, "Rewards",
+                    StepCraftResultScreenHandler.toPagesFromLines(
+                        StepCraftResultScreenHandler.toDisplayLines("Error: " + error)
+                    ))
+            );
             return;
         }
 
         if (slot == SLOT_SEED) {
-            StepCraftChestScreenHandler.sendBackendToLectern(serverPlayer, "Rewards", BackendClient::seedServerRewards);
+            serverPlayer.closeHandledScreen();
+            Text message = Text.literal("Open StepCraft Dashboard")
+                    .setStyle(Style.EMPTY
+                            .withColor(TextColor.fromRgb(0x55AAFF))
+                            .withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, DASHBOARD_URL))
+                            .withUnderline(true)
+                            .withItalic(false));
+            serverPlayer.sendMessage(message);
             return;
         }
 
@@ -65,6 +92,37 @@ public class StepCraftRewardsScreenHandler extends GenericContainerScreenHandler
         }
 
         return;
+    }
+
+    private static List<String> formatRewardLines(String rewardsJson) {
+        List<StepCraftChestScreenHandler.RewardTier> tiers = StepCraftChestScreenHandler.parseRewardTiers(rewardsJson);
+        List<String> lines = new ArrayList<>();
+        if (tiers.isEmpty()) {
+            lines.add("No reward tiers found.");
+            return lines;
+        }
+
+        int index = 1;
+        for (StepCraftChestScreenHandler.RewardTier tier : tiers) {
+            String label = tier.label();
+            String title = label == null || label.isBlank()
+                ? "Tier " + index
+                : "Tier " + index + " - " + label;
+            lines.add(title);
+            lines.add("Min steps: " + tier.minSteps());
+            List<String> rewards = tier.rewards();
+            if (rewards == null || rewards.isEmpty()) {
+                lines.add("Rewards: (none)");
+            } else {
+                lines.add("Rewards:");
+                for (String reward : rewards) {
+                    lines.add(" - " + reward);
+                }
+            }
+            lines.add("");
+            index++;
+        }
+        return lines;
     }
 
     private static ItemStack menuItem(net.minecraft.item.Item item, String label, int rgb) {

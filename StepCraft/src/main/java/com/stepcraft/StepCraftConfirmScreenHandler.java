@@ -80,7 +80,7 @@ public class StepCraftConfirmScreenHandler extends GenericContainerScreenHandler
                 error -> updateResult(serverPlayer, "Error: " + error));
             case YESTERDAY_STEPS -> StepCraftChestScreenHandler.sendBackendWithCallback(serverPlayer,
                 () -> BackendClient.getYesterdayStepsForPlayer(targetPlayer),
-                result -> updateResult(serverPlayer, "Yesterday steps: " + result),
+                result -> updateResult(serverPlayer, "Yesterday's steps: " + result),
                 error -> updateResult(serverPlayer, "Error: " + error));
                 default -> {}
             }

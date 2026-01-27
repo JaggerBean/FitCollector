@@ -41,7 +41,7 @@ public class StepCraftChestScreenHandler extends GenericContainerScreenHandler {
 
     // Server constructor only (client uses vanilla screen + vanilla type)
     public StepCraftChestScreenHandler(int syncId, PlayerInventory playerInventory, SimpleInventory inventory) {
-        super(ScreenHandlerType.GENERIC_9X3, syncId, playerInventory, inventory, 3);
+        super(ScreenHandlerType.GENERIC_9X6, syncId, playerInventory, inventory, 6);
         this.inventory = inventory;
     }
 
@@ -59,18 +59,18 @@ public class StepCraftChestScreenHandler extends GenericContainerScreenHandler {
                 }
 
                 switch (slot) {
-                    case 1 -> { sendBackendToLectern(serverPlayer, "Server info", BackendClient::getServerInfo); return; }
-                    case 3 -> { sendBackendToLectern(serverPlayer, "Health check", BackendClient::healthCheck); return; }
-                    case 5 -> { StepCraftUIHelper.openPlayerSelectList(serverPlayer, null, 0, StepCraftPlayerAction.BAN); return; }
-                    case 7 -> { StepCraftUIHelper.openPlayerSelectList(serverPlayer, null, 0, StepCraftPlayerAction.DELETE); return; }
-                    case 10 -> { StepCraftUIHelper.openPlayerSelectList(serverPlayer, null, 0, StepCraftPlayerAction.UNBAN); return; }
-                    case 12 -> { StepCraftUIHelper.openPlayerSelectList(serverPlayer, null, 0, StepCraftPlayerAction.CLAIM_REWARD); return; }
-                    case 14 -> { StepCraftUIHelper.openPlayerSelectList(serverPlayer, null, 0, StepCraftPlayerAction.CLAIM_STATUS); return; }
-                    case 16 -> { StepCraftUIHelper.openPlayerSelectList(serverPlayer, null, 0, StepCraftPlayerAction.NONE); return; }
-                    case 19 -> { sendBackendToLectern(serverPlayer, "Server bans", BackendClient::getAllServerBans); return; }
-                    case 21 -> { sendBackendToLectern(serverPlayer, "All players", BackendClient::getAllPlayers); return; }
-                    case 23 -> { StepCraftUIHelper.openPlayerSelectList(serverPlayer, null, 0, StepCraftPlayerAction.YESTERDAY_STEPS); return; }
-                    case 25 -> { StepCraftScreens.openSettings(serverPlayer); return; }
+                    case 10 -> { sendBackendToLectern(serverPlayer, "Server info", BackendClient::getServerInfo); return; }
+                    case 12 -> { sendBackendToLectern(serverPlayer, "Health check", BackendClient::healthCheck); return; }
+                    case 14 -> { StepCraftUIHelper.openPlayerSelectList(serverPlayer, null, 0, StepCraftPlayerAction.NONE); return; }
+                    case 16 -> { sendBackendToLectern(serverPlayer, "All players", BackendClient::getAllPlayers); return; }
+                    case 19 -> { StepCraftUIHelper.openPlayerSelectList(serverPlayer, null, 0, StepCraftPlayerAction.YESTERDAY_STEPS); return; }
+                    case 21 -> { StepCraftUIHelper.openPlayerSelectList(serverPlayer, null, 0, StepCraftPlayerAction.CLAIM_STATUS); return; }
+                    case 23 -> { StepCraftUIHelper.openPlayerSelectList(serverPlayer, null, 0, StepCraftPlayerAction.CLAIM_REWARD); return; }
+                    case 25 -> { sendBackendToLectern(serverPlayer, "Server bans", BackendClient::getAllServerBans); return; }
+                    case 28 -> { StepCraftUIHelper.openPlayerSelectList(serverPlayer, null, 0, StepCraftPlayerAction.BAN); return; }
+                    case 30 -> { StepCraftUIHelper.openPlayerSelectList(serverPlayer, null, 0, StepCraftPlayerAction.UNBAN); return; }
+                    case 32 -> { StepCraftUIHelper.openPlayerSelectList(serverPlayer, null, 0, StepCraftPlayerAction.DELETE); return; }
+                    case 49 -> { StepCraftScreens.openSettings(serverPlayer); return; }
                 }
             }
         }
@@ -296,7 +296,7 @@ public class StepCraftChestScreenHandler extends GenericContainerScreenHandler {
         return new ClaimStatus(claimed, claimedAt);
     }
 
-    private static List<RewardTier> parseRewardTiers(String rewardsJson) {
+    static List<RewardTier> parseRewardTiers(String rewardsJson) {
         List<RewardTier> tiers = new ArrayList<>();
         if (rewardsJson == null || rewardsJson.isBlank()) return tiers;
         if (rewardsJson.startsWith("Error:")) {
@@ -335,7 +335,7 @@ public class StepCraftChestScreenHandler extends GenericContainerScreenHandler {
         return best;
     }
 
-    private record RewardTier(long minSteps, String label, List<String> rewards) {}
+    static record RewardTier(long minSteps, String label, List<String> rewards) {}
 
     private record ClaimContext(long steps, RewardTier tier, boolean alreadyClaimed, String claimedAt) {}
 

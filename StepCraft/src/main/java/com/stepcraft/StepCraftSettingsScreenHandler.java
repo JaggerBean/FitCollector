@@ -20,10 +20,10 @@ import java.util.List;
 
 public class StepCraftSettingsScreenHandler extends GenericContainerScreenHandler {
     private static final int ROWS = 1;
-    private static final int SLOT_REWARDS = 0;
-    private static final int SLOT_SET_KEY = 2;
-    private static final int SLOT_STATUS = 4;
-    private static final int SLOT_BACK = 6;
+    private static final int SLOT_REWARDS = 1;
+    private static final int SLOT_SET_KEY = 3;
+    private static final int SLOT_STATUS = 5;
+    private static final int SLOT_BACK = 7;
 
     private final SimpleInventory inventory;
     private final ServerPlayerEntity viewer;
@@ -118,25 +118,25 @@ public class StepCraftSettingsScreenHandler extends GenericContainerScreenHandle
 
     private void setStatusWorking() {
         ItemStack item = menuItem(Items.LIME_WOOL, "API Key Status", 0x55FF55);
-        item.set(DataComponentTypes.LORE, new LoreComponent(List.of(loreLine("working"))));
+        item.set(DataComponentTypes.LORE, new LoreComponent(List.of(loreLine("Working"))));
         setStatusItem(item);
     }
 
     private void setStatusNotWorking() {
         ItemStack item = menuItem(Items.RED_WOOL, "API Key Status", 0xFF5555);
-        item.set(DataComponentTypes.LORE, new LoreComponent(List.of(loreLine("not working"))));
+        item.set(DataComponentTypes.LORE, new LoreComponent(List.of(loreLine("Not Working"))));
         setStatusItem(item);
     }
 
     private void setStatusNotSet() {
         ItemStack item = menuItem(Items.GRAY_WOOL, "API Key Status", 0xAAAAAA);
-        item.set(DataComponentTypes.LORE, new LoreComponent(List.of(loreLine("not set"))));
+        item.set(DataComponentTypes.LORE, new LoreComponent(List.of(loreLine("Not Set"))));
         setStatusItem(item);
     }
 
     private void setStatusMaybeWorking() {
         ItemStack item = menuItem(Items.YELLOW_WOOL, "API Key Status", 0xFFFF55);
-        item.set(DataComponentTypes.LORE, new LoreComponent(List.of(loreLine("may work (backend unreachable)"))));
+        item.set(DataComponentTypes.LORE, new LoreComponent(List.of(loreLine("May Work (Backend Unreachable)"))));
         setStatusItem(item);
     }
 

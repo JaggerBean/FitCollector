@@ -24,8 +24,8 @@ public class StepCraftCommands {
                     return Command.SINGLE_SUCCESS;
                 })
             )
-            // /stepcraft gui_players (OPs only)
-            .then(CommandManager.literal("gui_players")
+            // /stepcraft admin_gui (OPs only)
+            .then(CommandManager.literal("admin_gui")
                 .requires(source -> source.hasPermissionLevel(4))
                 .executes(context -> {
                     ServerCommandSource source = context.getSource();

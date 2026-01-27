@@ -15,8 +15,8 @@ public final class StepCraftScreens {
     private StepCraftScreens() {}
 
     public static void openAdminChest(ServerPlayerEntity player, DefaultedList<ItemStack> items, Text title) {
-        SimpleInventory inv = new SimpleInventory(27);
-        for (int i = 0; i < 27; i++) {
+        SimpleInventory inv = new SimpleInventory(54);
+        for (int i = 0; i < 54; i++) {
             ItemStack stack = (items != null && i < items.size()) ? items.get(i) : ItemStack.EMPTY;
             inv.setStack(i, stack);
         }
