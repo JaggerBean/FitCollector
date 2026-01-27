@@ -18,6 +18,9 @@ import net.minecraft.text.TextColor;
 import net.minecraft.text.ClickEvent;
 import net.minecraft.util.Unit;
 
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -213,9 +216,95 @@ public class StepCraftPlayerListScreenHandler extends GenericContainerScreenHand
         }
 
         head.set(DataComponentTypes.LORE, new LoreComponent(List.of(
-                Text.literal("Click to manage").setStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xAAAAAA)).withItalic(false))
+                Text.literal("Click to manage").setStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xAAAAAA)).withItalic(false)),
+                Text.literal("Steps (yesterday): loading...").setStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xAAAAAA)).withItalic(false)),
+                Text.literal("Claim: loading...").setStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xAAAAAA)).withItalic(false))
         )));
+
+        if (server != null) {
+            java.util.concurrent.CompletableFuture
+                    .supplyAsync(() -> fetchPlayerStats(username))
+                    .whenComplete((stats, error) -> server.execute(() -> {
+                        String current = handler.slotToPlayer.get(slot);
+                        if (current == null || !current.equals(username)) {
+                            return;
+                        }
+
+                        ItemStack refreshed = handler.getInventory().getStack(slot).copy();
+                        List<Text> lore = new java.util.ArrayList<>();
+                        lore.add(Text.literal("Click to manage")
+                                .setStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xAAAAAA)).withItalic(false)));
+
+                        if (error != null) {
+                            lore.add(Text.literal("Steps (yesterday): error")
+                                    .setStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xFF7777)).withItalic(false)));
+                            lore.add(Text.literal("Claim: error")
+                                    .setStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xFF7777)).withItalic(false)));
+                        } else {
+                            long steps = stats.steps;
+                            String stepsText = steps >= 0 ? String.valueOf(steps) : "n/a";
+                            lore.add(Text.literal("Steps (yesterday): " + stepsText)
+                                    .setStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xAAAAAA)).withItalic(false)));
+                            String claimText = stats.claimStatus.claimed ? "claimed" : "not claimed";
+                            lore.add(Text.literal("Claim: " + claimText)
+                                    .setStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xAAAAAA)).withItalic(false)));
+                        }
+
+                        refreshed.set(DataComponentTypes.LORE, new LoreComponent(lore));
+                        handler.getInventory().setStack(slot, refreshed);
+                        handler.getInventory().markDirty();
+                        handler.sendContentUpdates();
+                    }));
+        }
         return head;
     }
+
+    private static PlayerStats fetchPlayerStats(String username) {
+        String stepsJson = BackendClient.getYesterdayStepsForPlayer(username);
+        long steps = extractSteps(stepsJson);
+        String claimJson = BackendClient.getClaimStatusForPlayer(username);
+        ClaimStatus claimStatus = extractClaimStatus(claimJson);
+        return new PlayerStats(steps, claimStatus);
+    }
+
+    private static long extractSteps(String stepsJson) {
+        if (stepsJson == null) return -1;
+        if (stepsJson.startsWith("Error:")) {
+            throw new RuntimeException(stepsJson);
+        }
+        JsonObject obj = JsonParser.parseString(stepsJson).getAsJsonObject();
+        if (obj == null) return -1;
+        if (obj.has("steps_yesterday") && obj.get("steps_yesterday").isJsonPrimitive()) {
+            return obj.get("steps_yesterday").getAsLong();
+        }
+        return -1;
+    }
+
+    private static ClaimStatus extractClaimStatus(String claimJson) {
+        if (claimJson == null) return new ClaimStatus(false, null);
+        if (claimJson.startsWith("Error:")) {
+            throw new RuntimeException(claimJson);
+        }
+        JsonObject obj = JsonParser.parseString(claimJson).getAsJsonObject();
+        if (obj == null) return new ClaimStatus(false, null);
+        boolean claimed = obj.has("claimed") && obj.get("claimed").isJsonPrimitive() && obj.get("claimed").getAsBoolean();
+        String claimedAt = null;
+        if (obj.has("claimed_at") && obj.get("claimed_at").isJsonPrimitive()) {
+            claimedAt = obj.get("claimed_at").getAsString();
+        }
+        return new ClaimStatus(claimed, claimedAt);
+    }
+
+    private static class PlayerStats {
+        final long steps;
+        final ClaimStatus claimStatus;
+
+        PlayerStats(long steps, ClaimStatus claimStatus) {
+            this.steps = steps;
+            this.claimStatus = claimStatus;
+        }
+    }
+
+    private record ClaimStatus(boolean claimed, String claimedAt) {}
 
 }

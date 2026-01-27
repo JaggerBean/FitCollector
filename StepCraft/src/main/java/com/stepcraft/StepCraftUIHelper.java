@@ -68,7 +68,8 @@ public class StepCraftUIHelper {
                 ItemStack stack = new ItemStack(item);
 
                 if (item == Items.POTION && "Claim Status".equals(name)) {
-                    stack.set(DataComponentTypes.POTION_CONTENTS, PotionContentsComponent.of(Potions.POISON));
+                    stack.set(DataComponentTypes.POTION_CONTENTS, new PotionContentsComponent(Potions.NIGHT_VISION));
+                    stack.set(DataComponentTypes.HIDE_ADDITIONAL_TOOLTIP, Unit.INSTANCE);
                 }
 
                 // ✅ Force explicit RGB color (prevents vanilla rarity/lore colors from taking over)
