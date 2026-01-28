@@ -201,6 +201,8 @@ const ParticleCard = ({
 
       if (!isNear || (!enableTilt && !enableMagnetism)) return;
 
+      const strength = Math.max(0, 1 - distance / proximity);
+
       const clampedX = Math.min(Math.max(e.clientX, rect.left), rect.right);
       const clampedY = Math.min(Math.max(e.clientY, rect.top), rect.bottom);
       const x = clampedX - rect.left;
@@ -209,8 +211,8 @@ const ParticleCard = ({
       const centerY = rect.height / 2;
 
       if (enableTilt) {
-        const rotateX = ((y - centerY) / centerY) * -10;
-        const rotateY = ((x - centerX) / centerX) * 10;
+        const rotateX = ((y - centerY) / centerY) * -10 * strength;
+        const rotateY = ((x - centerX) / centerX) * 10 * strength;
 
         gsap.to(element, {
           rotateX,
@@ -222,8 +224,8 @@ const ParticleCard = ({
       }
 
       if (enableMagnetism) {
-        const magnetX = (x - centerX) * 0.05;
-        const magnetY = (y - centerY) * 0.05;
+        const magnetX = (x - centerX) * 0.05 * strength;
+        const magnetY = (y - centerY) * 0.05 * strength;
 
         magnetismAnimationRef.current = gsap.to(element, {
           x: magnetX,
