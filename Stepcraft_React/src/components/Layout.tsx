@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import type { ReactNode } from "react";
 import { useAuthContext } from "../app/AuthContext";
 
-export function Layout({ title, children }: { title?: string; children: ReactNode }) {
+export function Layout({ children }: { title?: string; children: ReactNode }) {
   const { isAuthenticated, logout } = useAuthContext();
 
   return (
@@ -14,7 +14,6 @@ export function Layout({ title, children }: { title?: string; children: ReactNod
             <img src="/logo.png" alt="StepCraft" className="h-10 w-auto" />
             <div className="text-xl font-semibold text-emerald-700 dark:text-emerald-200">StepCraft</div>
           </Link>
-          {title ? <div className="text-sm text-slate-500 dark:text-slate-400">{title}</div> : null}
         </div>
         {isAuthenticated ? (
           <button
@@ -25,6 +24,12 @@ export function Layout({ title, children }: { title?: string; children: ReactNod
           </button>
         ) : (
           <div className="flex items-center gap-3">
+            <Link
+              to="/login"
+              className="text-sm font-medium text-slate-300 hover:text-emerald-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
+            >
+              Sign in
+            </Link>
             <Link
               to="/account/register"
               className="rounded-full bg-emerald-500 px-4 py-2 text-sm font-semibold text-slate-950 shadow-sm transition hover:bg-emerald-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
