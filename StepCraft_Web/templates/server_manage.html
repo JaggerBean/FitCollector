@@ -204,18 +204,18 @@
                 <input type="hidden" name="server_name" value="{{ server.server_name }}">
                 <input type="hidden" name="action" value="list_players">
                 <div class="col-md-4">
-                    <label class="form-label">Search</label>
-                    <input class="form-control" type="text" name="query" placeholder="Optional username filter">
+                    <label class="form-label" for="player-query">Search <span title="Filter by username (optional)">🛈</span></label>
+                    <input class="form-control" id="player-query" type="text" name="query" placeholder="Type a username to filter (optional)">
                 </div>
                 <div class="col-md-3">
-                    <label class="form-label">Limit</label>
-                    <input class="form-control" type="number" name="limit" min="1" max="500" value="100">
+                    <label class="form-label" for="player-limit">Max Results <span title="Maximum number of players to show">🛈</span></label>
+                    <input class="form-control" id="player-limit" type="number" name="limit" min="1" max="500" value="100" placeholder="Max results">
                 </div>
                 <div class="col-md-3">
-                    <label class="form-label">Offset</label>
-                    <input class="form-control" type="number" name="offset" min="0" value="0">
+                    <label class="form-label" for="player-offset">Start At <span title="Skip this many players from the start">🛈</span></label>
+                    <input class="form-control" id="player-offset" type="number" name="offset" min="0" value="0" placeholder="Offset">
                 </div>
-                <div class="col-md-2">
+                <div class="col-md-2 d-flex align-items-end">
                     <button class="btn btn-outline-secondary w-100" type="submit">List Players</button>
                 </div>
             </form>
