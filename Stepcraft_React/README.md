@@ -5,7 +5,7 @@ React + Vite dashboard for managing StepCraft servers (privacy, rewards, push no
 ## Local development
 
 1. Install dependencies: npm install
-2. Create a .env file (optional) and set VITE_BACKEND_URL.
+2. Create a .env file (optional) and set VITE_BACKEND_URL and VITE_GOOGLE_CLIENT_ID.
 3. Run the dev server: npm run dev
 
 ## Docker (recommended for VPS)

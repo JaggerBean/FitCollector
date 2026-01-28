@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { Layout } from "../components/Layout";
@@ -6,11 +6,50 @@ import { useAuthContext } from "../app/AuthContext";
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const { login } = useAuthContext();
+  const { login, loginWithGoogle } = useAuthContext();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [googleReady, setGoogleReady] = useState(false);
+  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined;
+
+  useEffect(() => {
+    if (!googleClientId) return;
+    if (window.google?.accounts?.id) {
+      setGoogleReady(true);
+      return;
+    }
+    const script = document.createElement("script");
+    script.src = "https://accounts.google.com/gsi/client";
+    script.async = true;
+    script.defer = true;
+    script.onload = () => setGoogleReady(true);
+    document.head.appendChild(script);
+  }, [googleClientId]);
+
+  useEffect(() => {
+    if (!googleClientId || !googleReady || !window.google?.accounts?.id) return;
+    window.google.accounts.id.initialize({
+      client_id: googleClientId,
+      callback: async (response: { credential: string }) => {
+        setError(null);
+        try {
+          await loginWithGoogle(response.credential);
+          navigate("/dashboard");
+        } catch (err) {
+          setError((err as Error).message);
+        }
+      },
+    });
+    const target = document.getElementById("google-signin");
+    if (!target) return;
+    window.google.accounts.id.renderButton(target, {
+      theme: "outline",
+      size: "large",
+      width: 320,
+    });
+  }, [googleClientId, googleReady, loginWithGoogle, navigate]);
 
   const onSubmit = async (event: FormEvent) => {
     event.preventDefault();
@@ -67,6 +106,12 @@ export default function LoginPage() {
             {loading ? "Signing in..." : "Sign in"}
           </button>
         </form>
+        {googleClientId && (
+          <div className="mt-6">
+            <div className="mb-2 text-xs uppercase tracking-wide text-slate-400">Or sign in with</div>
+            <div id="google-signin" className="flex justify-center" />
+          </div>
+        )}
       </div>
     </Layout>
   );

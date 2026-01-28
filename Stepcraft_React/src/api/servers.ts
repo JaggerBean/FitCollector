@@ -1,6 +1,7 @@
 import { apiRequest } from "./client";
 import type {
   LoginResponse,
+  GoogleLoginResponse,
   RegisterServerResponse,
   OwnedServersResponse,
   PlayersListResponse,
@@ -8,12 +9,23 @@ import type {
   ServerInfo,
   TogglePrivacyResponse,
   PushResponse,
+  ClaimStatusResponse,
+  YesterdayStepsResponse,
+  BansResponse,
+  ActionResponse,
 } from "./types";
 
 export async function login(email: string, password: string): Promise<LoginResponse> {
   return apiRequest<LoginResponse>("/v1/auth/login", {
     method: "POST",
     body: JSON.stringify({ email, password }),
+  });
+}
+
+export async function loginWithGoogle(idToken: string): Promise<GoogleLoginResponse> {
+  return apiRequest<GoogleLoginResponse>("/v1/auth/google", {
+    method: "POST",
+    body: JSON.stringify({ id_token: idToken }),
   });
 }
 
@@ -118,6 +130,90 @@ export async function createPush(
       method: "POST",
       body: JSON.stringify(payload),
     },
+    token,
+  );
+}
+
+export async function getClaimStatus(
+  token: string,
+  server: string,
+  username: string,
+): Promise<ClaimStatusResponse> {
+  return apiRequest<ClaimStatusResponse>(
+    `/v1/servers/players/${encodeURIComponent(username)}/claim-status?server=${encodeURIComponent(server)}`,
+    {},
+    token,
+  );
+}
+
+export async function claimReward(
+  token: string,
+  server: string,
+  username: string,
+): Promise<ClaimStatusResponse> {
+  return apiRequest<ClaimStatusResponse>(
+    `/v1/servers/players/${encodeURIComponent(username)}/claim-reward?server=${encodeURIComponent(server)}`,
+    { method: "POST" },
+    token,
+  );
+}
+
+export async function getYesterdaySteps(
+  token: string,
+  server: string,
+  username: string,
+): Promise<YesterdayStepsResponse> {
+  return apiRequest<YesterdayStepsResponse>(
+    `/v1/servers/players/${encodeURIComponent(username)}/yesterday-steps?server=${encodeURIComponent(server)}`,
+    {},
+    token,
+  );
+}
+
+export async function listBans(token: string, server: string, limit = 1000): Promise<BansResponse> {
+  return apiRequest<BansResponse>(
+    `/v1/servers/bans?server=${encodeURIComponent(server)}&limit=${limit}`,
+    {},
+    token,
+  );
+}
+
+export async function banPlayer(
+  token: string,
+  server: string,
+  username: string,
+  reason: string,
+): Promise<ActionResponse> {
+  return apiRequest<ActionResponse>(
+    `/v1/servers/players/${encodeURIComponent(username)}/ban?server=${encodeURIComponent(server)}`,
+    {
+      method: "POST",
+      body: JSON.stringify({ reason }),
+    },
+    token,
+  );
+}
+
+export async function unbanPlayer(
+  token: string,
+  server: string,
+  username: string,
+): Promise<ActionResponse> {
+  return apiRequest<ActionResponse>(
+    `/v1/servers/players/${encodeURIComponent(username)}/ban?server=${encodeURIComponent(server)}`,
+    { method: "DELETE" },
+    token,
+  );
+}
+
+export async function wipePlayer(
+  token: string,
+  server: string,
+  username: string,
+): Promise<ActionResponse> {
+  return apiRequest<ActionResponse>(
+    `/v1/servers/players/${encodeURIComponent(username)}?server=${encodeURIComponent(server)}`,
+    { method: "DELETE" },
     token,
   );
 }

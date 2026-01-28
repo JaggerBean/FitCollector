@@ -2,12 +2,46 @@ export interface LoginResponse {
   token: string;
 }
 
+export interface GoogleLoginResponse {
+  token: string;
+}
+
 export interface RegisterServerResponse {
   api_key: string;
   server_name: string;
   message: string;
   is_private?: boolean;
   invite_code?: string | null;
+}
+
+export interface ClaimStatusResponse {
+  claimed: boolean;
+  claimed_at: string | null;
+}
+
+export interface YesterdayStepsResponse {
+  minecraft_username: string;
+  server_name: string;
+  day: string;
+  steps_yesterday: number;
+}
+
+export interface BanEntry {
+  ban_group_id: string;
+  username: string | null;
+  devices: string[];
+  reason: string;
+  banned_at: string | null;
+}
+
+export interface BansResponse {
+  server_name: string;
+  total_bans: number;
+  bans: BanEntry[];
+}
+
+export interface ActionResponse {
+  [key: string]: unknown;
 }
 
 export interface ServerSummary {

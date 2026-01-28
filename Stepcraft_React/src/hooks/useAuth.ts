@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from "react";
-import { login as loginApi } from "../api/servers";
+import { login as loginApi, loginWithGoogle as loginWithGoogleApi } from "../api/servers";
 
 const TOKEN_KEY = "stepcraft_token";
 
@@ -12,13 +12,19 @@ export function useAuth() {
     setToken(newToken);
   }, []);
 
+  const loginWithGoogle = useCallback(async (idToken: string) => {
+    const { token: newToken } = await loginWithGoogleApi(idToken);
+    localStorage.setItem(TOKEN_KEY, newToken);
+    setToken(newToken);
+  }, []);
+
   const logout = useCallback(() => {
     localStorage.removeItem(TOKEN_KEY);
     setToken(null);
   }, []);
 
   return useMemo(
-    () => ({ token, isAuthenticated: Boolean(token), login, logout }),
-    [token, login, logout],
+    () => ({ token, isAuthenticated: Boolean(token), login, loginWithGoogle, logout }),
+    [token, login, loginWithGoogle, logout],
   );
 }

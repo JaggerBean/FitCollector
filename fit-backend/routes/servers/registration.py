@@ -7,7 +7,7 @@ from zoneinfo import ZoneInfo
 
 from database import engine
 from models import ServerRegistrationRequest, ApiKeyResponse
-from utils import generate_opaque_token, hash_token, generate_invite_code
+from utils import generate_opaque_token, hash_token, generate_invite_code, send_api_key_email
 from auth import require_server_access, require_user
 
 CENTRAL_TZ = ZoneInfo("America/Chicago")
@@ -116,13 +116,19 @@ def register_server(request: ServerRegistrationRequest, user=Depends(require_use
             # Example: send_email(request.owner_email, plaintext_key, request.server_name)
         
         # Return the plaintext key ONLY on creation (never again)
-        return ApiKeyResponse(
+        response = ApiKeyResponse(
             api_key=plaintext_key,
             server_name=request.server_name,
             message="Store this key securely in your server config. You won't be able to see it again!",
             is_private=request.is_private,
             invite_code=invite_code,
         )
+        try:
+            if request.owner_email:
+                send_api_key_email(request.owner_email, request.server_name, plaintext_key, response.message)
+        except Exception:
+            pass
+        return response
     
     except HTTPException:
         raise

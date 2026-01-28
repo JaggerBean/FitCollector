@@ -163,6 +163,7 @@ export default function RegisterServerPage() {
                   {result.api_key}
                 </div>
                 <div className="mt-1 text-xs text-slate-400">Save this key securely. You will not see it again.</div>
+                <div className="mt-1 text-xs text-slate-400">If SMTP is configured on the backend, an email is also sent automatically.</div>
               </div>
               {result.invite_code && (
                 <div>

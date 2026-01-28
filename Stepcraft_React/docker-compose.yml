@@ -4,6 +4,7 @@ services:
       context: .
       args:
         VITE_BACKEND_URL: ${VITE_BACKEND_URL:-https://api.stepcraft.org}
+        VITE_GOOGLE_CLIENT_ID: ${VITE_GOOGLE_CLIENT_ID:-}
     container_name: stepcraft_react
     ports:
       - "8080:80"
