@@ -1,6 +1,7 @@
 import { apiRequest } from "./client";
 import type {
   LoginResponse,
+  RegisterUserResponse,
   GoogleLoginResponse,
   RegisterServerResponse,
   OwnedServersResponse,
@@ -19,6 +20,13 @@ export async function login(email: string, password: string): Promise<LoginRespo
   return apiRequest<LoginResponse>("/v1/auth/login", {
     method: "POST",
     body: JSON.stringify({ email, password }),
+  });
+}
+
+export async function registerUser(name: string, email: string, password: string): Promise<RegisterUserResponse> {
+  return apiRequest<RegisterUserResponse>("/v1/auth/register", {
+    method: "POST",
+    body: JSON.stringify({ name, email, password }),
   });
 }
 

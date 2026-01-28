@@ -2,6 +2,11 @@ export interface LoginResponse {
   token: string;
 }
 
+export interface RegisterUserResponse {
+  ok: boolean;
+  message: string;
+}
+
 export interface GoogleLoginResponse {
   token: string;
 }

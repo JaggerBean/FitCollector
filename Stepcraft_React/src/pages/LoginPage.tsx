@@ -112,6 +112,14 @@ export default function LoginPage() {
             <div id="google-signin" className="flex justify-center" />
           </div>
         )}
+        {!googleClientId && (
+          <p className="mt-6 text-center text-xs text-slate-400">
+            Google sign-in requires VITE_GOOGLE_CLIENT_ID in your .env.
+          </p>
+        )}
+        <div className="mt-4 text-center text-xs text-slate-400">
+          New here? <a className="text-emerald-600 hover:text-emerald-700" href="/account/register">Create an account</a>
+        </div>
       </div>
     </Layout>
   );

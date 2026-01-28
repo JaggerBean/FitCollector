@@ -1,7 +1,9 @@
 import type { ReactElement } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import { useAuthContext } from "./app/AuthContext";
+import LandingPage from "./pages/LandingPage";
 import LoginPage from "./pages/LoginPage";
+import RegisterAccountPage from "./pages/RegisterAccountPage";
 import DashboardPage from "./pages/DashboardPage";
 import RegisterServerPage from "./pages/RegisterServerPage";
 import ServerManagePage from "./pages/ServerManagePage";
@@ -22,8 +24,12 @@ function App() {
 
   return (
     <Routes>
-      <Route path="/" element={<Navigate to={isAuthenticated ? "/dashboard" : "/login"} replace />} />
+      <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <LoginPage />} />
+      <Route
+        path="/account/register"
+        element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <RegisterAccountPage />}
+      />
       <Route
         path="/dashboard"
         element={
