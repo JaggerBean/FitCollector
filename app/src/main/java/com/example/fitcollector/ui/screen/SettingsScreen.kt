@@ -763,16 +763,15 @@ fun SettingsScreen(
                             color = Color.Gray
                         )
                         Spacer(Modifier.height(12.dp))
-                        Button(
-                            onClick = {
-                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !notificationsGranted) {
+                            Button(
+                                onClick = {
                                     notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-                                }
-                            },
-                            enabled = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !notificationsGranted,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Text(if (notificationsGranted) "Notifications Enabled" else "Enable Notifications")
+                                },
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text("Enable Notifications")
+                            }
                         }
 
                         Spacer(Modifier.height(12.dp))
