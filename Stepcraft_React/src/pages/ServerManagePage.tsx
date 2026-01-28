@@ -43,7 +43,18 @@ export default function ServerManagePage() {
   const filteredSuggestions = useMemo(() => {
     if (!username) return usernameSuggestions;
     const lower = username.toLowerCase();
-    return usernameSuggestions.filter((name) => name.toLowerCase().startsWith(lower));
+    return usernameSuggestions
+      .filter((name) => name.toLowerCase().startsWith(lower))
+      .sort((a, b) => {
+        const al = a.toLowerCase();
+        const bl = b.toLowerCase();
+        const aExact = al === lower;
+        const bExact = bl === lower;
+        if (aExact && !bExact) return -1;
+        if (!aExact && bExact) return 1;
+        if (a.length !== b.length) return a.length - b.length;
+        return al.localeCompare(bl);
+      });
   }, [username, usernameSuggestions]);
 
   const getUsernameSuggestion = (value: string) => {
