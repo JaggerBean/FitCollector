@@ -109,7 +109,7 @@ const ParticleCard = ({
           particle.parentNode?.removeChild(particle);
         },
       });
-        gsap.fromTo(clone, { scale: 0, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.15, ease: "back.out(1.7)" });
+    });
     particlesRef.current = [];
   }, []);
 
@@ -128,7 +128,7 @@ const ParticleCard = ({
         cardRef.current.appendChild(clone);
         particlesRef.current.push(clone);
 
-        gsap.fromTo(clone, { scale: 0, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.3, ease: "back.out(1.7)" });
+        gsap.fromTo(clone, { scale: 0, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.15, ease: "back.out(1.7)" });
 
         gsap.to(clone, {
           x: (Math.random() - 0.5) * 100,
@@ -147,7 +147,7 @@ const ParticleCard = ({
           repeat: -1,
           yoyo: true,
         });
-      }, index * 100);
+      }, index * 25);
 
       timeoutsRef.current.push(timeoutId);
     });
