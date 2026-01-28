@@ -1,10 +1,13 @@
 package com.example.fitcollector.ui.screen
 
+import android.Manifest
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.PowerManager
 import android.provider.Settings
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -15,6 +18,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.List
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Lock
@@ -29,11 +33,17 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.window.Dialog
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.example.fitcollector.*
+import com.google.mlkit.vision.barcode.common.Barcode
+import com.google.mlkit.vision.barcode.BarcodeScannerOptions
+import com.google.mlkit.vision.barcode.BarcodeScanning
+import com.google.mlkit.vision.common.InputImage
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.time.Instant
@@ -41,6 +51,11 @@ import androidx.health.connect.client.request.ReadRecordsRequest
 import androidx.health.connect.client.records.StepsRecord
 import androidx.health.connect.client.time.TimeRangeFilter
 import androidx.health.connect.client.HealthConnectClient
+import androidx.camera.core.CameraSelector
+import androidx.camera.core.ImageAnalysis
+import androidx.camera.core.Preview
+import androidx.camera.lifecycle.ProcessCameraProvider
+import androidx.camera.view.PreviewView
 import retrofit2.HttpException
 import kotlin.math.roundToInt
 
@@ -76,6 +91,7 @@ fun SettingsScreen(
     var showKeysDialog by remember { mutableStateOf(false) }
     var showHealthConnectErrorDialog by remember { mutableStateOf(false) }
     var showBatteryOffDialog by remember { mutableStateOf(false) }
+    var showQrScanner by remember { mutableStateOf(false) }
 
     val canChangeMc = remember { canChangeMinecraftUsername(context) }
     
@@ -84,6 +100,16 @@ fun SettingsScreen(
             androidx.health.connect.client.permission.HealthPermission.getReadPermission(StepsRecord::class),
             "android.permission.health.READ_HEALTH_DATA_IN_BACKGROUND"
         ) 
+    }
+
+    val cameraPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) {
+            showQrScanner = true
+        } else {
+            message = "Camera permission required to scan QR codes." to false
+        }
     }
 
     var allPermissionsGranted by remember { mutableStateOf(false) }
@@ -280,59 +306,71 @@ fun SettingsScreen(
                             singleLine = true
                         )
                         Spacer(Modifier.height(8.dp))
-                        Button(
-                            onClick = {
-                                scope.launch {
-                                    val code = inviteCodeInput.trim()
-                                    if (code.isBlank()) {
-                                        message = "Enter an invite code." to false
-                                        return@launch
-                                    }
-                                    val currentName = mcUsername.trim()
-                                    if (currentName.isBlank()) {
-                                        message = "Set your Minecraft username before adding private servers." to false
-                                        return@launch
-                                    }
-                                    try {
-                                        val previousNames = availableServers.map { it.server_name }.toSet()
-                                        val resp = globalApi.getAvailableServers(code)
-                                        availableServers = resp.servers.sortedBy { it.server_name.lowercase() }
-                                        val added = resp.servers.filter { it.server_name !in previousNames }
-                                        if (added.isNotEmpty()) {
-                                            inviteCodesByServer = inviteCodesByServer + added.associate { it.server_name to code }
-                                            val addedNames = added.map { it.server_name }
-                                            selectedServers = selectedServers + addedNames
-                                            setSelectedServers(context, selectedServers.toList())
-                                            addedNames.forEach { serverName ->
-                                                if (getServerKey(context, currentName, serverName) == null) {
-                                                    try {
-                                                        val respReg = globalApi.register(RegisterPayload(currentName, deviceId, serverName, code))
-                                                        saveServerKey(context, currentName, serverName, respReg.player_api_key)
-                                                    } catch (e: HttpException) {
-                                                        if (e.code() == 409) {
-                                                            try {
-                                                                val recoveryResp = globalApi.recoverKey(RegisterPayload(currentName, deviceId, serverName))
-                                                                saveServerKey(context, currentName, serverName, recoveryResp.player_api_key)
-                                                            } catch (_: Exception) {}
-                                                        } else {
-                                                            throw e
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Button(
+                                onClick = {
+                                    scope.launch {
+                                        val code = inviteCodeInput.trim()
+                                        if (code.isBlank()) {
+                                            message = "Enter an invite code." to false
+                                            return@launch
+                                        }
+                                        val currentName = mcUsername.trim()
+                                        if (currentName.isBlank()) {
+                                            message = "Set your Minecraft username before adding private servers." to false
+                                            return@launch
+                                        }
+                                        try {
+                                            val previousNames = availableServers.map { it.server_name }.toSet()
+                                            val resp = globalApi.getAvailableServers(code)
+                                            availableServers = resp.servers.sortedBy { it.server_name.lowercase() }
+                                            val added = resp.servers.filter { it.server_name !in previousNames }
+                                            if (added.isNotEmpty()) {
+                                                inviteCodesByServer = inviteCodesByServer + added.associate { it.server_name to code }
+                                                val addedNames = added.map { it.server_name }
+                                                selectedServers = selectedServers + addedNames
+                                                setSelectedServers(context, selectedServers.toList())
+                                                addedNames.forEach { serverName ->
+                                                    if (getServerKey(context, currentName, serverName) == null) {
+                                                        try {
+                                                            val respReg = globalApi.register(RegisterPayload(currentName, deviceId, serverName, code))
+                                                            saveServerKey(context, currentName, serverName, respReg.player_api_key)
+                                                        } catch (e: HttpException) {
+                                                            if (e.code() == 409) {
+                                                                try {
+                                                                    val recoveryResp = globalApi.recoverKey(RegisterPayload(currentName, deviceId, serverName))
+                                                                    saveServerKey(context, currentName, serverName, recoveryResp.player_api_key)
+                                                                } catch (_: Exception) {}
+                                                            } else {
+                                                                throw e
+                                                            }
                                                         }
                                                     }
                                                 }
+                                                val serverDisplayName = if (addedNames.size == 1) addedNames.first() else "multiple servers"
+                                                inviteCodeInput = ""
+                                                message = "You Registered to $serverDisplayName" to true
+                                            } else {
+                                                message = "Invite code not found." to false
                                             }
-                                            inviteCodeInput = ""
-                                            message = "Private server added and registered." to true
-                                        } else {
-                                            message = "Invite code not found." to false
+                                        } catch (e: Exception) {
+                                            message = "Could not add invite code: ${e.message}" to false
                                         }
-                                    } catch (e: Exception) {
-                                        message = "Could not add invite code: ${e.message}" to false
                                     }
-                                }
-                            },
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Text("Add Private Server")
+                                },
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Text("Add Private Server")
+                            }
+                            OutlinedButton(
+                                onClick = { cameraPermissionLauncher.launch(Manifest.permission.CAMERA) },
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Text("Scan QR")
+                            }
                         }
 
                         Spacer(Modifier.height(16.dp))
@@ -425,8 +463,36 @@ fun SettingsScreen(
                         }
 
                         message?.let { (msg, success) ->
-                            Text(msg, color = if (success) Color(0xFF2E7D32) else MaterialTheme.colorScheme.error, 
-                                style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 8.dp))
+                            if (success) {
+                                Surface(
+                                    color = Color(0xFFE8F5E9),
+                                    shape = RoundedCornerShape(12.dp),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(top = 16.dp)
+                                ) {
+                                    Row(
+                                        modifier = Modifier.padding(12.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Icon(
+                                            Icons.Default.CheckCircle,
+                                            contentDescription = null,
+                                            tint = Color(0xFF2E7D32)
+                                        )
+                                        Spacer(Modifier.width(8.dp))
+                                        Text(
+                                            msg,
+                                            color = Color(0xFF2E7D32),
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
+                                }
+                            } else {
+                                Text(msg, color = MaterialTheme.colorScheme.error, 
+                                    style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 8.dp))
+                            }
                         }
                     }
                 }
@@ -688,6 +754,17 @@ fun SettingsScreen(
         )
     }
 
+    if (showQrScanner) {
+        QrScannerDialog(
+            onCodeScanned = { raw ->
+                inviteCodeInput = extractInviteCode(raw)
+                showQrScanner = false
+                message = "Invite code scanned." to true
+            },
+            onDismiss = { showQrScanner = false }
+        )
+    }
+
     if (showKeysDialog) {
         val keys = getAllServerKeys(context)
         Dialog(onDismissRequest = { showKeysDialog = false }) {
@@ -898,5 +975,120 @@ fun ServerSelectorDialog(
                 }
             }
         }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun QrScannerDialog(
+    onCodeScanned: (String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val previewView = remember { PreviewView(context) }
+    val hasScanned = remember { mutableStateOf(false) }
+    val executor = remember { ContextCompat.getMainExecutor(context) }
+
+    DisposableEffect(previewView) {
+        val cameraProviderFuture = ProcessCameraProvider.getInstance(context)
+        val options = BarcodeScannerOptions.Builder()
+            .setBarcodeFormats(Barcode.FORMAT_QR_CODE)
+            .build()
+        val scanner = BarcodeScanning.getClient(options)
+
+        val analysis = ImageAnalysis.Builder()
+            .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+            .build()
+
+        analysis.setAnalyzer(executor) { imageProxy ->
+            val mediaImage = imageProxy.image
+            if (mediaImage != null && !hasScanned.value) {
+                val image = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
+                scanner.process(image)
+                    .addOnSuccessListener { barcodes ->
+                        val raw = barcodes.firstOrNull()?.rawValue
+                        if (!raw.isNullOrBlank() && !hasScanned.value) {
+                            hasScanned.value = true
+                            onCodeScanned(raw)
+                        }
+                    }
+                    .addOnCompleteListener { imageProxy.close() }
+            } else {
+                imageProxy.close()
+            }
+        }
+
+        val listener = Runnable {
+            val cameraProvider = cameraProviderFuture.get()
+            val preview = Preview.Builder().build().also {
+                it.setSurfaceProvider(previewView.surfaceProvider)
+            }
+            try {
+                cameraProvider.unbindAll()
+                cameraProvider.bindToLifecycle(
+                    lifecycleOwner,
+                    CameraSelector.DEFAULT_BACK_CAMERA,
+                    preview,
+                    analysis
+                )
+            } catch (_: Exception) {}
+        }
+
+        cameraProviderFuture.addListener(listener, executor)
+
+        onDispose {
+            analysis.clearAnalyzer()
+            scanner.close()
+            try {
+                cameraProviderFuture.get().unbindAll()
+            } catch (_: Exception) {}
+        }
+    }
+
+    Dialog(onDismissRequest = onDismiss) {
+        Surface(
+            shape = RoundedCornerShape(16.dp),
+            color = MaterialTheme.colorScheme.surface,
+            modifier = Modifier.fillMaxWidth().heightIn(min = 320.dp, max = 520.dp)
+        ) {
+            Column(Modifier.padding(16.dp)) {
+                Text("Scan Invite QR", style = MaterialTheme.typography.titleMedium)
+                Spacer(Modifier.height(12.dp))
+                AndroidView(
+                    factory = { previewView },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f)
+                )
+                Spacer(Modifier.height(12.dp))
+                Text(
+                    "Center the QR code inside the frame.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color.Gray
+                )
+                Spacer(Modifier.height(12.dp))
+                Button(
+                    onClick = onDismiss,
+                    modifier = Modifier.align(Alignment.End)
+                ) {
+                    Text("Close")
+                }
+            }
+        }
+    }
+}
+
+fun extractInviteCode(raw: String): String {
+    val trimmed = raw.trim()
+    if (trimmed.isBlank()) return trimmed
+    return try {
+        val uri = Uri.parse(trimmed)
+        uri.getQueryParameter("code")
+            ?: uri.getQueryParameter("invite")
+            ?: uri.getQueryParameter("invite_code")
+            ?: trimmed
+    } catch (_: Exception) {
+        trimmed
     }
 }

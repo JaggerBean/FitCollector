@@ -95,6 +95,11 @@ export default function ServerManagePage() {
 
   const onTogglePrivacy = async () => {
     if (!token || !decodedName || !info) return;
+    const nextLabel = info.is_private ? "public" : "private";
+    const shouldContinue = window.confirm(
+      `Switch ${decodedName} to ${nextLabel}? This changes who can join the server.`,
+    );
+    if (!shouldContinue) return;
     setPrivacyLoading(true);
     try {
       const response = await togglePrivacy(token, decodedName, !info.is_private);
@@ -118,6 +123,12 @@ export default function ServerManagePage() {
     } finally {
       setActionLoading(false);
     }
+  };
+
+  const confirmAndRunAction = async (message: string, action: () => Promise<unknown>) => {
+    const shouldContinue = window.confirm(message);
+    if (!shouldContinue) return;
+    await runAction(action);
   };
 
   return (
@@ -351,7 +362,12 @@ export default function ServerManagePage() {
                 <button
                   type="button"
                   disabled={actionLoading || !username.trim()}
-                  onClick={() => runAction(() => banPlayer(token!, decodedName, username.trim(), reason.trim() || "broke code of conduct"))}
+                  onClick={() =>
+                    confirmAndRunAction(
+                      `Ban ${username.trim()} on ${decodedName}? This removes access until unbanned.`,
+                      () => banPlayer(token!, decodedName, username.trim(), reason.trim() || "broke code of conduct"),
+                    )
+                  }
                   className="rounded-lg border border-red-200 px-3 py-2 text-sm font-medium text-red-700 hover:border-red-300"
                 >
                   Ban player
@@ -359,7 +375,12 @@ export default function ServerManagePage() {
                 <button
                   type="button"
                   disabled={actionLoading || !username.trim()}
-                  onClick={() => runAction(() => unbanPlayer(token!, decodedName, username.trim()))}
+                  onClick={() =>
+                    confirmAndRunAction(
+                      `Unban ${username.trim()} on ${decodedName}?`,
+                      () => unbanPlayer(token!, decodedName, username.trim()),
+                    )
+                  }
                   className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 hover:border-slate-300 dark:border-slate-700 dark:text-slate-200"
                 >
                   Unban player
@@ -367,7 +388,12 @@ export default function ServerManagePage() {
                 <button
                   type="button"
                   disabled={actionLoading || !username.trim()}
-                  onClick={() => runAction(() => wipePlayer(token!, decodedName, username.trim()))}
+                  onClick={() =>
+                    confirmAndRunAction(
+                      `Wipe ${username.trim()} on ${decodedName}? This is irreversible.`,
+                      () => wipePlayer(token!, decodedName, username.trim()),
+                    )
+                  }
                   className="rounded-lg border border-red-200 px-3 py-2 text-sm font-medium text-red-700 hover:border-red-300"
                 >
                   Wipe player
