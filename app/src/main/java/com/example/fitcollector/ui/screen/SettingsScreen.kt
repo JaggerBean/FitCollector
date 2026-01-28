@@ -69,6 +69,8 @@ fun SettingsScreen(
     var isLoading by remember { mutableStateOf(false) }
     var message by remember { mutableStateOf<Pair<String, Boolean>?>(null) }
     var queuedName by remember { mutableStateOf(getQueuedUsername(context)) }
+    var inviteCodeInput by remember { mutableStateOf("") }
+    var inviteCodesByServer by remember { mutableStateOf<Map<String, String>>(emptyMap()) }
     
     var showServerSelector by remember { mutableStateOf(false) }
     var showKeysDialog by remember { mutableStateOf(false) }
@@ -267,6 +269,74 @@ fun SettingsScreen(
                         
                         Spacer(Modifier.height(16.dp))
                         
+                        Text("Private Server Invite Code", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
+                        Text("Add a private server using its invite code.", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                        Spacer(Modifier.height(8.dp))
+                        OutlinedTextField(
+                            value = inviteCodeInput,
+                            onValueChange = { inviteCodeInput = it },
+                            label = { Text("Invite Code") },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true
+                        )
+                        Spacer(Modifier.height(8.dp))
+                        Button(
+                            onClick = {
+                                scope.launch {
+                                    val code = inviteCodeInput.trim()
+                                    if (code.isBlank()) {
+                                        message = "Enter an invite code." to false
+                                        return@launch
+                                    }
+                                    val currentName = mcUsername.trim()
+                                    if (currentName.isBlank()) {
+                                        message = "Set your Minecraft username before adding private servers." to false
+                                        return@launch
+                                    }
+                                    try {
+                                        val previousNames = availableServers.map { it.server_name }.toSet()
+                                        val resp = globalApi.getAvailableServers(code)
+                                        availableServers = resp.servers.sortedBy { it.server_name.lowercase() }
+                                        val added = resp.servers.filter { it.server_name !in previousNames }
+                                        if (added.isNotEmpty()) {
+                                            inviteCodesByServer = inviteCodesByServer + added.associate { it.server_name to code }
+                                            val addedNames = added.map { it.server_name }
+                                            selectedServers = selectedServers + addedNames
+                                            setSelectedServers(context, selectedServers.toList())
+                                            addedNames.forEach { serverName ->
+                                                if (getServerKey(context, currentName, serverName) == null) {
+                                                    try {
+                                                        val respReg = globalApi.register(RegisterPayload(currentName, deviceId, serverName, code))
+                                                        saveServerKey(context, currentName, serverName, respReg.player_api_key)
+                                                    } catch (e: HttpException) {
+                                                        if (e.code() == 409) {
+                                                            try {
+                                                                val recoveryResp = globalApi.recoverKey(RegisterPayload(currentName, deviceId, serverName))
+                                                                saveServerKey(context, currentName, serverName, recoveryResp.player_api_key)
+                                                            } catch (_: Exception) {}
+                                                        } else {
+                                                            throw e
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                            inviteCodeInput = ""
+                                            message = "Private server added and registered." to true
+                                        } else {
+                                            message = "Invite code not found." to false
+                                        }
+                                    } catch (e: Exception) {
+                                        message = "Could not add invite code: ${e.message}" to false
+                                    }
+                                }
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("Add Private Server")
+                        }
+
+                        Spacer(Modifier.height(16.dp))
+
                         OutlinedButton(
                             onClick = { showServerSelector = true },
                             modifier = Modifier.fillMaxWidth()
@@ -296,7 +366,8 @@ fun SettingsScreen(
                                             selectedServers.forEach { serverName ->
                                                 if (getServerKey(context, cleaned, serverName) == null) {
                                                     try {
-                                                        val resp = globalApi.register(RegisterPayload(cleaned, deviceId, serverName))
+                                                        val invite = inviteCodesByServer[serverName]
+                                                        val resp = globalApi.register(RegisterPayload(cleaned, deviceId, serverName, invite))
                                                         saveServerKey(context, cleaned, serverName, resp.player_api_key)
                                                     } catch (e: HttpException) {
                                                         if (e.code() == 409) {

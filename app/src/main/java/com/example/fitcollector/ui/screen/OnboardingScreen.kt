@@ -350,12 +350,15 @@ fun OnboardingScreen(
                         singleLine = true
                     )
 
-                    Spacer(Modifier.height(12.dp))
+                    Spacer(Modifier.height(16.dp))
 
+                    Text("Private Server Invite Code", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
+                    Text("Enter an invite code to add a private server to the list.", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                    Spacer(Modifier.height(8.dp))
                     OutlinedTextField(
                         value = inviteCodeInput,
                         onValueChange = { inviteCodeInput = it },
-                        label = { Text("Invite Code (private server)") },
+                        label = { Text("Invite Code") },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true
                     )
@@ -387,6 +390,14 @@ fun OnboardingScreen(
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text("Add Private Server")
+                    }
+
+                    if (inviteCodesByServer.isNotEmpty()) {
+                        Spacer(Modifier.height(8.dp))
+                        Text("Private servers added:", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                        inviteCodesByServer.keys.sorted().forEach { name ->
+                            Text("• $name", style = MaterialTheme.typography.bodySmall)
+                        }
                     }
                     
                     Spacer(Modifier.height(8.dp))

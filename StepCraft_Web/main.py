@@ -894,7 +894,7 @@ async def register_server(request: Request,
         if response:
             try:
                 data = response.json()
-                error = data.get("error")
+                error = data.get("detail") or data.get("error")
             except Exception:
                 error = response.text
         if not error:

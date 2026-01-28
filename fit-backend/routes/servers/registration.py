@@ -2,6 +2,7 @@
 
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy import text
+from sqlalchemy.exc import IntegrityError
 from zoneinfo import ZoneInfo
 
 from database import engine
@@ -27,8 +28,6 @@ def register_server(request: ServerRegistrationRequest, user=Depends(require_use
     plaintext_key = generate_opaque_token()
     key_hash = hash_token(plaintext_key)
     invite_code = None
-    if request.is_private:
-        invite_code = request.invite_code or generate_invite_code()
     
     try:
         with engine.begin() as conn:
@@ -40,6 +39,29 @@ def register_server(request: ServerRegistrationRequest, user=Depends(require_use
             
             if existing:
                 raise HTTPException(status_code=409, detail=f"Server name '{request.server_name}' already registered")
+
+            if request.is_private:
+                provided = (request.invite_code or "").strip() or None
+                if provided:
+                    exists = conn.execute(
+                        text("SELECT id FROM servers WHERE invite_code = :invite_code"),
+                        {"invite_code": provided}
+                    ).fetchone()
+                    if exists:
+                        raise HTTPException(status_code=409, detail="Invite code already in use. Choose another.")
+                    invite_code = provided
+                else:
+                    for _ in range(5):
+                        candidate = generate_invite_code()
+                        exists = conn.execute(
+                            text("SELECT id FROM servers WHERE invite_code = :invite_code"),
+                            {"invite_code": candidate}
+                        ).fetchone()
+                        if not exists:
+                            invite_code = candidate
+                            break
+                    if not invite_code:
+                        raise HTTPException(status_code=500, detail="Failed to generate unique invite code. Try again.")
             
             # Insert new API key (hashed)
             conn.execute(
@@ -104,6 +126,11 @@ def register_server(request: ServerRegistrationRequest, user=Depends(require_use
     
     except HTTPException:
         raise
+    except IntegrityError as e:
+        msg = str(e)
+        if "invite_code" in msg or "idx_servers_invite_code" in msg:
+            raise HTTPException(status_code=409, detail="Invite code already in use. Choose another.")
+        raise HTTPException(status_code=500, detail="Failed to register server due to a database constraint.")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to register server: {str(e)}")
 
