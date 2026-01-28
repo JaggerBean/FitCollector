@@ -2,6 +2,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { Layout } from "../components/Layout";
 import { RevealText } from "../components/RevealText";
+import Dock from "../components/Dock";
+import ScrollReveal from "../components/ScrollReveal";
 import { useAuthContext } from "../app/AuthContext";
 
 export default function LandingPage() {
@@ -13,6 +15,29 @@ export default function LandingPage() {
       navigate("/dashboard", { replace: true });
     }
   }, [isAuthenticated, navigate]);
+
+  const dockItems = [
+    {
+      icon: "🚀",
+      label: isAuthenticated ? "Dashboard" : "Create account",
+      onClick: () => navigate(isAuthenticated ? "/dashboard" : "/account/register"),
+    },
+    {
+      icon: "🔐",
+      label: isAuthenticated ? "Sign out" : "Sign in",
+      onClick: () => navigate(isAuthenticated ? "/dashboard" : "/login"),
+    },
+    {
+      icon: "🧭",
+      label: "Register server",
+      onClick: () => navigate(isAuthenticated ? "/register" : "/login"),
+    },
+    {
+      icon: "🎯",
+      label: "Rewards",
+      onClick: () => navigate(isAuthenticated ? "/dashboard" : "/login"),
+    },
+  ];
 
   return (
     <Layout title="Welcome">
@@ -56,6 +81,9 @@ export default function LandingPage() {
                   </>
                 )}
               </div>
+              <div className="mt-10">
+                <Dock items={dockItems} />
+              </div>
             </div>
           </div>
         </section>
@@ -80,7 +108,9 @@ export default function LandingPage() {
           <div className="flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <p className="text-xs uppercase tracking-[0.35em] text-slate-400">Launch sequence</p>
-              <h2 className="mt-3 text-3xl font-semibold text-white">Launch in 3 steps</h2>
+              <ScrollReveal containerClassName="mt-3" textClassName="text-3xl font-semibold text-white">
+                Launch in 3 steps
+              </ScrollReveal>
             </div>
             <div className="grid gap-6 text-sm text-slate-300 md:grid-cols-3">
               <div>
@@ -104,7 +134,7 @@ export default function LandingPage() {
 
         <section className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
           <div className="rounded-3xl border border-slate-800 bg-slate-950/70 p-8">
-            <h3 className="text-2xl font-semibold text-white">Why communities love it</h3>
+            <ScrollReveal textClassName="text-2xl font-semibold text-white">Why communities love it</ScrollReveal>
             <ul className="mt-6 space-y-3 text-sm text-slate-300">
               <li>• Automated rewards and claim tracking</li>
               <li>• Real-time player tools and ban controls</li>
