@@ -6,7 +6,7 @@ export function Layout({ title, children }: { title?: string; children: ReactNod
   const { isAuthenticated, logout } = useAuthContext();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-emerald-50 dark:from-slate-950 dark:to-slate-900">
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 to-slate-900">
       <header className="border-b border-slate-900/20 bg-slate-950/70 backdrop-blur">
         <div className="mx-auto flex h-16 w-full max-w-[1280px] items-center justify-between px-6 md:h-[72px] md:px-10">
         <div>
