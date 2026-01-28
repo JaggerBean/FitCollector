@@ -118,3 +118,8 @@ export interface PushResponse {
   server_name: string;
   items: PushItem[];
 }
+
+export interface PushCreateResponse {
+  server_name: string;
+  item: PushItem;
+}

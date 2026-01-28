@@ -49,7 +49,7 @@ export default function PushPage() {
         scheduled_at: scheduledAt,
         timezone,
       });
-      setItems(response.items);
+      setItems((prev) => [response.item, ...prev]);
       setMessage("");
     } catch (err) {
       setError((err as Error).message);

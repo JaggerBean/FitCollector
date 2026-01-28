@@ -10,6 +10,7 @@ import type {
   ServerInfo,
   TogglePrivacyResponse,
   PushResponse,
+  PushCreateResponse,
   ClaimStatusResponse,
   YesterdayStepsResponse,
   BansResponse,
@@ -132,7 +133,7 @@ export async function createPush(
   server: string,
   payload: { message: string; scheduled_at: string; timezone: string },
 ) {
-  return apiRequest<PushResponse>(
+  return apiRequest<PushCreateResponse>(
     `/v1/servers/push?server=${encodeURIComponent(server)}`,
     {
       method: "POST",
