@@ -827,7 +827,8 @@ async def register_server(request: Request,
     server_address: str = Form(...),
     server_version: str = Form(""),
     is_private: str = Form(""),
-    invite_code: str = Form("")
+    invite_code: str = Form(""),
+    notes: str = Form("")
 ):
     # Send registration data to backend API
     import logging
@@ -901,7 +902,21 @@ async def register_server(request: Request,
             error = last_error or "No backend response"
         if response is not None:
             error = f"{response.status_code}: {error}"
+        invite_code_error = bool(error and "invite code" in error.lower())
         logging.error(f"Registration failed: {error}")
-        return templates.TemplateResponse("register.html", {"request": request, "error": error, "year": year})
+        return templates.TemplateResponse("register.html", {
+            "request": request,
+            "error": error,
+            "year": year,
+            "server_name": server_name,
+            "owner_name": owner_name,
+            "owner_email": owner_email,
+            "server_address": server_address,
+            "server_version": server_version,
+            "is_private": bool(is_private),
+            "invite_code": invite_code,
+            "notes": notes,
+            "invite_code_error": invite_code_error,
+        })
 
 ## Optionally remove or refactor /admin if not needed

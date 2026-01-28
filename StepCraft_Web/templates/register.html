@@ -116,7 +116,7 @@
         <form method="post" action="/registered">
             <div class="mb-3">
                 <label for="server_name" class="form-label">Server Name</label>
-                <input type="text" class="form-control" id="server_name" name="server_name" required minlength="3" maxlength="50">
+                <input type="text" class="form-control" id="server_name" name="server_name" required minlength="3" maxlength="50" value="{{ server_name or '' }}">
                 <div class="invalid-feedback">3–50 characters</div>
             </div>
             <div class="mb-3">
@@ -131,29 +131,29 @@
             </div>
             <div class="mb-3">
                 <label for="server_address" class="form-label">Server Address</label>
-                <input type="text" class="form-control" id="server_address" name="server_address" required minlength="5" maxlength="255">
+                <input type="text" class="form-control" id="server_address" name="server_address" required minlength="5" maxlength="255" value="{{ server_address or '' }}">
                 <div class="invalid-feedback">5–255 characters</div>
             </div>
             <div class="mb-3">
                 <label for="server_version" class="form-label">Server Version</label>
-                <input type="text" class="form-control" id="server_version" name="server_version">
+                <input type="text" class="form-control" id="server_version" name="server_version" value="{{ server_version or '' }}">
             </div>
             <div class="mb-3">
                 <div class="form-check">
-                    <input class="form-check-input" type="checkbox" id="is_private" name="is_private">
+                    <input class="form-check-input" type="checkbox" id="is_private" name="is_private" {% if is_private %}checked{% endif %}>
                     <label class="form-check-label" for="is_private">Private server (invite code required)</label>
                 </div>
                 <small class="text-muted">If private, only users with the invite code can join.</small>
             </div>
             <div class="mb-3">
                 <label for="invite_code" class="form-label">Invite Code (optional)</label>
-                <input type="text" class="form-control" id="invite_code" name="invite_code" minlength="6" maxlength="32">
+                <input type="text" class="form-control {% if invite_code_error %}is-invalid{% endif %}" id="invite_code" name="invite_code" minlength="6" maxlength="32" value="{{ invite_code or '' }}">
                 <div class="invalid-feedback">6–32 characters</div>
                 <small class="text-muted">Leave blank to auto-generate a code.</small>
             </div>
             <div class="mb-3">
                 <label for="notes" class="form-label">Notes (optional)</label>
-                <textarea class="form-control" id="notes" name="notes" rows="3"></textarea>
+                <textarea class="form-control" id="notes" name="notes" rows="3">{{ notes or '' }}</textarea>
             </div>
             <button type="submit" class="btn btn-primary w-100 mb-2">Register</button>
             <a id="contactBtn" href="#" class="btn btn-outline-secondary w-100">Contact Us</a>
