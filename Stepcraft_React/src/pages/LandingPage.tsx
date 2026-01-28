@@ -1,6 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { Layout } from "../components/Layout";
+import MagicBento from "../components/MagicBento";
 import { useAuthContext } from "../app/AuthContext";
 
 export default function LandingPage() {
@@ -58,63 +59,58 @@ export default function LandingPage() {
           </div>
         </section>
 
-        <section className="grid gap-8 lg:grid-cols-3">
-          {[
-            { title: "Invite codes", text: "Private servers with controlled access." },
-            { title: "Reward tiers", text: "Customize goals and commands for each tier." },
-            { title: "Push alerts", text: "Keep players informed with scheduled updates." },
-          ].map((card) => (
-            <div
-              key={card.title}
-              className="rounded-2xl border border-slate-800 bg-slate-950/60 p-6 text-slate-200 shadow-[0_0_0_1px_rgba(15,23,42,0.4)]"
-            >
-              <h3 className="text-lg font-semibold text-white">{card.title}</h3>
-              <p className="mt-2 text-sm text-slate-400">{card.text}</p>
-            </div>
-          ))}
-        </section>
-
-        <section className="rounded-3xl border border-slate-800 bg-slate-950/70 p-8">
-          <div className="flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
-            <div>
-              <p className="text-xs uppercase tracking-[0.35em] text-slate-400">Launch sequence</p>
-              <h2 className="mt-3 text-3xl font-semibold text-white">Launch in 3 steps</h2>
-            </div>
-            <div className="grid gap-6 text-sm text-slate-300 md:grid-cols-3">
-              <div>
-                <div className="text-xs uppercase text-emerald-300">01</div>
-                <div className="mt-2 font-semibold text-white">Register your server</div>
-                <p className="mt-1 text-slate-400">Get an API key and invite code instantly.</p>
-              </div>
-              <div>
-                <div className="text-xs uppercase text-emerald-300">02</div>
-                <div className="mt-2 font-semibold text-white">Set rewards</div>
-                <p className="mt-1 text-slate-400">Configure commands per step tier.</p>
-              </div>
-              <div>
-                <div className="text-xs uppercase text-emerald-300">03</div>
-                <div className="mt-2 font-semibold text-white">Go live</div>
-                <p className="mt-1 text-slate-400">Invite players and watch streaks grow.</p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
-          <div className="rounded-3xl border border-slate-800 bg-slate-950/70 p-8">
-            <h3 className="text-2xl font-semibold text-white">Why communities love it</h3>
-            <ul className="mt-6 space-y-3 text-sm text-slate-300">
-              <li>• Automated rewards and claim tracking</li>
-              <li>• Real-time player tools and ban controls</li>
-              <li>• Works with private invite-only servers</li>
-            </ul>
-          </div>
-          <div className="rounded-3xl border border-emerald-900/50 bg-emerald-900/20 p-8 text-emerald-200">
-            <p className="text-lg leading-relaxed">
-              “We doubled daily activity in two weeks. Players log in just to hit the next step tier.”
-            </p>
-            <div className="mt-6 text-xs uppercase tracking-[0.3em] text-emerald-300/70">Community Admin</div>
-          </div>
+        <section>
+          <MagicBento
+            glowColor="45, 212, 191"
+            enableTilt
+            cards={[
+              {
+                color: "#060010",
+                title: "Invite codes",
+                description: "Private servers with controlled access.",
+                label: "Insights",
+              },
+              {
+                color: "#060010",
+                title: "Reward tiers",
+                description: "Customize goals and commands for each tier.",
+                label: "Overview",
+              },
+              {
+                color: "#060010",
+                title: "Push alerts",
+                description: "Keep players informed with scheduled updates.",
+                label: "Updates",
+              },
+              {
+                color: "#060010",
+                title: "Launch in 3 steps",
+                description:
+                  "01  Register your server — Get an API key and invite code instantly.\n" +
+                  "02  Set rewards — Configure commands per step tier.\n" +
+                  "03  Go live — Invite players and watch streaks grow.",
+                label: "Launch sequence",
+                className: "magic-bento-card--launch",
+              },
+              {
+                color: "#060010",
+                title: "Why communities love it",
+                description:
+                  "• Automated rewards and claim tracking\n" +
+                  "• Real-time player tools and ban controls\n" +
+                  "• Works with private invite-only servers",
+                label: "Trust",
+              },
+              {
+                color: "rgba(16, 185, 129, 0.12)",
+                title: "Community admin",
+                description:
+                  "“We doubled daily activity in two weeks. Players log in just to hit the next step tier.”",
+                label: "Community",
+                className: "magic-bento-card--quote",
+              },
+            ]}
+          />
         </section>
       </div>
     </Layout>
