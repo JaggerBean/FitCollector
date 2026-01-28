@@ -4,6 +4,8 @@ import android.Manifest
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
+import android.content.pm.PackageManager
 import android.os.PowerManager
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -89,6 +91,12 @@ fun SettingsScreen(
     var showHealthConnectErrorDialog by remember { mutableStateOf(false) }
     var showBatteryOffDialog by remember { mutableStateOf(false) }
     var showQrScanner by remember { mutableStateOf(false) }
+    var notificationsGranted by remember {
+        mutableStateOf(
+            Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
+                ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
+        )
+    }
 
     val canChangeMc = remember { canChangeMinecraftUsername(context) }
     
@@ -106,6 +114,15 @@ fun SettingsScreen(
             showQrScanner = true
         } else {
             message = "Camera permission required to scan QR codes." to false
+        }
+    }
+
+    val notificationPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        notificationsGranted = granted
+        if (!granted) {
+            message = "Notification permission not granted." to false
         }
     }
 
@@ -694,6 +711,36 @@ fun SettingsScreen(
                                     Text(displayName, style = MaterialTheme.typography.bodyMedium)
                                 }
                             }
+                        }
+                    }
+                }
+            }
+
+            item {
+                Text("Notifications", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            }
+
+            item {
+                Card(modifier = Modifier.fillMaxWidth()) {
+                    Column(Modifier.padding(16.dp)) {
+                        Text("Enable notifications", style = MaterialTheme.typography.labelLarge)
+                        Spacer(Modifier.height(8.dp))
+                        Text(
+                            "Get alerts about rewards and server updates.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color.Gray
+                        )
+                        Spacer(Modifier.height(12.dp))
+                        Button(
+                            onClick = {
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                    notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                                }
+                            },
+                            enabled = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !notificationsGranted,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(if (notificationsGranted) "Notifications Enabled" else "Enable Notifications")
                         }
                     }
                 }

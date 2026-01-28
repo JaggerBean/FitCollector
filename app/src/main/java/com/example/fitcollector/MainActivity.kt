@@ -8,10 +8,8 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.fillMaxSize
 
 import android.os.Bundle
-import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
-import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.activity.ComponentActivity
 import androidx.activity.result.ActivityResultLauncher
@@ -40,6 +38,8 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        ensureInstallState(this)
+
         requestPermissions =
             registerForActivityResult(
                 PermissionController.createRequestPermissionResultContract()
@@ -47,20 +47,6 @@ class MainActivity : ComponentActivity() {
 
         // Schedule background sync
         SyncWorker.schedule(this)
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            val granted = ContextCompat.checkSelfPermission(
-                this,
-                Manifest.permission.POST_NOTIFICATIONS
-            ) == PackageManager.PERMISSION_GRANTED
-            if (!granted) {
-                ActivityCompat.requestPermissions(
-                    this,
-                    arrayOf(Manifest.permission.POST_NOTIFICATIONS),
-                    1001
-                )
-            }
-        }
 
         setContent {
             val context = LocalContext.current
@@ -81,8 +67,16 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    var currentScreen by remember { 
-                        mutableStateOf(if (isOnboardingComplete(context)) AppScreen.Dashboard else AppScreen.Onboarding) 
+                    val shouldForceOnboarding = remember {
+                        val username = getMinecraftUsername(context)
+                        val servers = getSelectedServers(context)
+                        val hasKeys = username.isNotBlank() && servers.isNotEmpty() &&
+                            servers.all { getServerKey(context, username, it) != null }
+                        !isOnboardingComplete(context) || username.isBlank() || servers.isEmpty() || !hasKeys
+                    }
+
+                    var currentScreen by remember {
+                        mutableStateOf(if (shouldForceOnboarding) AppScreen.Onboarding else AppScreen.Dashboard)
                     }
                     
                     val onNavigate = { screen: AppScreen -> currentScreen = screen }

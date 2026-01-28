@@ -56,6 +56,21 @@ fun DashboardScreen(
     onNavigate: (com.example.fitcollector.AppScreen) -> Unit
 ) {
     val context = LocalContext.current
+    val needsOnboarding = remember {
+        val username = getMinecraftUsername(context)
+        val servers = getSelectedServers(context)
+        val hasKeys = username.isNotBlank() && servers.isNotEmpty() &&
+            servers.all { getServerKey(context, username, it) != null }
+        username.isBlank() || servers.isEmpty() || !hasKeys
+    }
+    LaunchedEffect(needsOnboarding) {
+        if (needsOnboarding) {
+            onNavigate(com.example.fitcollector.AppScreen.Onboarding)
+        }
+    }
+    if (needsOnboarding) {
+        return
+    }
     val scope = rememberCoroutineScope()
     val deviceZone = remember { ZoneId.systemDefault() }
 

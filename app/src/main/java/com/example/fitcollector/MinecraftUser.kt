@@ -29,6 +29,7 @@ private const val KEY_SERVER_KEYS = "server_keys"
 private const val KEY_INVITE_CODES = "invite_codes_by_server"
 private const val KEY_THEME_MODE = "theme_mode" // "System", "Light", "Dark"
 private const val KEY_ALLOWED_SOURCES = "allowed_step_sources"
+private const val KEY_INSTALL_TIME = "install_time"
 
 private val dateFormatter = DateTimeFormatter.ISO_LOCAL_DATE
 private val CENTRAL_ZONE = ZoneId.of("America/Chicago")
@@ -211,6 +212,38 @@ fun isOnboardingComplete(context: Context): Boolean {
 fun setOnboardingComplete(context: Context, complete: Boolean) {
     val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
     prefs.edit().putBoolean(KEY_ONBOARDING_COMPLETE, complete).apply()
+}
+
+fun ensureInstallState(context: Context) {
+    val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    val stored = prefs.getLong(KEY_INSTALL_TIME, 0L)
+    val current = try {
+        context.packageManager.getPackageInfo(context.packageName, 0).firstInstallTime
+    } catch (_: Exception) {
+        0L
+    }
+
+    if (current > 0L && stored != current) {
+        resetAppStateForFreshInstall(context)
+        prefs.edit().putLong(KEY_INSTALL_TIME, current).apply()
+    } else if (stored == 0L && current > 0L) {
+        prefs.edit().putLong(KEY_INSTALL_TIME, current).apply()
+    }
+}
+
+fun resetAppStateForFreshInstall(context: Context) {
+    val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    prefs.edit()
+        .remove(KEY_MC_USER)
+        .remove(KEY_LAST_CHANGE_DATE)
+        .remove(KEY_QUEUED_USER)
+        .remove(KEY_QUEUED_DATE)
+        .remove(KEY_SELECTED_SERVERS)
+        .remove(KEY_SERVER_KEYS)
+        .remove(KEY_INVITE_CODES)
+        .remove(KEY_ONBOARDING_COMPLETE)
+        .remove(KEY_ALLOWED_SOURCES)
+        .apply()
 }
 
 fun getSelectedServers(context: Context): List<String> {
