@@ -15,73 +15,76 @@ export default function LandingPage() {
   }, [isAuthenticated, navigate]);
 
   return (
-    <Layout title="Welcome">
-      <div className="space-y-20">
-        <section className="relative w-screen left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] bg-slate-950 py-24">
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-slate-900/80 via-slate-950 to-slate-950" />
-          <div className="pointer-events-none absolute -left-24 top-12 h-64 w-64 rounded-full bg-emerald-400/10 blur-3xl" />
-          <div className="pointer-events-none absolute right-0 top-24 h-80 w-80 rounded-full bg-blue-400/10 blur-3xl" />
-          <div className="relative mx-auto w-full max-w-screen-2xl px-6 2xl:px-10">
-            <div className="max-w-3xl">
-              <h1 className="text-5xl font-semibold text-white md:text-6xl">
-                Inspire daily movement with a rewards-driven Minecraft server
-              </h1>
-              <p className="mt-6 text-base text-slate-300 md:text-lg">
-                StepCraft turns step goals into in-game rewards. Launch a private or public server, automate rewards,
-                and keep your community engaged every single day.
-              </p>
-              <div className="mt-8 flex flex-wrap gap-4">
-                {isAuthenticated ? (
-                  <Link
-                    to="/dashboard"
-                    className="rounded-md bg-emerald-500 px-6 py-3 text-sm font-semibold text-slate-950 hover:bg-emerald-400"
-                  >
-                    Go to dashboard
-                  </Link>
-                ) : (
-                  <>
+    <Layout>
+      <div className="space-y-12 md:space-y-16">
+        <section className="relative w-screen left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] bg-slate-950">
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(16,185,129,0.12),transparent_55%),linear-gradient(to_bottom,rgba(2,6,23,0.7),rgba(2,6,23,0.95))]" />
+          <div className="relative mx-auto w-full max-w-[1280px] px-6 pt-24 pb-20 md:px-10">
+            <div className="grid gap-12 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
+              <div className="max-w-xl">
+                <h1 className="text-4xl font-bold leading-[1.08] text-white md:text-6xl">
+                  Inspire daily movement with a rewards-driven Minecraft server
+                </h1>
+                <p className="mt-6 text-base leading-relaxed text-slate-300 md:text-lg">
+                  StepCraft turns step goals into in-game rewards. Launch a private or public server, automate rewards,
+                  and keep your community engaged every single day.
+                </p>
+                <p className="mt-3 text-xs uppercase tracking-[0.14em] text-emerald-300">
+                  Used by early access servers • Rewards delivered daily
+                </p>
+                <div className="mt-8 flex flex-wrap gap-4">
+                  {isAuthenticated ? (
                     <Link
-                      to="/account/register"
-                      className="rounded-md bg-emerald-500 px-6 py-3 text-sm font-semibold text-slate-950 hover:bg-emerald-400"
+                      to="/dashboard"
+                      className="h-11 rounded-md bg-emerald-500 px-6 text-sm font-semibold text-slate-950 transition hover:bg-emerald-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
                     >
-                      Create your account
+                      Go to dashboard
                     </Link>
-                    <Link
-                      to="/login"
-                      className="rounded-md border border-slate-700 px-6 py-3 text-sm font-semibold text-white hover:border-slate-500"
-                    >
-                      Sign in
-                    </Link>
-                  </>
-                )}
+                  ) : (
+                    <>
+                      <Link
+                        to="/account/register"
+                        className="h-11 rounded-md bg-emerald-500 px-6 text-sm font-semibold text-slate-950 transition hover:bg-emerald-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
+                      >
+                        Create your account
+                      </Link>
+                      <Link
+                        to="/login"
+                        className="h-11 rounded-md border border-slate-700 px-6 text-sm font-semibold text-white transition hover:border-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
+                      >
+                        Sign in
+                      </Link>
+                    </>
+                  )}
+                </div>
+                <div className="mt-3 text-xs text-slate-400">Takes 30 seconds. No credit card.</div>
+              </div>
+              <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-6 shadow-[0_8px_30px_rgba(15,23,42,0.35)]">
+                <div className="text-xs uppercase tracking-[0.2em] text-slate-400">Today’s rewards</div>
+                <div className="mt-4 space-y-3">
+                  {["1,000 steps → Starter kit", "5,000 steps → Iron bundle", "10,000 steps → Legendary drop"].map(
+                    (line) => (
+                      <div
+                        key={line}
+                        className="rounded-lg border border-slate-800 bg-slate-950 px-4 py-3 text-sm text-slate-200"
+                      >
+                        {line}
+                      </div>
+                    ),
+                  )}
+                </div>
               </div>
             </div>
           </div>
         </section>
 
-        <section>
+        <section className="space-y-6">
+          <div className="text-xs uppercase tracking-[0.16em] text-slate-400">How it works</div>
           <MagicBento
             glowColor="45, 212, 191"
             enableTilt
+            enableStars={false}
             cards={[
-              {
-                color: "#060010",
-                title: "Invite codes",
-                description: "Private servers with controlled access.",
-                label: "Insights",
-              },
-              {
-                color: "#060010",
-                title: "Reward tiers",
-                description: "Customize goals and commands for each tier.",
-                label: "Overview",
-              },
-              {
-                color: "#060010",
-                title: "Push alerts",
-                description: "Keep players informed with scheduled updates.",
-                label: "Updates",
-              },
               {
                 color: "#060010",
                 title: "Launch in 3 steps",
@@ -92,6 +95,46 @@ export default function LandingPage() {
                 label: "Launch sequence",
                 className: "magic-bento-card--launch",
               },
+            ]}
+          />
+        </section>
+
+        <section className="space-y-6">
+          <div className="text-xs uppercase tracking-[0.16em] text-slate-400">Features</div>
+          <MagicBento
+            glowColor="45, 212, 191"
+            enableTilt
+            enableStars={false}
+            cards={[
+              {
+                color: "#060010",
+                title: "Control who joins your server",
+                description: "Invite codes keep your private community secure.",
+                label: "Access",
+              },
+              {
+                color: "#060010",
+                title: "Automate rewards for step streaks",
+                description: "Reward tiers run commands the moment goals are hit.",
+                label: "Automation",
+              },
+              {
+                color: "#060010",
+                title: "Bring players back daily",
+                description: "Push alerts keep streaks alive and servers active.",
+                label: "Engagement",
+              },
+            ]}
+          />
+        </section>
+
+        <section className="space-y-6">
+          <div className="text-xs uppercase tracking-[0.16em] text-slate-400">Trust & community</div>
+          <MagicBento
+            glowColor="45, 212, 191"
+            enableTilt
+            enableStars={false}
+            cards={[
               {
                 color: "#060010",
                 title: "Why communities love it",
@@ -99,7 +142,7 @@ export default function LandingPage() {
                   "• Automated rewards and claim tracking\n" +
                   "• Real-time player tools and ban controls\n" +
                   "• Works with private invite-only servers",
-                label: "Trust",
+                label: "Outcomes",
               },
               {
                 color: "rgba(16, 185, 129, 0.12)",
@@ -111,6 +154,19 @@ export default function LandingPage() {
               },
             ]}
           />
+        </section>
+
+        <section className="rounded-2xl border border-slate-800 bg-slate-950/70 p-8 text-center">
+          <h2 className="text-2xl font-semibold text-white">Ready to build your StepCraft community?</h2>
+          <p className="mt-2 text-sm text-slate-400">Create your account and launch in minutes.</p>
+          <div className="mt-6 flex justify-center">
+            <Link
+              to={isAuthenticated ? "/dashboard" : "/account/register"}
+              className="h-11 rounded-md bg-emerald-500 px-6 text-sm font-semibold text-slate-950 transition hover:bg-emerald-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
+            >
+              {isAuthenticated ? "Go to dashboard" : "Create your account"}
+            </Link>
+          </div>
         </section>
       </div>
     </Layout>
