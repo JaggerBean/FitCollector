@@ -16,10 +16,10 @@ export default function LandingPage() {
 
   return (
     <Layout>
-      <div className="space-y-12 md:space-y-16">
-        <section className="relative w-screen left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] bg-slate-950">
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(16,185,129,0.12),transparent_55%),linear-gradient(to_bottom,rgba(2,6,23,0.7),rgba(2,6,23,0.95))]" />
-          <div className="relative mx-auto w-full max-w-[1280px] px-6 pt-24 pb-20 md:px-10">
+      <div className="rounded-3xl bg-slate-950/95 px-6 py-16 md:px-10">
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-96 bg-[radial-gradient(circle_at_top,rgba(16,185,129,0.12),transparent_55%)]" />
+        <div className="space-y-12 md:space-y-16">
+          <section className="relative">
             <div className="grid gap-12 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
               <div className="max-w-xl">
                 <h1 className="text-4xl font-bold leading-[1.08] text-white md:text-6xl">
@@ -75,10 +75,9 @@ export default function LandingPage() {
                 </div>
               </div>
             </div>
-          </div>
-        </section>
+          </section>
 
-        <section className="space-y-6">
+          <section className="space-y-6">
           <div className="text-xs uppercase tracking-[0.16em] text-slate-400">How it works</div>
           <MagicBento
             glowColor="45, 212, 191"
@@ -98,7 +97,7 @@ export default function LandingPage() {
           />
         </section>
 
-        <section className="space-y-6">
+          <section className="space-y-6">
           <div className="text-xs uppercase tracking-[0.16em] text-slate-400">Features</div>
           <MagicBento
             glowColor="45, 212, 191"
@@ -126,7 +125,7 @@ export default function LandingPage() {
           />
         </section>
 
-        <section className="space-y-6">
+          <section className="space-y-6">
           <div className="text-xs uppercase tracking-[0.16em] text-slate-400">Trust & community</div>
           <MagicBento
             glowColor="45, 212, 191"
@@ -152,7 +151,7 @@ export default function LandingPage() {
           />
         </section>
 
-        <section className="rounded-2xl border border-slate-800 bg-slate-950/70 p-8 text-center">
+          <section className="rounded-2xl border border-slate-800 bg-slate-950/70 p-8 text-center">
           <h2 className="text-2xl font-semibold text-white">Ready to build your StepCraft community?</h2>
           <p className="mt-2 text-sm text-slate-400">Create your account and launch in minutes.</p>
           <div className="mt-6 flex justify-center">
@@ -163,7 +162,8 @@ export default function LandingPage() {
               {isAuthenticated ? "Go to dashboard" : "Create your account"}
             </Link>
           </div>
-        </section>
+          </section>
+        </div>
       </div>
     </Layout>
   );
