@@ -30,13 +30,13 @@ export default function LandingPage() {
                   and keep your community engaged every single day.
                 </p>
                 <p className="mt-3 text-xs uppercase tracking-[0.14em] text-emerald-300">
-                  Used by early access servers • Rewards delivered daily
+                  Rewards delivered daily • Streaks tracked across servers
                 </p>
                 <div className="mt-8 flex flex-wrap gap-4">
                   {isAuthenticated ? (
                     <Link
                       to="/dashboard"
-                      className="h-11 rounded-md bg-emerald-500 px-6 text-sm font-semibold text-slate-950 transition hover:bg-emerald-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
+                      className="flex h-11 items-center justify-center rounded-md bg-emerald-500 px-6 text-sm font-semibold text-slate-950 transition hover:bg-emerald-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
                     >
                       Go to dashboard
                     </Link>
@@ -44,13 +44,13 @@ export default function LandingPage() {
                     <>
                       <Link
                         to="/account/register"
-                        className="h-11 rounded-md bg-emerald-500 px-6 text-sm font-semibold text-slate-950 transition hover:bg-emerald-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
+                        className="flex h-11 items-center justify-center rounded-md bg-emerald-500 px-6 text-sm font-semibold text-slate-950 transition hover:bg-emerald-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
                       >
                         Create your account
                       </Link>
                       <Link
                         to="/login"
-                        className="h-11 rounded-md border border-slate-700 px-6 text-sm font-semibold text-white transition hover:border-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
+                        className="flex h-11 items-center justify-center rounded-md border border-slate-700 px-6 text-sm font-semibold text-white transition hover:border-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
                       >
                         Sign in
                       </Link>
@@ -83,7 +83,6 @@ export default function LandingPage() {
           <MagicBento
             glowColor="45, 212, 191"
             enableTilt
-            enableStars={false}
             cards={[
               {
                 color: "#060010",
@@ -104,7 +103,6 @@ export default function LandingPage() {
           <MagicBento
             glowColor="45, 212, 191"
             enableTilt
-            enableStars={false}
             cards={[
               {
                 color: "#060010",
@@ -133,7 +131,6 @@ export default function LandingPage() {
           <MagicBento
             glowColor="45, 212, 191"
             enableTilt
-            enableStars={false}
             cards={[
               {
                 color: "#060010",
@@ -162,7 +159,7 @@ export default function LandingPage() {
           <div className="mt-6 flex justify-center">
             <Link
               to={isAuthenticated ? "/dashboard" : "/account/register"}
-              className="h-11 rounded-md bg-emerald-500 px-6 text-sm font-semibold text-slate-950 transition hover:bg-emerald-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
+              className="flex h-11 items-center justify-center rounded-md bg-emerald-500 px-6 text-sm font-semibold text-slate-950 transition hover:bg-emerald-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
             >
               {isAuthenticated ? "Go to dashboard" : "Create your account"}
             </Link>

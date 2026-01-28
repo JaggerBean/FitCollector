@@ -380,9 +380,9 @@ const GlobalSpotlight = ({
 
       const targetOpacity =
         minDistance <= proximity
-          ? 0.8
+          ? 0.45
           : minDistance <= fadeDistance
-            ? ((fadeDistance - minDistance) / (fadeDistance - proximity)) * 0.8
+            ? ((fadeDistance - minDistance) / (fadeDistance - proximity)) * 0.45
             : 0;
 
       gsap.to(spotlightRef.current, {
