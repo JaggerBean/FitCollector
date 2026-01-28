@@ -206,7 +206,13 @@ export default function ServerManagePage() {
                   value={username}
                   onChange={(event) => setUsername(event.target.value)}
                   placeholder="Player name"
+                  list="player-suggestions"
                 />
+                <datalist id="player-suggestions">
+                  {players?.players?.map((player) => (
+                    <option key={player.minecraft_username} value={player.minecraft_username} />
+                  ))}
+                </datalist>
               </div>
               <div>
                 <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Ban reason</label>
