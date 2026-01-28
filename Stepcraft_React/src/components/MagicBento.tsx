@@ -344,25 +344,9 @@ const GlobalSpotlight = ({
     const handleMouseMove = (e: MouseEvent) => {
       if (!spotlightRef.current || !gridRef.current) return;
 
-      const section = gridRef.current.closest(".bento-section");
-      const rect = section?.getBoundingClientRect();
-      const mouseInside =
-        rect && e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom;
-
-      isInsideSection.current = mouseInside || false;
+      const mouseInside = true;
+      isInsideSection.current = true;
       const cards = gridRef.current.querySelectorAll(".magic-bento-card");
-
-      if (!mouseInside) {
-        gsap.to(spotlightRef.current, {
-          opacity: 0,
-          duration: 0.3,
-          ease: "power2.out",
-        });
-        cards.forEach((card) => {
-          (card as HTMLElement).style.setProperty("--glow-intensity", "0");
-        });
-        return;
-      }
 
       const { proximity, fadeDistance } = calculateSpotlightValues(spotlightRadius);
       let minDistance = Infinity;
@@ -409,26 +393,10 @@ const GlobalSpotlight = ({
       });
     };
 
-    const handleMouseLeave = () => {
-      isInsideSection.current = false;
-      gridRef.current?.querySelectorAll(".magic-bento-card").forEach((card) => {
-        (card as HTMLElement).style.setProperty("--glow-intensity", "0");
-      });
-      if (spotlightRef.current) {
-        gsap.to(spotlightRef.current, {
-          opacity: 0,
-          duration: 0.3,
-          ease: "power2.out",
-        });
-      }
-    };
-
     document.addEventListener("mousemove", handleMouseMove);
-    document.addEventListener("mouseleave", handleMouseLeave);
 
     return () => {
       document.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("mouseleave", handleMouseLeave);
       spotlightRef.current?.parentNode?.removeChild(spotlightRef.current);
     };
   }, [gridRef, disableAnimations, enabled, spotlightRadius, glowColor]);
