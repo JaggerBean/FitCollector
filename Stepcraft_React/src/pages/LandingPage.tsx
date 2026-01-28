@@ -22,17 +22,14 @@ export default function LandingPage() {
           <section className="relative">
             <div className="grid gap-12 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
               <div className="max-w-xl">
-                <h1 className="text-4xl font-bold leading-[1.08] text-white md:text-6xl">
+                <h1 className="text-[2.5rem] font-bold leading-[1.15] text-white md:text-[3.5rem]">
                   Inspire daily movement with a rewards-driven Minecraft server
                 </h1>
                 <p className="mt-6 text-base leading-relaxed text-slate-300 md:text-lg">
-                  StepCraft turns step goals into in-game rewards. Launch a private or public server, automate rewards,
-                  and keep your community engaged every single day.
+                  StepCraft turns step goals into in-game rewards. Launch a private or public server and keep your
+                  community engaged every single day.
                 </p>
-                <p className="mt-3 text-xs uppercase tracking-[0.14em] text-emerald-300">
-                  Rewards delivered daily • Steps tracked across servers
-                </p>
-                <div className="mt-8 flex flex-wrap gap-4">
+                <div className="mt-10 flex flex-wrap gap-4">
                   {isAuthenticated ? (
                     <Link
                       to="/dashboard"
@@ -57,16 +54,25 @@ export default function LandingPage() {
                     </>
                   )}
                 </div>
+                <p className="mt-4 text-[11px] uppercase tracking-[0.22em] text-slate-500">
+                  Rewards delivered daily • Steps tracked across servers
+                </p>
                 <div className="mt-3 text-xs text-slate-400">Takes 30 seconds. No credit card.</div>
               </div>
-              <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-6 shadow-[0_8px_30px_rgba(15,23,42,0.35)]">
+              <div className="rounded-2xl border border-slate-900/60 bg-slate-950/60 p-6 shadow-[0_8px_30px_rgba(15,23,42,0.35)]">
                 <div className="text-xs uppercase tracking-[0.2em] text-slate-400">Today’s rewards</div>
+                <div className="mt-1 text-[11px] text-slate-500">Example daily rewards</div>
                 <div className="mt-4 space-y-3">
-                  {["1,000 steps → Starter kit", "5,000 steps → Iron bundle", "10,000 steps → Legendary drop"].map(
-                    (line) => (
+                  {[
+                    "1,000 steps → Starter kit",
+                    "5,000 steps → Iron bundle",
+                    "10,000 steps → Legendary drop",
+                  ].map((line, index) => (
                       <div
                         key={line}
-                        className="rounded-lg border border-slate-800 bg-slate-950 px-4 py-3 text-sm text-slate-200"
+                        className={`rounded-lg border border-slate-800 bg-slate-950 px-4 py-3 text-sm text-slate-200 ${
+                          index === 2 ? "opacity-70" : ""
+                        }`}
                       >
                         {line}
                       </div>
