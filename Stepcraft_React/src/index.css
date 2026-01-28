@@ -4,120 +4,13 @@
 
 :root {
   color-scheme: light dark;
-  --bg-1: #cfe6ff;
-  --bg-2: #eadfc7;
-  --surface-1: #ffffff;
-  --surface-2: #d7e2cf;
-  --border-1: #c8d3c2;
-  --text-1: #1f2a24;
-  --text-2: #516055;
-  --accent-1: #7bbf6a;
-  --accent-2: #d2a45c;
-  --accent-rgb: 123 191 106;
-  --accent-1-contrast: #0b0f0b;
-  --shadow-1: 0 12px 40px rgba(31, 42, 36, 0.15);
-}
-
-.dark {
-  --bg-1: #07040f;
-  --bg-2: #120718;
-  --surface-1: #0f0916;
-  --surface-2: #160b22;
-  --border-1: #3a1a4d;
-  --text-1: #f8fafc;
-  --text-2: #cbd5f5;
-  --accent-1: #c084fc;
-  --accent-2: #f472b6;
-  --accent-rgb: 192 132 252;
-  --accent-1-contrast: #0b0f0b;
-  --shadow-1: 0 12px 40px rgba(2, 6, 23, 0.45);
 }
 
 body {
-  background: var(--bg-1);
-  color: var(--text-1);
+  @apply bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100;
   font-family: "Roboto", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
 #root {
   min-height: 100vh;
-}
-
-@layer components {
-  .app-shell {
-    background: linear-gradient(135deg, var(--bg-1), var(--bg-2));
-    color: var(--text-1);
-  }
-
-  .app-header,
-  .app-footer {
-    background: var(--surface-1);
-  }
-
-  .app-panel {
-    background: var(--surface-1);
-    border: 1px solid var(--border-1);
-    box-shadow: var(--shadow-1);
-    color: var(--text-1);
-  }
-
-  .app-panel-soft {
-    background: var(--surface-2);
-    border: 1px solid var(--border-1);
-    color: var(--text-1);
-  }
-
-  .text-muted {
-    color: var(--text-2);
-  }
-
-  .text-accent {
-    color: var(--accent-1);
-  }
-
-  .border-default {
-    border-color: var(--border-1);
-  }
-
-  .btn-primary {
-    background: var(--accent-1);
-    color: var(--accent-1-contrast);
-  }
-
-  .btn-primary:hover {
-    filter: brightness(1.05);
-  }
-
-  .btn-secondary {
-    border: 1px solid var(--border-1);
-    color: var(--text-1);
-    background: transparent;
-  }
-
-  .btn-secondary:hover {
-    border-color: var(--accent-1);
-    color: var(--accent-1);
-  }
-
-  .pixel-corners {
-    --pixel: 10px;
-    clip-path: polygon(
-      0 var(--pixel),
-      var(--pixel) 0,
-      calc(100% - var(--pixel)) 0,
-      100% var(--pixel),
-      100% calc(100% - var(--pixel)),
-      calc(100% - var(--pixel)) 100%,
-      var(--pixel) 100%,
-      0 calc(100% - var(--pixel))
-    );
-  }
-
-  .pixel-corners-sm {
-    --pixel: 6px;
-  }
-
-  .pixel-corners-lg {
-    --pixel: 14px;
-  }
 }
