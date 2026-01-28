@@ -14,7 +14,6 @@ export function Layout({ title, children }: { title?: string; children: ReactNod
             <img src="/logo.png" alt="StepCraft" className="h-10 w-auto" />
             <div className="text-xl font-semibold text-emerald-700 dark:text-emerald-200">StepCraft</div>
           </Link>
-          {title ? <div className="text-sm text-slate-500 dark:text-slate-400">{title}</div> : null}
         </div>
         {isAuthenticated ? (
           <button
