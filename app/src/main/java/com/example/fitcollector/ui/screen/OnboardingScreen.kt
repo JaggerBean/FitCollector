@@ -1,6 +1,8 @@
 package com.example.fitcollector.ui.screen
 
+import android.Manifest
 import android.content.Intent
+import android.os.Build
 import android.os.PowerManager
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -82,6 +84,8 @@ fun OnboardingScreen(
     var showPublicServers by remember { mutableStateOf(false) }
     var showPrivateServer by remember { mutableStateOf(false) }
     var showQrScanner by remember { mutableStateOf(false) }
+    var showNotificationsPrompt by remember { mutableStateOf(false) }
+    var pendingComplete by remember { mutableStateOf(false) }
     
     // Step Source State
     var selectedSource by remember { mutableStateOf("") }
@@ -104,6 +108,15 @@ fun OnboardingScreen(
             showQrScanner = true
         } else {
             error = "Camera permission required to scan QR codes."
+        }
+    }
+
+    val notificationPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { _ ->
+        if (pendingComplete) {
+            pendingComplete = false
+            onComplete()
         }
     }
 
@@ -172,7 +185,7 @@ fun OnboardingScreen(
                 autoAdvancedBackground = false
             }
         }
-        if (step == 5) {
+        if (step == 3) {
             refreshSources(false)
         }
     }
@@ -297,105 +310,6 @@ fun OnboardingScreen(
             3 -> {
                 OnboardingStep(
                     number = if (wantsBackground) 3 else 2,
-                    title = "Minecraft Username",
-                    description = "Enter your exact Minecraft username.",
-                    icon = Icons.Default.Person
-                ) {
-                    if (error != null) {
-                        Text(error!!, color = Color.Red, style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.Center)
-                        Spacer(Modifier.height(8.dp))
-                    }
-                    OutlinedTextField(
-                        value = mcUsername,
-                        onValueChange = { mcUsername = it },
-                        label = { Text("Minecraft Username") },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true
-                    )
-                    Spacer(Modifier.height(16.dp))
-                    Button(
-                        onClick = {
-                            if (mcUsername.isNotBlank()) {
-                                error = null
-                                step = 4
-                            }
-                        },
-                        enabled = mcUsername.isNotBlank(),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text("Next")
-                    }
-                }
-            }
-            4 -> {
-                OnboardingStep(
-                    number = if (wantsBackground) 4 else 3,
-                    title = "Confirm Username",
-                    description = "Is this the correct Minecraft username?",
-                    icon = Icons.Default.Person
-                ) {
-                    if (error != null) {
-                        Text(error!!, color = Color.Red, style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.Center)
-                        Spacer(Modifier.height(8.dp))
-                    }
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        val cleaned = mcUsername.trim()
-                        val avatarUrl = remember(cleaned) {
-                            if (cleaned.isNotBlank()) {
-                                val enc = URLEncoder.encode(cleaned, "UTF-8")
-                                "https://minotar.net/armor/bust/$enc/160"
-                            } else null
-                        }
-                        avatarUrl?.let { url ->
-                            AsyncImage(
-                                model = url,
-                                contentDescription = "Minecraft skin preview",
-                                modifier = Modifier.size(120.dp).clip(RoundedCornerShape(12.dp))
-                            )
-                            Spacer(Modifier.height(16.dp))
-                        }
-                        Text(cleaned, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                        Spacer(Modifier.height(16.dp))
-                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            OutlinedButton(
-                                onClick = { step = 3 },
-                                modifier = Modifier.weight(1f)
-                            ) {
-                                Text("Back")
-                            }
-                            Button(
-                                onClick = {
-                                    scope.launch {
-                                        confirmLoading = true
-                                        error = null
-                                        try {
-                                            val profile = fetchMinecraftProfile(cleaned)
-                                            if (profile == null || profile.id == null) {
-                                                val details = profile?.errorMessage ?: "no response"
-                                                error = "'$cleaned' is not a valid Minecraft username. API: $details"
-                                            } else {
-                                                step = 5
-                                            }
-                                        } catch (e: Exception) {
-                                            error = e.message ?: "Validation failed"
-                                        } finally {
-                                            confirmLoading = false
-                                        }
-                                    }
-                                },
-                                enabled = !confirmLoading,
-                                modifier = Modifier.weight(1f)
-                            ) {
-                                if (confirmLoading) CircularProgressIndicator(modifier = Modifier.size(20.dp), color = Color.White)
-                                else Text("Confirm")
-                            }
-                        }
-                    }
-                }
-            }
-            5 -> {
-                OnboardingStep(
-                    number = if (wantsBackground) 5 else 4,
                     title = "Steps Source",
                     description = "Choose which app StepCraft should trust for your step count.",
                     icon = Icons.Default.Source
@@ -471,7 +385,7 @@ fun OnboardingScreen(
                                 onClick = { 
                                     if (selectedSource.isNotEmpty()) {
                                         setAllowedStepSources(context, setOf(selectedSource))
-                                        step = 6
+                                        step = 4
                                     } else {
                                         error = "Please select a step source."
                                     }
@@ -480,6 +394,105 @@ fun OnboardingScreen(
                                 enabled = selectedSource.isNotEmpty()
                             ) {
                                 Text("Next")
+                            }
+                        }
+                    }
+                }
+            }
+            4 -> {
+                OnboardingStep(
+                    number = if (wantsBackground) 4 else 3,
+                    title = "Minecraft Username",
+                    description = "Enter your exact Minecraft username.",
+                    icon = Icons.Default.Person
+                ) {
+                    if (error != null) {
+                        Text(error!!, color = Color.Red, style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.Center)
+                        Spacer(Modifier.height(8.dp))
+                    }
+                    OutlinedTextField(
+                        value = mcUsername,
+                        onValueChange = { mcUsername = it },
+                        label = { Text("Minecraft Username") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true
+                    )
+                    Spacer(Modifier.height(16.dp))
+                    Button(
+                        onClick = {
+                            if (mcUsername.isNotBlank()) {
+                                error = null
+                                step = 5
+                            }
+                        },
+                        enabled = mcUsername.isNotBlank(),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Next")
+                    }
+                }
+            }
+            5 -> {
+                OnboardingStep(
+                    number = if (wantsBackground) 5 else 4,
+                    title = "Confirm Username",
+                    description = "Is this the correct Minecraft username?",
+                    icon = Icons.Default.Person
+                ) {
+                    if (error != null) {
+                        Text(error!!, color = Color.Red, style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.Center)
+                        Spacer(Modifier.height(8.dp))
+                    }
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        val cleaned = mcUsername.trim()
+                        val avatarUrl = remember(cleaned) {
+                            if (cleaned.isNotBlank()) {
+                                val enc = URLEncoder.encode(cleaned, "UTF-8")
+                                "https://minotar.net/armor/bust/$enc/160"
+                            } else null
+                        }
+                        avatarUrl?.let { url ->
+                            AsyncImage(
+                                model = url,
+                                contentDescription = "Minecraft skin preview",
+                                modifier = Modifier.size(120.dp).clip(RoundedCornerShape(12.dp))
+                            )
+                            Spacer(Modifier.height(16.dp))
+                        }
+                        Text(cleaned, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                        Spacer(Modifier.height(16.dp))
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            OutlinedButton(
+                                onClick = { step = 4 },
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Text("Back")
+                            }
+                            Button(
+                                onClick = {
+                                    scope.launch {
+                                        confirmLoading = true
+                                        error = null
+                                        try {
+                                            val profile = fetchMinecraftProfile(cleaned)
+                                            if (profile == null || profile.id == null) {
+                                                val details = profile?.errorMessage ?: "no response"
+                                                error = "'$cleaned' is not a valid Minecraft username. API: $details"
+                                            } else {
+                                                step = 6
+                                            }
+                                        } catch (e: Exception) {
+                                            error = e.message ?: "Validation failed"
+                                        } finally {
+                                            confirmLoading = false
+                                        }
+                                    }
+                                },
+                                enabled = !confirmLoading,
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                if (confirmLoading) CircularProgressIndicator(modifier = Modifier.size(20.dp), color = Color.White)
+                                else Text("Confirm")
                             }
                         }
                     }
@@ -555,7 +568,8 @@ fun OnboardingScreen(
                                     setMinecraftUsername(context, cleaned)
                                     setSelectedServers(context, selectedServers.toList())
                                     setOnboardingComplete(context, true)
-                                    onComplete()
+                                    pendingComplete = true
+                                    showNotificationsPrompt = true
                                 } catch (e: Exception) {
                                     error = e.message ?: "Registration failed"
                                 } finally {
@@ -642,6 +656,49 @@ fun OnboardingScreen(
                 showQrScanner = false
             },
             onDismiss = { showQrScanner = false }
+        )
+    }
+
+    if (showNotificationsPrompt) {
+        AlertDialog(
+            onDismissRequest = { showNotificationsPrompt = false },
+            title = { Text("Enable Notifications?") },
+            text = {
+                Text(
+                    "Would you like to receive notifications for your connected servers? " +
+                        "You can customize notifications anytime in Settings."
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showNotificationsPrompt = false
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                            notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                        } else {
+                            if (pendingComplete) {
+                                pendingComplete = false
+                                onComplete()
+                            }
+                        }
+                    }
+                ) {
+                    Text("Enable")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        showNotificationsPrompt = false
+                        if (pendingComplete) {
+                            pendingComplete = false
+                            onComplete()
+                        }
+                    }
+                ) {
+                    Text("Skip for now")
+                }
+            }
         )
     }
 }
