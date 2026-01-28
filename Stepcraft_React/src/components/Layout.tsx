@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import type { ReactNode } from "react";
 import { useAuthContext } from "../app/AuthContext";
 
-export function Layout({ title, children }: { title?: string; children: ReactNode }) {
+export function Layout({ children }: { children: ReactNode }) {
   const { isAuthenticated, logout } = useAuthContext();
 
   return (
