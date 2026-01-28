@@ -49,7 +49,12 @@ export default function PushPage() {
         scheduled_at: scheduledAt,
         timezone,
       });
-      setItems((prev) => [response.item, ...prev]);
+      if (response.item) {
+        setItems((prev) => [response.item, ...prev]);
+      } else {
+        const refreshed = await listPush(token, decodedName);
+        setItems(refreshed.items);
+      }
       setMessage("");
     } catch (err) {
       setError((err as Error).message);
@@ -126,7 +131,7 @@ export default function PushPage() {
         <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Scheduled</h2>
         <div className="mt-4 space-y-3 text-sm text-slate-700 dark:text-slate-200">
           {items.length ? (
-            items.map((item) => (
+            items.filter(Boolean).map((item) => (
               <div key={item.id} className="rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700">
                 <div className="font-medium text-slate-900 dark:text-slate-100">{item.message}</div>
                 <div className="mt-1 text-xs text-slate-400">Scheduled: {item.scheduled_at}</div>
