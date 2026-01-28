@@ -11,6 +11,7 @@ export function Layout({ title, children }: { title: string; children: ReactNode
         <div>
           <Link to="/" className="flex items-center gap-3">
             <img src="/logo.png" alt="StepCraft" className="h-10 w-auto" />
+            <div className="text-xl font-semibold text-emerald-700 dark:text-emerald-200">StepCraft</div>
           </Link>
           <div className="text-sm text-slate-500 dark:text-slate-400">{title}</div>
         </div>

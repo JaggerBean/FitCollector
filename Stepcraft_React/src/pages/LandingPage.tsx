@@ -7,7 +7,9 @@ export default function LandingPage() {
 
   return (
     <Layout title="Welcome">
-      <div className="grid gap-10 lg:grid-cols-[1.2fr_0.8fr]">
+      <div className="relative grid gap-10 lg:grid-cols-[1.2fr_0.8fr]">
+        <div className="pointer-events-none absolute -left-20 top-10 h-56 w-56 rounded-full bg-emerald-400/10 blur-3xl" />
+        <div className="pointer-events-none absolute -right-10 top-32 h-72 w-72 rounded-full bg-blue-400/10 blur-3xl" />
         <div className="space-y-8">
           <div className="rounded-3xl border border-emerald-100 bg-white p-8 shadow-xl dark:border-slate-800 dark:bg-slate-900">
             <div className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700 dark:border-emerald-700/40 dark:bg-emerald-900/20 dark:text-emerald-200">
@@ -44,6 +46,20 @@ export default function LandingPage() {
                   </Link>
                 </>
               )}
+            </div>
+            <div className="mt-6 grid gap-3 sm:grid-cols-3">
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-xs text-slate-600 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-300">
+                <div className="text-lg font-semibold text-slate-900 dark:text-slate-100">2×</div>
+                Daily activity boost in two weeks
+              </div>
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-xs text-slate-600 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-300">
+                <div className="text-lg font-semibold text-slate-900 dark:text-slate-100">15 min</div>
+                Average setup time for owners
+              </div>
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-xs text-slate-600 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-300">
+                <div className="text-lg font-semibold text-slate-900 dark:text-slate-100">24/7</div>
+                Automated rewards & claim tracking
+              </div>
             </div>
             <div className="mt-6 grid gap-4 sm:grid-cols-3">
               <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-300">
@@ -101,18 +117,12 @@ export default function LandingPage() {
             <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
               Join the owners turning daily steps into daily playtime.
             </p>
-            <div className="mt-4 flex flex-wrap gap-3">
+            <div className="mt-4">
               <Link
                 to={isAuthenticated ? "/dashboard" : "/account/register"}
-                className="rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow hover:bg-emerald-700"
+                className="inline-flex rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow hover:bg-emerald-700"
               >
                 {isAuthenticated ? "Go to dashboard" : "Create account"}
-              </Link>
-              <Link
-                to="/register"
-                className="rounded-lg border border-emerald-200 bg-white px-5 py-2.5 text-sm font-semibold text-emerald-700 shadow-sm hover:border-emerald-300 hover:bg-emerald-50 dark:border-slate-700 dark:bg-slate-900 dark:text-emerald-200"
-              >
-                Register a server
               </Link>
             </div>
           </div>
