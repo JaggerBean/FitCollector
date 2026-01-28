@@ -207,7 +207,7 @@
                 <button class="btn btn-primary" type="submit" id="save-rewards" disabled>Save</button>
                 <button class="btn btn-outline-secondary" type="submit" form="default-rewards-form">Use Default</button>
             </div>
-            <div class="form-text mt-2" id="rewards-validation" style="display:none;">Fill in a label for each tier before saving.</div>
+            <div class="form-text mt-2 text-danger" id="rewards-validation" style="display:none;">Fill in a label for each tier before saving.</div>
         </form>
 
         <form id="default-rewards-form" method="post" action="/rewards/default?server={{ server_name }}"></form>
