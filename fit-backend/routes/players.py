@@ -7,10 +7,17 @@ from datetime import datetime, timezone
 from database import engine
 from models import PlayerRegistrationRequest, PlayerApiKeyResponse, KeyRecoveryRequest
 from utils import generate_opaque_token, hash_token
+import json
 from auth import require_api_key
 
 CENTRAL_TZ = ZoneInfo("America/Chicago")
 router = APIRouter()
+
+DEFAULT_REWARDS = [
+    {"min_steps": 1000, "label": "Starter", "rewards": ["give {player} minecraft:bread 3"]},
+    {"min_steps": 5000, "label": "Walker", "rewards": ["give {player} minecraft:iron_ingot 3"]},
+    {"min_steps": 10000, "label": "Legend", "rewards": ["give {player} minecraft:diamond 1"]},
+]
 
 # ...existing code...
 
@@ -109,6 +116,60 @@ def get_next_push_notification(
         "scheduled_at": row["scheduled_at"],
         "id": row["id"],
     }
+
+
+@router.get("/v1/players/rewards")
+def get_player_rewards(
+    device_id: str = Query(...),
+    server_name: str = Query(...),
+    player_api_key: str = Query(...),
+):
+    """
+    Fetch reward tiers for a server using a player's API key.
+    """
+    token_hash = hash_token(player_api_key)
+    with engine.begin() as conn:
+        valid = conn.execute(
+            text("""
+                SELECT id FROM player_keys
+                WHERE device_id = :device_id
+                  AND server_name = :server
+                  AND active = TRUE
+                  AND key = :key_hash
+                LIMIT 1
+            """),
+            {
+                "device_id": device_id,
+                "server": server_name,
+                "key_hash": token_hash,
+            },
+        ).fetchone()
+
+        if not valid:
+            raise HTTPException(status_code=403, detail="Invalid player API key")
+
+        rows = conn.execute(
+            text("""
+                SELECT min_steps, label, rewards_json
+                FROM server_rewards
+                WHERE server_name = :server
+                ORDER BY min_steps ASC, position ASC
+            """),
+            {"server": server_name},
+        ).fetchall()
+
+    if not rows:
+        return {"server_name": server_name, "tiers": DEFAULT_REWARDS, "is_default": True}
+
+    tiers = []
+    for row in rows:
+        try:
+            rewards = json.loads(row[2]) if row[2] else []
+        except Exception:
+            rewards = []
+        tiers.append({"min_steps": row[0], "label": row[1], "rewards": rewards})
+
+    return {"server_name": server_name, "tiers": tiers, "is_default": False}
 
 """Player registration and authentication endpoints."""
 

@@ -88,6 +88,8 @@ fun DashboardScreen(
     var claimStatuses by remember { mutableStateOf<Map<String, ClaimStatusResponse>>(emptyMap()) }
     var yesterdaySteps by remember { mutableStateOf<Map<String, Long>>(emptyMap()) }
     var blockedSourcesWarning by remember { mutableStateOf<List<String>?>(null) }
+    var rewardTiersByServer by remember { mutableStateOf<Map<String, List<RewardTier>>>(emptyMap()) }
+    var trackedTiers by remember { mutableStateOf(getTrackedTiersByServer(context)) }
 
     val deviceId = remember { getOrCreateDeviceId(context) }
     var mcUsername by remember { mutableStateOf(getMinecraftUsername(context)) }
@@ -194,6 +196,22 @@ fun DashboardScreen(
         }
         claimStatuses = newStatuses
         yesterdaySteps = newSteps
+    }
+
+    suspend fun refreshRewardTiers() {
+        if (mcUsername.isBlank()) return
+        val selectedServers = getSelectedServers(context)
+        val globalApi = buildApi(BASE_URL, GLOBAL_API_KEY)
+        val newTiers = mutableMapOf<String, List<RewardTier>>()
+        selectedServers.forEach { server ->
+            try {
+                val key = getServerKey(context, mcUsername, server) ?: return@forEach
+                val resp = globalApi.getPlayerRewards(deviceId, server, key)
+                newTiers[server] = resp.tiers
+            } catch (_: Exception) { }
+        }
+        rewardTiersByServer = newTiers
+        trackedTiers = getTrackedTiersByServer(context)
     }
 
     fun parseErrorMessage(e: Throwable): String {
@@ -316,6 +334,7 @@ fun DashboardScreen(
         if (successServers.isNotEmpty()) {
             lastSyncInstant = Instant.now()
             refreshClaimStatuses()
+            refreshRewardTiers()
         }
     }
 
@@ -330,6 +349,7 @@ fun DashboardScreen(
             }
         }
         refreshClaimStatuses()
+        refreshRewardTiers()
     }
 
     Scaffold(
@@ -434,6 +454,39 @@ fun DashboardScreen(
                 ActivityCard(stepsToday = stepsToday, isSyncEnabled = client != null && hasPerms && mcUsername.isNotBlank() && getSelectedServers(context).isNotEmpty() && !autoTimeDisabled, onSyncClick = {
                     scope.launch { syncSteps(true) }
                 })
+            }
+
+            item {
+                val trackedList = trackedTiers.entries.toList()
+                val currentSteps = stepsToday ?: 0L
+                AnimatedVisibility(
+                    visible = trackedList.isNotEmpty(),
+                    enter = animationSpec,
+                    exit = exitSpec
+                ) {
+                    Surface(
+                        color = MaterialTheme.colorScheme.surfaceVariant,
+                        shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(Modifier.padding(16.dp)) {
+                            Text("Tracked milestones", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
+                            Spacer(Modifier.height(8.dp))
+                            trackedList.forEach { (server, minSteps) ->
+                                val label = rewardTiersByServer[server]?.firstOrNull { it.min_steps == minSteps }?.label
+                                    ?: "Milestone"
+                                val progress = if (minSteps > 0) (currentSteps.toFloat() / minSteps.toFloat()).coerceIn(0f, 1f) else 0f
+                                Column(Modifier.padding(vertical = 8.dp)) {
+                                    Text("$server · $label", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+                                    Spacer(Modifier.height(4.dp))
+                                    LinearProgressIndicator(progress = progress, modifier = Modifier.fillMaxWidth())
+                                    Spacer(Modifier.height(4.dp))
+                                    Text("$currentSteps / $minSteps steps", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                                }
+                            }
+                        }
+                    }
+                }
             }
             
             blockedSourcesWarning?.let { sources ->

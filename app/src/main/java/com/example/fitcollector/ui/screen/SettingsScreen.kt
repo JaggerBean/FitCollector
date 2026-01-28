@@ -91,6 +91,11 @@ fun SettingsScreen(
     var showHealthConnectErrorDialog by remember { mutableStateOf(false) }
     var showBatteryOffDialog by remember { mutableStateOf(false) }
     var showQrScanner by remember { mutableStateOf(false) }
+    var rewardTiersByServer by remember { mutableStateOf<Map<String, List<RewardTier>>>(emptyMap()) }
+    var rewardsLoading by remember { mutableStateOf(false) }
+    var rewardsError by remember { mutableStateOf<String?>(null) }
+    var trackedTiers by remember { mutableStateOf(getTrackedTiersByServer(context)) }
+    var notificationTiers by remember { mutableStateOf(getNotificationTierKeys(context)) }
     var notificationsGranted by remember {
         mutableStateOf(
             Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
@@ -124,6 +129,27 @@ fun SettingsScreen(
         if (!granted) {
             message = "Notification permission not granted." to false
         }
+    }
+
+    LaunchedEffect(selectedServers, mcUsername) {
+        rewardsLoading = true
+        rewardsError = null
+        val serverList = selectedServers.toList()
+        val tiers = mutableMapOf<String, List<RewardTier>>()
+        serverList.forEach { server ->
+            val key = getServerKey(context, mcUsername, server)
+            if (key.isNullOrBlank()) return@forEach
+            try {
+                val resp = globalApi.getPlayerRewards(deviceId, server, key)
+                tiers[server] = resp.tiers
+            } catch (e: Exception) {
+                rewardsError = e.message ?: "Failed to load reward tiers"
+            }
+        }
+        rewardTiersByServer = tiers
+        trackedTiers = getTrackedTiersByServer(context)
+        notificationTiers = getNotificationTierKeys(context)
+        rewardsLoading = false
     }
 
     var allPermissionsGranted by remember { mutableStateOf(false) }
@@ -741,6 +767,87 @@ fun SettingsScreen(
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Text(if (notificationsGranted) "Notifications Enabled" else "Enable Notifications")
+                        }
+                    }
+                }
+            }
+
+            item {
+                Text("Milestones & Alerts", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            }
+
+            item {
+                Card(modifier = Modifier.fillMaxWidth()) {
+                    Column(Modifier.padding(16.dp)) {
+                        Text("Track milestones", style = MaterialTheme.typography.labelLarge)
+                        Spacer(Modifier.height(6.dp))
+                        Text(
+                            "Choose a tier to track on your dashboard and enable alerts when you reach a milestone. You can customize notifications anytime in Settings.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color.Gray
+                        )
+
+                        if (rewardsLoading) {
+                            Spacer(Modifier.height(12.dp))
+                            CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                        } else if (rewardTiersByServer.isEmpty()) {
+                            Spacer(Modifier.height(12.dp))
+                            Text("No reward tiers found for your servers.", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                        } else {
+                            rewardTiersByServer.forEach { (server, tiers) ->
+                                Spacer(Modifier.height(12.dp))
+                                Text(server, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
+                                if (tiers.isEmpty()) {
+                                    Text("No tiers configured.", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                                } else {
+                                    tiers.sortedBy { it.min_steps }.forEach { tier ->
+                                        val isTracked = trackedTiers[server] == tier.min_steps
+                                        val isNotify = notificationTiers.contains(makeTierKey(server, tier.min_steps))
+
+                                        Column(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(vertical = 6.dp)
+                                        ) {
+                                            Text("${tier.label} · ${tier.min_steps} steps", style = MaterialTheme.typography.bodyMedium)
+                                            Spacer(Modifier.height(4.dp))
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                horizontalArrangement = Arrangement.SpaceBetween,
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Text("Track on dashboard", style = MaterialTheme.typography.bodySmall)
+                                                Switch(
+                                                    checked = isTracked,
+                                                    onCheckedChange = { checked ->
+                                                        setTrackedTierForServer(context, server, if (checked) tier.min_steps else null)
+                                                        trackedTiers = getTrackedTiersByServer(context)
+                                                    }
+                                                )
+                                            }
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                horizontalArrangement = Arrangement.SpaceBetween,
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Text("Notify when reached", style = MaterialTheme.typography.bodySmall)
+                                                Switch(
+                                                    checked = isNotify,
+                                                    onCheckedChange = { checked ->
+                                                        setNotificationTierEnabled(context, server, tier.min_steps, checked)
+                                                        notificationTiers = getNotificationTierKeys(context)
+                                                    }
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        rewardsError?.let { err ->
+                            Spacer(Modifier.height(8.dp))
+                            Text(err, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
                         }
                     }
                 }

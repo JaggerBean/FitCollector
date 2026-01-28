@@ -92,6 +92,18 @@ data class PushNextResponse(
     val scheduled_at: String? = null
 )
 
+data class RewardTier(
+    val min_steps: Long,
+    val label: String,
+    val rewards: List<String> = emptyList()
+)
+
+data class RewardsResponse(
+    val server_name: String,
+    val tiers: List<RewardTier> = emptyList(),
+    val is_default: Boolean? = null
+)
+
 data class MojangProfile(
     val id: String? = null,
     val name: String? = null,
@@ -136,6 +148,13 @@ interface FitApi {
         @Query("server_name") serverName: String,
         @Query("player_api_key") apiKey: String
     ): PushNextResponse
+
+    @GET("v1/players/rewards")
+    suspend fun getPlayerRewards(
+        @Query("device_id") deviceId: String,
+        @Query("server_name") serverName: String,
+        @Query("player_api_key") apiKey: String
+    ): RewardsResponse
 }
 
 fun buildApi(baseUrl: String, apiKey: String): FitApi {

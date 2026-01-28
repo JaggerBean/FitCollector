@@ -247,6 +247,7 @@ class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
             try {
                 val currentServers = getSelectedServers(context)
                 checkPushNotifications(context, mcUsername, deviceId, currentServers)
+                checkMilestoneNotifications(context, mcUsername, deviceId, currentServers, totalSteps, dayStr)
             } catch (e: Exception) {
                 Log.e("SyncWorker", "Push check failed: ${e.message}")
             }
@@ -339,6 +340,44 @@ class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
                 }
             } catch (e: Exception) {
                 Log.e("SyncWorker", "Push poll failed for $server: ${e.message}")
+            }
+        }
+    }
+
+    private suspend fun checkMilestoneNotifications(
+        context: Context,
+        mcUsername: String,
+        deviceId: String,
+        servers: List<String>,
+        stepsToday: Long,
+        day: String
+    ) {
+        val notifyKeys = getNotificationTierKeys(context)
+        if (notifyKeys.isEmpty()) return
+        if (!NotificationManagerCompat.from(context).areNotificationsEnabled()) return
+
+        val api = buildApi(BASE_URL, GLOBAL_API_KEY)
+        createPushChannel(context)
+        pruneMilestoneNotifications(context, day)
+
+        servers.forEach { server ->
+            val key = getServerKey(context, mcUsername, server)
+            if (key.isNullOrBlank()) return@forEach
+            try {
+                val resp = api.getPlayerRewards(deviceId, server, key)
+                resp.tiers.forEach { tier ->
+                    val shouldNotify = notifyKeys.contains(makeTierKey(server, tier.min_steps))
+                    if (!shouldNotify) return@forEach
+
+                    if (stepsToday >= tier.min_steps && !hasMilestoneNotified(context, server, tier.min_steps, day)) {
+                        val label = if (tier.label.isNotBlank()) tier.label else "Milestone"
+                        val message = "You reached $label (${tier.min_steps} steps) on $server."
+                        showPushNotification(context, server, message)
+                        markMilestoneNotified(context, server, tier.min_steps, day)
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("SyncWorker", "Milestone check failed for $server: ${e.message}")
             }
         }
     }

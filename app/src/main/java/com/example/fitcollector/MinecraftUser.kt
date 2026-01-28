@@ -30,6 +30,9 @@ private const val KEY_INVITE_CODES = "invite_codes_by_server"
 private const val KEY_THEME_MODE = "theme_mode" // "System", "Light", "Dark"
 private const val KEY_ALLOWED_SOURCES = "allowed_step_sources"
 private const val KEY_INSTALL_TIME = "install_time"
+private const val KEY_TRACKED_TIERS = "tracked_tiers_by_server"
+private const val KEY_NOTIFY_TIERS = "notify_tiers"
+private const val KEY_MILESTONE_NOTIFIED = "milestone_notified"
 
 private val dateFormatter = DateTimeFormatter.ISO_LOCAL_DATE
 private val CENTRAL_ZONE = ZoneId.of("America/Chicago")
@@ -337,6 +340,62 @@ fun getAllowedStepSources(context: Context): Set<String> {
 fun setAllowedStepSources(context: Context, sources: Set<String>) {
     val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
     prefs.edit().putStringSet(KEY_ALLOWED_SOURCES, sources).apply()
+}
+
+fun getTrackedTiersByServer(context: Context): Map<String, Long> {
+    val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    val json = prefs.getString(KEY_TRACKED_TIERS, "{}")
+    val type = object : TypeToken<Map<String, Long>>() {}.type
+    return Gson().fromJson(json, type)
+}
+
+fun setTrackedTierForServer(context: Context, server: String, minSteps: Long?) {
+    val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    val current = getTrackedTiersByServer(context).toMutableMap()
+    if (minSteps == null) current.remove(server) else current[server] = minSteps
+    prefs.edit().putString(KEY_TRACKED_TIERS, Gson().toJson(current)).apply()
+}
+
+fun makeTierKey(server: String, minSteps: Long): String = "$server|$minSteps"
+
+fun getNotificationTierKeys(context: Context): Set<String> {
+    val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    return prefs.getStringSet(KEY_NOTIFY_TIERS, emptySet()) ?: emptySet()
+}
+
+fun isNotificationTierEnabled(context: Context, server: String, minSteps: Long): Boolean {
+    return getNotificationTierKeys(context).contains(makeTierKey(server, minSteps))
+}
+
+fun setNotificationTierEnabled(context: Context, server: String, minSteps: Long, enabled: Boolean) {
+    val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    val current = getNotificationTierKeys(context).toMutableSet()
+    val key = makeTierKey(server, minSteps)
+    if (enabled) current.add(key) else current.remove(key)
+    prefs.edit().putStringSet(KEY_NOTIFY_TIERS, current).apply()
+}
+
+fun getNotifiedMilestones(context: Context): Set<String> {
+    val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    return prefs.getStringSet(KEY_MILESTONE_NOTIFIED, emptySet()) ?: emptySet()
+}
+
+fun hasMilestoneNotified(context: Context, server: String, minSteps: Long, day: String): Boolean {
+    val key = "$day|${makeTierKey(server, minSteps)}"
+    return getNotifiedMilestones(context).contains(key)
+}
+
+fun markMilestoneNotified(context: Context, server: String, minSteps: Long, day: String) {
+    val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    val current = getNotifiedMilestones(context).toMutableSet()
+    current.add("$day|${makeTierKey(server, minSteps)}")
+    prefs.edit().putStringSet(KEY_MILESTONE_NOTIFIED, current).apply()
+}
+
+fun pruneMilestoneNotifications(context: Context, day: String) {
+    val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    val current = getNotifiedMilestones(context).filter { it.startsWith("$day|") }.toSet()
+    prefs.edit().putStringSet(KEY_MILESTONE_NOTIFIED, current).apply()
 }
 
 /**
