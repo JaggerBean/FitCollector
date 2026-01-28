@@ -211,8 +211,8 @@ const ParticleCard = ({
       const centerY = rect.height / 2;
 
       if (enableTilt) {
-        const rotateX = ((y - centerY) / centerY) * -10 * strength;
-        const rotateY = ((x - centerX) / centerX) * 10 * strength;
+        const rotateX = ((y - centerY) / centerY) * -6 * strength;
+        const rotateY = ((x - centerX) / centerX) * 6 * strength;
 
         gsap.to(element, {
           rotateX,

@@ -16,16 +16,16 @@ export default function LandingPage() {
 
   return (
     <Layout>
-      <div className="rounded-3xl bg-slate-950/95 px-6 py-16 md:px-10">
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-96 bg-[radial-gradient(circle_at_top,rgba(16,185,129,0.12),transparent_55%)]" />
+      <div className="app-panel pixel-corners pixel-corners-lg px-6 py-16 md:px-10">
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-96 bg-[radial-gradient(circle_at_top,rgba(var(--accent-rgb),0.16),transparent_55%)]" />
         <div className="space-y-12 md:space-y-16">
           <section className="relative">
             <div className="grid gap-12 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
               <div className="max-w-xl">
-                <h1 className="text-[2.5rem] font-bold leading-[1.15] text-white md:text-[3.5rem]">
+                <h1 className="text-[2.5rem] font-bold leading-[1.15] text-[color:var(--text-1)] md:text-[3.5rem]">
                   Inspire daily movement with a rewards-driven Minecraft server
                 </h1>
-                <p className="mt-6 text-base leading-relaxed text-slate-300 md:text-lg">
+                <p className="mt-6 text-base leading-relaxed text-muted md:text-lg">
                   StepCraft turns step goals into in-game rewards. Launch a private or public server and keep your
                   community engaged every single day.
                 </p>
@@ -33,7 +33,7 @@ export default function LandingPage() {
                   {isAuthenticated ? (
                     <Link
                       to="/dashboard"
-                      className="flex h-11 items-center justify-center rounded-md bg-emerald-500 px-6 text-sm font-semibold text-slate-950 transition hover:bg-emerald-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
+                      className="btn-primary flex h-11 items-center justify-center rounded-md px-6 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent-1)]"
                     >
                       Go to dashboard
                     </Link>
@@ -41,26 +41,26 @@ export default function LandingPage() {
                     <>
                       <Link
                         to="/account/register"
-                        className="flex h-11 items-center justify-center rounded-md bg-emerald-500 px-6 text-sm font-semibold text-slate-950 transition hover:bg-emerald-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
+                        className="btn-primary flex h-11 items-center justify-center rounded-md px-6 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent-1)]"
                       >
                         Create your account
                       </Link>
                       <Link
                         to="/login"
-                        className="flex h-11 items-center justify-center rounded-md border border-slate-700 px-6 text-sm font-semibold text-white transition hover:border-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
+                        className="btn-secondary flex h-11 items-center justify-center rounded-md px-6 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent-1)]"
                       >
                         Sign in
                       </Link>
                     </>
                   )}
                 </div>
-                <p className="mt-4 text-[11px] uppercase tracking-[0.22em] text-slate-500">
+                <p className="mt-4 text-[11px] uppercase tracking-[0.22em] text-muted">
                   Rewards delivered daily • Steps tracked across servers
                 </p>
               </div>
-              <div className="rounded-2xl border border-slate-900/60 bg-slate-950/60 p-6 shadow-[0_8px_30px_rgba(15,23,42,0.35)]">
-                <div className="text-xs uppercase tracking-[0.2em] text-slate-400">Today’s rewards</div>
-                <div className="mt-1 text-[11px] text-slate-500">Example daily rewards</div>
+              <div className="app-panel pixel-corners p-6">
+                <div className="text-xs uppercase tracking-[0.2em] text-muted">Today’s rewards</div>
+                <div className="mt-1 text-[11px] text-muted">Example daily rewards</div>
                 <div className="mt-4 space-y-3">
                   {[
                     "1,000 steps → Starter kit",
@@ -69,7 +69,7 @@ export default function LandingPage() {
                   ].map((line, index) => (
                       <div
                         key={line}
-                        className={`rounded-lg border border-slate-800 bg-slate-950 px-4 py-3 text-sm text-slate-200 ${
+                        className={`app-panel-soft pixel-corners pixel-corners-sm px-4 py-3 text-sm ${
                           index === 2 ? "opacity-70" : ""
                         }`}
                       >
@@ -83,13 +83,13 @@ export default function LandingPage() {
           </section>
 
           <section className="space-y-6">
-          <div className="text-xs uppercase tracking-[0.16em] text-slate-400">How it works</div>
+          <div className="text-xs uppercase tracking-[0.16em] text-muted">How it works</div>
           <MagicBento
-            glowColor="45, 212, 191"
+            glowColor="var(--accent-rgb)"
             enableTilt
             cards={[
               {
-                color: "#060010",
+                color: "var(--surface-1)",
                 title: "Launch in 3 steps",
                 description:
                   "01  Register your server — Get an API key and invite code instantly.\n" +
@@ -103,25 +103,25 @@ export default function LandingPage() {
         </section>
 
           <section className="space-y-6">
-          <div className="text-xs uppercase tracking-[0.16em] text-slate-400">Features</div>
+          <div className="text-xs uppercase tracking-[0.16em] text-muted">Features</div>
           <MagicBento
-            glowColor="45, 212, 191"
+            glowColor="var(--accent-rgb)"
             enableTilt
             cards={[
               {
-                color: "#060010",
+                color: "var(--surface-1)",
                 title: "Control who joins your server",
                 description: "Invite codes keep your private community secure.",
                 label: "Access",
               },
               {
-                color: "#060010",
+                color: "var(--surface-1)",
                 title: "Automate rewards for step streaks",
                 description: "Reward tiers run commands the moment goals are hit.",
                 label: "Automation",
               },
               {
-                color: "#060010",
+                color: "var(--surface-1)",
                 title: "Bring players back daily",
                 description: "Push alerts keep streaks alive and servers active.",
                 label: "Engagement",
@@ -131,13 +131,13 @@ export default function LandingPage() {
         </section>
 
           <section className="space-y-6">
-          <div className="text-xs uppercase tracking-[0.16em] text-slate-400">Trust & community</div>
+          <div className="text-xs uppercase tracking-[0.16em] text-muted">Trust & community</div>
           <MagicBento
-            glowColor="45, 212, 191"
+            glowColor="var(--accent-rgb)"
             enableTilt
             cards={[
               {
-                color: "#060010",
+                color: "var(--surface-1)",
                 title: "Why communities love it",
                 description:
                   "• Automated rewards and claim tracking\n" +
@@ -146,7 +146,7 @@ export default function LandingPage() {
                 label: "Outcomes",
               },
               {
-                color: "#060010",
+                color: "var(--surface-1)",
                 title: "Community admin",
                 description:
                   "“We doubled daily activity in two weeks. Players log in just to hit the next step tier.”",
@@ -156,13 +156,13 @@ export default function LandingPage() {
           />
         </section>
 
-          <section className="rounded-2xl border border-slate-800 bg-slate-950/70 p-8 text-center">
-          <h2 className="text-2xl font-semibold text-white">Ready to build your StepCraft community?</h2>
-          <p className="mt-2 text-sm text-slate-400">Create your account and launch in minutes.</p>
+          <section className="app-panel pixel-corners p-8 text-center">
+          <h2 className="text-2xl font-semibold text-[color:var(--text-1)]">Ready to build your StepCraft community?</h2>
+          <p className="mt-2 text-sm text-muted">Create your account and launch in minutes.</p>
           <div className="mt-6 flex justify-center">
             <Link
               to={isAuthenticated ? "/dashboard" : "/account/register"}
-              className="flex h-11 items-center justify-center rounded-md bg-emerald-500 px-6 text-sm font-semibold text-slate-950 transition hover:bg-emerald-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
+              className="btn-primary flex h-11 items-center justify-center rounded-md px-6 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent-1)]"
             >
               {isAuthenticated ? "Go to dashboard" : "Create your account"}
             </Link>
