@@ -7,7 +7,7 @@ export function Layout({ title, children }: { title: string; children: ReactNode
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-emerald-50 dark:from-slate-950 dark:to-slate-900">
-      <header className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-6">
+      <header className="mx-auto flex w-full max-w-7xl items-center justify-between px-6 py-6">
         <div>
           <Link to="/" className="flex items-center gap-3">
             <img src="/logo.png" alt="StepCraft" className="h-10 w-auto" />
@@ -39,7 +39,7 @@ export function Layout({ title, children }: { title: string; children: ReactNode
           </div>
         )}
       </header>
-      <main className="mx-auto w-full max-w-6xl px-6 pb-12">{children}</main>
+      <main className="mx-auto w-full max-w-7xl px-6 pb-12">{children}</main>
     </div>
   );
 }
