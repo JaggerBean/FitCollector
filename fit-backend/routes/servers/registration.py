@@ -6,7 +6,7 @@ from sqlalchemy.exc import IntegrityError
 from zoneinfo import ZoneInfo
 
 from database import engine
-from models import ServerRegistrationRequest, ApiKeyResponse
+from models import ServerRegistrationRequest, ApiKeyResponse, ReopenServerRequest
 from utils import generate_opaque_token, hash_token, generate_invite_code, send_api_key_email
 from auth import require_server_access, require_user
 
@@ -139,3 +139,68 @@ def register_server(request: ServerRegistrationRequest, user=Depends(require_use
         raise HTTPException(status_code=500, detail="Failed to register server due to a database constraint.")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to register server: {str(e)}")
+
+
+@router.post("/v1/servers/reopen")
+def reopen_server(request: ReopenServerRequest, user=Depends(require_user)) -> ApiKeyResponse:
+    """
+    Reopen a deleted server and issue a new API key to the owner.
+    Requires user authentication.
+    """
+    plaintext_key = generate_opaque_token()
+    key_hash = hash_token(plaintext_key)
+
+    try:
+        with engine.begin() as conn:
+            server = conn.execute(
+                text("""
+                    SELECT server_name, owner_user_id, is_private, invite_code
+                    FROM servers
+                    WHERE server_name = :server_name
+                """),
+                {"server_name": request.server_name}
+            ).mappings().fetchone()
+
+            if not server:
+                raise HTTPException(status_code=404, detail=f"Server '{request.server_name}' not found")
+            if server["owner_user_id"] != user["id"]:
+                raise HTTPException(status_code=403, detail="Not authorized for this server")
+
+            active_key = conn.execute(
+                text("""
+                    SELECT id FROM api_keys
+                    WHERE server_name = :server_name
+                      AND owner_user_id = :owner_user_id
+                      AND active = TRUE
+                    LIMIT 1
+                """),
+                {"server_name": request.server_name, "owner_user_id": user["id"]}
+            ).fetchone()
+
+            if active_key:
+                raise HTTPException(status_code=409, detail="Server already active")
+
+            conn.execute(
+                text("""
+                    INSERT INTO api_keys (key, server_name, active, owner_user_id)
+                    VALUES (:key_hash, :server_name, :active, :owner_user_id)
+                """),
+                {
+                    "key_hash": key_hash,
+                    "server_name": request.server_name,
+                    "active": True,
+                    "owner_user_id": user["id"],
+                }
+            )
+
+        return ApiKeyResponse(
+            api_key=plaintext_key,
+            server_name=request.server_name,
+            message="Store this key securely in your server config. You won't be able to see it again!",
+            is_private=server["is_private"],
+            invite_code=server["invite_code"],
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to reopen server: {str(e)}")

@@ -107,11 +107,14 @@ class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
             var successCount = 0
             val successServers = mutableListOf<String>()
             val errorGroups = mutableMapOf<String, MutableList<String>>() // error -> list of servers
+            val removedServers = mutableSetOf<String>()
 
             val globalApi = buildApi(BASE_URL, GLOBAL_API_KEY)
+            val inviteCodes = getInviteCodesByServer(context)
 
             selectedServers.forEach { server ->
                 suspend fun getOrRecoverKey(): String? {
+                    val inviteCode = inviteCodes[server]
                     var key = getServerKey(context, mcUsername, server)
                     if (key != null) return key
 
@@ -119,12 +122,24 @@ class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
                         val resp = globalApi.recoverKey(RegisterPayload(mcUsername, deviceId, server))
                         saveServerKey(context, mcUsername, server, resp.player_api_key)
                         return resp.player_api_key
+                    } catch (e: HttpException) {
+                        if (e.code() == 404) {
+                            try {
+                                val resp = globalApi.register(RegisterPayload(mcUsername, deviceId, server, inviteCode))
+                                saveServerKey(context, mcUsername, server, resp.player_api_key)
+                                return resp.player_api_key
+                            } catch (e2: HttpException) {
+                                if (e2.code() == 404) throw e2
+                            } catch (_: Exception) {}
+                        }
                     } catch (e: Exception) {}
 
                     try {
-                        val resp = globalApi.register(RegisterPayload(mcUsername, deviceId, server))
+                        val resp = globalApi.register(RegisterPayload(mcUsername, deviceId, server, inviteCode))
                         saveServerKey(context, mcUsername, server, resp.player_api_key)
                         return resp.player_api_key
+                    } catch (e: HttpException) {
+                        if (e.code() == 404) throw e
                     } catch (e: Exception) {}
 
                     return null
@@ -156,6 +171,9 @@ class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
                             successServers.add(server)
                         }
                     } catch (e: HttpException) {
+                        if (e.code() == 404) {
+                            throw e
+                        }
                         if (e.code() == 401) {
                             try {
                                 val resp = globalApi.recoverKey(RegisterPayload(mcUsername, deviceId, server))
@@ -168,11 +186,31 @@ class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
                                         return@forEach
                                     }
                                 }
+                            } catch (e2: HttpException) {
+                                if (e2.code() == 404) {
+                                    val inviteCode = inviteCodes[server]
+                                    try {
+                                        val resp = globalApi.register(RegisterPayload(mcUsername, deviceId, server, inviteCode))
+                                        saveServerKey(context, mcUsername, server, resp.player_api_key)
+                                        val newKey = resp.player_api_key
+                                        if (performIngest(newKey)) {
+                                            successCount++
+                                            successServers.add(server)
+                                            return@forEach
+                                        }
+                                    } catch (e3: HttpException) {
+                                        if (e3.code() == 404) throw e3
+                                    } catch (_: Exception) {}
+                                }
                             } catch (e2: Exception) {}
                         }
                         throw e
                     }
                 } catch (e: Exception) {
+                    if (e is HttpException && e.code() == 404) {
+                        handleServerRemoval(context, mcUsername, server, removedServers)
+                        return@forEach
+                    }
                     val errMsg = parseErrorMessage(e)
                     errorGroups.getOrPut(errMsg) { mutableListOf() }.add(server)
                 }
@@ -184,10 +222,17 @@ class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
                     "Failed for ${srvs.joinToString(", ")}: $err"
                 }
             } else null
+            val removalMsg = if (removedServers.isNotEmpty()) {
+                "Removed from app: ${removedServers.joinToString(", ")}" 
+            } else null
 
             val logMessage = when {
+                successMsg != null && errorMsg != null && removalMsg != null -> "Partial: $successMsg | $errorMsg | $removalMsg"
                 successMsg != null && errorMsg != null -> "Partial: $successMsg | $errorMsg"
+                successMsg != null && removalMsg != null -> "Partial: $successMsg | $removalMsg"
                 successMsg != null -> successMsg
+                removalMsg != null && errorMsg != null -> "Partial: $errorMsg | $removalMsg"
+                removalMsg != null -> removalMsg
                 else -> errorMsg ?: "Unknown failure"
             }
 
@@ -200,7 +245,8 @@ class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
             ))
 
             try {
-                checkPushNotifications(context, mcUsername, deviceId, selectedServers)
+                val currentServers = getSelectedServers(context)
+                checkPushNotifications(context, mcUsername, deviceId, currentServers)
             } catch (e: Exception) {
                 Log.e("SyncWorker", "Push check failed: ${e.message}")
             }
@@ -227,6 +273,7 @@ class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
     companion object {
         private const val WORK_NAME = "StepCraftSyncWork"
         private const val PUSH_CHANNEL_ID = "stepcraft_push"
+        private const val SYSTEM_CHANNEL_ID = "stepcraft_system"
 
         fun schedule(context: Context) {
             if (!isBackgroundSyncEnabled(context)) {
@@ -296,11 +343,65 @@ class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
         }
     }
 
+    private fun handleServerRemoval(
+        context: Context,
+        mcUsername: String,
+        server: String,
+        removedServers: MutableSet<String>
+    ) {
+        if (removedServers.contains(server)) return
+        removedServers.add(server)
+
+        val updated = getSelectedServers(context).filterNot { it == server }
+        setSelectedServers(context, updated)
+        removeServerKey(context, mcUsername, server)
+        removeInviteCodeForServer(context, server)
+        showServerRemovedNotification(context, server)
+    }
+
+    private fun showServerRemovedNotification(context: Context, serverName: String) {
+        createSystemChannel(context)
+        val intent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        }
+        val pendingIntent = PendingIntent.getActivity(
+            context,
+            1,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val message = "Removed from app because it no longer exists on the backend."
+        val notification = NotificationCompat.Builder(context, SYSTEM_CHANNEL_ID)
+            .setSmallIcon(R.drawable.ic_stat_stepcraft)
+            .setContentTitle("Server removed · $serverName")
+            .setContentText(message)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(message))
+            .setContentIntent(pendingIntent)
+            .setAutoCancel(true)
+            .build()
+
+        val id = ("removed" + serverName).hashCode()
+        NotificationManagerCompat.from(context).notify(id, notification)
+    }
+
     private fun createPushChannel(context: Context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 PUSH_CHANNEL_ID,
                 "StepCraft Notifications",
+                NotificationManager.IMPORTANCE_DEFAULT
+            )
+            val manager = context.getSystemService(NotificationManager::class.java)
+            manager.createNotificationChannel(channel)
+        }
+    }
+
+    private fun createSystemChannel(context: Context) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(
+                SYSTEM_CHANNEL_ID,
+                "StepCraft Alerts",
                 NotificationManager.IMPORTANCE_DEFAULT
             )
             val manager = context.getSystemService(NotificationManager::class.java)

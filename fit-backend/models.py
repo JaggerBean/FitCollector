@@ -39,6 +39,10 @@ class ServerRegistrationRequest(BaseModel):
     invite_code: Optional[str] = Field(None, min_length=6, max_length=32, description="Invite code for private server")
 
 
+class ReopenServerRequest(BaseModel):
+    server_name: str = Field(..., min_length=3, max_length=50)
+
+
 
 class KeysResponse(BaseModel):
     minecraft_username: str

@@ -57,7 +57,7 @@ fun OnboardingScreen(
     var servers by remember { mutableStateOf<List<ServerInfo>>(emptyList()) }
     var serverSearchQuery by remember { mutableStateOf("") }
     var inviteCodeInput by remember { mutableStateOf("") }
-    var inviteCodesByServer by remember { mutableStateOf<Map<String, String>>(emptyMap()) }
+    var inviteCodesByServer by remember { mutableStateOf(getInviteCodesByServer(context)) }
     var isLoading by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
     
@@ -139,6 +139,24 @@ fun OnboardingScreen(
         if (step == 2) {
             refreshSources(false)
         }
+    }
+
+    LaunchedEffect(Unit) {
+        try {
+            val resp = globalApi.getAvailableServers()
+            var merged = resp.servers.toMutableList()
+            val storedInvites = getInviteCodesByServer(context)
+            inviteCodesByServer = storedInvites
+            storedInvites.values.distinct().forEach { code ->
+                try {
+                    val privateResp = globalApi.getAvailableServers(code)
+                    val existing = merged.map { it.server_name }.toSet()
+                    val newOnes = privateResp.servers.filter { it.server_name !in existing }
+                    merged.addAll(newOnes)
+                } catch (_: Exception) {}
+            }
+            servers = merged.sortedBy { it.server_name.lowercase() }
+        } catch (_: Exception) {}
     }
 
     Column(
@@ -338,7 +356,7 @@ fun OnboardingScreen(
                         Spacer(Modifier.height(8.dp))
                     }
                     
-                    Text("Select Servers:", style = MaterialTheme.typography.labelLarge)
+                    Text("Select From Available Servers:", style = MaterialTheme.typography.labelLarge)
                     Spacer(Modifier.height(8.dp))
                     
                     OutlinedTextField(
@@ -378,6 +396,7 @@ fun OnboardingScreen(
                                     val added = resp.servers.filter { it.server_name !in previousNames }
                                     if (added.isNotEmpty()) {
                                         inviteCodesByServer = inviteCodesByServer + added.associate { it.server_name to code }
+                                        setInviteCodesByServer(context, inviteCodesByServer)
                                         inviteCodeInput = ""
                                     } else {
                                         error = "Invite code not found."

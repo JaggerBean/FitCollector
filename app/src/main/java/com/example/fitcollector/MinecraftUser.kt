@@ -26,6 +26,7 @@ private const val KEY_LAST_STEPS_DATE = "last_known_steps_date"
 private const val KEY_ONBOARDING_COMPLETE = "onboarding_complete"
 private const val KEY_SELECTED_SERVERS = "selected_servers"
 private const val KEY_SERVER_KEYS = "server_keys"
+private const val KEY_INVITE_CODES = "invite_codes_by_server"
 private const val KEY_THEME_MODE = "theme_mode" // "System", "Light", "Dark"
 private const val KEY_ALLOWED_SOURCES = "allowed_step_sources"
 
@@ -224,6 +225,25 @@ fun setSelectedServers(context: Context, servers: List<String>) {
     prefs.edit().putString(KEY_SELECTED_SERVERS, Gson().toJson(servers)).apply()
 }
 
+fun getInviteCodesByServer(context: Context): Map<String, String> {
+    val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    val json = prefs.getString(KEY_INVITE_CODES, "{}")
+    val type = object : TypeToken<Map<String, String>>() {}.type
+    return Gson().fromJson(json, type)
+}
+
+fun setInviteCodesByServer(context: Context, inviteCodes: Map<String, String>) {
+    val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    prefs.edit().putString(KEY_INVITE_CODES, Gson().toJson(inviteCodes)).apply()
+}
+
+fun removeInviteCodeForServer(context: Context, server: String) {
+    val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    val codes = getInviteCodesByServer(context).toMutableMap()
+    codes.remove(server)
+    prefs.edit().putString(KEY_INVITE_CODES, Gson().toJson(codes)).apply()
+}
+
 fun getServerKey(context: Context, username: String, server: String): String? {
     val allKeys = getAllServerKeys(context)
     return allKeys["$username:$server"]
@@ -233,6 +253,13 @@ fun saveServerKey(context: Context, username: String, server: String, key: Strin
     val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
     val allKeys = getAllServerKeys(context).toMutableMap()
     allKeys["$username:$server"] = key
+    prefs.edit().putString(KEY_SERVER_KEYS, Gson().toJson(allKeys)).apply()
+}
+
+fun removeServerKey(context: Context, username: String, server: String) {
+    val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    val allKeys = getAllServerKeys(context).toMutableMap()
+    allKeys.remove("$username:$server")
     prefs.edit().putString(KEY_SERVER_KEYS, Gson().toJson(allKeys)).apply()
 }
 

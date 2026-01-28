@@ -64,6 +64,17 @@ export async function registerServer(
   );
 }
 
+export async function reopenServer(token: string, server: string): Promise<RegisterServerResponse> {
+  return apiRequest<RegisterServerResponse>(
+    "/v1/servers/reopen",
+    {
+      method: "POST",
+      body: JSON.stringify({ server_name: server }),
+    },
+    token,
+  );
+}
+
 export async function getServerInfo(token: string, server: string): Promise<ServerInfo> {
   return apiRequest<ServerInfo>(`/v1/servers/info?server=${encodeURIComponent(server)}`, {}, token);
 }

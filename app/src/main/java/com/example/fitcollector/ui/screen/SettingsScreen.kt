@@ -19,8 +19,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
@@ -85,10 +83,9 @@ fun SettingsScreen(
     var message by remember { mutableStateOf<Pair<String, Boolean>?>(null) }
     var queuedName by remember { mutableStateOf(getQueuedUsername(context)) }
     var inviteCodeInput by remember { mutableStateOf("") }
-    var inviteCodesByServer by remember { mutableStateOf<Map<String, String>>(emptyMap()) }
+    var inviteCodesByServer by remember { mutableStateOf(getInviteCodesByServer(context)) }
     
     var showServerSelector by remember { mutableStateOf(false) }
-    var showKeysDialog by remember { mutableStateOf(false) }
     var showHealthConnectErrorDialog by remember { mutableStateOf(false) }
     var showBatteryOffDialog by remember { mutableStateOf(false) }
     var showQrScanner by remember { mutableStateOf(false) }
@@ -159,7 +156,21 @@ fun SettingsScreen(
         refreshSystemStatus()
         try { 
             val resp = globalApi.getAvailableServers()
-            availableServers = resp.servers.sortedBy { it.server_name.lowercase() }
+            var merged = resp.servers.toMutableList()
+
+            val storedInvites = getInviteCodesByServer(context)
+            inviteCodesByServer = storedInvites
+            val uniqueCodes = storedInvites.values.distinct()
+            uniqueCodes.forEach { code ->
+                try {
+                    val privateResp = globalApi.getAvailableServers(code)
+                    val existing = merged.map { it.server_name }.toSet()
+                    val newOnes = privateResp.servers.filter { it.server_name !in existing }
+                    merged.addAll(newOnes)
+                } catch (_: Exception) {}
+            }
+
+            availableServers = merged.sortedBy { it.server_name.lowercase() }
         } catch (e: Exception) {}
     }
 
@@ -330,6 +341,7 @@ fun SettingsScreen(
                                             val added = resp.servers.filter { it.server_name !in previousNames }
                                             if (added.isNotEmpty()) {
                                                 inviteCodesByServer = inviteCodesByServer + added.associate { it.server_name to code }
+                                                setInviteCodesByServer(context, inviteCodesByServer)
                                                 val addedNames = added.map { it.server_name }
                                                 selectedServers = selectedServers + addedNames
                                                 setSelectedServers(context, selectedServers.toList())
@@ -683,60 +695,6 @@ fun SettingsScreen(
                                 }
                             }
                         }
-
-                        HorizontalDivider(Modifier.padding(vertical = 16.dp))
-
-                        OutlinedButton(
-                            onClick = onNavigateToRawHealth,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Icon(Icons.Default.Info, null)
-                            Spacer(Modifier.width(8.dp))
-                            Text("Debug: View Raw Health Records")
-                        }
-                    }
-                }
-            }
-
-            item {
-                Text("Developer Debug", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.error)
-            }
-
-            item {
-                Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.1f))) {
-                    Column(Modifier.padding(16.dp)) {
-                        Button(
-                            onClick = { showKeysDialog = true },
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
-                        ) {
-                            Icon(Icons.Default.Search, null)
-                            Spacer(Modifier.width(8.dp))
-                            Text("View Saved API Keys")
-                        }
-
-                        Spacer(Modifier.height(8.dp))
-
-                        Button(
-                            onClick = {
-                                clearAllServerKeys(context)
-                                message = "All server keys cleared!" to true
-                            },
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
-                        ) {
-                            Icon(Icons.Default.Delete, null)
-                            Spacer(Modifier.width(8.dp))
-                            Text("Clear All API Keys")
-                        }
-
-                        Spacer(Modifier.height(8.dp))
-
-                        Text(
-                            "Device ID: $deviceId",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = Color.Gray
-                        )
                     }
                 }
             }
@@ -765,43 +723,6 @@ fun SettingsScreen(
         )
     }
 
-    if (showKeysDialog) {
-        val keys = getAllServerKeys(context)
-        Dialog(onDismissRequest = { showKeysDialog = false }) {
-            Surface(
-                shape = RoundedCornerShape(16.dp),
-                color = MaterialTheme.colorScheme.surface,
-                modifier = Modifier.fillMaxWidth().padding(16.dp)
-            ) {
-                Column(Modifier.padding(16.dp)) {
-                    Text("Saved API Keys", style = MaterialTheme.typography.titleLarge)
-                    Spacer(Modifier.height(16.dp))
-
-                    if (keys.isEmpty()) {
-                        Text("No keys saved.", style = MaterialTheme.typography.bodyMedium)
-                    } else {
-                        LazyColumn(modifier = Modifier.heightIn(max = 400.dp)) {
-                            items(keys.toList()) { (ident, key) ->
-                                Column(Modifier.padding(vertical = 8.dp)) {
-                                    Text(ident, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelLarge)
-                                    Text(key, style = MaterialTheme.typography.bodySmall, color = Color.Gray)
-                                }
-                                HorizontalDivider()
-                            }
-                        }
-                    }
-
-                    Spacer(Modifier.height(16.dp))
-                    Button(
-                        onClick = { showKeysDialog = false },
-                        modifier = Modifier.align(Alignment.End)
-                    ) {
-                        Text("Close")
-                    }
-                }
-            }
-        }
-    }
 
     // Battery optimization OFF dialog
     if (showBatteryOffDialog) {
@@ -877,7 +798,7 @@ fun ServerSelectorDialog(
             modifier = Modifier.fillMaxWidth().fillMaxHeight(0.8f)
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
-                Text("Select Servers", style = MaterialTheme.typography.headlineSmall)
+                Text("Select From Available Servers", style = MaterialTheme.typography.headlineSmall)
                 Spacer(Modifier.height(16.dp))
                 
                 OutlinedTextField(

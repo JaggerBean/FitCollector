@@ -37,12 +37,34 @@ def list_owned_servers(user=Depends(require_user)):
 
         rows = conn.execute(
             text("""
-                SELECT server_name, owner_email, server_address, server_version, created_at, is_private, invite_code
-                FROM servers
-                WHERE owner_user_id = :user_id
-                ORDER BY created_at DESC
+                SELECT 
+                    s.server_name,
+                    s.owner_email,
+                    s.server_address,
+                    s.server_version,
+                    s.created_at,
+                    s.is_private,
+                    s.invite_code,
+                    COALESCE(MAX(CASE WHEN k.active THEN 1 ELSE 0 END), 0) AS api_active,
+                    COUNT(k.id) AS key_count
+                FROM servers s
+                LEFT JOIN api_keys k
+                  ON k.server_name = s.server_name
+                 AND k.owner_user_id = s.owner_user_id
+                WHERE s.owner_user_id = :user_id
+                GROUP BY s.server_name, s.owner_email, s.server_address, s.server_version, s.created_at, s.is_private, s.invite_code
+                ORDER BY s.created_at DESC
             """),
             {"user_id": user["id"]}
         ).mappings().all()
 
-    return {"servers": list(rows)}
+    servers = []
+    for row in rows:
+        item = dict(row)
+        item["is_active"] = bool(item.get("api_active"))
+        item["is_deleted"] = not item["is_active"]
+        item.pop("api_active", None)
+        item.pop("key_count", None)
+        servers.append(item)
+
+    return {"servers": servers}

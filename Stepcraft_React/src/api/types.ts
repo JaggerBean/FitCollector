@@ -57,6 +57,8 @@ export interface ServerSummary {
   created_at?: string;
   is_private?: boolean;
   invite_code?: string | null;
+  is_active?: boolean;
+  is_deleted?: boolean;
 }
 
 export interface OwnedServersResponse {
