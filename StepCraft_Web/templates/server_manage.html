@@ -131,10 +131,27 @@
                 color: #E1E1E1;
             }
             .output-block {
-                background: #0b0d0b;
-                color: #8CFFA3;
-                border-color: #81C784;
-                box-shadow: inset 0 0 0 1px rgba(129, 199, 132, 0.35);
+                background: #f6f8f6;
+                color: #1f2a24;
+                border: 1px solid #d9e3db;
+                border-radius: 12px;
+                padding: 16px;
+                font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+                font-size: 0.9rem;
+                white-space: pre-wrap;
+                word-break: break-word;
+                max-height: 320px;
+                overflow-y: auto;
+            }
+            @media (prefers-color-scheme: dark) {
+                .output-block {
+                    background: #0b0d0b;
+                    color: #8CFFA3;
+                    border-color: #81C784;
+                    box-shadow: inset 0 0 0 1px rgba(129, 199, 132, 0.35);
+                    max-height: 320px;
+                    overflow-y: auto;
+                }
             }
             .ghost-text {
                 color: #7b7f7c;
