@@ -158,25 +158,9 @@ const ParticleCard = ({
 
     const element = cardRef.current;
 
-    const handleMouseEnter = () => {
-      isHoveredRef.current = true;
-      animateParticles();
+    const proximity = 120;
 
-      if (enableTilt) {
-        gsap.to(element, {
-          rotateX: 5,
-          rotateY: 5,
-          duration: 0.3,
-          ease: "power2.out",
-          transformPerspective: 1000,
-        });
-      }
-    };
-
-    const handleMouseLeave = () => {
-      isHoveredRef.current = false;
-      clearAllParticles();
-
+    const resetTransforms = () => {
       if (enableTilt) {
         gsap.to(element, {
           rotateX: 0,
@@ -197,11 +181,30 @@ const ParticleCard = ({
     };
 
     const handleMouseMove = (e: MouseEvent) => {
-      if (!enableTilt && !enableMagnetism) return;
-
       const rect = element.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
+      const dx = Math.max(rect.left - e.clientX, 0, e.clientX - rect.right);
+      const dy = Math.max(rect.top - e.clientY, 0, e.clientY - rect.bottom);
+      const distance = Math.hypot(dx, dy);
+      const isNear = distance <= proximity;
+
+      if (isNear && !isHoveredRef.current) {
+        isHoveredRef.current = true;
+        animateParticles();
+      }
+
+      if (!isNear && isHoveredRef.current) {
+        isHoveredRef.current = false;
+        clearAllParticles();
+        resetTransforms();
+        return;
+      }
+
+      if (!isNear || (!enableTilt && !enableMagnetism)) return;
+
+      const clampedX = Math.min(Math.max(e.clientX, rect.left), rect.right);
+      const clampedY = Math.min(Math.max(e.clientY, rect.top), rect.bottom);
+      const x = clampedX - rect.left;
+      const y = clampedY - rect.top;
       const centerX = rect.width / 2;
       const centerY = rect.height / 2;
 
@@ -276,18 +279,15 @@ const ParticleCard = ({
       );
     };
 
-    element.addEventListener("mouseenter", handleMouseEnter);
-    element.addEventListener("mouseleave", handleMouseLeave);
-    element.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mousemove", handleMouseMove);
     element.addEventListener("click", handleClick);
 
     return () => {
       isHoveredRef.current = false;
-      element.removeEventListener("mouseenter", handleMouseEnter);
-      element.removeEventListener("mouseleave", handleMouseLeave);
-      element.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mousemove", handleMouseMove);
       element.removeEventListener("click", handleClick);
       clearAllParticles();
+      resetTransforms();
     };
   }, [animateParticles, clearAllParticles, disableAnimations, enableTilt, enableMagnetism, clickEffect, glowColor]);
 
