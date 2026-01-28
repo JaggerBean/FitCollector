@@ -57,7 +57,6 @@ export default function LandingPage() {
                 <p className="mt-4 text-[11px] uppercase tracking-[0.22em] text-slate-500">
                   Rewards delivered daily • Steps tracked across servers
                 </p>
-                <div className="mt-3 text-xs text-slate-400">Takes 30 seconds. No credit card.</div>
               </div>
               <div className="rounded-2xl border border-slate-900/60 bg-slate-950/60 p-6 shadow-[0_8px_30px_rgba(15,23,42,0.35)]">
                 <div className="text-xs uppercase tracking-[0.2em] text-slate-400">Today’s rewards</div>
