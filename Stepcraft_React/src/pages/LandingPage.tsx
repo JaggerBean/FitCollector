@@ -112,20 +112,6 @@ export default function LandingPage() {
               Built for admins who want motivation, not manual work.
             </div>
           </div>
-          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-            <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Ready to enroll?</h2>
-            <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-              Join the owners turning daily steps into daily playtime.
-            </p>
-            <div className="mt-4">
-              <Link
-                to={isAuthenticated ? "/dashboard" : "/account/register"}
-                className="inline-flex rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow hover:bg-emerald-700"
-              >
-                {isAuthenticated ? "Go to dashboard" : "Create account"}
-              </Link>
-            </div>
-          </div>
         </div>
       </div>
     </Layout>
