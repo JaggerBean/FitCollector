@@ -142,12 +142,11 @@ export default function LandingPage() {
                 label: "Outcomes",
               },
               {
-                color: "rgba(16, 185, 129, 0.12)",
+                color: "#060010",
                 title: "Community admin",
                 description:
                   "“We doubled daily activity in two weeks. Players log in just to hit the next step tier.”",
                 label: "Community",
-                className: "magic-bento-card--quote",
               },
             ]}
           />
