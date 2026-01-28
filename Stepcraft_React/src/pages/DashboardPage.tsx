@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { QRCodeCanvas } from "qrcode.react";
 import { Layout } from "../components/Layout";
 import { useAuthContext } from "../app/AuthContext";
 import { getOwnedServers } from "../api/servers";
@@ -46,8 +47,18 @@ export default function DashboardPage() {
               {server.server_address || "No address"} · {server.server_version || "Unknown"}
             </div>
             {server.is_private && server.invite_code && (
-              <div className="mt-2 rounded-lg border border-emerald-100 bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-700 dark:border-emerald-700/40 dark:bg-emerald-900/20 dark:text-emerald-200">
-                Private · Invite {server.invite_code}
+              <div className="mt-2">
+                <div className="rounded-lg border border-emerald-100 bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-700 dark:border-emerald-700/40 dark:bg-emerald-900/20 dark:text-emerald-200">
+                  Private · Invite {server.invite_code}
+                </div>
+                <div className="mt-3 flex items-center gap-3">
+                  <div className="rounded-lg bg-white p-2 shadow-sm">
+                    <QRCodeCanvas value={server.invite_code} size={72} includeMargin />
+                  </div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400">
+                    Scan to add this private server.
+                  </div>
+                </div>
               </div>
             )}
             <div className="mt-4 flex gap-2">

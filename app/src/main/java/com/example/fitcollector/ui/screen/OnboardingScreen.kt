@@ -402,39 +402,94 @@ fun OnboardingScreen(
                     
                     Spacer(Modifier.height(8.dp))
                     
-                    val filteredServers = remember(serverSearchQuery, servers) {
-                        servers.filter { it.server_name.contains(serverSearchQuery, ignoreCase = true) }
+                    val (privateServers, publicServers) = remember(serverSearchQuery, servers, inviteCodesByServer) {
+                        val privateNames = inviteCodesByServer.keys
+                        val filtered = servers.filter { it.server_name.contains(serverSearchQuery, ignoreCase = true) }
+                        val privates = filtered.filter { privateNames.contains(it.server_name) }
+                            .sortedBy { it.server_name.lowercase() }
+                        val publics = filtered.filterNot { privateNames.contains(it.server_name) }
+                            .sortedBy { it.server_name.lowercase() }
+                        privates to publics
                     }
                     
                     LazyColumn(
                         modifier = Modifier.heightIn(max = 200.dp)
                     ) {
-                        items(filteredServers) { server ->
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable {
-                                        selectedServers = if (selectedServers.contains(server.server_name)) {
-                                            selectedServers - server.server_name
-                                        } else {
-                                            selectedServers + server.server_name
-                                        }
-                                    }
-                                    .padding(vertical = 8.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Checkbox(
-                                    checked = selectedServers.contains(server.server_name),
-                                    onCheckedChange = { checked ->
-                                        selectedServers = if (checked) {
-                                            selectedServers + server.server_name
-                                        } else {
-                                            selectedServers - server.server_name
-                                        }
-                                    }
+                        if (privateServers.isNotEmpty()) {
+                            item {
+                                Text(
+                                    "Private servers",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = Color.Gray,
+                                    modifier = Modifier.padding(vertical = 4.dp)
                                 )
-                                Spacer(Modifier.width(8.dp))
-                                Text(server.server_name)
+                            }
+                            items(privateServers) { server ->
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable {
+                                            selectedServers = if (selectedServers.contains(server.server_name)) {
+                                                selectedServers - server.server_name
+                                            } else {
+                                                selectedServers + server.server_name
+                                            }
+                                        }
+                                        .padding(vertical = 8.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Checkbox(
+                                        checked = selectedServers.contains(server.server_name),
+                                        onCheckedChange = { checked ->
+                                            selectedServers = if (checked) {
+                                                selectedServers + server.server_name
+                                            } else {
+                                                selectedServers - server.server_name
+                                            }
+                                        }
+                                    )
+                                    Spacer(Modifier.width(8.dp))
+                                    Text(server.server_name)
+                                }
+                            }
+                        }
+
+                        if (publicServers.isNotEmpty()) {
+                            item {
+                                Text(
+                                    "Public servers",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = Color.Gray,
+                                    modifier = Modifier.padding(vertical = 4.dp)
+                                )
+                            }
+                            items(publicServers) { server ->
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable {
+                                            selectedServers = if (selectedServers.contains(server.server_name)) {
+                                                selectedServers - server.server_name
+                                            } else {
+                                                selectedServers + server.server_name
+                                            }
+                                        }
+                                        .padding(vertical = 8.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Checkbox(
+                                        checked = selectedServers.contains(server.server_name),
+                                        onCheckedChange = { checked ->
+                                            selectedServers = if (checked) {
+                                                selectedServers + server.server_name
+                                            } else {
+                                                selectedServers - server.server_name
+                                            }
+                                        }
+                                    )
+                                    Spacer(Modifier.width(8.dp))
+                                    Text(server.server_name)
+                                }
                             }
                         }
                     }
