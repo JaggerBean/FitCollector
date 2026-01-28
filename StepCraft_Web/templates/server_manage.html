@@ -233,7 +233,7 @@
                     </div>
                     <datalist id="player-suggestions"></datalist>
                 </div>
-                <div class="col-md-8">
+                <div class="col-md-8" id="ban-reason-wrap" style="display:none;">
                     <label class="form-label">Ban Reason (optional)</label>
                     <input class="form-control" type="text" name="reason" placeholder="broke code of conduct">
                 </div>
@@ -241,9 +241,10 @@
                     <button class="btn btn-outline-secondary" name="action" value="yesterday_steps" type="submit">Yesterday Steps</button>
                     <button class="btn btn-outline-secondary" name="action" value="claim_status" type="submit">Claim Status</button>
                     <button class="btn btn-outline-secondary" name="action" value="claim_reward" type="submit">Mark Claimed</button>
-                    <button class="btn btn-outline-warning" name="action" value="ban_player" type="submit">Ban Player</button>
+                    <button class="btn btn-outline-warning" name="action" value="ban_player" type="button" id="ban-player-btn">Ban Player</button>
                     <button class="btn btn-outline-secondary" name="action" value="unban_player" type="submit">Unban Player</button>
                     <button class="btn btn-outline-danger" name="action" value="wipe_player" type="submit">Wipe Player</button>
+                    <button class="btn btn-primary" id="ban-player-submit" type="submit" style="display:none;">Confirm Ban</button>
                 </div>
             </form>
         </div>
@@ -351,6 +352,20 @@
             ghost.style.display = 'none';
             ghost.innerHTML = '';
         })();
+    </script>
+    <!-- Ban reason show/hide logic -->
+    <script>
+        const banBtn = document.getElementById('ban-player-btn');
+        const banReasonWrap = document.getElementById('ban-reason-wrap');
+        const banSubmit = document.getElementById('ban-player-submit');
+        if (banBtn && banReasonWrap && banSubmit) {
+            banBtn.addEventListener('click', function() {
+                banReasonWrap.style.display = '';
+                banBtn.style.display = 'none';
+                banSubmit.style.display = '';
+                banReasonWrap.querySelector('input').focus();
+            });
+        }
     </script>
 </body>
 </html>
