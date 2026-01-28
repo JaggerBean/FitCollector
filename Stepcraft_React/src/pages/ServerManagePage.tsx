@@ -35,6 +35,26 @@ export default function ServerManagePage() {
   const [limit, setLimit] = useState(100);
   const [offset, setOffset] = useState(0);
 
+  const usernameSuggestions = useMemo(
+    () => players?.players?.map((player) => player.minecraft_username) ?? [],
+    [players],
+  );
+
+  const getUsernameSuggestion = (value: string) => {
+    if (!value) return null;
+    const lower = value.toLowerCase();
+    return usernameSuggestions.find((name) => name.toLowerCase().startsWith(lower)) ?? null;
+  };
+
+  const onUsernameKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key !== "Tab") return;
+    const suggestion = getUsernameSuggestion(username);
+    if (suggestion && suggestion !== username) {
+      event.preventDefault();
+      setUsername(suggestion);
+    }
+  };
+
   const decodedName = useMemo(() => (serverName ? decodeURIComponent(serverName) : ""), [serverName]);
 
   useEffect(() => {
@@ -207,6 +227,7 @@ export default function ServerManagePage() {
                   onChange={(event) => setUsername(event.target.value)}
                   placeholder="Player name"
                   list="player-suggestions"
+                  onKeyDown={onUsernameKeyDown}
                 />
                 <datalist id="player-suggestions">
                   {players?.players?.map((player) => (
