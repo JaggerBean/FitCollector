@@ -1,0 +1,13 @@
+version: "3.8"
+services:
+  stepcraft_react:
+    build:
+      context: .
+      args:
+        VITE_BACKEND_URL: ${VITE_BACKEND_URL:-https://api.stepcraft.org}
+    container_name: stepcraft_react
+    ports:
+      - "8080:80"
+    restart: unless-stopped
+    env_file:
+      - ../.env
