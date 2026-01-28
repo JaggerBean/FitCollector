@@ -8,7 +8,7 @@ from zoneinfo import ZoneInfo
 from database import engine
 from models import ServerRegistrationRequest, ApiKeyResponse
 from utils import generate_opaque_token, hash_token, generate_invite_code
-from auth import require_api_key, require_user
+from auth import require_server_access, require_user
 
 CENTRAL_TZ = ZoneInfo("America/Chicago")
 router = APIRouter()
@@ -133,29 +133,3 @@ def register_server(request: ServerRegistrationRequest, user=Depends(require_use
         raise HTTPException(status_code=500, detail="Failed to register server due to a database constraint.")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to register server: {str(e)}")
-
-
-@router.get("/v1/servers/info")
-def get_server_info(server_name: str = Depends(require_api_key)):
-    """Get info about the authenticated server."""
-    with engine.begin() as conn:
-        row = conn.execute(
-            text("""
-                SELECT server_name, active, created_at, last_used
-                FROM api_keys
-                WHERE server_name = :server_name
-                LIMIT 1
-            """),
-            {"server_name": server_name}
-        ).mappings().first()
-    
-    if not row:
-        raise HTTPException(status_code=404, detail="Server not found")
-    
-    d = dict(row)
-    if d.get("created_at"):
-        d["created_at"] = d["created_at"].astimezone(CENTRAL_TZ).isoformat()
-    if d.get("last_used"):
-        d["last_used"] = d["last_used"].astimezone(CENTRAL_TZ).isoformat()
-    
-    return d
