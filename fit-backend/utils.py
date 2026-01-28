@@ -15,6 +15,11 @@ def generate_opaque_token(length: int = 32) -> str:
     return secrets.token_urlsafe(length)
 
 
+def generate_invite_code(length: int = 8) -> str:
+    """Generate a short invite code for private servers."""
+    return secrets.token_hex(max(1, length // 2))
+
+
 def generate_salt(length: int = 16) -> str:
     return secrets.token_hex(length)
 

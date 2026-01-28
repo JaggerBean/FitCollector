@@ -56,6 +56,8 @@ fun OnboardingScreen(
     var selectedServers by remember { mutableStateOf<Set<String>>(emptySet()) }
     var servers by remember { mutableStateOf<List<ServerInfo>>(emptyList()) }
     var serverSearchQuery by remember { mutableStateOf("") }
+    var inviteCodeInput by remember { mutableStateOf("") }
+    var inviteCodesByServer by remember { mutableStateOf<Map<String, String>>(emptyMap()) }
     var isLoading by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
     
@@ -347,6 +349,45 @@ fun OnboardingScreen(
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true
                     )
+
+                    Spacer(Modifier.height(12.dp))
+
+                    OutlinedTextField(
+                        value = inviteCodeInput,
+                        onValueChange = { inviteCodeInput = it },
+                        label = { Text("Invite Code (private server)") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    Button(
+                        onClick = {
+                            scope.launch {
+                                val code = inviteCodeInput.trim()
+                                if (code.isBlank()) {
+                                    error = "Enter an invite code."
+                                    return@launch
+                                }
+                                try {
+                                    val previousNames = servers.map { it.server_name }.toSet()
+                                    val resp = globalApi.getAvailableServers(code)
+                                    servers = resp.servers.sortedBy { it.server_name.lowercase() }
+                                    val added = resp.servers.filter { it.server_name !in previousNames }
+                                    if (added.isNotEmpty()) {
+                                        inviteCodesByServer = inviteCodesByServer + added.associate { it.server_name to code }
+                                        inviteCodeInput = ""
+                                    } else {
+                                        error = "Invite code not found."
+                                    }
+                                } catch (e: Exception) {
+                                    error = "Could not add invite code: ${e.message}"
+                                }
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Add Private Server")
+                    }
                     
                     Spacer(Modifier.height(8.dp))
                     
@@ -429,7 +470,8 @@ fun OnboardingScreen(
                                     val cleaned = mcUsername.trim()
                                     selectedServers.forEach { serverName ->
                                         try {
-                                            val resp = globalApi.register(RegisterPayload(cleaned, deviceId, serverName))
+                                            val invite = inviteCodesByServer[serverName]
+                                            val resp = globalApi.register(RegisterPayload(cleaned, deviceId, serverName, invite))
                                             saveServerKey(context, cleaned, serverName, resp.player_api_key)
                                         } catch (e: HttpException) {
                                             if (e.code() == 409) {

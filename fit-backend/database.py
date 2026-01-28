@@ -122,6 +122,23 @@ def init_db() -> None:
         ON servers(owner_user_id);
         """))
 
+        # 5d) Migration: add privacy + invite code to servers
+        conn.execute(text("""
+        ALTER TABLE servers
+        ADD COLUMN IF NOT EXISTS is_private BOOLEAN DEFAULT FALSE;
+        """))
+
+        conn.execute(text("""
+        ALTER TABLE servers
+        ADD COLUMN IF NOT EXISTS invite_code TEXT;
+        """))
+
+        conn.execute(text("""
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_servers_invite_code
+        ON servers(invite_code)
+        WHERE invite_code IS NOT NULL;
+        """))
+
         # 6) Create player_keys table for per-player authentication
         conn.execute(text("""
         CREATE TABLE IF NOT EXISTS player_keys (

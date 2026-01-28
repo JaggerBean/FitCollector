@@ -267,6 +267,62 @@
         </div>
 
         <div class="card p-3 mb-3">
+            <h5>Privacy</h5>
+            {% if not has_key %}
+                <div class="alert alert-warning mb-0">Save your API key on the dashboard to manage privacy.</div>
+            {% else %}
+                <div class="d-flex align-items-center gap-3">
+                    <label class="form-label mb-0">Privacy:</label>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="is-private-toggle" {% if server.is_private %}checked{% endif %}>
+                        <label class="form-check-label" for="is-private-toggle" id="privacy-label">{{ 'Private' if server.is_private else 'Public' }}</label>
+                    </div>
+                    <span class="ms-3 {% if server.is_private and server.invite_code %}d-inline{% else %}d-none{% endif %}" id="invite-code-wrap">
+                        Invite Code: <strong id="invite-code">{{ server.invite_code }}</strong>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="copyInviteCode()">Copy</button>
+                    </span>
+                </div>
+                <script>
+                function copyInviteCode() {
+                    const code = document.getElementById('invite-code').textContent;
+                    navigator.clipboard.writeText(code);
+                }
+                document.getElementById('is-private-toggle').addEventListener('change', async function() {
+                    const isPrivate = this.checked;
+                    const label = document.getElementById('privacy-label');
+                    label.textContent = isPrivate ? 'Private' : 'Public';
+                    try {
+                        const resp = await fetch('/api/server/toggle-privacy', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                server_name: '{{ server.server_name }}',
+                                is_private: isPrivate
+                            })
+                        });
+                        const data = await resp.json();
+                        if (data.ok) {
+                            const wrap = document.getElementById('invite-code-wrap');
+                            if (isPrivate) {
+                                wrap.classList.remove('d-none');
+                                wrap.classList.add('d-inline');
+                                document.getElementById('invite-code').textContent = data.invite_code || '{{ server.invite_code }}';
+                            } else {
+                                wrap.classList.remove('d-inline');
+                                wrap.classList.add('d-none');
+                            }
+                        } else {
+                            alert('Failed to update privacy: ' + (data.detail || 'Unknown error'));
+                        }
+                    } catch (e) {
+                        alert('Error updating privacy: ' + e);
+                    }
+                });
+                </script>
+            {% endif %}
+        </div>
+
+        <div class="card p-3 mb-3">
             <h5>Players</h5>
             <form method="post" action="/server/manage/action" class="row g-2 align-items-end">
                 <input type="hidden" name="server_name" value="{{ server.server_name }}">

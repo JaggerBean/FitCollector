@@ -16,6 +16,10 @@ class UpdateServerSettingsRequest(BaseModel):
     max_players: Optional[int] = Field(None, ge=1, le=10000, description="Maximum players allowed (NULL = unlimited)")
 
 
+class TogglePrivacyRequest(BaseModel):
+    is_private: bool
+
+
 @router.get("/v1/servers/info")
 def get_server_info(server_name: str = Depends(require_api_key)):
     """
@@ -27,13 +31,16 @@ def get_server_info(server_name: str = Depends(require_api_key)):
             server = conn.execute(
                 text("""
                     SELECT 
-                        server_name,
-                        max_players,
-                        created_at,
-                        last_used,
-                        active
-                    FROM api_keys
-                    WHERE server_name = :server_name
+                        k.server_name,
+                        k.max_players,
+                        k.created_at,
+                        k.last_used,
+                        k.active,
+                        s.is_private,
+                        s.invite_code
+                    FROM api_keys k
+                    JOIN servers s ON s.server_name = k.server_name
+                    WHERE k.server_name = :server_name
                 """),
                 {"server_name": server_name}
             ).mappings().fetchone()
@@ -61,6 +68,48 @@ def get_server_info(server_name: str = Depends(require_api_key)):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to get server info: {str(e)}")
+
+
+@router.post("/v1/servers/toggle-privacy")
+def toggle_server_privacy(request: TogglePrivacyRequest, server_name: str = Depends(require_api_key)):
+    """
+    Toggle server privacy (public/private) and regenerate invite code if switching to private.
+    Requires server API key (X-API-Key header).
+    """
+    from utils import generate_invite_code
+    try:
+        with engine.begin() as conn:
+            server = conn.execute(
+                text("SELECT is_private, invite_code FROM servers WHERE server_name = :server_name"),
+                {"server_name": server_name}
+            ).mappings().fetchone()
+
+            if not server:
+                raise HTTPException(status_code=404, detail=f"Server '{server_name}' not found")
+
+            invite_code = server["invite_code"]
+            if request.is_private and (not server["is_private"] or not invite_code):
+                invite_code = generate_invite_code()
+
+            conn.execute(
+                text("""
+                    UPDATE servers
+                    SET is_private = :is_private,
+                        invite_code = :invite_code
+                    WHERE server_name = :server_name
+                """),
+                {
+                    "is_private": request.is_private,
+                    "invite_code": invite_code if request.is_private else invite_code,
+                    "server_name": server_name,
+                }
+            )
+
+        return {"ok": True, "is_private": request.is_private, "invite_code": invite_code if request.is_private else None}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to toggle privacy: {str(e)}")
 
 
 @router.patch("/v1/admin/servers/{server_name}/settings")

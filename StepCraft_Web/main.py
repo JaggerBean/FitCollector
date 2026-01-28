@@ -31,6 +31,37 @@ def get_server_key_from_session(request: Request, server_name: str | None) -> st
     return keys.get(server_name)
 
 
+@app.post("/api/server/toggle-privacy")
+async def api_toggle_privacy(request: Request):
+    data = await request.json()
+    server_name = data.get("server_name")
+    is_private = data.get("is_private")
+    if not server_name or is_private is None:
+        return JSONResponse({"ok": False, "detail": "Missing server_name or is_private"}, status_code=400)
+
+    server_key = get_server_key_from_session(request, server_name)
+    if not server_key:
+        return JSONResponse({"ok": False, "detail": "Missing API key for this server. Save it on the dashboard first."}, status_code=400)
+
+    headers = {"X-API-Key": server_key}
+    async with httpx.AsyncClient() as client:
+        try:
+            resp = await client.post(
+                f"{BACKEND_URL}/v1/servers/toggle-privacy",
+                headers=headers,
+                json={"is_private": is_private},
+                timeout=10,
+            )
+        except Exception as e:
+            return JSONResponse({"ok": False, "detail": str(e)}, status_code=500)
+
+    try:
+        payload = resp.json()
+    except Exception:
+        payload = {"ok": False, "detail": resp.text}
+    return JSONResponse(payload, status_code=resp.status_code)
+
+
 @app.get("/server/players", response_class=HTMLResponse)
 async def server_players(request: Request):
     user_token = request.session.get("user_token")
@@ -794,7 +825,9 @@ async def register_server(request: Request,
     owner_name: str = Form(...),
     owner_email: str = Form(...),
     server_address: str = Form(...),
-    server_version: str = Form("")
+    server_version: str = Form(""),
+    is_private: str = Form(""),
+    invite_code: str = Form("")
 ):
     # Send registration data to backend API
     import logging
@@ -820,7 +853,9 @@ async def register_server(request: Request,
                         "owner_name": owner_name,
                         "owner_email": owner_email,
                         "server_address": server_address,
-                        "server_version": server_version
+                        "server_version": server_version,
+                        "is_private": bool(is_private),
+                        "invite_code": invite_code.strip() or None,
                     },
                     headers={"Authorization": f"Bearer {user_token}"}
                 )
@@ -845,7 +880,15 @@ async def register_server(request: Request,
         except Exception as e:
             import logging
             logging.error(f"Failed to send email: {e}")
-        return templates.TemplateResponse("confirmation.html", {"request": request, "api_key": api_key, "server_name": server_name_val, "message": message_val, "year": year})
+        return templates.TemplateResponse("confirmation.html", {
+            "request": request,
+            "api_key": api_key,
+            "server_name": server_name_val,
+            "message": message_val,
+            "invite_code": data.get("invite_code"),
+            "is_private": data.get("is_private"),
+            "year": year
+        })
     else:
         error = None
         if response:

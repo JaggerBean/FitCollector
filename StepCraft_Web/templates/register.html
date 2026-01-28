@@ -139,6 +139,19 @@
                 <input type="text" class="form-control" id="server_version" name="server_version">
             </div>
             <div class="mb-3">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="is_private" name="is_private">
+                    <label class="form-check-label" for="is_private">Private server (invite code required)</label>
+                </div>
+                <small class="text-muted">If private, only users with the invite code can join.</small>
+            </div>
+            <div class="mb-3">
+                <label for="invite_code" class="form-label">Invite Code (optional)</label>
+                <input type="text" class="form-control" id="invite_code" name="invite_code" minlength="6" maxlength="32">
+                <div class="invalid-feedback">6–32 characters</div>
+                <small class="text-muted">Leave blank to auto-generate a code.</small>
+            </div>
+            <div class="mb-3">
                 <label for="notes" class="form-label">Notes (optional)</label>
                 <textarea class="form-control" id="notes" name="notes" rows="3"></textarea>
             </div>

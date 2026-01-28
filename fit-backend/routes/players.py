@@ -113,7 +113,7 @@ def get_next_push_notification(
 """Player registration and authentication endpoints."""
 
 @router.get("/v1/servers/available")
-def get_available_servers():
+def get_available_servers(invite_code: str | None = Query(None)):
     """
     Get all available servers that users can register to.
     
@@ -122,16 +122,36 @@ def get_available_servers():
     """
     try:
         with engine.begin() as conn:
-            rows = conn.execute(
+            public_rows = conn.execute(
                 text("""
-                    SELECT server_name, created_at
-                    FROM api_keys
-                    WHERE active = TRUE
-                    ORDER BY server_name ASC
+                    SELECT s.server_name, s.created_at
+                    FROM servers s
+                    JOIN api_keys k ON k.server_name = s.server_name
+                    WHERE k.active = TRUE
+                      AND COALESCE(s.is_private, FALSE) = FALSE
+                    ORDER BY s.server_name ASC
                 """)
             ).mappings().all()
-        
-        servers = [dict(row) for row in rows]
+
+            servers = [dict(row) for row in public_rows]
+
+            if invite_code:
+                private_row = conn.execute(
+                    text("""
+                        SELECT s.server_name, s.created_at
+                        FROM servers s
+                        JOIN api_keys k ON k.server_name = s.server_name
+                        WHERE k.active = TRUE
+                          AND s.invite_code = :invite_code
+                        LIMIT 1
+                    """),
+                    {"invite_code": invite_code}
+                ).mappings().first()
+
+                if private_row:
+                    existing_names = {s["server_name"] for s in servers}
+                    if private_row["server_name"] not in existing_names:
+                        servers.append(dict(private_row))
         
         return {
             "total_servers": len(servers),
@@ -156,7 +176,12 @@ def register_player(request: PlayerRegistrationRequest) -> PlayerApiKeyResponse:
         with engine.begin() as conn:
             # Check if server exists and get max_players limit
             server_info = conn.execute(
-                text("SELECT id, max_players FROM api_keys WHERE server_name = :server_name AND active = TRUE"),
+                text("""
+                    SELECT k.id, k.max_players, s.is_private, s.invite_code
+                    FROM api_keys k
+                    JOIN servers s ON s.server_name = k.server_name
+                    WHERE k.server_name = :server_name AND k.active = TRUE
+                """),
                 {"server_name": request.server_name}
             ).fetchone()
             
@@ -164,6 +189,14 @@ def register_player(request: PlayerRegistrationRequest) -> PlayerApiKeyResponse:
                 raise HTTPException(status_code=404, detail=f"Server '{request.server_name}' not found. Register with a valid server name.")
             
             max_players = server_info[1]  # Can be NULL (unlimited) or an integer
+            is_private = bool(server_info[2])
+            server_invite = server_info[3]
+
+            if is_private and request.invite_code != server_invite:
+                raise HTTPException(
+                    status_code=403,
+                    detail="Invalid invite code for this private server."
+                )
             
             # Check if this device already has a key for this server
             existing_key = conn.execute(

@@ -60,7 +60,8 @@ data class AvailableServersResponse(
 data class RegisterPayload(
     val minecraft_username: String,
     val device_id: String,
-    val server_name: String
+    val server_name: String,
+    val invite_code: String? = null
 )
 
 data class RegisterResponse(
@@ -108,7 +109,7 @@ interface FitApi {
     suspend fun latest(@Path("deviceId") deviceId: String): LatestResponse
 
     @GET("v1/servers/available")
-    suspend fun getAvailableServers(): AvailableServersResponse
+    suspend fun getAvailableServers(@Query("invite_code") inviteCode: String? = null): AvailableServersResponse
 
     @POST("v1/players/register")
     suspend fun register(@Body payload: RegisterPayload): RegisterResponse

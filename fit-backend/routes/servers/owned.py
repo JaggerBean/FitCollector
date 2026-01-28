@@ -37,7 +37,7 @@ def list_owned_servers(user=Depends(require_user)):
 
         rows = conn.execute(
             text("""
-                SELECT server_name, owner_email, server_address, server_version, created_at
+                SELECT server_name, owner_email, server_address, server_version, created_at, is_private, invite_code
                 FROM servers
                 WHERE owner_user_id = :user_id
                 ORDER BY created_at DESC

@@ -18,6 +18,7 @@ class PlayerRegistrationRequest(BaseModel):
     minecraft_username: str = Field(..., min_length=3, max_length=16)
     device_id: str = Field(..., min_length=6, max_length=128)
     server_name: str = Field(..., min_length=3, max_length=50)
+    invite_code: Optional[str] = Field(None, min_length=6, max_length=32)
 
 
 class PlayerApiKeyResponse(BaseModel):
@@ -34,6 +35,8 @@ class ServerRegistrationRequest(BaseModel):
     owner_email: str = Field(..., min_length=5, max_length=255)
     server_address: Optional[str] = Field(None, min_length=5, max_length=255)
     server_version: Optional[str] = None
+    is_private: bool = Field(False, description="If true, server is private and requires invite code")
+    invite_code: Optional[str] = Field(None, min_length=6, max_length=32, description="Invite code for private server")
 
 
 
@@ -53,3 +56,5 @@ class ApiKeyResponse(BaseModel):
     api_key: str
     server_name: str
     message: str = "Store this key securely. You won't be able to see it again!"
+    is_private: Optional[bool] = None
+    invite_code: Optional[str] = None

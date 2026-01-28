@@ -6,7 +6,7 @@ from zoneinfo import ZoneInfo
 
 from database import engine
 from models import ServerRegistrationRequest, ApiKeyResponse
-from utils import generate_opaque_token, hash_token
+from utils import generate_opaque_token, hash_token, generate_invite_code
 from auth import require_api_key, require_user
 
 CENTRAL_TZ = ZoneInfo("America/Chicago")
@@ -26,6 +26,9 @@ def register_server(request: ServerRegistrationRequest, user=Depends(require_use
     # Generate opaque token and hash it
     plaintext_key = generate_opaque_token()
     key_hash = hash_token(plaintext_key)
+    invite_code = None
+    if request.is_private:
+        invite_code = request.invite_code or generate_invite_code()
     
     try:
         with engine.begin() as conn:
@@ -54,8 +57,26 @@ def register_server(request: ServerRegistrationRequest, user=Depends(require_use
 
             conn.execute(
                 text("""
-                    INSERT INTO servers (server_name, owner_user_id, owner_name, owner_email, server_address, server_version)
-                    VALUES (:server_name, :owner_user_id, :owner_name, :owner_email, :server_address, :server_version)
+                    INSERT INTO servers (
+                        server_name,
+                        owner_user_id,
+                        owner_name,
+                        owner_email,
+                        server_address,
+                        server_version,
+                        is_private,
+                        invite_code
+                    )
+                    VALUES (
+                        :server_name,
+                        :owner_user_id,
+                        :owner_name,
+                        :owner_email,
+                        :server_address,
+                        :server_version,
+                        :is_private,
+                        :invite_code
+                    )
                 """),
                 {
                     "server_name": request.server_name,
@@ -64,6 +85,8 @@ def register_server(request: ServerRegistrationRequest, user=Depends(require_use
                     "owner_email": request.owner_email,
                     "server_address": request.server_address,
                     "server_version": request.server_version,
+                    "is_private": request.is_private,
+                    "invite_code": invite_code,
                 }
             )
             
@@ -74,7 +97,9 @@ def register_server(request: ServerRegistrationRequest, user=Depends(require_use
         return ApiKeyResponse(
             api_key=plaintext_key,
             server_name=request.server_name,
-            message="Store this key securely in your server config. You won't be able to see it again!"
+            message="Store this key securely in your server config. You won't be able to see it again!",
+            is_private=request.is_private,
+            invite_code=invite_code,
         )
     
     except HTTPException:
