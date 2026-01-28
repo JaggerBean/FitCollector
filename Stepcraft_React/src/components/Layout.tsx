@@ -10,7 +10,7 @@ export function Layout({ title, children }: { title: string; children: ReactNode
       <header className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-6">
         <div>
           <Link to="/" className="flex items-center gap-3">
-            <img src="/logo.svg" alt="StepCraft" className="h-10 w-auto" />
+            <img src="/logo.png" alt="StepCraft" className="h-10 w-auto" />
           </Link>
           <div className="text-sm text-slate-500 dark:text-slate-400">{title}</div>
         </div>
