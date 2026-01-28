@@ -344,7 +344,6 @@ const GlobalSpotlight = ({
     const handleMouseMove = (e: MouseEvent) => {
       if (!spotlightRef.current || !gridRef.current) return;
 
-      const mouseInside = true;
       isInsideSection.current = true;
       const cards = gridRef.current.querySelectorAll(".magic-bento-card");
 
