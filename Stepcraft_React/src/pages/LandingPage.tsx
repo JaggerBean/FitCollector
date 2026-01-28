@@ -1,6 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { Layout } from "../components/Layout";
+import { RevealText } from "../components/RevealText";
 import { useAuthContext } from "../app/AuthContext";
 
 export default function LandingPage() {
@@ -22,9 +23,10 @@ export default function LandingPage() {
           <div className="pointer-events-none absolute right-0 top-24 h-80 w-80 rounded-full bg-blue-400/10 blur-3xl" />
           <div className="relative mx-auto w-full max-w-screen-2xl px-6 2xl:px-10">
             <div className="max-w-3xl">
-              <h1 className="text-5xl font-semibold text-white md:text-6xl">
-                Inspire daily movement with a rewards-driven Minecraft server
-              </h1>
+              <RevealText
+                text="Inspire daily movement with a rewards-driven Minecraft server"
+                className="text-5xl font-semibold text-white md:text-6xl"
+              />
               <p className="mt-6 text-base text-slate-300 md:text-lg">
                 StepCraft turns step goals into in-game rewards. Launch a private or public server, automate rewards,
                 and keep your community engaged every single day.
