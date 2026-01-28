@@ -64,7 +64,7 @@ export default function PushPage() {
   };
 
   return (
-    <Layout title="Push notifications">
+    <Layout>
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">Push notifications</h1>

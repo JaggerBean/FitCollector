@@ -3,7 +3,7 @@ import { Layout } from "../components/Layout";
 
 export default function NotFoundPage() {
   return (
-    <Layout title="Not found">
+    <Layout>
       <div className="rounded-3xl border border-emerald-100 bg-white p-8 text-center shadow-xl dark:border-slate-800 dark:bg-slate-900">
         <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">Page not found</h1>
         <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">

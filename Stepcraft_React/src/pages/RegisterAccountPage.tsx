@@ -76,7 +76,7 @@ export default function RegisterAccountPage() {
   };
 
   return (
-    <Layout title="Create account">
+    <Layout>
       <div className="mx-auto max-w-md rounded-3xl border border-emerald-100 bg-white p-8 shadow-xl dark:border-slate-800 dark:bg-slate-900">
         <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">Create your account</h1>
         <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
