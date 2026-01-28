@@ -42,6 +42,31 @@ export function Layout({ title, children }: { title?: string; children: ReactNod
         </div>
       </header>
       <main className="mx-auto w-full max-w-[1280px] px-6 pb-16 md:px-10">{children}</main>
+      <footer className="mt-10 border-t border-slate-800/70 bg-slate-950/80">
+        <div className="mx-auto flex w-full max-w-[1280px] items-center justify-between px-6 py-6 text-xs text-slate-500 md:px-10">
+          <div>© {new Date().getFullYear()} StepCraft</div>
+          <div className="flex items-center gap-3">
+            <a
+              href="#"
+              aria-label="StepCraft Minecraft mod page (coming soon)"
+              className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-800 text-slate-300 transition hover:border-emerald-400/60 hover:text-emerald-200"
+            >
+              <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true" fill="currentColor">
+                <path d="M12 2 2.5 7v10L12 22l9.5-5V7L12 2zm0 2.2 7.3 3.8L12 12 4.7 8l7.3-3.8zm-7 5.9L11 13.9v5.9l-6-3.2v-6.5zm14 0v6.5l-6 3.2v-5.9l6-3.8z" />
+              </svg>
+            </a>
+            <a
+              href="#"
+              aria-label="StepCraft phone app (coming soon)"
+              className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-800 text-slate-300 transition hover:border-emerald-400/60 hover:text-emerald-200"
+            >
+              <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true" fill="currentColor">
+                <path d="M8 2h8a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm0 2v16h8V4H8zm4 13.5a1.25 1.25 0 1 0 0 2.5 1.25 1.25 0 0 0 0-2.5z" />
+              </svg>
+            </a>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
