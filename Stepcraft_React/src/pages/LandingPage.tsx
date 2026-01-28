@@ -15,7 +15,7 @@ export default function LandingPage() {
 
   return (
     <Layout title="Welcome">
-      <div className="relative grid gap-10 lg:grid-cols-[1.4fr_0.6fr] 2xl:grid-cols-[1.55fr_0.45fr] lg:items-stretch">
+      <div className="relative grid gap-10 lg:grid-cols-[1.25fr_0.75fr] 2xl:grid-cols-[1.35fr_0.65fr] lg:items-stretch">
         <div className="pointer-events-none absolute -left-20 top-10 h-56 w-56 rounded-full bg-emerald-400/10 blur-3xl" />
         <div className="pointer-events-none absolute -right-10 top-32 h-72 w-72 rounded-full bg-blue-400/10 blur-3xl" />
         <div className="flex">
