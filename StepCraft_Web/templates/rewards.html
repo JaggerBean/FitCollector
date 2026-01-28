@@ -201,9 +201,10 @@
             </div>
 
             <div class="d-flex gap-2 mt-3">
-                <button class="btn btn-primary" type="submit">Save</button>
+                <button class="btn btn-primary" type="submit" id="save-rewards" disabled>Save</button>
                 <button class="btn btn-outline-secondary" type="submit" form="default-rewards-form">Use Default</button>
             </div>
+            <div class="form-text mt-2" id="rewards-validation" style="display:none;">Fill in a label for each tier before saving.</div>
         </form>
 
         <form id="default-rewards-form" method="post" action="/rewards/default?server={{ server_name }}"></form>
@@ -295,7 +296,31 @@
             }
         });
 
+        function isTierValid(tierEl) {
+            const label = tierEl.querySelector('[data-label]').value.trim();
+            const minStepsRaw = tierEl.querySelector('[data-min-steps]').value;
+            const hasMinSteps = minStepsRaw !== '' && !Number.isNaN(Number(minStepsRaw));
+            return label.length > 0 && hasMinSteps;
+        }
+
+        function refreshSaveState() {
+            const tiers = Array.from(tiersList.querySelectorAll('[data-tier]'));
+            const valid = tiers.length > 0 && tiers.every(isTierValid);
+            const saveBtn = document.getElementById('save-rewards');
+            const hint = document.getElementById('rewards-validation');
+            saveBtn.disabled = !valid;
+            hint.style.display = valid ? 'none' : 'block';
+        }
+
+        tiersList.addEventListener('input', refreshSaveState);
+        tiersList.addEventListener('change', refreshSaveState);
+
         document.getElementById('rewards-form').addEventListener('submit', (event) => {
+            refreshSaveState();
+            if (document.getElementById('save-rewards').disabled) {
+                event.preventDefault();
+                return;
+            }
             const tiers = Array.from(tiersList.querySelectorAll('[data-tier]')).map(tierEl => {
                 const minSteps = parseInt(tierEl.querySelector('[data-min-steps]').value || '0', 10);
                 const label = tierEl.querySelector('[data-label]').value.trim();
@@ -327,6 +352,7 @@
             } catch {
                 ensureAtLeastOneTier();
             }
+            refreshSaveState();
         })();
     </script>
 </body>
