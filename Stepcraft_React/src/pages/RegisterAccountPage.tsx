@@ -1,11 +1,13 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Layout } from "../components/Layout";
 import { registerUser } from "../api/servers";
+import { useAuthContext } from "../app/AuthContext";
 
 export default function RegisterAccountPage() {
   const navigate = useNavigate();
+  const { loginWithGoogle } = useAuthContext();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -13,6 +15,46 @@ export default function RegisterAccountPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [googleReady, setGoogleReady] = useState(false);
+  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined;
+
+  useEffect(() => {
+    if (!googleClientId) return;
+    if (window.google?.accounts?.id) {
+      setGoogleReady(true);
+      return;
+    }
+    const script = document.createElement("script");
+    script.src = "https://accounts.google.com/gsi/client";
+    script.async = true;
+    script.defer = true;
+    script.onload = () => setGoogleReady(true);
+    document.head.appendChild(script);
+  }, [googleClientId]);
+
+  useEffect(() => {
+    if (!googleClientId || !googleReady || !window.google?.accounts?.id) return;
+    window.google.accounts.id.initialize({
+      client_id: googleClientId,
+      callback: async (response: { credential: string }) => {
+        setError(null);
+        try {
+          await loginWithGoogle(response.credential);
+          navigate("/dashboard");
+        } catch (err) {
+          setError((err as Error).message);
+        }
+      },
+    });
+    const target = document.getElementById("google-signup");
+    if (!target) return;
+    window.google.accounts.id.renderButton(target, {
+      theme: "outline",
+      size: "large",
+      width: 320,
+      text: "signup_with",
+    });
+  }, [googleClientId, googleReady, loginWithGoogle, navigate]);
 
   const onSubmit = async (event: FormEvent) => {
     event.preventDefault();
@@ -101,6 +143,17 @@ export default function RegisterAccountPage() {
             {loading ? "Creating..." : "Create account"}
           </button>
         </form>
+        {googleClientId && (
+          <div className="mt-6">
+            <div className="mb-2 text-xs uppercase tracking-wide text-slate-400">Or continue with</div>
+            <div id="google-signup" className="flex justify-center" />
+          </div>
+        )}
+        {!googleClientId && (
+          <p className="mt-6 text-center text-xs text-slate-400">
+            Google sign-up requires VITE_GOOGLE_CLIENT_ID in your .env.
+          </p>
+        )}
         <div className="mt-4 text-center text-xs text-slate-400">
           Already have an account? <Link className="text-emerald-600 hover:text-emerald-700" to="/login">Sign in</Link>
         </div>
