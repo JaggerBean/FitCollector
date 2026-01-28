@@ -40,6 +40,12 @@ export default function ServerManagePage() {
     [players],
   );
 
+  const filteredSuggestions = useMemo(() => {
+    if (!username) return usernameSuggestions;
+    const lower = username.toLowerCase();
+    return usernameSuggestions.filter((name) => name.toLowerCase().startsWith(lower));
+  }, [username, usernameSuggestions]);
+
   const getUsernameSuggestion = (value: string) => {
     if (!value) return null;
     const lower = value.toLowerCase();
@@ -230,8 +236,8 @@ export default function ServerManagePage() {
                   onKeyDown={onUsernameKeyDown}
                 />
                 <datalist id="player-suggestions">
-                  {players?.players?.map((player) => (
-                    <option key={player.minecraft_username} value={player.minecraft_username} />
+                  {filteredSuggestions.map((name) => (
+                    <option key={name} value={name} />
                   ))}
                 </datalist>
               </div>
