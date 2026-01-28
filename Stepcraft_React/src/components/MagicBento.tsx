@@ -2,10 +2,10 @@ import { useRef, useEffect, useCallback, useState } from "react";
 import { gsap } from "gsap";
 import "./MagicBento.css";
 
-const DEFAULT_PARTICLE_COUNT = 12;
 const DEFAULT_SPOTLIGHT_RADIUS = 300;
 const DEFAULT_GLOW_COLOR = "132, 0, 255";
 const MOBILE_BREAKPOINT = 768;
+const DEFAULT_PARTICLE_COUNT = 24;
 
 export interface MagicBentoCardData {
   color: string;
@@ -109,7 +109,7 @@ const ParticleCard = ({
           particle.parentNode?.removeChild(particle);
         },
       });
-    });
+        gsap.fromTo(clone, { scale: 0, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.15, ease: "back.out(1.7)" });
     particlesRef.current = [];
   }, []);
 
