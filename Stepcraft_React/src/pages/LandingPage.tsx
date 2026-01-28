@@ -1,9 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { Layout } from "../components/Layout";
-import { RevealText } from "../components/RevealText";
-import Dock from "../components/Dock";
-import ScrollReveal from "../components/ScrollReveal";
 import { useAuthContext } from "../app/AuthContext";
 
 export default function LandingPage() {
@@ -16,29 +13,6 @@ export default function LandingPage() {
     }
   }, [isAuthenticated, navigate]);
 
-  const dockItems = [
-    {
-      icon: "🚀",
-      label: isAuthenticated ? "Dashboard" : "Create account",
-      onClick: () => navigate(isAuthenticated ? "/dashboard" : "/account/register"),
-    },
-    {
-      icon: "🔐",
-      label: isAuthenticated ? "Sign out" : "Sign in",
-      onClick: () => navigate(isAuthenticated ? "/dashboard" : "/login"),
-    },
-    {
-      icon: "🧭",
-      label: "Register server",
-      onClick: () => navigate(isAuthenticated ? "/register" : "/login"),
-    },
-    {
-      icon: "🎯",
-      label: "Rewards",
-      onClick: () => navigate(isAuthenticated ? "/dashboard" : "/login"),
-    },
-  ];
-
   return (
     <Layout title="Welcome">
       <div className="space-y-20">
@@ -48,10 +22,9 @@ export default function LandingPage() {
           <div className="pointer-events-none absolute right-0 top-24 h-80 w-80 rounded-full bg-blue-400/10 blur-3xl" />
           <div className="relative mx-auto w-full max-w-screen-2xl px-6 2xl:px-10">
             <div className="max-w-3xl">
-              <RevealText
-                text="Inspire daily movement with a rewards-driven Minecraft server"
-                className="text-5xl font-semibold text-white md:text-6xl"
-              />
+              <h1 className="text-5xl font-semibold text-white md:text-6xl">
+                Inspire daily movement with a rewards-driven Minecraft server
+              </h1>
               <p className="mt-6 text-base text-slate-300 md:text-lg">
                 StepCraft turns step goals into in-game rewards. Launch a private or public server, automate rewards,
                 and keep your community engaged every single day.
@@ -81,9 +54,6 @@ export default function LandingPage() {
                   </>
                 )}
               </div>
-              <div className="mt-10">
-                <Dock items={dockItems} />
-              </div>
             </div>
           </div>
         </section>
@@ -108,9 +78,7 @@ export default function LandingPage() {
           <div className="flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <p className="text-xs uppercase tracking-[0.35em] text-slate-400">Launch sequence</p>
-              <ScrollReveal containerClassName="mt-3" textClassName="text-3xl font-semibold text-white">
-                Launch in 3 steps
-              </ScrollReveal>
+              <h2 className="mt-3 text-3xl font-semibold text-white">Launch in 3 steps</h2>
             </div>
             <div className="grid gap-6 text-sm text-slate-300 md:grid-cols-3">
               <div>
@@ -134,7 +102,7 @@ export default function LandingPage() {
 
         <section className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
           <div className="rounded-3xl border border-slate-800 bg-slate-950/70 p-8">
-            <ScrollReveal textClassName="text-2xl font-semibold text-white">Why communities love it</ScrollReveal>
+            <h3 className="text-2xl font-semibold text-white">Why communities love it</h3>
             <ul className="mt-6 space-y-3 text-sm text-slate-300">
               <li>• Automated rewards and claim tracking</li>
               <li>• Real-time player tools and ban controls</li>
