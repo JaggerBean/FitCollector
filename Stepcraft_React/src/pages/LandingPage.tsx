@@ -15,11 +15,11 @@ export default function LandingPage() {
 
   return (
     <Layout title="Welcome">
-      <div className="relative grid gap-10 lg:grid-cols-[1.2fr_0.8fr]">
+      <div className="relative grid gap-10 lg:grid-cols-[1.2fr_0.8fr] lg:items-stretch">
         <div className="pointer-events-none absolute -left-20 top-10 h-56 w-56 rounded-full bg-emerald-400/10 blur-3xl" />
         <div className="pointer-events-none absolute -right-10 top-32 h-72 w-72 rounded-full bg-blue-400/10 blur-3xl" />
-        <div className="space-y-8">
-          <div className="rounded-3xl border border-emerald-100 bg-white p-8 shadow-xl dark:border-slate-800 dark:bg-slate-900">
+        <div className="flex">
+          <div className="flex h-full w-full flex-col rounded-3xl border border-emerald-100 bg-white p-8 shadow-xl dark:border-slate-800 dark:bg-slate-900">
             <div className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700 dark:border-emerald-700/40 dark:bg-emerald-900/20 dark:text-emerald-200">
               Fitness meets Minecraft
             </div>
@@ -85,7 +85,7 @@ export default function LandingPage() {
             </div>
           </div>
         </div>
-        <div className="space-y-6">
+        <div className="flex h-full flex-col gap-6">
           <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm dark:border-slate-800 dark:bg-slate-900">
             <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Launch in 3 steps</h2>
             <ol className="mt-4 space-y-4 text-sm text-slate-600 dark:text-slate-300">
