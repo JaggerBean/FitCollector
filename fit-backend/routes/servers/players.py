@@ -5,14 +5,14 @@ from sqlalchemy import text
 from zoneinfo import ZoneInfo
 from datetime import datetime, timedelta
 from database import engine
-from auth import require_api_key
+from auth import require_server_access
 
 CENTRAL_TZ = ZoneInfo("America/Chicago")
 router = APIRouter()
 
 # Server endpoint: check and set claim status for yesterday
 @router.get("/v1/servers/players/{minecraft_username}/claim-status")
-def get_claim_status_server(minecraft_username: str, server_name: str = Depends(require_api_key)):
+def get_claim_status_server(minecraft_username: str, server_name: str = Depends(require_server_access)):
     """
     Check if the player has claimed their reward for yesterday (server/mod use).
     """
@@ -32,7 +32,7 @@ def get_claim_status_server(minecraft_username: str, server_name: str = Depends(
         return {"claimed": False, "claimed_at": None}
 
 @router.post("/v1/servers/players/{minecraft_username}/claim-reward")
-def claim_reward_server(minecraft_username: str, server_name: str = Depends(require_api_key)):
+def claim_reward_server(minecraft_username: str, server_name: str = Depends(require_server_access)):
     """
     Mark the player's reward as claimed for yesterday (server/mod use).
     """
@@ -52,7 +52,7 @@ def claim_reward_server(minecraft_username: str, server_name: str = Depends(requ
 @router.get("/v1/servers/players")
 def get_server_players(
     limit: int = 1000,
-    server_name: str = Depends(require_api_key),
+    server_name: str = Depends(require_server_access),
 ):
     """
     Get all player data for this server.
@@ -95,7 +95,7 @@ def get_server_players(
 @router.get("/v1/servers/players/{minecraft_username}/yesterday-steps")
 def get_yesterday_steps_server(
     minecraft_username: str,
-    server_name: str = Depends(require_api_key),
+    server_name: str = Depends(require_server_access),
 ):
     """
     Get yesterday's step count for a player on this server.
@@ -121,7 +121,7 @@ def get_yesterday_steps_server(
 def delete_player(
     minecraft_username: str,
     all: bool = False,
-    server_name: str = Depends(require_api_key),
+    server_name: str = Depends(require_server_access),
 ):
     """
     Delete a player's data.

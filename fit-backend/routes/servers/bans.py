@@ -7,7 +7,7 @@ from zoneinfo import ZoneInfo
 import secrets
 
 from database import engine
-from auth import require_api_key
+from auth import require_server_access
 
 CENTRAL_TZ = ZoneInfo("America/Chicago")
 router = APIRouter()
@@ -20,7 +20,7 @@ class BanRequest(BaseModel):
 @router.get("/v1/servers/bans")
 def get_server_bans(
     limit: int = 1000,
-    server_name: str = Depends(require_api_key),
+    server_name: str = Depends(require_server_access),
 ):
     """
     Get all bans for this server.
@@ -78,7 +78,7 @@ def get_server_bans(
 def ban_player(
     minecraft_username: str,
     request: BanRequest,
-    server_name: str = Depends(require_api_key),
+    server_name: str = Depends(require_server_access),
 ):
     """
     Ban a player from this server.
@@ -186,7 +186,7 @@ def ban_player(
 @router.delete("/v1/servers/players/{minecraft_username}/ban")
 def unban_player(
     minecraft_username: str,
-    server_name: str = Depends(require_api_key),
+    server_name: str = Depends(require_server_access),
 ):
     """
     Unban a player from this server.

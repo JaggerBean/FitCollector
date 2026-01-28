@@ -39,17 +39,17 @@ async def api_toggle_privacy(request: Request):
     if not server_name or is_private is None:
         return JSONResponse({"ok": False, "detail": "Missing server_name or is_private"}, status_code=400)
 
-    server_key = get_server_key_from_session(request, server_name)
-    if not server_key:
-        return JSONResponse({"ok": False, "detail": "Missing API key for this server. Save it on the dashboard first."}, status_code=400)
-
-    headers = {"X-API-Key": server_key}
+    user_token = request.session.get("user_token")
+    if not user_token:
+        return JSONResponse({"ok": False, "detail": "Unauthorized"}, status_code=401)
+    headers = {"Authorization": f"Bearer {user_token}"}
     async with httpx.AsyncClient() as client:
         try:
             resp = await client.post(
                 f"{BACKEND_URL}/v1/servers/toggle-privacy",
                 headers=headers,
                 json={"is_private": is_private},
+                params={"server": server_name},
                 timeout=10,
             )
         except Exception as e:
@@ -72,17 +72,13 @@ async def server_players(request: Request):
     if not server_name:
         return JSONResponse({"error": "Missing server"}, status_code=400)
 
-    server_key = get_server_key_from_session(request, server_name)
-    if not server_key:
-        return JSONResponse({"error": "Missing API key"}, status_code=400)
-
-    headers = {"X-API-Key": server_key}
+    headers = {"Authorization": f"Bearer {user_token}"}
     async with httpx.AsyncClient() as client:
         try:
             resp = await client.get(
-                f"{BACKEND_URL}/v1/servers/players/list",
+                f"{BACKEND_URL}/v1/servers/owner/players/list",
                 headers=headers,
-                params={"limit": 500, "offset": 0},
+                params={"server_name": server_name, "limit": 500, "offset": 0},
                 timeout=10,
             )
         except Exception as e:
@@ -401,14 +397,12 @@ async def server_manage(request: Request):
     if not server:
         return RedirectResponse(url="/dashboard", status_code=302)
 
-    server_key = get_server_key_from_session(request, server_name)
-
     return templates.TemplateResponse(
         "server_manage.html",
         {
             "request": request,
             "server": server,
-            "has_key": bool(server_key),
+            "has_key": True,
             "action_name": None,
             "action_output": None,
             "action_error": None,
@@ -448,71 +442,79 @@ async def server_manage_action(
     if not server:
         return RedirectResponse(url="/dashboard", status_code=302)
 
-    server_key = get_server_key_from_session(request, server_name)
-    if not server_key:
-        return templates.TemplateResponse(
-            "server_manage.html",
-            {
-                "request": request,
-                "server": server,
-                "has_key": False,
-                "action_name": action,
-                "action_output": None,
-                "action_error": "Missing API key for this server. Save it on the dashboard first.",
-            },
-        )
-
-    headers = {"X-API-Key": server_key}
+    headers = {"Authorization": f"Bearer {user_token}"}
     action_output = None
     action_error = None
 
     async with httpx.AsyncClient() as client:
         try:
             if action == "info":
-                resp = await client.get(f"{BACKEND_URL}/v1/servers/info", headers=headers, timeout=10)
+                resp = await client.get(
+                    f"{BACKEND_URL}/v1/servers/owner/info",
+                    headers=headers,
+                    params={"server_name": server_name},
+                    timeout=10,
+                )
             elif action == "list_players":
                 params = {"limit": limit, "offset": offset}
                 if query.strip():
                     params["q"] = query.strip()
-                resp = await client.get(f"{BACKEND_URL}/v1/servers/players/list", headers=headers, params=params, timeout=10)
+                params["server_name"] = server_name
+                resp = await client.get(
+                    f"{BACKEND_URL}/v1/servers/owner/players/list",
+                    headers=headers,
+                    params=params,
+                    timeout=10,
+                )
             elif action == "yesterday_steps":
                 resp = await client.get(
-                    f"{BACKEND_URL}/v1/servers/players/{username.strip()}/yesterday-steps",
+                    f"{BACKEND_URL}/v1/servers/owner/players/{username.strip()}/yesterday-steps",
                     headers=headers,
+                    params={"server_name": server_name},
                     timeout=10,
                 )
             elif action == "claim_status":
                 resp = await client.get(
-                    f"{BACKEND_URL}/v1/servers/players/{username.strip()}/claim-status",
+                    f"{BACKEND_URL}/v1/servers/owner/players/{username.strip()}/claim-status",
                     headers=headers,
+                    params={"server_name": server_name},
                     timeout=10,
                 )
             elif action == "claim_reward":
                 resp = await client.post(
-                    f"{BACKEND_URL}/v1/servers/players/{username.strip()}/claim-reward",
+                    f"{BACKEND_URL}/v1/servers/owner/players/{username.strip()}/claim-reward",
                     headers=headers,
+                    params={"server_name": server_name},
                     timeout=10,
                 )
             elif action == "list_bans":
-                resp = await client.get(f"{BACKEND_URL}/v1/servers/bans", headers=headers, timeout=10)
+                resp = await client.get(
+                    f"{BACKEND_URL}/v1/servers/owner/bans",
+                    headers=headers,
+                    params={"server_name": server_name, "limit": 1000},
+                    timeout=10,
+                )
             elif action == "ban_player":
                 payload = {"reason": reason.strip() or "broke code of conduct"}
                 resp = await client.post(
-                    f"{BACKEND_URL}/v1/servers/players/{username.strip()}/ban",
+                    f"{BACKEND_URL}/v1/servers/owner/players/{username.strip()}/ban",
                     headers=headers,
+                    params={"server_name": server_name},
                     json=payload,
                     timeout=10,
                 )
             elif action == "unban_player":
                 resp = await client.delete(
-                    f"{BACKEND_URL}/v1/servers/players/{username.strip()}/ban",
+                    f"{BACKEND_URL}/v1/servers/owner/players/{username.strip()}/ban",
                     headers=headers,
+                    params={"server_name": server_name},
                     timeout=10,
                 )
             elif action == "wipe_player":
                 resp = await client.delete(
-                    f"{BACKEND_URL}/v1/servers/players/{username.strip()}",
+                    f"{BACKEND_URL}/v1/servers/owner/players/{username.strip()}",
                     headers=headers,
+                    params={"server_name": server_name},
                     timeout=10,
                 )
             else:
@@ -556,15 +558,13 @@ async def push_notifications_page(request: Request):
 
     items = []
     error = None
-    server_key = get_server_key_from_session(request, server_name)
     async with httpx.AsyncClient() as client:
         try:
             headers = {"Authorization": f"Bearer {user_token}"}
-            if server_key:
-                headers["X-API-Key"] = server_key
             resp = await client.get(
                 f"{BACKEND_URL}/v1/servers/push",
                 headers=headers,
+                params={"server": server_name},
                 timeout=10,
             )
             if resp.status_code == 200:
@@ -654,16 +654,14 @@ async def push_notifications_create(
         return RedirectResponse(url="/dashboard", status_code=302)
 
     error = None
-    server_key = get_server_key_from_session(request, server_name)
     async with httpx.AsyncClient() as client:
         try:
             headers = {"Authorization": f"Bearer {user_token}"}
-            if server_key:
-                headers["X-API-Key"] = server_key
             resp = await client.post(
-                f"{BACKEND_URL}/v1/servers/push",
+                f"{BACKEND_URL}/v1/servers/players/list",
                 headers=headers,
-                json={"message": message, "scheduled_at": scheduled_at, "timezone": timezone},
+                params={"server": server_name, "limit": 500, "offset": 0},
+                params={"server": server_name},
                 timeout=10,
             )
             if resp.status_code != 200:
@@ -736,71 +734,71 @@ async def rewards_update(request: Request, rewards_json: str = Form(...)):
         if "tiers" not in payload:
             payload = {"tiers": payload}
     except Exception as e:
-        return templates.TemplateResponse("rewards.html", {
+                    f"{BACKEND_URL}/v1/servers/info",
             "request": request,
-            "data": None,
+                    params={"server": server_name},
             "raw_json": rewards_json,
             "error": f"Invalid JSON: {e}",
         })
 
     server_key = get_server_key_from_session(request, server_name)
     async with httpx.AsyncClient() as client:
-        try:
+                params["server"] = server_name
             headers = {"Authorization": f"Bearer {user_token}"}
-            if server_key:
+                    f"{BACKEND_URL}/v1/servers/players/list",
                 headers["X-API-Key"] = server_key
             resp = await client.put(
                 f"{BACKEND_URL}/v1/servers/rewards",
                 headers=headers,
                 json=payload,
                 params={"server": server_name},
-                timeout=10,
+                    f"{BACKEND_URL}/v1/servers/players/{username.strip()}/yesterday-steps",
             )
-        except Exception as e:
+                    params={"server": server_name},
             return templates.TemplateResponse("rewards.html", {
                 "request": request,
                 "data": None,
                 "raw_json": rewards_json,
-                "error": f"Backend error: {e}",
+                    f"{BACKEND_URL}/v1/servers/players/{username.strip()}/claim-status",
                 "server_name": server_name,
-            })
+                    params={"server": server_name},
 
     if resp.status_code != 200:
         return templates.TemplateResponse("rewards.html", {
             "request": request,
-            "data": None,
+                    f"{BACKEND_URL}/v1/servers/players/{username.strip()}/claim-reward",
             "raw_json": rewards_json,
-            "error": resp.text,
+                    params={"server": server_name},
             "server_name": server_name,
         })
 
     return RedirectResponse(url=f"/rewards?server={server_name}", status_code=302)
+                    f"{BACKEND_URL}/v1/servers/bans",
 
-
-@app.post("/rewards/default")
+                    params={"server": server_name, "limit": 1000},
 async def rewards_default(request: Request):
     user_token = request.session.get("user_token")
     if not user_token:
         return RedirectResponse(url="/account/login", status_code=302)
 
-    server_name = request.query_params.get("server")
+                    f"{BACKEND_URL}/v1/servers/players/{username.strip()}/ban",
     if not server_name:
-        return RedirectResponse(url="/dashboard", status_code=302)
+                    params={"server": server_name},
 
     server_key = get_server_key_from_session(request, server_name)
     async with httpx.AsyncClient() as client:
         try:
             headers = {"Authorization": f"Bearer {user_token}"}
-            if server_key:
+                    f"{BACKEND_URL}/v1/servers/players/{username.strip()}/ban",
                 headers["X-API-Key"] = server_key
-            await client.post(
+                    params={"server": server_name},
                 f"{BACKEND_URL}/v1/servers/rewards/default",
                 headers=headers,
                 params={"server": server_name},
                 timeout=10,
-            )
+                    f"{BACKEND_URL}/v1/servers/players/{username.strip()}",
         except Exception:
-            pass
+                    params={"server": server_name},
 
     return RedirectResponse(url=f"/rewards?server={server_name}", status_code=302)
 

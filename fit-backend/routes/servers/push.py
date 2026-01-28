@@ -7,7 +7,7 @@ from zoneinfo import ZoneInfo
 from datetime import datetime, timezone
 
 from database import engine
-from auth import require_api_key
+from auth import require_server_access
 
 router = APIRouter()
 
@@ -19,7 +19,7 @@ class PushPayload(BaseModel):
 
 
 @router.get("/v1/servers/push")
-def list_push_notifications(server_name: str = Depends(require_api_key)):
+def list_push_notifications(server_name: str = Depends(require_server_access)):
     with engine.begin() as conn:
         rows = conn.execute(
             text("""
@@ -36,7 +36,7 @@ def list_push_notifications(server_name: str = Depends(require_api_key)):
 
 
 @router.post("/v1/servers/push")
-def schedule_push_notification(payload: PushPayload, server_name: str = Depends(require_api_key)):
+def schedule_push_notification(payload: PushPayload, server_name: str = Depends(require_server_access)):
     try:
         scheduled = datetime.fromisoformat(payload.scheduled_at)
     except Exception:

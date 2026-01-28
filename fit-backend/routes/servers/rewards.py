@@ -1,43 +1,13 @@
 """Server rewards configuration endpoints."""
 
-from fastapi import APIRouter, Depends, HTTPException, Header, Query
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy import text
 import json
 from database import engine
-from auth import require_api_key, require_user
+from auth import require_server_access
 
 router = APIRouter()
-
-
-def _ensure_owner(server_name: str, user_id: int) -> None:
-    with engine.begin() as conn:
-        row = conn.execute(
-            text("SELECT id FROM servers WHERE server_name = :server AND owner_user_id = :user_id"),
-            {"server": server_name, "user_id": user_id}
-        ).fetchone()
-        if not row:
-            raise HTTPException(status_code=403, detail="Not authorized for this server")
-
-
-def require_server_access(
-    x_api_key: str | None = Header(default=None, alias="X-API-Key"),
-    authorization: str | None = Header(default=None, alias="Authorization"),
-    x_user_token: str | None = Header(default=None, alias="X-User-Token"),
-    server: str | None = Query(default=None),
-) -> str:
-    if x_api_key:
-        try:
-            return require_api_key(x_api_key)
-        except HTTPException:
-            if not authorization and not x_user_token:
-                raise
-
-    user = require_user(authorization=authorization, x_user_token=x_user_token)
-    if not server:
-        raise HTTPException(status_code=400, detail="Missing server")
-    _ensure_owner(server, user["id"])
-    return server
 
 
 class RewardTier(BaseModel):

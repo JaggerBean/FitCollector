@@ -1,7 +1,7 @@
 """Authentication and authorization functions."""
 
 import os
-from fastapi import HTTPException, Header
+from fastapi import HTTPException, Header, Query
 from sqlalchemy import text
 from utils import hash_token, generate_opaque_token
 from database import engine
@@ -84,6 +84,36 @@ def require_user(
         )
 
     return {"id": row[0], "email": row[1], "name": row[2]}
+
+
+def require_server_access(
+    x_api_key: str | None = Header(default=None, alias="X-API-Key"),
+    authorization: str | None = Header(default=None, alias="Authorization"),
+    x_user_token: str | None = Header(default=None, alias="X-User-Token"),
+    server: str | None = Query(default=None),
+    server_name: str | None = Query(default=None),
+) -> str:
+    if x_api_key:
+        try:
+            return require_api_key(x_api_key)
+        except HTTPException:
+            if not authorization and not x_user_token:
+                raise
+
+    user = require_user(authorization=authorization, x_user_token=x_user_token)
+    selected = (server or server_name or "").strip()
+    if not selected:
+        raise HTTPException(status_code=400, detail="Missing server")
+
+    with engine.begin() as conn:
+        row = conn.execute(
+            text("SELECT id FROM servers WHERE server_name = :server AND owner_user_id = :user_id"),
+            {"server": selected, "user_id": user["id"]}
+        ).fetchone()
+        if not row:
+            raise HTTPException(status_code=403, detail="Not authorized for this server")
+
+    return selected
 
 
 def validate_and_get_server(device_id: str, player_api_key: str) -> tuple[str, str]:

@@ -6,7 +6,7 @@ from sqlalchemy import text
 from typing import Optional
 
 from database import engine
-from auth import require_api_key, require_master_admin
+from auth import require_server_access, require_master_admin
 from fastapi.responses import JSONResponse
 
 router = APIRouter()
@@ -21,7 +21,7 @@ class TogglePrivacyRequest(BaseModel):
 
 
 @router.get("/v1/servers/info")
-def get_server_info(server_name: str = Depends(require_api_key)):
+def get_server_info(server_name: str = Depends(require_server_access)):
     """
     Get your server's information and settings.
     Requires server API key (X-API-Key header).
@@ -71,7 +71,7 @@ def get_server_info(server_name: str = Depends(require_api_key)):
 
 
 @router.post("/v1/servers/toggle-privacy")
-def toggle_server_privacy(request: TogglePrivacyRequest, server_name: str = Depends(require_api_key)):
+def toggle_server_privacy(request: TogglePrivacyRequest, server_name: str = Depends(require_server_access)):
     """
     Toggle server privacy (public/private) and regenerate invite code if switching to private.
     Requires server API key (X-API-Key header).
@@ -202,7 +202,7 @@ def admin_update_server_settings(
 
 @router.get("/v1/servers/players/list")
 def list_server_players(
-    server_name: str = Depends(require_api_key),
+    server_name: str = Depends(require_server_access),
     limit: int = 100,
     offset: int = 0,
     q: str | None = None
@@ -283,7 +283,7 @@ def list_server_players(
 @router.delete("/v1/servers/players/{minecraft_username}")
 def server_wipe_player(
     minecraft_username: str,
-    server_name: str = Depends(require_api_key),
+    server_name: str = Depends(require_server_access),
 ):
     """
     Wipe all data for a specific player on your server only.
