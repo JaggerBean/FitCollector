@@ -17,7 +17,7 @@ export default function LandingPage() {
   return (
     <Layout>
       <div className="rounded-3xl bg-slate-950/95 px-6 py-16 md:px-10">
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-96 bg-[radial-gradient(circle_at_top,rgba(16,185,129,0.12),transparent_55%)]" />
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-96 bg-[radial-gradient(circle_at_top,rgba(var(--accent-500),0.12),transparent_55%)]" />
         <div className="space-y-12 md:space-y-16">
           <section className="relative">
             <div className="grid gap-12 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
@@ -85,7 +85,8 @@ export default function LandingPage() {
           <section className="space-y-6">
           <div className="text-xs uppercase tracking-[0.16em] text-slate-400">How it works</div>
           <MagicBento
-            glowColor="45, 212, 191"
+            glowColor="var(--accent-500)"
+            particleCount={24}
             enableTilt
             cards={[
               {
@@ -105,7 +106,8 @@ export default function LandingPage() {
           <section className="space-y-6">
           <div className="text-xs uppercase tracking-[0.16em] text-slate-400">Features</div>
           <MagicBento
-            glowColor="45, 212, 191"
+            glowColor="var(--accent-500)"
+            particleCount={24}
             enableTilt
             cards={[
               {
@@ -133,7 +135,8 @@ export default function LandingPage() {
           <section className="space-y-6">
           <div className="text-xs uppercase tracking-[0.16em] text-slate-400">Trust & community</div>
           <MagicBento
-            glowColor="45, 212, 191"
+            glowColor="var(--accent-500)"
+            particleCount={24}
             enableTilt
             cards={[
               {
