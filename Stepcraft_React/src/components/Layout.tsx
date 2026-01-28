@@ -6,7 +6,7 @@ export function Layout({ title, children }: { title?: string; children: ReactNod
   const { isAuthenticated, logout } = useAuthContext();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 to-slate-900">
+    <div className="flex min-h-screen flex-col bg-gradient-to-br from-slate-950 to-slate-900">
       <header className="border-b border-slate-900/20 bg-slate-950/70 backdrop-blur">
         <div className="mx-auto flex h-16 w-full max-w-[1280px] items-center justify-between px-6 md:h-[72px] md:px-10">
         <div>
@@ -41,7 +41,7 @@ export function Layout({ title, children }: { title?: string; children: ReactNod
         )}
         </div>
       </header>
-      <main className="mx-auto w-full max-w-[1280px] px-6 pb-16 md:px-10">{children}</main>
+      <main className="mx-auto w-full max-w-[1280px] flex-1 px-6 pb-16 md:px-10">{children}</main>
       <footer className="mt-10 border-t border-slate-800/70 bg-slate-950/80">
         <div className="mx-auto flex w-full max-w-[1280px] items-center justify-between px-6 py-6 text-xs text-slate-500 md:px-10">
           <div>© {new Date().getFullYear()} StepCraft</div>
