@@ -18,7 +18,7 @@ export default function DashboardPage() {
   }, [token]);
 
   return (
-    <Layout title="Dashboard">
+    <Layout>
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">Your servers</h1>
         <Link

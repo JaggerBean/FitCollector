@@ -47,7 +47,7 @@ export default function RegisterServerPage() {
   };
 
   return (
-    <Layout title="Register server">
+    <Layout>
       <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
         <form
           onSubmit={onSubmit}
