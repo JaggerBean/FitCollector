@@ -4,7 +4,7 @@ import "./MagicBento.css";
 
 const DEFAULT_PARTICLE_COUNT = 12;
 const DEFAULT_SPOTLIGHT_RADIUS = 300;
-const DEFAULT_GLOW_COLOR = "var(--accent-500)";
+const DEFAULT_GLOW_COLOR = "132, 0, 255";
 const MOBILE_BREAKPOINT = 768;
 
 export interface MagicBentoCardData {
@@ -211,8 +211,8 @@ const ParticleCard = ({
       const centerY = rect.height / 2;
 
       if (enableTilt) {
-        const rotateX = ((y - centerY) / centerY) * -6 * strength;
-        const rotateY = ((x - centerX) / centerX) * 6 * strength;
+        const rotateX = ((y - centerY) / centerY) * -10 * strength;
+        const rotateY = ((x - centerX) / centerX) * 10 * strength;
 
         gsap.to(element, {
           rotateX,

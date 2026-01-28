@@ -55,7 +55,7 @@
   font-size: 12px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: rgb(var(--accent-300));
+  color: #86efac;
 }
 
 .magic-bento-card__title {
@@ -82,9 +82,9 @@
 }
 
 .magic-bento-card.magic-bento-card--quote {
-  background: rgba(var(--accent-500), 0.12);
-  border-color: rgba(var(--accent-500), 0.35);
-  color: rgb(var(--accent-100));
+  background: rgba(16, 185, 129, 0.12);
+  border-color: rgba(16, 185, 129, 0.35);
+  color: #d1fae5;
 }
 
 @media (max-width: 1024px) {
