@@ -1,9 +1,17 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useEffect } from "react";
 import { Layout } from "../components/Layout";
 import { useAuthContext } from "../app/AuthContext";
 
 export default function LandingPage() {
   const { isAuthenticated } = useAuthContext();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate("/dashboard", { replace: true });
+    }
+  }, [isAuthenticated, navigate]);
 
   return (
     <Layout title="Welcome">
@@ -76,20 +84,6 @@ export default function LandingPage() {
               </div>
             </div>
           </div>
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-              <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Why communities love it</h2>
-              <ul className="mt-4 space-y-3 text-sm text-slate-600 dark:text-slate-300">
-                <li>• Automated rewards and claim tracking</li>
-                <li>• Real-time player tools and ban controls</li>
-                <li>• Works with private invite-only servers</li>
-              </ul>
-            </div>
-            <div className="rounded-3xl border border-emerald-100 bg-emerald-50 p-6 text-sm text-emerald-700 shadow-sm dark:border-emerald-700/40 dark:bg-emerald-900/20 dark:text-emerald-200">
-              “We doubled daily activity in two weeks. Players log in just to hit the next step tier.”
-              <div className="mt-4 text-xs uppercase tracking-wide text-emerald-700/70">Community Admin</div>
-            </div>
-          </div>
         </div>
         <div className="space-y-6">
           <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm dark:border-slate-800 dark:bg-slate-900">
@@ -110,6 +104,20 @@ export default function LandingPage() {
             </ol>
             <div className="mt-6 rounded-2xl border border-emerald-100 bg-emerald-50 p-4 text-xs text-emerald-700 dark:border-emerald-700/40 dark:bg-emerald-900/20 dark:text-emerald-200">
               Built for admins who want motivation, not manual work.
+            </div>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Why communities love it</h2>
+              <ul className="mt-4 space-y-3 text-sm text-slate-600 dark:text-slate-300">
+                <li>• Automated rewards and claim tracking</li>
+                <li>• Real-time player tools and ban controls</li>
+                <li>• Works with private invite-only servers</li>
+              </ul>
+            </div>
+            <div className="rounded-3xl border border-emerald-100 bg-emerald-50 p-6 text-sm text-emerald-700 shadow-sm dark:border-emerald-700/40 dark:bg-emerald-900/20 dark:text-emerald-200">
+              “We doubled daily activity in two weeks. Players log in just to hit the next step tier.”
+              <div className="mt-4 text-xs uppercase tracking-wide text-emerald-700/70">Community Admin</div>
             </div>
           </div>
         </div>
