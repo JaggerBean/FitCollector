@@ -33,6 +33,7 @@ private const val KEY_INSTALL_TIME = "install_time"
 private const val KEY_TRACKED_TIERS = "tracked_tiers_by_server"
 private const val KEY_NOTIFY_TIERS = "notify_tiers"
 private const val KEY_MILESTONE_NOTIFIED = "milestone_notified"
+private const val KEY_ADMIN_PUSH_BY_SERVER = "admin_push_by_server"
 
 private val dateFormatter = DateTimeFormatter.ISO_LOCAL_DATE
 private val CENTRAL_ZONE = ZoneId.of("America/Chicago")
@@ -340,6 +341,24 @@ fun getAllowedStepSources(context: Context): Set<String> {
 fun setAllowedStepSources(context: Context, sources: Set<String>) {
     val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
     prefs.edit().putStringSet(KEY_ALLOWED_SOURCES, sources).apply()
+}
+
+fun getAdminPushByServer(context: Context): Map<String, Boolean> {
+    val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    val json = prefs.getString(KEY_ADMIN_PUSH_BY_SERVER, "{}")
+    val type = object : TypeToken<Map<String, Boolean>>() {}.type
+    return Gson().fromJson(json, type)
+}
+
+fun isAdminPushEnabledForServer(context: Context, server: String): Boolean {
+    return getAdminPushByServer(context)[server] ?: true
+}
+
+fun setAdminPushEnabledForServer(context: Context, server: String, enabled: Boolean) {
+    val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    val current = getAdminPushByServer(context).toMutableMap()
+    current[server] = enabled
+    prefs.edit().putString(KEY_ADMIN_PUSH_BY_SERVER, Gson().toJson(current)).apply()
 }
 
 fun getTrackedTiersByServer(context: Context): Map<String, Long> {

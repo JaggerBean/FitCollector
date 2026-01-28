@@ -324,6 +324,7 @@ class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
         createPushChannel(context)
 
         servers.forEach { server ->
+            if (!isAdminPushEnabledForServer(context, server)) return@forEach
             val key = getServerKey(context, mcUsername, server)
             if (key.isNullOrBlank()) return@forEach
 

@@ -96,6 +96,11 @@ fun SettingsScreen(
     var rewardsError by remember { mutableStateOf<String?>(null) }
     var trackedTiers by remember { mutableStateOf(getTrackedTiersByServer(context)) }
     var notificationTiers by remember { mutableStateOf(getNotificationTierKeys(context)) }
+    var showTrackDialog by remember { mutableStateOf(false) }
+    var selectedTrackServer by remember { mutableStateOf<String?>(null) }
+    var showNotifyDialog by remember { mutableStateOf(false) }
+    var selectedNotifyServer by remember { mutableStateOf<String?>(null) }
+    var adminPushByServer by remember { mutableStateOf(getAdminPushByServer(context)) }
     var notificationsGranted by remember {
         mutableStateOf(
             Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
@@ -149,6 +154,7 @@ fun SettingsScreen(
         rewardTiersByServer = tiers
         trackedTiers = getTrackedTiersByServer(context)
         notificationTiers = getNotificationTierKeys(context)
+        adminPushByServer = getAdminPushByServer(context)
         rewardsLoading = false
     }
 
@@ -768,86 +774,32 @@ fun SettingsScreen(
                         ) {
                             Text(if (notificationsGranted) "Notifications Enabled" else "Enable Notifications")
                         }
+
+                        Spacer(Modifier.height(12.dp))
+                        Button(onClick = { showNotifyDialog = true }, modifier = Modifier.fillMaxWidth()) {
+                            Text("Manage server notifications")
+                        }
                     }
                 }
             }
 
             item {
-                Text("Milestones & Alerts", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Text("Milestones", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             }
 
             item {
                 Card(modifier = Modifier.fillMaxWidth()) {
                     Column(Modifier.padding(16.dp)) {
                         Text("Track milestones", style = MaterialTheme.typography.labelLarge)
-                        Spacer(Modifier.height(6.dp))
+                        Spacer(Modifier.height(8.dp))
                         Text(
-                            "Choose a tier to track on your dashboard and enable alerts when you reach a milestone. You can customize notifications anytime in Settings.",
+                            "Select one milestone per server to track on your dashboard.",
                             style = MaterialTheme.typography.bodySmall,
                             color = Color.Gray
                         )
-
-                        if (rewardsLoading) {
-                            Spacer(Modifier.height(12.dp))
-                            CircularProgressIndicator(modifier = Modifier.size(24.dp))
-                        } else if (rewardTiersByServer.isEmpty()) {
-                            Spacer(Modifier.height(12.dp))
-                            Text("No reward tiers found for your servers.", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
-                        } else {
-                            rewardTiersByServer.forEach { (server, tiers) ->
-                                Spacer(Modifier.height(12.dp))
-                                Text(server, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
-                                if (tiers.isEmpty()) {
-                                    Text("No tiers configured.", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
-                                } else {
-                                    tiers.sortedBy { it.min_steps }.forEach { tier ->
-                                        val isTracked = trackedTiers[server] == tier.min_steps
-                                        val isNotify = notificationTiers.contains(makeTierKey(server, tier.min_steps))
-
-                                        Column(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .padding(vertical = 6.dp)
-                                        ) {
-                                            Text("${tier.label} · ${tier.min_steps} steps", style = MaterialTheme.typography.bodyMedium)
-                                            Spacer(Modifier.height(4.dp))
-                                            Row(
-                                                modifier = Modifier.fillMaxWidth(),
-                                                horizontalArrangement = Arrangement.SpaceBetween,
-                                                verticalAlignment = Alignment.CenterVertically
-                                            ) {
-                                                Text("Track on dashboard", style = MaterialTheme.typography.bodySmall)
-                                                Switch(
-                                                    checked = isTracked,
-                                                    onCheckedChange = { checked ->
-                                                        setTrackedTierForServer(context, server, if (checked) tier.min_steps else null)
-                                                        trackedTiers = getTrackedTiersByServer(context)
-                                                    }
-                                                )
-                                            }
-                                            Row(
-                                                modifier = Modifier.fillMaxWidth(),
-                                                horizontalArrangement = Arrangement.SpaceBetween,
-                                                verticalAlignment = Alignment.CenterVertically
-                                            ) {
-                                                Text("Notify when reached", style = MaterialTheme.typography.bodySmall)
-                                                Switch(
-                                                    checked = isNotify,
-                                                    onCheckedChange = { checked ->
-                                                        setNotificationTierEnabled(context, server, tier.min_steps, checked)
-                                                        notificationTiers = getNotificationTierKeys(context)
-                                                    }
-                                                )
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-
-                        rewardsError?.let { err ->
-                            Spacer(Modifier.height(8.dp))
-                            Text(err, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                        Spacer(Modifier.height(12.dp))
+                        Button(onClick = { showTrackDialog = true }, modifier = Modifier.fillMaxWidth()) {
+                            Text("Track milestones")
                         }
                     }
                 }
@@ -875,6 +827,206 @@ fun SettingsScreen(
             },
             onDismiss = { showQrScanner = false }
         )
+    }
+
+    if (showTrackDialog) {
+        val servers = rewardTiersByServer.keys.sorted()
+        if (selectedTrackServer == null && servers.isNotEmpty()) {
+            selectedTrackServer = servers.first()
+        }
+
+        Dialog(onDismissRequest = { showTrackDialog = false }) {
+            Surface(
+                shape = RoundedCornerShape(16.dp),
+                color = MaterialTheme.colorScheme.surface,
+                modifier = Modifier.fillMaxWidth().fillMaxHeight(0.8f)
+            ) {
+                Column(Modifier.padding(16.dp)) {
+                    Text("Track milestones", style = MaterialTheme.typography.headlineSmall)
+                    Spacer(Modifier.height(8.dp))
+                    Text("Select a server, then choose one milestone to track.", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+
+                    Spacer(Modifier.height(12.dp))
+                    if (rewardsLoading) {
+                        CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                    } else if (servers.isEmpty()) {
+                        Text("No reward tiers found.", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                    } else {
+                        LazyColumn(modifier = Modifier.weight(1f)) {
+                            items(servers) { server ->
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable { selectedTrackServer = server }
+                                        .padding(vertical = 6.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    RadioButton(selected = selectedTrackServer == server, onClick = { selectedTrackServer = server })
+                                    Spacer(Modifier.width(8.dp))
+                                    Text(server)
+                                }
+                            }
+
+                            val server = selectedTrackServer
+                            val tiers = server?.let { rewardTiersByServer[it].orEmpty() } ?: emptyList()
+                            if (server != null && tiers.isNotEmpty()) {
+                                item {
+                                    Spacer(Modifier.height(8.dp))
+                                    Text("Milestones", style = MaterialTheme.typography.labelLarge)
+                                }
+                                items(tiers.sortedBy { it.min_steps }) { tier ->
+                                    val checked = trackedTiers[server] == tier.min_steps
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clickable {
+                                                setTrackedTierForServer(context, server, tier.min_steps)
+                                                trackedTiers = getTrackedTiersByServer(context)
+                                            }
+                                            .padding(vertical = 6.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        RadioButton(
+                                            selected = checked,
+                                            onClick = {
+                                                setTrackedTierForServer(context, server, tier.min_steps)
+                                                trackedTiers = getTrackedTiersByServer(context)
+                                            }
+                                        )
+                                        Spacer(Modifier.width(8.dp))
+                                        Text("${tier.label} · ${tier.min_steps} steps", style = MaterialTheme.typography.bodySmall)
+                                    }
+                                }
+                                item {
+                                    TextButton(onClick = {
+                                        setTrackedTierForServer(context, server, null)
+                                        trackedTiers = getTrackedTiersByServer(context)
+                                    }) {
+                                        Text("Clear selection")
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    rewardsError?.let { err ->
+                        Spacer(Modifier.height(8.dp))
+                        Text(err, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                    }
+
+                    Spacer(Modifier.height(8.dp))
+                    Button(onClick = { showTrackDialog = false }, modifier = Modifier.align(Alignment.End)) {
+                        Text("Done")
+                    }
+                }
+            }
+        }
+    }
+
+    if (showNotifyDialog) {
+        val servers = rewardTiersByServer.keys.sorted()
+        if (selectedNotifyServer == null && servers.isNotEmpty()) {
+            selectedNotifyServer = servers.first()
+        }
+
+        Dialog(onDismissRequest = { showNotifyDialog = false }) {
+            Surface(
+                shape = RoundedCornerShape(16.dp),
+                color = MaterialTheme.colorScheme.surface,
+                modifier = Modifier.fillMaxWidth().fillMaxHeight(0.85f)
+            ) {
+                Column(Modifier.padding(16.dp)) {
+                    Text("Server notifications", style = MaterialTheme.typography.headlineSmall)
+                    Spacer(Modifier.height(8.dp))
+                    Text("Select a server to manage admin updates and milestone alerts.", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+
+                    Spacer(Modifier.height(12.dp))
+                    if (rewardsLoading) {
+                        CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                    } else if (servers.isEmpty()) {
+                        Text("No reward tiers found.", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                    } else {
+                        LazyColumn(modifier = Modifier.weight(1f)) {
+                            items(servers) { server ->
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable { selectedNotifyServer = server }
+                                        .padding(vertical = 6.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    RadioButton(selected = selectedNotifyServer == server, onClick = { selectedNotifyServer = server })
+                                    Spacer(Modifier.width(8.dp))
+                                    Text(server)
+                                }
+                            }
+
+                            val server = selectedNotifyServer
+                            val tiers = server?.let { rewardTiersByServer[it].orEmpty() } ?: emptyList()
+                            if (server != null) {
+                                item {
+                                    Spacer(Modifier.height(8.dp))
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text("Admin updates", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+                                        Switch(
+                                            checked = adminPushByServer[server] ?: true,
+                                            onCheckedChange = { enabled ->
+                                                setAdminPushEnabledForServer(context, server, enabled)
+                                                adminPushByServer = getAdminPushByServer(context)
+                                            }
+                                        )
+                                    }
+                                }
+                            }
+
+                            if (server != null && tiers.isNotEmpty()) {
+                                item {
+                                    Spacer(Modifier.height(8.dp))
+                                    Text("Milestone alerts", style = MaterialTheme.typography.labelLarge)
+                                }
+                                items(tiers.sortedBy { it.min_steps }) { tier ->
+                                    val checked = notificationTiers.contains(makeTierKey(server, tier.min_steps))
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clickable {
+                                                setNotificationTierEnabled(context, server, tier.min_steps, !checked)
+                                                notificationTiers = getNotificationTierKeys(context)
+                                            }
+                                            .padding(vertical = 6.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Checkbox(
+                                            checked = checked,
+                                            onCheckedChange = { enabled ->
+                                                setNotificationTierEnabled(context, server, tier.min_steps, enabled)
+                                                notificationTiers = getNotificationTierKeys(context)
+                                            }
+                                        )
+                                        Spacer(Modifier.width(8.dp))
+                                        Text("${tier.label} · ${tier.min_steps} steps", style = MaterialTheme.typography.bodySmall)
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    rewardsError?.let { err ->
+                        Spacer(Modifier.height(8.dp))
+                        Text(err, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                    }
+
+                    Spacer(Modifier.height(8.dp))
+                    Button(onClick = { showNotifyDialog = false }, modifier = Modifier.align(Alignment.End)) {
+                        Text("Done")
+                    }
+                }
+            }
+        }
     }
 
 
