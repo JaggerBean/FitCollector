@@ -30,7 +30,7 @@ export default function LandingPage() {
                   and keep your community engaged every single day.
                 </p>
                 <p className="mt-3 text-xs uppercase tracking-[0.14em] text-emerald-300">
-                  Rewards delivered daily • Streaks tracked across servers
+                  Rewards delivered daily • Steps tracked across servers
                 </p>
                 <div className="mt-8 flex flex-wrap gap-4">
                   {isAuthenticated ? (
