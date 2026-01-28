@@ -1,3 +1,4 @@
+import type { ReactElement } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import { useAuthContext } from "./app/AuthContext";
 import LoginPage from "./pages/LoginPage";
@@ -8,7 +9,7 @@ import RewardsPage from "./pages/RewardsPage";
 import PushPage from "./pages/PushPage";
 import NotFoundPage from "./pages/NotFoundPage";
 
-function RequireAuth({ children }: { children: JSX.Element }) {
+function RequireAuth({ children }: { children: ReactElement }) {
   const { isAuthenticated } = useAuthContext();
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
