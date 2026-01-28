@@ -9,8 +9,8 @@ export function Layout({ title, children }: { title: string; children: ReactNode
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-emerald-50 dark:from-slate-950 dark:to-slate-900">
       <header className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-6">
         <div>
-          <Link to="/" className="text-2xl font-semibold text-emerald-700 dark:text-emerald-300">
-            StepCraft
+          <Link to="/" className="flex items-center gap-3">
+            <img src="/logo.svg" alt="StepCraft" className="h-10 w-auto" />
           </Link>
           <div className="text-sm text-slate-500 dark:text-slate-400">{title}</div>
         </div>
