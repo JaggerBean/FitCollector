@@ -8,14 +8,14 @@ import type { RewardsTier } from "../api/types";
 interface EditableTier {
   min_steps: number;
   label: string;
-  rewardsText: string;
+  rewards: string[];
 }
 
 function toEditable(tier: RewardsTier): EditableTier {
   return {
     min_steps: tier.min_steps,
     label: tier.label,
-    rewardsText: tier.rewards.join("\n"),
+    rewards: tier.rewards.length ? tier.rewards : [""],
   };
 }
 
@@ -23,10 +23,7 @@ function toPayload(tier: EditableTier): RewardsTier {
   return {
     min_steps: tier.min_steps,
     label: tier.label.trim(),
-    rewards: tier.rewardsText
-      .split("\n")
-      .map((line) => line.trim())
-      .filter(Boolean),
+    rewards: tier.rewards.map((reward) => reward.trim()).filter(Boolean),
   };
 }
 
@@ -93,11 +90,40 @@ export default function RewardsPage() {
   };
 
   const addTier = () => {
-    setTiers((prev) => [...prev, { min_steps: 0, label: "", rewardsText: "" }]);
+    setTiers((prev) => [...prev, { min_steps: 0, label: "", rewards: [""] }]);
   };
 
   const updateTier = (index: number, patch: Partial<EditableTier>) => {
     setTiers((prev) => prev.map((tier, idx) => (idx === index ? { ...tier, ...patch } : tier)));
+  };
+
+  const addReward = (index: number) => {
+    setTiers((prev) =>
+      prev.map((tier, idx) =>
+        idx === index ? { ...tier, rewards: [...tier.rewards, ""] } : tier,
+      ),
+    );
+  };
+
+  const updateReward = (tierIndex: number, rewardIndex: number, value: string) => {
+    setTiers((prev) =>
+      prev.map((tier, idx) => {
+        if (idx !== tierIndex) return tier;
+        const nextRewards = tier.rewards.slice();
+        nextRewards[rewardIndex] = value;
+        return { ...tier, rewards: nextRewards };
+      }),
+    );
+  };
+
+  const removeReward = (tierIndex: number, rewardIndex: number) => {
+    setTiers((prev) =>
+      prev.map((tier, idx) => {
+        if (idx !== tierIndex) return tier;
+        const nextRewards = tier.rewards.filter((_, rIdx) => rIdx !== rewardIndex);
+        return { ...tier, rewards: nextRewards.length ? nextRewards : [""] };
+      }),
+    );
   };
 
   const removeTier = (index: number) => {
@@ -168,14 +194,32 @@ export default function RewardsPage() {
             </div>
             <div className="mt-4">
               <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Reward commands</label>
-              <textarea
-                className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
-                rows={4}
-                placeholder="give {player} minecraft:diamond 1"
-                value={tier.rewardsText}
-                onChange={(event) => updateTier(index, { rewardsText: event.target.value })}
-              />
-              <p className="mt-1 text-xs text-slate-400">One command per line.</p>
+              <div className="mt-2 space-y-2">
+                {tier.rewards.map((reward, rewardIndex) => (
+                  <div key={`${index}-reward-${rewardIndex}`} className="flex gap-2">
+                    <input
+                      className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+                      placeholder="give {player} minecraft:diamond 1"
+                      value={reward}
+                      onChange={(event) => updateReward(index, rewardIndex, event.target.value)}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeReward(index, rewardIndex)}
+                      className="rounded-lg border border-red-200 px-3 py-2 text-xs font-semibold text-red-700 hover:border-red-300"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <button
+                type="button"
+                onClick={() => addReward(index)}
+                className="mt-2 rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 hover:border-slate-300 dark:border-slate-700 dark:text-slate-200"
+              >
+                Add reward command
+              </button>
             </div>
           </div>
         ))}
