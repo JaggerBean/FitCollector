@@ -15,112 +15,108 @@ export default function LandingPage() {
 
   return (
     <Layout title="Welcome">
-      <div className="relative grid gap-10 lg:grid-cols-[1.25fr_0.75fr] 2xl:grid-cols-[1.35fr_0.65fr] lg:items-stretch">
-        <div className="pointer-events-none absolute -left-20 top-10 h-56 w-56 rounded-full bg-emerald-400/10 blur-3xl" />
-        <div className="pointer-events-none absolute -right-10 top-32 h-72 w-72 rounded-full bg-blue-400/10 blur-3xl" />
-        <div className="flex">
-          <div className="flex h-full w-full flex-col rounded-3xl border border-emerald-100 bg-white p-8 shadow-xl dark:border-slate-800 dark:bg-slate-900">
-            <div className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700 dark:border-emerald-700/40 dark:bg-emerald-900/20 dark:text-emerald-200">
-              Fitness meets Minecraft
-            </div>
-            <h1 className="mt-4 text-4xl font-semibold text-slate-900 dark:text-slate-100">
-              Inspire daily movement with a rewards-driven Minecraft server
-            </h1>
-            <p className="mt-4 text-sm text-slate-500 dark:text-slate-400">
-              StepCraft turns step goals into in-game rewards. Launch a private or public server, automate rewards,
-              and keep your community engaged every single day.
-            </p>
-            <div className="mt-6 flex flex-wrap gap-3">
-              {isAuthenticated ? (
-                <Link
-                  to="/dashboard"
-                  className="rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow hover:bg-emerald-700"
-                >
-                  Go to dashboard
-                </Link>
-              ) : (
-                <>
+      <div className="space-y-20">
+        <section className="relative w-screen left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] bg-slate-950 py-24">
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-slate-900/80 via-slate-950 to-slate-950" />
+          <div className="pointer-events-none absolute -left-24 top-12 h-64 w-64 rounded-full bg-emerald-400/10 blur-3xl" />
+          <div className="pointer-events-none absolute right-0 top-24 h-80 w-80 rounded-full bg-blue-400/10 blur-3xl" />
+          <div className="relative mx-auto w-full max-w-screen-2xl px-6 2xl:px-10">
+            <div className="max-w-3xl">
+              <div className="text-xs uppercase tracking-[0.4em] text-emerald-300">StepCraft</div>
+              <h1 className="mt-4 text-5xl font-semibold text-white md:text-6xl">
+                Inspire daily movement with a rewards-driven Minecraft server
+              </h1>
+              <p className="mt-6 text-base text-slate-300 md:text-lg">
+                StepCraft turns step goals into in-game rewards. Launch a private or public server, automate rewards,
+                and keep your community engaged every single day.
+              </p>
+              <div className="mt-8 flex flex-wrap gap-4">
+                {isAuthenticated ? (
                   <Link
-                    to="/account/register"
-                    className="rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow hover:bg-emerald-700"
+                    to="/dashboard"
+                    className="rounded-md bg-emerald-500 px-6 py-3 text-sm font-semibold text-slate-950 hover:bg-emerald-400"
                   >
-                    Create your account
+                    Go to dashboard
                   </Link>
-                  <Link
-                    to="/login"
-                    className="rounded-lg border border-emerald-200 bg-white px-5 py-2.5 text-sm font-semibold text-emerald-700 shadow-sm hover:border-emerald-300 hover:bg-emerald-50 dark:border-slate-700 dark:bg-slate-900 dark:text-emerald-200"
-                  >
-                    Sign in
-                  </Link>
-                </>
-              )}
-            </div>
-            <div className="mt-6 grid gap-3 sm:grid-cols-3">
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-xs text-slate-600 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-300">
-                <div className="text-lg font-semibold text-slate-900 dark:text-slate-100">2×</div>
-                Daily activity boost in two weeks
-              </div>
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-xs text-slate-600 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-300">
-                <div className="text-lg font-semibold text-slate-900 dark:text-slate-100">15 min</div>
-                Average setup time for owners
-              </div>
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-xs text-slate-600 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-300">
-                <div className="text-lg font-semibold text-slate-900 dark:text-slate-100">24/7</div>
-                Automated rewards & claim tracking
-              </div>
-            </div>
-            <div className="mt-6 grid gap-4 sm:grid-cols-3">
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-300">
-                <div className="text-lg font-semibold text-slate-900 dark:text-slate-100">Invite codes</div>
-                Private servers with controlled access.
-              </div>
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-300">
-                <div className="text-lg font-semibold text-slate-900 dark:text-slate-100">Reward tiers</div>
-                Customize goals and commands for each tier.
-              </div>
-              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-300">
-                <div className="text-lg font-semibold text-slate-900 dark:text-slate-100">Push alerts</div>
-                Keep players informed with scheduled updates.
+                ) : (
+                  <>
+                    <Link
+                      to="/account/register"
+                      className="rounded-md bg-emerald-500 px-6 py-3 text-sm font-semibold text-slate-950 hover:bg-emerald-400"
+                    >
+                      Create your account
+                    </Link>
+                    <Link
+                      to="/login"
+                      className="rounded-md border border-slate-700 px-6 py-3 text-sm font-semibold text-white hover:border-slate-500"
+                    >
+                      Sign in
+                    </Link>
+                  </>
+                )}
               </div>
             </div>
           </div>
-        </div>
-        <div className="flex h-full flex-col gap-6">
-          <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-            <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Launch in 3 steps</h2>
-            <ol className="mt-4 space-y-4 text-sm text-slate-600 dark:text-slate-300">
-              <li>
-                <span className="font-semibold text-slate-900 dark:text-slate-100">1. Register your server</span>
-                <div>Get an API key and invite code instantly.</div>
-              </li>
-              <li>
-                <span className="font-semibold text-slate-900 dark:text-slate-100">2. Set rewards</span>
-                <div>Configure commands per step tier.</div>
-              </li>
-              <li>
-                <span className="font-semibold text-slate-900 dark:text-slate-100">3. Go live</span>
-                <div>Invite players and watch streaks grow.</div>
-              </li>
-            </ol>
-            <div className="mt-6 rounded-2xl border border-emerald-100 bg-emerald-50 p-4 text-xs text-emerald-700 dark:border-emerald-700/40 dark:bg-emerald-900/20 dark:text-emerald-200">
-              Built for admins who want motivation, not manual work.
+        </section>
+
+        <section className="grid gap-8 lg:grid-cols-3">
+          {[
+            { title: "Invite codes", text: "Private servers with controlled access." },
+            { title: "Reward tiers", text: "Customize goals and commands for each tier." },
+            { title: "Push alerts", text: "Keep players informed with scheduled updates." },
+          ].map((card) => (
+            <div
+              key={card.title}
+              className="rounded-2xl border border-slate-800 bg-slate-950/60 p-6 text-slate-200 shadow-[0_0_0_1px_rgba(15,23,42,0.4)]"
+            >
+              <h3 className="text-lg font-semibold text-white">{card.title}</h3>
+              <p className="mt-2 text-sm text-slate-400">{card.text}</p>
+            </div>
+          ))}
+        </section>
+
+        <section className="rounded-3xl border border-slate-800 bg-slate-950/70 p-8">
+          <div className="flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <p className="text-xs uppercase tracking-[0.35em] text-slate-400">Launch sequence</p>
+              <h2 className="mt-3 text-3xl font-semibold text-white">Launch in 3 steps</h2>
+            </div>
+            <div className="grid gap-6 text-sm text-slate-300 md:grid-cols-3">
+              <div>
+                <div className="text-xs uppercase text-emerald-300">01</div>
+                <div className="mt-2 font-semibold text-white">Register your server</div>
+                <p className="mt-1 text-slate-400">Get an API key and invite code instantly.</p>
+              </div>
+              <div>
+                <div className="text-xs uppercase text-emerald-300">02</div>
+                <div className="mt-2 font-semibold text-white">Set rewards</div>
+                <p className="mt-1 text-slate-400">Configure commands per step tier.</p>
+              </div>
+              <div>
+                <div className="text-xs uppercase text-emerald-300">03</div>
+                <div className="mt-2 font-semibold text-white">Go live</div>
+                <p className="mt-1 text-slate-400">Invite players and watch streaks grow.</p>
+              </div>
             </div>
           </div>
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-              <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Why communities love it</h2>
-              <ul className="mt-4 space-y-3 text-sm text-slate-600 dark:text-slate-300">
-                <li>• Automated rewards and claim tracking</li>
-                <li>• Real-time player tools and ban controls</li>
-                <li>• Works with private invite-only servers</li>
-              </ul>
-            </div>
-            <div className="rounded-3xl border border-emerald-100 bg-emerald-50 p-6 text-sm text-emerald-700 shadow-sm dark:border-emerald-700/40 dark:bg-emerald-900/20 dark:text-emerald-200">
+        </section>
+
+        <section className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
+          <div className="rounded-3xl border border-slate-800 bg-slate-950/70 p-8">
+            <h3 className="text-2xl font-semibold text-white">Why communities love it</h3>
+            <ul className="mt-6 space-y-3 text-sm text-slate-300">
+              <li>• Automated rewards and claim tracking</li>
+              <li>• Real-time player tools and ban controls</li>
+              <li>• Works with private invite-only servers</li>
+            </ul>
+          </div>
+          <div className="rounded-3xl border border-emerald-900/50 bg-emerald-900/20 p-8 text-emerald-200">
+            <p className="text-lg leading-relaxed">
               “We doubled daily activity in two weeks. Players log in just to hit the next step tier.”
-              <div className="mt-4 text-xs uppercase tracking-wide text-emerald-700/70">Community Admin</div>
-            </div>
+            </p>
+            <div className="mt-6 text-xs uppercase tracking-[0.3em] text-emerald-300/70">Community Admin</div>
           </div>
-        </div>
+        </section>
       </div>
     </Layout>
   );
