@@ -6,6 +6,9 @@ services:
       # SQLAlchemy wants this format
       DATABASE_URL: postgresql+psycopg2://fit:fitpass@db:5432/fitcollector
       MASTER_ADMIN_KEY: asdf
+      ENABLE_INACTIVE_PRUNE_SCHEDULER: "true"
+      INACTIVE_PRUNE_DAILY_TIME: "03:00"
+      INACTIVE_PRUNE_TIMEZONE: "America/Chicago"
     ports:
       - "8000:8000"
     depends_on:
