@@ -336,7 +336,7 @@ public class StepCraftChestScreenHandler extends GenericContainerScreenHandler {
         return tiers;
     }
 
-    static List<ClaimableItem> parseClaimableItems(String claimableJson) {
+    public static List<ClaimableItem> parseClaimableItems(String claimableJson) {
         List<ClaimableItem> items = new ArrayList<>();
         if (claimableJson == null || claimableJson.isBlank()) return items;
         if (claimableJson.startsWith("Error:")) {
@@ -385,9 +385,56 @@ public class StepCraftChestScreenHandler extends GenericContainerScreenHandler {
 
     private record ClaimStatus(boolean claimed, String claimedAt) {}
 
-    private record ClaimableItem(String day, long minSteps, String label) {}
+    public static record ClaimableItem(String day, long minSteps, String label) {}
 
     private record ClaimBatchContext(List<ClaimableItem> items, List<RewardTier> tiers, String debugJson) {}
+
+    public static void claimSpecificRewardWithCommands(ServerPlayerEntity player, String targetPlayer, String day, long minSteps,
+                                                       java.util.function.Consumer<String> onSuccess,
+                                                       java.util.function.Consumer<String> onError) {
+        CompletableFuture
+                .supplyAsync(() -> {
+                    try {
+                        String rewardsJson = BackendClient.getServerRewards();
+                        List<RewardTier> tiers = parseRewardTiers(rewardsJson);
+                        RewardTier tier = findTier(tiers, minSteps);
+                        if (tier == null) {
+                            throw new RuntimeException("Tier not found for min_steps=" + minSteps);
+                        }
+                        return tier;
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                }, BACKEND_EXECUTOR)
+                .whenComplete((tier, error) -> player.getServer().execute(() -> {
+                    if (error != null) {
+                        Throwable cause = error.getCause() != null ? error.getCause() : error;
+                        if (onError != null) {
+                            onError.accept(cause.getMessage());
+                        }
+                        return;
+                    }
+
+                    runRewardCommandsAsync(player, targetPlayer, tier.rewards)
+                            .thenCompose(ignored -> CompletableFuture.supplyAsync(() -> {
+                                try {
+                                    return BackendClient.claimRewardForPlayer(targetPlayer, minSteps, day);
+                                } catch (Exception e) {
+                                    throw new RuntimeException(e);
+                                }
+                            }, BACKEND_EXECUTOR))
+                            .whenComplete((result, claimError) -> player.getServer().execute(() -> {
+                                if (claimError != null) {
+                                    Throwable cause = claimError.getCause() != null ? claimError.getCause() : claimError;
+                                    if (onError != null) {
+                                        onError.accept(cause.getMessage());
+                                    }
+                                } else if (onSuccess != null) {
+                                    onSuccess.accept("Claimed " + tier.label + " (" + day + ").");
+                                }
+                            }));
+                }));
+    }
 
     static RewardTier getTierForYesterday(String username) throws Exception {
         String stepsJson = BackendClient.getYesterdayStepsForPlayer(username);

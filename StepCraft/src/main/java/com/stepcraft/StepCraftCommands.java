@@ -5,6 +5,7 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
+import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
 
 public class StepCraftCommands {
@@ -178,19 +179,15 @@ public class StepCraftCommands {
             .then(CommandManager.literal("claim_reward")
                 .executes(context -> {
                     ServerCommandSource source = context.getSource();
-                    String username = source.getPlayer().getName().getString();
                     try {
-                        StepCraftChestScreenHandler.RewardTier tier = StepCraftChestScreenHandler.getTierForYesterday(username);
-                        if (tier == null) {
-                            source.sendFeedback(() -> Text.literal("No reward tier for yesterday's steps."), false);
-                            return Command.SINGLE_SUCCESS;
-                        }
-                        String result = BackendClient.claimRewardForPlayer(
+                        ServerPlayerEntity player = source.getPlayer();
+                        String username = player.getName().getString();
+                        StepCraftChestScreenHandler.claimRewardWithCommands(
+                            player,
                             username,
-                            tier.minSteps(),
-                            StepCraftChestScreenHandler.getYesterdayDayParam()
+                            result -> source.sendFeedback(() -> Text.literal("Claim reward for " + username + ": " + result), false),
+                            error -> source.sendError(Text.literal("Error: " + error))
                         );
-                        source.sendFeedback(() -> Text.literal("Claim reward for " + username + ": " + result), false);
                     } catch (Exception e) {
                         source.sendError(Text.literal("Error: " + e.getMessage()));
                     }
@@ -210,17 +207,13 @@ public class StepCraftCommands {
                             return 0;
                         }
                         try {
-                            StepCraftChestScreenHandler.RewardTier tier = StepCraftChestScreenHandler.getTierForYesterday(username);
-                            if (tier == null) {
-                                source.sendFeedback(() -> Text.literal("No reward tier for yesterday's steps."), false);
-                                return Command.SINGLE_SUCCESS;
-                            }
-                            String result = BackendClient.claimRewardForPlayer(
+                            ServerPlayerEntity player = source.getPlayer();
+                            StepCraftChestScreenHandler.claimRewardWithCommands(
+                                player,
                                 username,
-                                tier.minSteps(),
-                                StepCraftChestScreenHandler.getYesterdayDayParam()
+                                result -> source.sendFeedback(() -> Text.literal("Claim reward for " + username + ": " + result), false),
+                                error -> source.sendError(Text.literal("Error: " + error))
                             );
-                            source.sendFeedback(() -> Text.literal("Claim reward for " + username + ": " + result), false);
                         } catch (Exception e) {
                             source.sendError(Text.literal("Error: " + e.getMessage()));
                         }

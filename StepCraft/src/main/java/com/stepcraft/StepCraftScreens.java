@@ -43,6 +43,14 @@ public final class StepCraftScreens {
         ));
     }
 
+        public static void openClaimRewards(ServerPlayerEntity player, String targetPlayer) {
+        player.openHandledScreen(new SimpleNamedScreenHandlerFactory(
+            (int syncId, PlayerInventory playerInv, PlayerEntity p) ->
+                new StepCraftClaimRewardsScreenHandler(syncId, playerInv, targetPlayer),
+            Text.literal("Claim Rewards")
+        ));
+        }
+
     public static void openConfirm(ServerPlayerEntity player, StepCraftPlayerAction action, String targetPlayer) {
         player.openHandledScreen(new StepCraftConfirmScreenFactory(
                 action,

@@ -151,6 +151,8 @@ public class StepCraftPlayerListScreenHandler extends GenericContainerScreenHand
                 } else if (action == StepCraftPlayerAction.YESTERDAY_STEPS) {
                     StepCraftChestScreenHandler.sendBackendToLectern(serverPlayer, "Yesterday's Steps",
                             () -> BackendClient.getYesterdayStepsForPlayer(target));
+                } else if (action == StepCraftPlayerAction.CLAIM_REWARD) {
+                    StepCraftScreens.openClaimRewards(serverPlayer, target);
                 } else {
                     StepCraftScreens.openConfirm(serverPlayer, action, target, true);
                 }

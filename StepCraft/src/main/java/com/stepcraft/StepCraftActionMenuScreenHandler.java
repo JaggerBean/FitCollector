@@ -78,7 +78,7 @@ public class StepCraftActionMenuScreenHandler extends GenericContainerScreenHand
                 return;
             }
             case 9 -> {
-                StepCraftScreens.openConfirm(serverPlayer, StepCraftPlayerAction.CLAIM_REWARD, targetPlayer);
+                StepCraftScreens.openClaimRewards(serverPlayer, targetPlayer);
                 return;
             }
             case 11 -> {

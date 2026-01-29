@@ -251,13 +251,16 @@ def get_claim_available(
 
         items = []
         for day in days:
+            day_str = str(day)
             steps_row = conn.execute(
                 text("""
                     SELECT steps_today FROM step_ingest
-                    WHERE minecraft_username = :username AND server_name = :server AND day = :day
+                    WHERE minecraft_username = :username
+                      AND server_name = :server
+                      AND CAST(day AS TEXT) = :day
                     LIMIT 1
                 """),
-                {"username": resolved_username, "server": server_name, "day": day},
+                {"username": resolved_username, "server": server_name, "day": day_str},
             ).fetchone()
 
             if not steps_row:
@@ -277,10 +280,10 @@ def get_claim_available(
                     SELECT min_steps FROM step_claims
                     WHERE minecraft_username = :username
                       AND server_name = :server
-                      AND day = :day
+                      AND CAST(day AS TEXT) = :day
                       AND claimed = TRUE
                 """),
-                {"username": resolved_username, "server": server_name, "day": day},
+                {"username": resolved_username, "server": server_name, "day": day_str},
             ).fetchall()
             claimed_set = {row[0] for row in claimed_rows}
             if debug:
