@@ -74,7 +74,7 @@ public class StepCraftChestScreenHandler extends GenericContainerScreenHandler {
                     case 28 -> { StepCraftUIHelper.openPlayerSelectList(serverPlayer, null, 0, StepCraftPlayerAction.BAN); return; }
                     case 30 -> { StepCraftUIHelper.openPlayerSelectList(serverPlayer, null, 0, StepCraftPlayerAction.UNBAN); return; }
                     case 32 -> { StepCraftUIHelper.openPlayerSelectList(serverPlayer, null, 0, StepCraftPlayerAction.DELETE); return; }
-                    case 34 -> {
+                        case 52 -> {
                         serverPlayer.closeHandledScreen();
                         Text message = Text.literal("Open StepCraft Dashboard")
                                 .setStyle(Style.EMPTY

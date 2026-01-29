@@ -57,7 +57,7 @@ public class StepCraftUIHelper {
                             int[] slotLayout = new int[]{
                                 10, 12, 14, 16,
                                 19, 21, 23, 25,
-                                28, 30, 32, 34
+                                28, 30, 32, 52
                             };
 
             for (int i = 0; i < commandItems.length && i < slotLayout.length; i++) {
