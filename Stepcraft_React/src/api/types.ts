@@ -22,6 +22,8 @@ export interface RegisterServerResponse {
 export interface ClaimStatusResponse {
   claimed: boolean;
   claimed_at: string | null;
+  day?: string;
+  already_claimed?: boolean;
 }
 
 export interface YesterdayStepsResponse {
@@ -73,6 +75,7 @@ export interface ServerInfo {
   active?: boolean;
   is_private?: boolean;
   invite_code?: string | null;
+  claim_buffer_days?: number | null;
   current_players?: number;
   slots_available?: number | null;
 }
@@ -148,4 +151,9 @@ export interface InactivePruneRunResponse {
   }>;
   removed_players?: string[];
   records_affected?: Record<string, number>;
+}
+
+export interface ClaimWindowResponse {
+  server_name: string;
+  claim_buffer_days: number;
 }

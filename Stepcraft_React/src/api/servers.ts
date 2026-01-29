@@ -17,6 +17,7 @@ import type {
   ActionResponse,
   InactivePruneSettingsResponse,
   InactivePruneRunResponse,
+  ClaimWindowResponse,
 } from "./types";
 
 export async function login(email: string, password: string): Promise<LoginResponse> {
@@ -160,9 +161,12 @@ export async function getClaimStatus(
   token: string,
   server: string,
   username: string,
+  day?: string,
 ): Promise<ClaimStatusResponse> {
+  const params = new URLSearchParams({ server: server });
+  if (day) params.set("day", day);
   return apiRequest<ClaimStatusResponse>(
-    `/v1/servers/players/${encodeURIComponent(username)}/claim-status?server=${encodeURIComponent(server)}`,
+    `/v1/servers/players/${encodeURIComponent(username)}/claim-status?${params.toString()}`,
     {},
     token,
   );
@@ -172,9 +176,12 @@ export async function claimReward(
   token: string,
   server: string,
   username: string,
+  day?: string,
 ): Promise<ClaimStatusResponse> {
+  const params = new URLSearchParams({ server: server });
+  if (day) params.set("day", day);
   return apiRequest<ClaimStatusResponse>(
-    `/v1/servers/players/${encodeURIComponent(username)}/claim-reward?server=${encodeURIComponent(server)}`,
+    `/v1/servers/players/${encodeURIComponent(username)}/claim-reward?${params.toString()}`,
     { method: "POST" },
     token,
   );
@@ -184,9 +191,12 @@ export async function getYesterdaySteps(
   token: string,
   server: string,
   username: string,
+  day?: string,
 ): Promise<YesterdayStepsResponse> {
+  const params = new URLSearchParams({ server: server });
+  if (day) params.set("day", day);
   return apiRequest<YesterdayStepsResponse>(
-    `/v1/servers/players/${encodeURIComponent(username)}/yesterday-steps?server=${encodeURIComponent(server)}`,
+    `/v1/servers/players/${encodeURIComponent(username)}/yesterday-steps?${params.toString()}`,
     {},
     token,
   );
@@ -274,6 +284,29 @@ export async function runInactivePrune(
   return apiRequest<InactivePruneRunResponse>(
     `/v1/servers/inactive-prune/run?server=${encodeURIComponent(server)}&dry_run=${dryRun ? "true" : "false"}`,
     { method: "POST" },
+    token,
+  );
+}
+
+export async function getClaimWindow(token: string, server: string): Promise<ClaimWindowResponse> {
+  return apiRequest<ClaimWindowResponse>(
+    `/v1/servers/claim-window?server=${encodeURIComponent(server)}`,
+    {},
+    token,
+  );
+}
+
+export async function updateClaimWindow(
+  token: string,
+  server: string,
+  claim_buffer_days: number,
+): Promise<ClaimWindowResponse> {
+  return apiRequest<ClaimWindowResponse>(
+    `/v1/servers/claim-window?server=${encodeURIComponent(server)}`,
+    {
+      method: "PUT",
+      body: JSON.stringify({ claim_buffer_days }),
+    },
     token,
   );
 }

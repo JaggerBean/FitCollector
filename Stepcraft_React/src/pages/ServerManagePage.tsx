@@ -7,6 +7,7 @@ import {
   banPlayer,
   claimReward,
   getClaimStatus,
+  getClaimWindow,
   getOwnedServers,
   getInactivePruneSettings,
   getServerInfo,
@@ -17,9 +18,11 @@ import {
   togglePrivacy,
   unbanPlayer,
   updateInactivePruneSettings,
+  updateClaimWindow,
   wipePlayer,
 } from "../api/servers";
 import type {
+  ClaimWindowResponse,
   InactivePruneSettingsResponse,
   InactivePruneRunResponse,
   PlayersListResponse,
@@ -44,6 +47,9 @@ export default function ServerManagePage() {
   const [query, setQuery] = useState("");
   const [limit, setLimit] = useState(100);
   const [offset, setOffset] = useState(0);
+  const [actionDay, setActionDay] = useState("");
+  const [claimWindow, setClaimWindow] = useState<ClaimWindowResponse | null>(null);
+  const [claimWindowSaving, setClaimWindowSaving] = useState(false);
   const [pruneSettings, setPruneSettings] = useState<InactivePruneSettingsResponse | null>(null);
   const [pruneSaving, setPruneSaving] = useState(false);
   const [pruneRunning, setPruneRunning] = useState(false);
@@ -98,12 +104,14 @@ export default function ServerManagePage() {
       getOwnedServers(token),
       listPlayers(token, decodedName, 200, 0),
       getInactivePruneSettings(token, decodedName),
+      getClaimWindow(token, decodedName),
     ])
-      .then(([infoResponse, owned, playersResponse, pruneResponse]) => {
+      .then(([infoResponse, owned, playersResponse, pruneResponse, claimWindowResponse]) => {
         setInfo(infoResponse);
         setMeta(owned.servers.find((server) => server.server_name === decodedName) ?? null);
         setPlayers(playersResponse);
         setPruneSettings(pruneResponse);
+        setClaimWindow(claimWindowResponse);
       })
       .catch((err) => setError((err as Error).message))
       .finally(() => setLoading(false));
@@ -128,6 +136,21 @@ export default function ServerManagePage() {
       setPruneError((err as Error).message);
     } finally {
       setPruneSaving(false);
+    }
+  };
+
+  const saveClaimWindow = async () => {
+    if (!token || !decodedName || !claimWindow) return;
+    setClaimWindowSaving(true);
+    setError(null);
+    try {
+      const response = await updateClaimWindow(token, decodedName, claimWindow.claim_buffer_days);
+      setClaimWindow(response);
+      setInfo((prev) => (prev ? { ...prev, claim_buffer_days: response.claim_buffer_days } : prev));
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setClaimWindowSaving(false);
     }
   };
 
@@ -253,6 +276,12 @@ export default function ServerManagePage() {
                     {info?.slots_available ?? "Unlimited"}
                   </span>
                 </div>
+                <div className="flex items-center justify-between">
+                  <span>Claim buffer days</span>
+                  <span className="font-medium text-slate-900 dark:text-slate-100">
+                    {info?.claim_buffer_days ?? claimWindow?.claim_buffer_days ?? 1}
+                  </span>
+                </div>
               </div>
             </div>
             <div className="rounded-2xl border border-emerald-100 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
@@ -288,6 +317,38 @@ export default function ServerManagePage() {
                   </div>
                 </div>
               )}
+            </div>
+            <div className="rounded-2xl border border-emerald-100 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Claim window</h2>
+              <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+                Allow claims for today and the past N days.
+              </p>
+              <div className="mt-4 flex flex-wrap items-end gap-3">
+                <div>
+                  <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                    Buffer days
+                  </label>
+                  <input
+                    type="number"
+                    min={0}
+                    className="mt-1 w-32 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+                    value={claimWindow?.claim_buffer_days ?? 1}
+                    onChange={(event) =>
+                      setClaimWindow((prev) =>
+                        prev ? { ...prev, claim_buffer_days: Number(event.target.value) } : prev,
+                      )
+                    }
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={saveClaimWindow}
+                  disabled={claimWindowSaving}
+                  className="rounded-lg bg-emerald-600 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-70"
+                >
+                  {claimWindowSaving ? "Saving..." : "Save"}
+                </button>
+              </div>
             </div>
             <div className="rounded-2xl border border-emerald-100 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
               <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Inactive cleanup</h2>
@@ -424,6 +485,15 @@ export default function ServerManagePage() {
                   placeholder="broke code of conduct"
                 />
               </div>
+              <div>
+                <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Day (YYYY-MM-DD)</label>
+                <input
+                  className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+                  value={actionDay}
+                  onChange={(event) => setActionDay(event.target.value)}
+                  placeholder="Optional"
+                />
+              </div>
               <div className="grid gap-4 md:grid-cols-3">
                 <div>
                   <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Search query</label>
@@ -471,15 +541,21 @@ export default function ServerManagePage() {
                 <button
                   type="button"
                   disabled={actionLoading || !username.trim()}
-                  onClick={() => runAction(() => getYesterdaySteps(token!, decodedName, username.trim()))}
+                  onClick={() =>
+                    runAction(() =>
+                      getYesterdaySteps(token!, decodedName, username.trim(), actionDay.trim() || undefined),
+                    )
+                  }
                   className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 hover:border-slate-300 dark:border-slate-700 dark:text-slate-200"
                 >
-                  Yesterday steps
+                  Day steps
                 </button>
                 <button
                   type="button"
                   disabled={actionLoading || !username.trim()}
-                  onClick={() => runAction(() => getClaimStatus(token!, decodedName, username.trim()))}
+                  onClick={() =>
+                    runAction(() => getClaimStatus(token!, decodedName, username.trim(), actionDay.trim() || undefined))
+                  }
                   className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 hover:border-slate-300 dark:border-slate-700 dark:text-slate-200"
                 >
                   Claim status
@@ -487,7 +563,9 @@ export default function ServerManagePage() {
                 <button
                   type="button"
                   disabled={actionLoading || !username.trim()}
-                  onClick={() => runAction(() => claimReward(token!, decodedName, username.trim()))}
+                  onClick={() =>
+                    runAction(() => claimReward(token!, decodedName, username.trim(), actionDay.trim() || undefined))
+                  }
                   className="rounded-lg bg-emerald-600 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-70"
                 >
                   Mark claimed

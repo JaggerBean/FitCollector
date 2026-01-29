@@ -149,6 +149,12 @@ def init_db() -> None:
         ADD COLUMN IF NOT EXISTS inactive_prune_mode TEXT DEFAULT 'deactivate';
         """))
 
+        # 5f) Migration: add claim buffer settings (days back allowed to claim)
+        conn.execute(text("""
+        ALTER TABLE servers
+        ADD COLUMN IF NOT EXISTS claim_buffer_days INTEGER DEFAULT 1;
+        """))
+
         conn.execute(text("""
         CREATE UNIQUE INDEX IF NOT EXISTS idx_servers_invite_code
         ON servers(invite_code)

@@ -27,6 +27,10 @@ class InactivePruneSettingsRequest(BaseModel):
     mode: Literal["deactivate", "wipe"] = "deactivate"
 
 
+class ClaimWindowSettingsRequest(BaseModel):
+    claim_buffer_days: int = Field(1, ge=0, le=365)
+
+
 @router.get("/v1/servers/info")
 def get_server_info(server_name: str = Depends(require_server_access)):
     """
@@ -44,7 +48,8 @@ def get_server_info(server_name: str = Depends(require_server_access)):
                         k.last_used,
                         k.active,
                         s.is_private,
-                        s.invite_code
+                        s.invite_code,
+                        s.claim_buffer_days
                     FROM api_keys k
                     JOIN servers s ON s.server_name = k.server_name
                     WHERE k.server_name = :server_name
@@ -75,6 +80,48 @@ def get_server_info(server_name: str = Depends(require_server_access)):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to get server info: {str(e)}")
+
+
+@router.get("/v1/servers/claim-window")
+def get_claim_window(server_name: str = Depends(require_server_access)):
+    with engine.begin() as conn:
+        row = conn.execute(
+            text("""
+                SELECT claim_buffer_days
+                FROM servers
+                WHERE server_name = :server
+            """),
+            {"server": server_name},
+        ).fetchone()
+
+    if not row:
+        raise HTTPException(status_code=404, detail="Server not found")
+
+    return {
+        "server_name": server_name,
+        "claim_buffer_days": row[0] if row[0] is not None else 1,
+    }
+
+
+@router.put("/v1/servers/claim-window")
+def update_claim_window(
+    payload: ClaimWindowSettingsRequest,
+    server_name: str = Depends(require_server_access),
+):
+    with engine.begin() as conn:
+        conn.execute(
+            text("""
+                UPDATE servers
+                SET claim_buffer_days = :days
+                WHERE server_name = :server
+            """),
+            {"days": payload.claim_buffer_days, "server": server_name},
+        )
+
+    return {
+        "server_name": server_name,
+        "claim_buffer_days": payload.claim_buffer_days,
+    }
 
 
 @router.post("/v1/servers/toggle-privacy")
