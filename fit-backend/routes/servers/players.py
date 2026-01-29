@@ -28,6 +28,7 @@ def get_claim_status_server(
         raise HTTPException(status_code=400, detail="min_steps must be >= 0")
 
     target_day = _resolve_claim_day(day, server_name)
+    resolved_username = _resolve_username(minecraft_username, server_name)
     with engine.begin() as conn:
         row = conn.execute(
             text("""
@@ -36,7 +37,7 @@ def get_claim_status_server(
                 LIMIT 1
             """),
             {
-                "username": minecraft_username,
+                "username": resolved_username,
                 "server": server_name,
                 "day": target_day,
                 "min_steps": min_steps,
@@ -64,6 +65,7 @@ def claim_reward_server(
         raise HTTPException(status_code=400, detail="min_steps must be >= 0")
 
     target_day = _resolve_claim_day(day, server_name)
+    resolved_username = _resolve_username(minecraft_username, server_name)
     now = datetime.now(timezone.utc)
     with engine.begin() as conn:
         existing = conn.execute(
@@ -73,7 +75,7 @@ def claim_reward_server(
                 LIMIT 1
             """),
             {
-                "username": minecraft_username,
+                "username": resolved_username,
                 "server": server_name,
                 "day": target_day,
                 "min_steps": min_steps,
@@ -97,7 +99,7 @@ def claim_reward_server(
                 DO UPDATE SET claimed = TRUE, claimed_at = :claimed_at
             """),
             {
-                "username": minecraft_username,
+                "username": resolved_username,
                 "server": server_name,
                 "day": target_day,
                 "min_steps": min_steps,
@@ -214,6 +216,7 @@ def get_claim_available(
     today = datetime.now(CENTRAL_TZ).date()
     buffer_days = _get_claim_buffer_days(server_name)
     days = [today - timedelta(days=offset) for offset in range(buffer_days + 1)]
+    resolved_username = _resolve_username(minecraft_username, server_name)
 
     with engine.begin() as conn:
         tiers = conn.execute(
@@ -237,7 +240,7 @@ def get_claim_available(
                     WHERE minecraft_username = :username AND server_name = :server AND day = :day
                     LIMIT 1
                 """),
-                {"username": minecraft_username, "server": server_name, "day": day},
+                {"username": resolved_username, "server": server_name, "day": day},
             ).fetchone()
 
             if not steps_row:
@@ -256,7 +259,7 @@ def get_claim_available(
                       AND day = :day
                       AND claimed = TRUE
                 """),
-                {"username": minecraft_username, "server": server_name, "day": day},
+                {"username": resolved_username, "server": server_name, "day": day},
             ).fetchall()
             claimed_set = {row[0] for row in claimed_rows}
 
@@ -403,5 +406,22 @@ def _get_claim_buffer_days(server_name: str) -> int:
     if not row or row[0] is None:
         return 1
     return max(0, int(row[0]))
+
+
+def _resolve_username(minecraft_username: str, server_name: str) -> str:
+    if not minecraft_username:
+        return minecraft_username
+    with engine.begin() as conn:
+        row = conn.execute(
+            text("""
+                SELECT minecraft_username FROM step_ingest
+                WHERE server_name = :server
+                  AND LOWER(minecraft_username) = LOWER(:username)
+                ORDER BY day DESC
+                LIMIT 1
+            """),
+            {"server": server_name, "username": minecraft_username},
+        ).fetchone()
+    return row[0] if row else minecraft_username
 
 
