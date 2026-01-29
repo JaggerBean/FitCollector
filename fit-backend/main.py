@@ -5,7 +5,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from database import init_db
 from routes import health, players, ingest
 from routes import auth as auth_routes
-from routes import owner as owner_routes
 from routes.servers import router as servers_router
 from routes.admin import router as admin_router
 from fastapi.responses import JSONResponse
@@ -32,7 +31,6 @@ app.include_router(servers_router)
 app.include_router(ingest.router)
 app.include_router(admin_router)
 app.include_router(auth_routes.router)
-app.include_router(owner_routes.router)
 
 
 @app.on_event("startup")

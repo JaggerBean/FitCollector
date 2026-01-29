@@ -245,7 +245,7 @@ export async function getInactivePruneSettings(
   server: string,
 ): Promise<InactivePruneSettingsResponse> {
   return apiRequest<InactivePruneSettingsResponse>(
-    `/v1/owner/servers/${encodeURIComponent(server)}/inactive-prune`,
+    `/v1/servers/inactive-prune?server=${encodeURIComponent(server)}`,
     {},
     token,
   );
@@ -257,7 +257,7 @@ export async function updateInactivePruneSettings(
   payload: { enabled: boolean; max_inactive_days: number | null; mode: "deactivate" | "wipe" },
 ): Promise<InactivePruneSettingsResponse> {
   return apiRequest<InactivePruneSettingsResponse>(
-    `/v1/owner/servers/${encodeURIComponent(server)}/inactive-prune`,
+    `/v1/servers/inactive-prune?server=${encodeURIComponent(server)}`,
     {
       method: "PUT",
       body: JSON.stringify(payload),
@@ -272,7 +272,7 @@ export async function runInactivePrune(
   dryRun: boolean,
 ): Promise<InactivePruneRunResponse> {
   return apiRequest<InactivePruneRunResponse>(
-    `/v1/owner/servers/${encodeURIComponent(server)}/inactive-prune/run?dry_run=${dryRun ? "true" : "false"}`,
+    `/v1/servers/inactive-prune/run?server=${encodeURIComponent(server)}&dry_run=${dryRun ? "true" : "false"}`,
     { method: "POST" },
     token,
   );
