@@ -467,186 +467,200 @@ export default function ServerManagePage() {
               Run admin actions for this server.
             </p>
             <div className="mt-4 grid gap-4">
-              <div className="rounded-xl border border-slate-200/70 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-950">
-                <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Player context</h3>
-                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                  Select a player once, then run actions in the sections below.
-                </p>
-                <div className="mt-3">
-                  <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Minecraft username</label>
-                  <input
-                    className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
-                    value={username}
-                    onChange={(event) => setUsername(event.target.value)}
-                    placeholder="Player name"
-                    list="player-suggestions"
-                    onKeyDown={onUsernameKeyDown}
-                  />
-                  <datalist id="player-suggestions">
-                    {filteredSuggestions.map((name) => (
-                      <option key={name} value={name} />
-                    ))}
-                  </datalist>
-                </div>
-              </div>
-              <div className="rounded-xl border border-slate-200/70 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-950">
-                <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Player lookup</h3>
-                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                  Optional day for step checks (uses the selected player).
-                </p>
-                <div className="mt-3 grid gap-4 md:grid-cols-2">
+              <div className="rounded-2xl border border-slate-200/70 bg-slate-50/70 p-5 dark:border-slate-800 dark:bg-slate-950">
+                <div className="flex items-center justify-between">
                   <div>
-                    <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Day (YYYY-MM-DD)</label>
+                    <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Player actions</h3>
+                    <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                      Select a player once, then use the tools below.
+                    </p>
+                  </div>
+                </div>
+                <div className="mt-4 rounded-xl border border-slate-200/70 bg-white/70 p-4 dark:border-slate-800 dark:bg-slate-900/70">
+                  <h4 className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                    Player context
+                  </h4>
+                  <div className="mt-3">
+                    <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Minecraft username</label>
                     <input
                       className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
-                      value={actionDay}
-                      onChange={(event) => setActionDay(event.target.value)}
-                      placeholder="Optional"
+                      value={username}
+                      onChange={(event) => setUsername(event.target.value)}
+                      placeholder="Player name"
+                      list="player-suggestions"
+                      onKeyDown={onUsernameKeyDown}
                     />
-                  </div>
-                </div>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  <button
-                    type="button"
-                    disabled={actionLoading || !username.trim()}
-                    onClick={() =>
-                      runAction(() =>
-                        getYesterdaySteps(token!, decodedName, username.trim(), actionDay.trim() || undefined),
-                      )
-                    }
-                    className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 hover:border-slate-300 dark:border-slate-700 dark:text-slate-200"
-                  >
-                    Day steps
-                  </button>
-                </div>
-              </div>
-
-              <div className="rounded-xl border border-slate-200/70 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-950">
-                <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Claim tools</h3>
-                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                  Check or mark a specific tier as claimed (uses the selected player).
-                </p>
-                <div className="mt-3 grid gap-4 md:grid-cols-2">
-                  <div>
-                    <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Reward tier</label>
-                    <select
-                      className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
-                      value={selectedTierMinSteps ?? ""}
-                      onChange={(event) =>
-                        setSelectedTierMinSteps(event.target.value ? Number(event.target.value) : null)
-                      }
-                    >
-                      {rewardTiers.length === 0 && <option value="">No tiers loaded</option>}
-                      {rewardTiers.map((tier) => (
-                        <option key={tier.min_steps} value={tier.min_steps}>
-                          {tier.label} · {tier.min_steps}
-                        </option>
+                    <datalist id="player-suggestions">
+                      {filteredSuggestions.map((name) => (
+                        <option key={name} value={name} />
                       ))}
-                    </select>
+                    </datalist>
                   </div>
                 </div>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  <button
-                    type="button"
-                    onClick={() =>
-                      runAction(() =>
-                        getClaimStatus(
-                          token!,
-                          decodedName,
-                          username.trim(),
-                          actionDay.trim() || undefined,
-                          selectedTierMinSteps ?? undefined,
-                        ),
-                      )
-                    }
-                    className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 hover:border-slate-300 dark:border-slate-700 dark:text-slate-200"
-                    disabled={actionLoading || !username.trim() || selectedTierMinSteps == null}
-                  >
-                    Claim status
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      runAction(() =>
-                        claimReward(
-                          token!,
-                          decodedName,
-                          username.trim(),
-                          actionDay.trim() || undefined,
-                          selectedTierMinSteps ?? undefined,
-                        ),
-                      )
-                    }
-                    className="rounded-lg bg-emerald-600 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-70"
-                    disabled={actionLoading || !username.trim() || selectedTierMinSteps == null}
-                  >
-                    Mark claimed
-                  </button>
-                </div>
-              </div>
 
-              <div className="rounded-xl border border-slate-200/70 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-950">
-                <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Moderation</h3>
-                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                  Ban, unban, or wipe player data (uses the selected player).
-                </p>
-                <div className="mt-3">
-                  <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Ban reason</label>
-                  <input
-                    className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
-                    value={reason}
-                    onChange={(event) => setReason(event.target.value)}
-                    placeholder="broke code of conduct"
-                  />
-                </div>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  <button
-                    type="button"
-                    disabled={actionLoading}
-                    onClick={() => runAction(() => listBans(token!, decodedName))}
-                    className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 hover:border-slate-300 dark:border-slate-700 dark:text-slate-200"
-                  >
-                    List bans
-                  </button>
-                  <button
-                    type="button"
-                    disabled={actionLoading || !username.trim()}
-                    onClick={() =>
-                      confirmAndRunAction(
-                        `Ban ${username.trim()} on ${decodedName}? This removes access until unbanned.`,
-                        () => banPlayer(token!, decodedName, username.trim(), reason.trim() || "broke code of conduct"),
-                      )
-                    }
-                    className="rounded-lg border border-red-200 px-3 py-2 text-sm font-medium text-red-700 hover:border-red-300"
-                  >
-                    Ban player
-                  </button>
-                  <button
-                    type="button"
-                    disabled={actionLoading || !username.trim()}
-                    onClick={() =>
-                      confirmAndRunAction(
-                        `Unban ${username.trim()} on ${decodedName}?`,
-                        () => unbanPlayer(token!, decodedName, username.trim()),
-                      )
-                    }
-                    className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 hover:border-slate-300 dark:border-slate-700 dark:text-slate-200"
-                  >
-                    Unban player
-                  </button>
-                  <button
-                    type="button"
-                    disabled={actionLoading || !username.trim()}
-                    onClick={() =>
-                      confirmAndRunAction(
-                        `Wipe ${username.trim()} on ${decodedName}? This is irreversible.`,
-                        () => wipePlayer(token!, decodedName, username.trim()),
-                      )
-                    }
-                    className="rounded-lg border border-red-200 px-3 py-2 text-sm font-medium text-red-700 hover:border-red-300"
-                  >
-                    Wipe player
-                  </button>
+                <div className="mt-4 grid gap-4 lg:grid-cols-3">
+                  <div className="rounded-xl border border-slate-200/70 bg-white/70 p-4 dark:border-slate-800 dark:bg-slate-900/70">
+                    <h4 className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                      Player lookup
+                    </h4>
+                    <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                      Optional day for step checks.
+                    </p>
+                    <div className="mt-3">
+                      <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Day (YYYY-MM-DD)</label>
+                      <input
+                        className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+                        value={actionDay}
+                        onChange={(event) => setActionDay(event.target.value)}
+                        placeholder="Optional"
+                      />
+                    </div>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        disabled={actionLoading || !username.trim()}
+                        onClick={() =>
+                          runAction(() =>
+                            getYesterdaySteps(token!, decodedName, username.trim(), actionDay.trim() || undefined),
+                          )
+                        }
+                        className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 hover:border-slate-300 dark:border-slate-700 dark:text-slate-200"
+                      >
+                        Day steps
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="rounded-xl border border-slate-200/70 bg-white/70 p-4 dark:border-slate-800 dark:bg-slate-900/70">
+                    <h4 className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                      Claim tools
+                    </h4>
+                    <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                      Check or mark a specific tier.
+                    </p>
+                    <div className="mt-3">
+                      <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Reward tier</label>
+                      <select
+                        className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+                        value={selectedTierMinSteps ?? ""}
+                        onChange={(event) =>
+                          setSelectedTierMinSteps(event.target.value ? Number(event.target.value) : null)
+                        }
+                      >
+                        {rewardTiers.length === 0 && <option value="">No tiers loaded</option>}
+                        {rewardTiers.map((tier) => (
+                          <option key={tier.min_steps} value={tier.min_steps}>
+                            {tier.label} · {tier.min_steps}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          runAction(() =>
+                            getClaimStatus(
+                              token!,
+                              decodedName,
+                              username.trim(),
+                              actionDay.trim() || undefined,
+                              selectedTierMinSteps ?? undefined,
+                            ),
+                          )
+                        }
+                        className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 hover:border-slate-300 dark:border-slate-700 dark:text-slate-200"
+                        disabled={actionLoading || !username.trim() || selectedTierMinSteps == null}
+                      >
+                        Claim status
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          runAction(() =>
+                            claimReward(
+                              token!,
+                              decodedName,
+                              username.trim(),
+                              actionDay.trim() || undefined,
+                              selectedTierMinSteps ?? undefined,
+                            ),
+                          )
+                        }
+                        className="rounded-lg bg-emerald-600 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-70"
+                        disabled={actionLoading || !username.trim() || selectedTierMinSteps == null}
+                      >
+                        Mark claimed
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="rounded-xl border border-slate-200/70 bg-white/70 p-4 dark:border-slate-800 dark:bg-slate-900/70">
+                    <h4 className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                      Moderation
+                    </h4>
+                    <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                      Ban, unban, or wipe player data.
+                    </p>
+                    <div className="mt-3">
+                      <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Ban reason</label>
+                      <input
+                        className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+                        value={reason}
+                        onChange={(event) => setReason(event.target.value)}
+                        placeholder="broke code of conduct"
+                      />
+                    </div>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        disabled={actionLoading}
+                        onClick={() => runAction(() => listBans(token!, decodedName))}
+                        className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 hover:border-slate-300 dark:border-slate-700 dark:text-slate-200"
+                      >
+                        List bans
+                      </button>
+                      <button
+                        type="button"
+                        disabled={actionLoading || !username.trim()}
+                        onClick={() =>
+                          confirmAndRunAction(
+                            `Ban ${username.trim()} on ${decodedName}? This removes access until unbanned.`,
+                            () => banPlayer(token!, decodedName, username.trim(), reason.trim() || "broke code of conduct"),
+                          )
+                        }
+                        className="rounded-lg border border-red-200 px-3 py-2 text-sm font-medium text-red-700 hover:border-red-300"
+                      >
+                        Ban player
+                      </button>
+                      <button
+                        type="button"
+                        disabled={actionLoading || !username.trim()}
+                        onClick={() =>
+                          confirmAndRunAction(
+                            `Unban ${username.trim()} on ${decodedName}?`,
+                            () => unbanPlayer(token!, decodedName, username.trim()),
+                          )
+                        }
+                        className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 hover:border-slate-300 dark:border-slate-700 dark:text-slate-200"
+                      >
+                        Unban player
+                      </button>
+                      <button
+                        type="button"
+                        disabled={actionLoading || !username.trim()}
+                        onClick={() =>
+                          confirmAndRunAction(
+                            `Wipe ${username.trim()} on ${decodedName}? This is irreversible.`,
+                            () => wipePlayer(token!, decodedName, username.trim()),
+                          )
+                        }
+                        className="rounded-lg border border-red-200 px-3 py-2 text-sm font-medium text-red-700 hover:border-red-300"
+                      >
+                        Wipe player
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
 
