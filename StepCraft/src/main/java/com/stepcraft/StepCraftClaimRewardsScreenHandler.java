@@ -29,9 +29,9 @@ public class StepCraftClaimRewardsScreenHandler extends GenericContainerScreenHa
     private static final int ROWS = 6;
     private static final int PAGE_SIZE = 45;
     private static final int SLOT_PREV = 45;
-    private static final int SLOT_BACK = 46;
+    private static final int SLOT_CLAIM_ALL = 47;
     private static final int SLOT_PAGE = 48;
-    private static final int SLOT_CLAIM_ALL = 49;
+    private static final int SLOT_BACK = 49;
     private static final int SLOT_REFRESH = 50;
     private static final int SLOT_NEXT = 53;
 

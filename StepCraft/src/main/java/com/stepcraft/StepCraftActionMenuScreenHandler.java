@@ -17,7 +17,7 @@ import net.minecraft.util.Unit;
 public class StepCraftActionMenuScreenHandler extends GenericContainerScreenHandler {
     private final String targetPlayer;
     private final SimpleInventory inventory;
-    private static final int ROWS = 2;
+    private static final int ROWS = 6;
 
     public StepCraftActionMenuScreenHandler(int syncId, PlayerInventory playerInventory, String targetPlayer) {
         super(ScreenHandlerType.GENERIC_9X2, syncId, playerInventory, new SimpleInventory(ROWS * 9), ROWS);
@@ -30,14 +30,14 @@ public class StepCraftActionMenuScreenHandler extends GenericContainerScreenHand
             inventory.setStack(i, pane.copy());
         }
 
-        inventory.setStack(0, makeActionItem(new ItemStack(Items.IRON_SWORD), "Ban Player", 0xFF5555));
-        inventory.setStack(2, makeActionItem(new ItemStack(Items.PAPER), "Unban Player", 0x55FF55));
-        inventory.setStack(4, makeActionItem(new ItemStack(Items.BARRIER), "Delete Player", 0xAA0000));
+        inventory.setStack(20, makeActionItem(new ItemStack(Items.IRON_SWORD), "Ban Player", 0xFF5555));
+        inventory.setStack(22, makeActionItem(new ItemStack(Items.PAPER), "Unban Player", 0x55FF55));
+        inventory.setStack(24, makeActionItem(new ItemStack(Items.BARRIER), "Delete Player", 0xAA0000));
 
-        inventory.setStack(9, makeActionItem(new ItemStack(Items.EMERALD), "Claim Reward", 0x55FF55));
-        inventory.setStack(11, makeActionItem(new ItemStack(Items.MAP), "Claim Status", 0xFFAA00));
-        inventory.setStack(13, makeActionItem(new ItemStack(Items.FEATHER), "Yesterday's Steps", 0x55FFFF));
-        inventory.setStack(16, makeActionItem(new ItemStack(Items.BOOK), "Back", 0xFFFFFF));
+        inventory.setStack(29, makeActionItem(new ItemStack(Items.EMERALD), "Claim Reward", 0x55FF55));
+        inventory.setStack(31, makeActionItem(new ItemStack(Items.MAP), "Claim Status", 0xFFAA00));
+        inventory.setStack(33, makeActionItem(new ItemStack(Items.FEATHER), "Yesterday's Steps", 0x55FFFF));
+        inventory.setStack(49, makeActionItem(new ItemStack(Items.BOOK), "Back", 0xFFFFFF));
     }
 
     private ItemStack makeActionItem(ItemStack stack, String name, int rgb) {
@@ -65,32 +65,32 @@ public class StepCraftActionMenuScreenHandler extends GenericContainerScreenHand
         }
 
         switch (slot) {
-            case 0 -> {
+            case 20 -> {
                 StepCraftScreens.openConfirm(serverPlayer, StepCraftPlayerAction.BAN, targetPlayer);
                 return;
             }
-            case 2 -> {
+            case 22 -> {
                 StepCraftScreens.openConfirm(serverPlayer, StepCraftPlayerAction.UNBAN, targetPlayer);
                 return;
             }
-            case 4 -> {
+            case 24 -> {
                 StepCraftScreens.openConfirm(serverPlayer, StepCraftPlayerAction.DELETE, targetPlayer);
                 return;
             }
-            case 9 -> {
+            case 29 -> {
                 StepCraftScreens.openClaimRewards(serverPlayer, targetPlayer);
                 return;
             }
-            case 11 -> {
+            case 31 -> {
                 StepCraftScreens.openClaimStatus(serverPlayer, targetPlayer);
                 return;
             }
-            case 13 -> {
+            case 33 -> {
                 StepCraftChestScreenHandler.sendBackendToLectern(serverPlayer, "Yesterday's Steps",
                         () -> BackendClient.getYesterdayStepsForPlayer(targetPlayer));
                 return;
             }
-            case 16 -> {
+            case 49 -> {
                 StepCraftNav.goBack(serverPlayer, () -> StepCraftUIHelper.openPlayerSelectList(serverPlayer, null, 0, StepCraftPlayerAction.NONE));
                 return;
             }

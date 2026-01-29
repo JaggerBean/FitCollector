@@ -30,9 +30,9 @@ public class StepCraftPlayerListScreenHandler extends GenericContainerScreenHand
     private static final int ROWS = 6;
     public static final int PAGE_SIZE = 45;
     private static final int SLOT_PREV = 45;
-    private static final int SLOT_BACK = 46;
+    private static final int SLOT_SEARCH = 47;
     private static final int SLOT_PAGE = 48;
-    private static final int SLOT_SEARCH = 49;
+    private static final int SLOT_BACK = 49;
     private static final int SLOT_CLEAR = 50;
     private static final int SLOT_NEXT = 53;
 

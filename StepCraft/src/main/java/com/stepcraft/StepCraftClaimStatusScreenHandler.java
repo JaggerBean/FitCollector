@@ -31,8 +31,8 @@ public class StepCraftClaimStatusScreenHandler extends GenericContainerScreenHan
     private static final int ROWS = 6;
     private static final int PAGE_SIZE = 45;
     private static final int SLOT_PREV = 45;
-    private static final int SLOT_BACK = 46;
     private static final int SLOT_PAGE = 48;
+    private static final int SLOT_BACK = 49;
     private static final int SLOT_REFRESH = 50;
     private static final int SLOT_NEXT = 53;
 

@@ -48,14 +48,16 @@ public final class StepCraftNav {
         suppressPush(() -> {
             switch (entry.type) {
                 case ADMIN -> StepCraftUIHelper.openPlayersList(player);
-                case PLAYER_LIST -> StepCraftScreens.openPlayerList(
-                    player,
-                    entry.players != null ? entry.players : List.of(),
-                    entry.query != null ? entry.query : "",
-                    entry.page,
-                    entry.totalPlayers,
-                    entry.action != null ? entry.action : StepCraftPlayerAction.NONE
-                );
+                case PLAYER_LIST -> {
+                    List<String> players = entry.players != null ? entry.players : List.of();
+                    String query = entry.query != null ? entry.query : "";
+                    StepCraftPlayerAction action = entry.action != null ? entry.action : StepCraftPlayerAction.NONE;
+                    if (players.isEmpty() && entry.totalPlayers == 0) {
+                        StepCraftUIHelper.openPlayerSelectList(player, query, entry.page, action);
+                    } else {
+                        StepCraftScreens.openPlayerList(player, players, query, entry.page, entry.totalPlayers, action);
+                    }
+                }
                 case ACTION_MENU -> StepCraftScreens.openActionMenu(player, entry.targetPlayer);
                 case CLAIM_REWARDS -> StepCraftScreens.openClaimRewards(player, entry.targetPlayer);
                 case CLAIM_STATUS -> StepCraftScreens.openClaimStatus(player, entry.targetPlayer);

@@ -19,11 +19,11 @@ import net.minecraft.util.Unit;
 import java.util.List;
 
 public class StepCraftSettingsScreenHandler extends GenericContainerScreenHandler {
-    private static final int ROWS = 1;
-    private static final int SLOT_REWARDS = 1;
-    private static final int SLOT_SET_KEY = 3;
-    private static final int SLOT_STATUS = 5;
-    private static final int SLOT_BACK = 7;
+    private static final int ROWS = 6;
+    private static final int SLOT_REWARDS = 20;
+    private static final int SLOT_SET_KEY = 22;
+    private static final int SLOT_STATUS = 24;
+    private static final int SLOT_BACK = 49;
 
     private final SimpleInventory inventory;
     private final ServerPlayerEntity viewer;

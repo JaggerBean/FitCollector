@@ -19,10 +19,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class StepCraftRewardsScreenHandler extends GenericContainerScreenHandler {
-    private static final int ROWS = 1;
-    private static final int SLOT_VIEW = 2;
-    private static final int SLOT_SEED = 4;
-    private static final int SLOT_BACK = 6;
+    private static final int ROWS = 6;
+    private static final int SLOT_VIEW = 20;
+    private static final int SLOT_SEED = 22;
+    private static final int SLOT_BACK = 49;
     private static final String DASHBOARD_URL = "https://stepcraft.org/dashboard";
 
     private final SimpleInventory inventory;

@@ -15,12 +15,15 @@ import net.minecraft.text.TextColor;
 import net.minecraft.util.Unit;
 
 public class StepCraftConfirmScreenHandler extends GenericContainerScreenHandler {
+    private static final int ROWS = 6;
+    private static final int SLOT_CANCEL = 47;
+    private static final int SLOT_CONFIRM = 51;
     private final StepCraftPlayerAction action;
     private final String targetPlayer;
     private final boolean returnToPlayerList;
 
     public StepCraftConfirmScreenHandler(int syncId, PlayerInventory playerInventory, StepCraftPlayerAction action, String targetPlayer, boolean returnToPlayerList) {
-        super(ScreenHandlerType.GENERIC_9X1, syncId, playerInventory, new SimpleInventory(9), 1);
+        super(ScreenHandlerType.GENERIC_9X6, syncId, playerInventory, new SimpleInventory(ROWS * 9), ROWS);
         this.action = action;
         this.targetPlayer = targetPlayer;
         this.returnToPlayerList = returnToPlayerList;
@@ -31,8 +34,8 @@ public class StepCraftConfirmScreenHandler extends GenericContainerScreenHandler
             this.getInventory().setStack(i, pane.copy());
         }
 
-        this.getInventory().setStack(3, menuItem(Items.RED_CONCRETE, "Cancel", 0xFF5555));
-        this.getInventory().setStack(5, menuItem(Items.LIME_CONCRETE, "Confirm", 0x55FF55));
+        this.getInventory().setStack(SLOT_CANCEL, menuItem(Items.RED_CONCRETE, "Cancel", 0xFF5555));
+        this.getInventory().setStack(SLOT_CONFIRM, menuItem(Items.LIME_CONCRETE, "Confirm", 0x55FF55));
     }
 
     public StepCraftPlayerAction getAction() {
@@ -54,7 +57,7 @@ public class StepCraftConfirmScreenHandler extends GenericContainerScreenHandler
             return;
         }
 
-        if (slot == 3) {
+        if (slot == SLOT_CANCEL) {
             StepCraftNav.goBack(serverPlayer, () -> {
                 if (returnToPlayerList) {
                     StepCraftUIHelper.openPlayerSelectList(serverPlayer, null, 0, action);
@@ -65,7 +68,7 @@ public class StepCraftConfirmScreenHandler extends GenericContainerScreenHandler
             return;
         }
 
-        if (slot == 5) {
+        if (slot == SLOT_CONFIRM) {
             serverPlayer.getServer().execute(() -> StepCraftLecternHelper.openLectern(serverPlayer, "Result",
                 StepCraftResultScreenHandler.toPagesFromLines(
                     StepCraftResultScreenHandler.toDisplayLines("Processing...")
