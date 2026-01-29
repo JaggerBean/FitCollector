@@ -207,6 +207,7 @@ def get_day_steps_server(
 @router.get("/v1/servers/players/{minecraft_username}/claim-available")
 def get_claim_available(
     minecraft_username: str,
+    debug: bool = Query(default=False),
     server_name: str = Depends(require_server_access),
 ):
     """
@@ -217,6 +218,16 @@ def get_claim_available(
     buffer_days = _get_claim_buffer_days(server_name)
     days = [today - timedelta(days=offset) for offset in range(buffer_days + 1)]
     resolved_username = _resolve_username(minecraft_username, server_name)
+
+    debug_info = {
+        "server_name": server_name,
+        "resolved_username": resolved_username,
+        "buffer_days": buffer_days,
+        "days": [str(d) for d in days],
+        "tiers": [],
+        "steps_by_day": {},
+        "claimed_by_day": {},
+    }
 
     with engine.begin() as conn:
         tiers = conn.execute(
@@ -229,8 +240,14 @@ def get_claim_available(
             {"server": server_name},
         ).mappings().all()
 
+        if debug:
+            debug_info["tiers"] = [
+                {"min_steps": t["min_steps"], "label": t["label"]}
+                for t in tiers
+            ]
+
         if not tiers:
-            return {"server_name": server_name, "items": []}
+            return {"server_name": server_name, "items": [], "debug": debug_info} if debug else {"server_name": server_name, "items": []}
 
         items = []
         for day in days:
@@ -244,9 +261,13 @@ def get_claim_available(
             ).fetchone()
 
             if not steps_row:
+                if debug:
+                    debug_info["steps_by_day"][str(day)] = None
                 continue
 
             steps = steps_row[0]
+            if debug:
+                debug_info["steps_by_day"][str(day)] = steps
             eligible = [tier for tier in tiers if steps >= tier["min_steps"]]
             if not eligible:
                 continue
@@ -262,6 +283,8 @@ def get_claim_available(
                 {"username": resolved_username, "server": server_name, "day": day},
             ).fetchall()
             claimed_set = {row[0] for row in claimed_rows}
+            if debug:
+                debug_info["claimed_by_day"][str(day)] = sorted(claimed_set)
 
             for tier in eligible:
                 if tier["min_steps"] in claimed_set:
@@ -274,7 +297,7 @@ def get_claim_available(
                     }
                 )
 
-    return {"server_name": server_name, "items": items}
+    return {"server_name": server_name, "items": items, "debug": debug_info} if debug else {"server_name": server_name, "items": items}
 
 @router.delete("/v1/servers/players/{minecraft_username}")
 def delete_player(

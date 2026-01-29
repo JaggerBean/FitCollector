@@ -181,12 +181,14 @@ public class StepCraftChestScreenHandler extends GenericContainerScreenHandler {
                     try {
                         String claimableJson = BackendClient.getClaimAvailableForPlayer(targetPlayer);
                         List<ClaimableItem> items = parseClaimableItems(claimableJson);
+                        String debugJson = null;
                         if (items.isEmpty()) {
-                            return new ClaimBatchContext(items, null);
+                            debugJson = BackendClient.getClaimAvailableForPlayer(targetPlayer, true);
+                            return new ClaimBatchContext(items, null, debugJson);
                         }
                         String rewardsJson = BackendClient.getServerRewards();
                         List<RewardTier> tiers = parseRewardTiers(rewardsJson);
-                        return new ClaimBatchContext(items, tiers);
+                        return new ClaimBatchContext(items, tiers, null);
                     } catch (Exception e) {
                         throw new RuntimeException(e);
                     }
@@ -201,7 +203,11 @@ public class StepCraftChestScreenHandler extends GenericContainerScreenHandler {
                     }
                     if (ctx == null || ctx.items.isEmpty() || ctx.tiers == null) {
                         if (onSuccess != null) {
-                            onSuccess.accept("No claimable rewards right now.");
+                            if (ctx != null && ctx.debugJson != null && !ctx.debugJson.isBlank()) {
+                                onSuccess.accept("No claimable rewards. Debug: " + ctx.debugJson);
+                            } else {
+                                onSuccess.accept("No claimable rewards right now.");
+                            }
                         }
                         return;
                     }
@@ -381,7 +387,7 @@ public class StepCraftChestScreenHandler extends GenericContainerScreenHandler {
 
     private record ClaimableItem(String day, long minSteps, String label) {}
 
-    private record ClaimBatchContext(List<ClaimableItem> items, List<RewardTier> tiers) {}
+    private record ClaimBatchContext(List<ClaimableItem> items, List<RewardTier> tiers, String debugJson) {}
 
     static RewardTier getTierForYesterday(String username) throws Exception {
         String stepsJson = BackendClient.getYesterdayStepsForPlayer(username);
