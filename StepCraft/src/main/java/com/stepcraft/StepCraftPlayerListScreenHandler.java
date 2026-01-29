@@ -127,6 +127,26 @@ public class StepCraftPlayerListScreenHandler extends GenericContainerScreenHand
         }
     }
 
+    public List<String> getPlayers() {
+        return players;
+    }
+
+    public String getQuery() {
+        return query;
+    }
+
+    public int getPage() {
+        return page;
+    }
+
+    public int getTotalPlayers() {
+        return totalPlayers;
+    }
+
+    public StepCraftPlayerAction getAction() {
+        return action;
+    }
+
     @Override
     public void onSlotClick(int slot, int button, net.minecraft.screen.slot.SlotActionType actionType, PlayerEntity player) {
         if (!(player instanceof ServerPlayerEntity serverPlayer)) {
@@ -172,7 +192,7 @@ public class StepCraftPlayerListScreenHandler extends GenericContainerScreenHand
         }
 
         if (slot == SLOT_BACK) {
-            StepCraftUIHelper.openPlayersList(serverPlayer);
+            StepCraftNav.goBack(serverPlayer, () -> StepCraftUIHelper.openPlayersList(serverPlayer));
             return;
         }
 

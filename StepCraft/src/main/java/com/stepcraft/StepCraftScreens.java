@@ -15,6 +15,7 @@ public final class StepCraftScreens {
     private StepCraftScreens() {}
 
     public static void openAdminChest(ServerPlayerEntity player, DefaultedList<ItemStack> items, Text title) {
+        StepCraftNav.pushCurrent(player);
         SimpleInventory inv = new SimpleInventory(54);
         for (int i = 0; i < 54; i++) {
             ItemStack stack = (items != null && i < items.size()) ? items.get(i) : ItemStack.EMPTY;
@@ -29,6 +30,7 @@ public final class StepCraftScreens {
     }
 
             public static void openPlayerList(ServerPlayerEntity player, List<String> players, String query, int page, int totalPlayers, StepCraftPlayerAction action) {
+        StepCraftNav.pushCurrent(player);
         player.openHandledScreen(new SimpleNamedScreenHandlerFactory(
                 (int syncId, PlayerInventory playerInv, PlayerEntity p) ->
                     new StepCraftPlayerListScreenHandler(syncId, playerInv, players, query, page, totalPlayers, action),
@@ -37,6 +39,7 @@ public final class StepCraftScreens {
     }
 
     public static void openActionMenu(ServerPlayerEntity player, String targetPlayer) {
+        StepCraftNav.pushCurrent(player);
         player.openHandledScreen(new StepCraftActionMenuScreenFactory(
                 targetPlayer,
                 Text.literal("Manage " + targetPlayer)
@@ -44,6 +47,7 @@ public final class StepCraftScreens {
     }
 
         public static void openClaimRewards(ServerPlayerEntity player, String targetPlayer) {
+        StepCraftNav.pushCurrent(player);
         player.openHandledScreen(new SimpleNamedScreenHandlerFactory(
             (int syncId, PlayerInventory playerInv, PlayerEntity p) ->
                 new StepCraftClaimRewardsScreenHandler(syncId, playerInv, targetPlayer),
@@ -52,6 +56,7 @@ public final class StepCraftScreens {
         }
 
             public static void openClaimStatus(ServerPlayerEntity player, String targetPlayer) {
+            StepCraftNav.pushCurrent(player);
             player.openHandledScreen(new SimpleNamedScreenHandlerFactory(
                 (int syncId, PlayerInventory playerInv, PlayerEntity p) ->
                     new StepCraftClaimStatusScreenHandler(syncId, playerInv, targetPlayer),
@@ -60,6 +65,7 @@ public final class StepCraftScreens {
             }
 
     public static void openConfirm(ServerPlayerEntity player, StepCraftPlayerAction action, String targetPlayer) {
+        StepCraftNav.pushCurrent(player);
         player.openHandledScreen(new StepCraftConfirmScreenFactory(
                 action,
                 targetPlayer,
@@ -69,6 +75,7 @@ public final class StepCraftScreens {
     }
 
     public static void openConfirm(ServerPlayerEntity player, StepCraftPlayerAction action, String targetPlayer, boolean returnToPlayerList) {
+        StepCraftNav.pushCurrent(player);
         player.openHandledScreen(new StepCraftConfirmScreenFactory(
                 action,
                 targetPlayer,
@@ -78,6 +85,7 @@ public final class StepCraftScreens {
     }
 
     public static void openResult(ServerPlayerEntity player, String message) {
+        StepCraftNav.pushCurrent(player);
         player.openHandledScreen(new StepCraftResultScreenFactory(
                 message,
                 Text.literal("Result")
@@ -85,6 +93,7 @@ public final class StepCraftScreens {
     }
 
     public static void openSettings(ServerPlayerEntity player) {
+        StepCraftNav.pushCurrent(player);
         player.openHandledScreen(new SimpleNamedScreenHandlerFactory(
                 (int syncId, PlayerInventory playerInv, PlayerEntity p) ->
                         new StepCraftSettingsScreenHandler(syncId, playerInv),
@@ -93,6 +102,7 @@ public final class StepCraftScreens {
     }
 
         public static void openRewards(ServerPlayerEntity player) {
+        StepCraftNav.pushCurrent(player);
         player.openHandledScreen(new SimpleNamedScreenHandlerFactory(
             (int syncId, PlayerInventory playerInv, PlayerEntity p) ->
                 new StepCraftRewardsScreenHandler(syncId, playerInv),

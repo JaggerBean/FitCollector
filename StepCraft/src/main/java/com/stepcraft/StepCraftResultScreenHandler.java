@@ -85,7 +85,7 @@ public class StepCraftResultScreenHandler extends GenericContainerScreenHandler 
         }
 
         if (slot == SLOT_BACK) {
-            StepCraftUIHelper.openPlayersList(serverPlayer);
+            StepCraftNav.goBack(serverPlayer, () -> StepCraftUIHelper.openPlayersList(serverPlayer));
             return;
         }
     }

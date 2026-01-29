@@ -87,7 +87,7 @@ public class StepCraftRewardsScreenHandler extends GenericContainerScreenHandler
         }
 
         if (slot == SLOT_BACK) {
-            StepCraftScreens.openSettings(serverPlayer);
+            StepCraftNav.goBack(serverPlayer, () -> StepCraftScreens.openSettings(serverPlayer));
             return;
         }
 

@@ -35,6 +35,18 @@ public class StepCraftConfirmScreenHandler extends GenericContainerScreenHandler
         this.getInventory().setStack(5, menuItem(Items.LIME_CONCRETE, "Confirm", 0x55FF55));
     }
 
+    public StepCraftPlayerAction getAction() {
+        return action;
+    }
+
+    public String getTargetPlayer() {
+        return targetPlayer;
+    }
+
+    public boolean isReturnToPlayerList() {
+        return returnToPlayerList;
+    }
+
     @Override
     public void onSlotClick(int slot, int button, net.minecraft.screen.slot.SlotActionType actionType, PlayerEntity player) {
         if (!(player instanceof ServerPlayerEntity serverPlayer)) {
@@ -43,11 +55,13 @@ public class StepCraftConfirmScreenHandler extends GenericContainerScreenHandler
         }
 
         if (slot == 3) {
-            if (returnToPlayerList) {
-                StepCraftUIHelper.openPlayerSelectList(serverPlayer, null, 0, action);
-            } else {
-                StepCraftScreens.openActionMenu(serverPlayer, targetPlayer);
-            }
+            StepCraftNav.goBack(serverPlayer, () -> {
+                if (returnToPlayerList) {
+                    StepCraftUIHelper.openPlayerSelectList(serverPlayer, null, 0, action);
+                } else {
+                    StepCraftScreens.openActionMenu(serverPlayer, targetPlayer);
+                }
+            });
             return;
         }
 

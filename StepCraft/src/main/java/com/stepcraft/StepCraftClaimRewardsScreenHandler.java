@@ -62,6 +62,10 @@ public class StepCraftClaimRewardsScreenHandler extends GenericContainerScreenHa
         loadClaimables();
     }
 
+    public String getTargetPlayer() {
+        return targetPlayer;
+    }
+
     private void loadClaimables() {
         loading = true;
         debugJson = null;
@@ -213,7 +217,7 @@ public class StepCraftClaimRewardsScreenHandler extends GenericContainerScreenHa
         }
 
         if (slot == SLOT_BACK) {
-            StepCraftScreens.openActionMenu(serverPlayer, targetPlayer);
+            StepCraftNav.goBack(serverPlayer, () -> StepCraftScreens.openActionMenu(serverPlayer, targetPlayer));
             return;
         }
 
