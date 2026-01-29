@@ -314,10 +314,16 @@ def init_db() -> None:
             server_name TEXT NOT NULL,
             min_steps BIGINT NOT NULL,
             label TEXT NOT NULL,
+            item_id TEXT,
             rewards_json TEXT NOT NULL,
             position INTEGER NOT NULL DEFAULT 0,
             created_at TIMESTAMPTZ DEFAULT NOW()
         );
+        """))
+
+        conn.execute(text("""
+        ALTER TABLE server_rewards
+        ADD COLUMN IF NOT EXISTS item_id TEXT;
         """))
 
         conn.execute(text("""

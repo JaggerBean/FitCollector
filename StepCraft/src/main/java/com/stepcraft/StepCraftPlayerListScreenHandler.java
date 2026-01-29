@@ -255,13 +255,27 @@ public class StepCraftPlayerListScreenHandler extends GenericContainerScreenHand
                                     .setStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xFFAA55)).withItalic(false)));
                             }
 
-                            if (stats.claimError || stats.claimStatus == null) {
+                            if (stats.claimError || stats.claimSummary == null) {
                                 lore.add(Text.literal("Claim: error")
                                     .setStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xFF5555)).withItalic(false)));
                             } else {
-                                boolean claimed = stats.claimStatus.claimed;
-                                String claimText = claimed ? "claimed" : "not claimed";
-                                int claimColor = claimed ? 0x55FF55 : 0xFF5555;
+                                int total = stats.claimSummary.totalEligible();
+                                int claimed = stats.claimSummary.claimedCount();
+                                String claimText;
+                                int claimColor;
+                                if (total == 0) {
+                                    claimText = "none claimable";
+                                    claimColor = 0xAAAAAA;
+                                } else if (claimed == 0) {
+                                    claimText = "none claimed";
+                                    claimColor = 0xFF5555;
+                                } else if (claimed >= total) {
+                                    claimText = "claimed";
+                                    claimColor = 0x55FF55;
+                                } else {
+                                    claimText = "partial";
+                                    claimColor = 0xFFAA00;
+                                }
                                 lore.add(Text.literal("Claim: " + claimText)
                                     .setStyle(Style.EMPTY.withColor(TextColor.fromRgb(claimColor)).withItalic(false)));
                             }
@@ -280,7 +294,7 @@ public class StepCraftPlayerListScreenHandler extends GenericContainerScreenHand
         long steps = -1;
         boolean stepsError = false;
         boolean claimError = false;
-        ClaimStatus claimStatus = null;
+        ClaimStatusSummary claimSummary = null;
 
         try {
             String stepsJson = BackendClient.getYesterdayStepsForPlayer(username);
@@ -290,22 +304,13 @@ public class StepCraftPlayerListScreenHandler extends GenericContainerScreenHand
         }
 
         try {
-            StepCraftChestScreenHandler.RewardTier tier = StepCraftChestScreenHandler.getTierForYesterday(username);
-            if (tier == null) {
-                claimError = true;
-            } else {
-                String claimJson = BackendClient.getClaimStatusForPlayer(
-                        username,
-                        tier.minSteps(),
-                        StepCraftChestScreenHandler.getYesterdayDayParam()
-                );
-                claimStatus = extractClaimStatus(claimJson);
-            }
+            String claimJson = BackendClient.getClaimStatusListForPlayer(username);
+            claimSummary = extractClaimStatusSummary(claimJson);
         } catch (Exception e) {
             claimError = true;
         }
 
-        return new PlayerStats(steps, claimStatus, stepsError, claimError);
+        return new PlayerStats(steps, claimSummary, stepsError, claimError);
     }
 
     private static long extractSteps(String stepsJson) {
@@ -321,35 +326,42 @@ public class StepCraftPlayerListScreenHandler extends GenericContainerScreenHand
         return -1;
     }
 
-    private static ClaimStatus extractClaimStatus(String claimJson) {
-        if (claimJson == null) return new ClaimStatus(false, null);
+    private static ClaimStatusSummary extractClaimStatusSummary(String claimJson) {
+        if (claimJson == null || claimJson.isBlank()) return new ClaimStatusSummary(0, 0);
         if (claimJson.startsWith("Error:")) {
             throw new RuntimeException(claimJson);
         }
         JsonObject obj = JsonParser.parseString(claimJson).getAsJsonObject();
-        if (obj == null) return new ClaimStatus(false, null);
-        boolean claimed = obj.has("claimed") && obj.get("claimed").isJsonPrimitive() && obj.get("claimed").getAsBoolean();
-        String claimedAt = null;
-        if (obj.has("claimed_at") && obj.get("claimed_at").isJsonPrimitive()) {
-            claimedAt = obj.get("claimed_at").getAsString();
+        if (obj == null || !obj.has("items") || !obj.get("items").isJsonArray()) {
+            return new ClaimStatusSummary(0, 0);
         }
-        return new ClaimStatus(claimed, claimedAt);
+        int total = 0;
+        int claimed = 0;
+        for (var el : obj.getAsJsonArray("items")) {
+            if (!el.isJsonObject()) continue;
+            total++;
+            JsonObject item = el.getAsJsonObject();
+            if (item.has("claimed") && item.get("claimed").isJsonPrimitive() && item.get("claimed").getAsBoolean()) {
+                claimed++;
+            }
+        }
+        return new ClaimStatusSummary(total, claimed);
     }
 
     private static class PlayerStats {
         final long steps;
-        final ClaimStatus claimStatus;
+        final ClaimStatusSummary claimSummary;
         final boolean stepsError;
         final boolean claimError;
 
-        PlayerStats(long steps, ClaimStatus claimStatus, boolean stepsError, boolean claimError) {
+        PlayerStats(long steps, ClaimStatusSummary claimSummary, boolean stepsError, boolean claimError) {
             this.steps = steps;
-            this.claimStatus = claimStatus;
+            this.claimSummary = claimSummary;
             this.stepsError = stepsError;
             this.claimError = claimError;
         }
     }
 
-    private record ClaimStatus(boolean claimed, String claimedAt) {}
+    private record ClaimStatusSummary(int totalEligible, int claimedCount) {}
 
 }

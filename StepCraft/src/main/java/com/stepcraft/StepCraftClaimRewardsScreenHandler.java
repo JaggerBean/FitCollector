@@ -7,12 +7,14 @@ import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.inventory.SimpleInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
+import net.minecraft.registry.Registries;
 import net.minecraft.screen.GenericContainerScreenHandler;
 import net.minecraft.screen.ScreenHandlerType;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 import net.minecraft.text.TextColor;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.Unit;
 
 import java.util.ArrayList;
@@ -126,7 +128,7 @@ public class StepCraftClaimRewardsScreenHandler extends GenericContainerScreenHa
                     ? ("Tier " + item.minSteps())
                     : item.label();
 
-                ItemStack stack = menuItem(Items.EMERALD, title, 0x55FF55);
+                ItemStack stack = menuItem(resolveItem(item.itemId()), title, 0x55FF55);
                 stack.set(DataComponentTypes.LORE, new LoreComponent(List.of(
                     Text.literal("Day: " + item.day()).setStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xAAAAAA)).withItalic(false)),
                     Text.literal("Min Steps: " + item.minSteps()).setStyle(Style.EMPTY.withColor(TextColor.fromRgb(0xAAAAAA)).withItalic(false))
@@ -247,5 +249,17 @@ public class StepCraftClaimRewardsScreenHandler extends GenericContainerScreenHa
             Text.literal(label).setStyle(Style.EMPTY.withColor(TextColor.fromRgb(rgb)).withItalic(false))
         );
         return stack;
+    }
+
+    private static net.minecraft.item.Item resolveItem(String itemId) {
+        if (itemId == null || itemId.isBlank()) {
+            return Items.EMERALD;
+        }
+        try {
+            Identifier id = Identifier.of(itemId);
+            return Registries.ITEM.get(id);
+        } catch (Exception ignored) {
+            return Items.EMERALD;
+        }
     }
 }

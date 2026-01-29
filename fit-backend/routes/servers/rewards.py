@@ -13,6 +13,7 @@ router = APIRouter()
 class RewardTier(BaseModel):
     min_steps: int = Field(..., ge=0)
     label: str = Field(..., min_length=1)
+    item_id: str | None = None
     rewards: list[str] = Field(default_factory=list)
 
 
@@ -21,9 +22,9 @@ class RewardsPayload(BaseModel):
 
 
 DEFAULT_REWARDS = [
-    RewardTier(min_steps=1000, label="Starter", rewards=["give {player} minecraft:bread 3"]),
-    RewardTier(min_steps=5000, label="Walker", rewards=["give {player} minecraft:iron_ingot 3"]),
-    RewardTier(min_steps=10000, label="Legend", rewards=["give {player} minecraft:diamond 1"]),
+    RewardTier(min_steps=1000, label="Starter", item_id="minecraft:bread", rewards=["give {player} minecraft:bread 3"]),
+    RewardTier(min_steps=5000, label="Walker", item_id="minecraft:iron_ingot", rewards=["give {player} minecraft:iron_ingot 3"]),
+    RewardTier(min_steps=10000, label="Legend", item_id="minecraft:diamond", rewards=["give {player} minecraft:diamond 1"]),
 ]
 
 
@@ -32,7 +33,7 @@ def get_server_rewards(server_name: str = Depends(require_server_access)):
     with engine.begin() as conn:
         rows = conn.execute(
             text("""
-                SELECT min_steps, label, rewards_json
+                SELECT min_steps, label, item_id, rewards_json
                 FROM server_rewards
                 WHERE server_name = :server
                 ORDER BY min_steps ASC, position ASC
@@ -51,10 +52,10 @@ def get_server_rewards(server_name: str = Depends(require_server_access)):
     for row in rows:
         rewards = []
         try:
-            rewards = json.loads(row[2]) if row[2] else []
+            rewards = json.loads(row[3]) if row[3] else []
         except Exception:
             rewards = []
-        tiers.append({"min_steps": row[0], "label": row[1], "rewards": rewards})
+        tiers.append({"min_steps": row[0], "label": row[1], "item_id": row[2], "rewards": rewards})
 
     return {"server_name": server_name, "tiers": tiers, "is_default": False}
 
@@ -70,13 +71,14 @@ def seed_default_rewards(server_name: str = Depends(require_server_access)):
         for idx, tier in enumerate(DEFAULT_REWARDS):
             conn.execute(
                 text("""
-                    INSERT INTO server_rewards (server_name, min_steps, label, rewards_json, position)
-                    VALUES (:server, :min_steps, :label, :rewards_json, :position)
+                    INSERT INTO server_rewards (server_name, min_steps, label, item_id, rewards_json, position)
+                    VALUES (:server, :min_steps, :label, :item_id, :rewards_json, :position)
                 """),
                 {
                     "server": server_name,
                     "min_steps": tier.min_steps,
                     "label": tier.label,
+                    "item_id": tier.item_id,
                     "rewards_json": json.dumps(tier.rewards),
                     "position": idx,
                 },
@@ -114,13 +116,14 @@ def replace_rewards(payload: RewardsPayload, server_name: str = Depends(require_
         for idx, tier in enumerate(payload.tiers):
             conn.execute(
                 text("""
-                    INSERT INTO server_rewards (server_name, min_steps, label, rewards_json, position)
-                    VALUES (:server, :min_steps, :label, :rewards_json, :position)
+                    INSERT INTO server_rewards (server_name, min_steps, label, item_id, rewards_json, position)
+                    VALUES (:server, :min_steps, :label, :item_id, :rewards_json, :position)
                 """),
                 {
                     "server": server_name,
                     "min_steps": tier.min_steps,
                     "label": tier.label,
+                    "item_id": tier.item_id,
                     "rewards_json": json.dumps(tier.rewards),
                     "position": idx,
                 },

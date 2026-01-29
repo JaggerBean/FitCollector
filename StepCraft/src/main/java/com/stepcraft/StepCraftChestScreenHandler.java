@@ -351,8 +351,11 @@ public class StepCraftChestScreenHandler extends GenericContainerScreenHandler {
             String day = obj.has("day") ? obj.get("day").getAsString() : null;
             long minSteps = obj.has("min_steps") ? obj.get("min_steps").getAsLong() : 0;
             String label = obj.has("label") ? obj.get("label").getAsString() : "";
+            String itemId = obj.has("item_id") && obj.get("item_id").isJsonPrimitive()
+                ? obj.get("item_id").getAsString()
+                : null;
             if (day != null && !day.isBlank()) {
-                items.add(new ClaimableItem(day, minSteps, label));
+                items.add(new ClaimableItem(day, minSteps, label, itemId));
             }
         }
         return items;
@@ -385,7 +388,7 @@ public class StepCraftChestScreenHandler extends GenericContainerScreenHandler {
 
     private record ClaimStatus(boolean claimed, String claimedAt) {}
 
-    public static record ClaimableItem(String day, long minSteps, String label) {}
+    public static record ClaimableItem(String day, long minSteps, String label, String itemId) {}
 
     private record ClaimBatchContext(List<ClaimableItem> items, List<RewardTier> tiers, String debugJson) {}
 

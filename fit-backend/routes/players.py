@@ -14,9 +14,9 @@ CENTRAL_TZ = ZoneInfo("America/Chicago")
 router = APIRouter()
 
 DEFAULT_REWARDS = [
-    {"min_steps": 1000, "label": "Starter", "rewards": ["give {player} minecraft:bread 3"]},
-    {"min_steps": 5000, "label": "Walker", "rewards": ["give {player} minecraft:iron_ingot 3"]},
-    {"min_steps": 10000, "label": "Legend", "rewards": ["give {player} minecraft:diamond 1"]},
+    {"min_steps": 1000, "label": "Starter", "item_id": "minecraft:bread", "rewards": ["give {player} minecraft:bread 3"]},
+    {"min_steps": 5000, "label": "Walker", "item_id": "minecraft:iron_ingot", "rewards": ["give {player} minecraft:iron_ingot 3"]},
+    {"min_steps": 10000, "label": "Legend", "item_id": "minecraft:diamond", "rewards": ["give {player} minecraft:diamond 1"]},
 ]
 
 
@@ -112,7 +112,7 @@ def get_claim_available_player(
     with engine.begin() as conn:
         tiers = conn.execute(
             text("""
-                SELECT min_steps, label
+                SELECT min_steps, label, item_id
                 FROM server_rewards
                 WHERE server_name = :server
                 ORDER BY min_steps ASC, position ASC
@@ -127,10 +127,10 @@ def get_claim_available_player(
             ]
 
         if not tiers:
-            tiers = [{"min_steps": r["min_steps"], "label": r["label"]} for r in DEFAULT_REWARDS]
+            tiers = [{"min_steps": r["min_steps"], "label": r["label"], "item_id": r.get("item_id")} for r in DEFAULT_REWARDS]
             if debug:
                 debug_info["tiers"] = [
-                    {"min_steps": t["min_steps"], "label": t["label"]}
+                    {"min_steps": t["min_steps"], "label": t["label"], "item_id": t.get("item_id")}
                     for t in tiers
                 ]
 
@@ -183,6 +183,7 @@ def get_claim_available_player(
                         "day": day_str,
                         "min_steps": tier["min_steps"],
                         "label": tier["label"],
+                        "item_id": tier.get("item_id"),
                     }
                 )
 
@@ -295,7 +296,7 @@ def get_player_rewards(
 
         rows = conn.execute(
             text("""
-                SELECT min_steps, label, rewards_json
+                SELECT min_steps, label, item_id, rewards_json
                 FROM server_rewards
                 WHERE server_name = :server
                 ORDER BY min_steps ASC, position ASC
@@ -309,10 +310,10 @@ def get_player_rewards(
     tiers = []
     for row in rows:
         try:
-            rewards = json.loads(row[2]) if row[2] else []
+            rewards = json.loads(row[3]) if row[3] else []
         except Exception:
             rewards = []
-        tiers.append({"min_steps": row[0], "label": row[1], "rewards": rewards})
+        tiers.append({"min_steps": row[0], "label": row[1], "item_id": row[2], "rewards": rewards})
 
     return {"server_name": server_name, "tiers": tiers, "is_default": False}
 

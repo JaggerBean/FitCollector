@@ -8,6 +8,7 @@ import type { RewardsTier } from "../api/types";
 interface EditableTier {
   min_steps: number;
   label: string;
+  item_id: string;
   rewards: string[];
 }
 
@@ -15,6 +16,7 @@ function toEditable(tier: RewardsTier): EditableTier {
   return {
     min_steps: tier.min_steps,
     label: tier.label,
+    item_id: tier.item_id ?? "",
     rewards: tier.rewards.length ? tier.rewards : [""],
   };
 }
@@ -23,6 +25,7 @@ function toPayload(tier: EditableTier): RewardsTier {
   return {
     min_steps: tier.min_steps,
     label: tier.label.trim(),
+    item_id: tier.item_id.trim() || undefined,
     rewards: tier.rewards.map((reward) => reward.trim()).filter(Boolean),
   };
 }
@@ -90,7 +93,7 @@ export default function RewardsPage() {
   };
 
   const addTier = () => {
-    setTiers((prev) => [...prev, { min_steps: 0, label: "", rewards: [""] }]);
+    setTiers((prev) => [...prev, { min_steps: 0, label: "", item_id: "", rewards: [""] }]);
   };
 
   const updateTier = (index: number, patch: Partial<EditableTier>) => {
@@ -190,6 +193,18 @@ export default function RewardsPage() {
                   value={tier.label}
                   onChange={(event) => updateTier(index, { label: event.target.value })}
                 />
+              </div>
+              <div className="md:col-span-2">
+                <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Reward item id</label>
+                <input
+                  className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+                  value={tier.item_id}
+                  onChange={(event) => updateTier(index, { item_id: event.target.value })}
+                  placeholder="minecraft:diamond"
+                />
+                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                  Optional. Used for in-game reward icons.
+                </p>
               </div>
             </div>
             <div className="mt-4">

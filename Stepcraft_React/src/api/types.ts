@@ -104,6 +104,7 @@ export interface PlayersListResponse {
 export interface RewardsTier {
   min_steps: number;
   label: string;
+  item_id?: string | null;
   rewards: string[];
 }
 

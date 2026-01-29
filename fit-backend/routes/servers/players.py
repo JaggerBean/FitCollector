@@ -11,9 +11,9 @@ CENTRAL_TZ = ZoneInfo("America/Chicago")
 router = APIRouter()
 
 DEFAULT_REWARDS = [
-    {"min_steps": 1000, "label": "Starter", "rewards": ["give {player} minecraft:bread 3"]},
-    {"min_steps": 5000, "label": "Walker", "rewards": ["give {player} minecraft:iron_ingot 3"]},
-    {"min_steps": 10000, "label": "Legend", "rewards": ["give {player} minecraft:diamond 1"]},
+    {"min_steps": 1000, "label": "Starter", "item_id": "minecraft:bread", "rewards": ["give {player} minecraft:bread 3"]},
+    {"min_steps": 5000, "label": "Walker", "item_id": "minecraft:iron_ingot", "rewards": ["give {player} minecraft:iron_ingot 3"]},
+    {"min_steps": 10000, "label": "Legend", "item_id": "minecraft:diamond", "rewards": ["give {player} minecraft:diamond 1"]},
 ]
 
 # Server endpoint: check claim status for a day (defaults to today)
@@ -238,7 +238,7 @@ def get_claim_available(
     with engine.begin() as conn:
         tiers = conn.execute(
             text("""
-                SELECT min_steps, label
+                SELECT min_steps, label, item_id
                 FROM server_rewards
                 WHERE server_name = :server
                 ORDER BY min_steps ASC, position ASC
@@ -253,10 +253,10 @@ def get_claim_available(
             ]
 
         if not tiers:
-            tiers = [{"min_steps": r["min_steps"], "label": r["label"]} for r in DEFAULT_REWARDS]
+            tiers = [{"min_steps": r["min_steps"], "label": r["label"], "item_id": r.get("item_id")} for r in DEFAULT_REWARDS]
             if debug:
                 debug_info["tiers"] = [
-                    {"min_steps": t["min_steps"], "label": t["label"]}
+                    {"min_steps": t["min_steps"], "label": t["label"], "item_id": t.get("item_id")}
                     for t in tiers
                 ]
 
@@ -308,6 +308,7 @@ def get_claim_available(
                         "day": str(day),
                         "min_steps": tier["min_steps"],
                         "label": tier["label"],
+                        "item_id": tier.get("item_id"),
                     }
                 )
 
@@ -331,7 +332,7 @@ def get_claim_status_list(
     with engine.begin() as conn:
         tiers = conn.execute(
             text("""
-                SELECT min_steps, label
+                SELECT min_steps, label, item_id
                 FROM server_rewards
                 WHERE server_name = :server
                 ORDER BY min_steps ASC, position ASC
@@ -340,7 +341,7 @@ def get_claim_status_list(
         ).mappings().all()
 
         if not tiers:
-            tiers = [{"min_steps": r["min_steps"], "label": r["label"]} for r in DEFAULT_REWARDS]
+            tiers = [{"min_steps": r["min_steps"], "label": r["label"], "item_id": r.get("item_id")} for r in DEFAULT_REWARDS]
 
         items = []
         for day in days:
@@ -383,6 +384,7 @@ def get_claim_status_list(
                         "day": day_str,
                         "min_steps": tier["min_steps"],
                         "label": tier["label"],
+                        "item_id": tier.get("item_id"),
                         "claimed": claimed,
                         "claimed_at": claimed_at,
                     }
