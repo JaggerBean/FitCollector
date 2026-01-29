@@ -48,7 +48,6 @@ export default function ServerManagePage() {
   const [reason, setReason] = useState("");
   const [query, setQuery] = useState("");
   const [limit, setLimit] = useState(100);
-  const [offset, setOffset] = useState(0);
   const [actionDay, setActionDay] = useState("");
   const [selectedTierMinSteps, setSelectedTierMinSteps] = useState<number | null>(null);
   const [rewardTiers, setRewardTiers] = useState<RewardsResponse["tiers"]>([]);
@@ -469,27 +468,33 @@ export default function ServerManagePage() {
             </p>
             <div className="mt-4 grid gap-4">
               <div className="rounded-xl border border-slate-200/70 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-950">
+                <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Player context</h3>
+                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                  Select a player once, then run actions in the sections below.
+                </p>
+                <div className="mt-3">
+                  <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Minecraft username</label>
+                  <input
+                    className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+                    value={username}
+                    onChange={(event) => setUsername(event.target.value)}
+                    placeholder="Player name"
+                    list="player-suggestions"
+                    onKeyDown={onUsernameKeyDown}
+                  />
+                  <datalist id="player-suggestions">
+                    {filteredSuggestions.map((name) => (
+                      <option key={name} value={name} />
+                    ))}
+                  </datalist>
+                </div>
+              </div>
+              <div className="rounded-xl border border-slate-200/70 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-950">
                 <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Player lookup</h3>
                 <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                  Select a player and optional day for step/claim checks.
+                  Optional day for step checks (uses the selected player).
                 </p>
                 <div className="mt-3 grid gap-4 md:grid-cols-2">
-                  <div>
-                    <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Minecraft username</label>
-                    <input
-                      className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
-                      value={username}
-                      onChange={(event) => setUsername(event.target.value)}
-                      placeholder="Player name"
-                      list="player-suggestions"
-                      onKeyDown={onUsernameKeyDown}
-                    />
-                    <datalist id="player-suggestions">
-                      {filteredSuggestions.map((name) => (
-                        <option key={name} value={name} />
-                      ))}
-                    </datalist>
-                  </div>
                   <div>
                     <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Day (YYYY-MM-DD)</label>
                     <input
@@ -519,7 +524,7 @@ export default function ServerManagePage() {
               <div className="rounded-xl border border-slate-200/70 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-950">
                 <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Claim tools</h3>
                 <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                  Check or mark a specific tier as claimed.
+                  Check or mark a specific tier as claimed (uses the selected player).
                 </p>
                 <div className="mt-3 grid gap-4 md:grid-cols-2">
                   <div>
@@ -583,7 +588,7 @@ export default function ServerManagePage() {
               <div className="rounded-xl border border-slate-200/70 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-950">
                 <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Moderation</h3>
                 <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                  Ban, unban, or wipe player data.
+                  Ban, unban, or wipe player data (uses the selected player).
                 </p>
                 <div className="mt-3">
                   <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Ban reason</label>
@@ -650,7 +655,7 @@ export default function ServerManagePage() {
                 <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                   Fetch player registrations for quick reference.
                 </p>
-                <div className="mt-3 grid gap-4 md:grid-cols-3">
+                <div className="mt-3 grid gap-4 md:grid-cols-2">
                   <div>
                     <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Search query</label>
                     <input
@@ -670,16 +675,6 @@ export default function ServerManagePage() {
                       onChange={(event) => setLimit(Number(event.target.value))}
                     />
                   </div>
-                  <div>
-                    <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Offset</label>
-                    <input
-                      type="number"
-                      min={0}
-                      className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
-                      value={offset}
-                      onChange={(event) => setOffset(Number(event.target.value))}
-                    />
-                  </div>
                 </div>
                 <div className="mt-3 flex flex-wrap gap-2">
                   <button
@@ -687,7 +682,7 @@ export default function ServerManagePage() {
                     disabled={actionLoading}
                     onClick={() =>
                       runAction(() =>
-                        listPlayers(token!, decodedName, limit, offset, query.trim() || undefined),
+                        listPlayers(token!, decodedName, limit, 0, query.trim() || undefined),
                       )
                     }
                     className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 hover:border-slate-300 dark:border-slate-700 dark:text-slate-200"
