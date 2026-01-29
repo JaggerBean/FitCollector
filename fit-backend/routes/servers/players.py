@@ -10,6 +10,12 @@ from auth import require_server_access
 CENTRAL_TZ = ZoneInfo("America/Chicago")
 router = APIRouter()
 
+DEFAULT_REWARDS = [
+    {"min_steps": 1000, "label": "Starter", "rewards": ["give {player} minecraft:bread 3"]},
+    {"min_steps": 5000, "label": "Walker", "rewards": ["give {player} minecraft:iron_ingot 3"]},
+    {"min_steps": 10000, "label": "Legend", "rewards": ["give {player} minecraft:diamond 1"]},
+]
+
 # Server endpoint: check claim status for a day (defaults to today)
 @router.get("/v1/servers/players/{minecraft_username}/claim-status")
 def get_claim_status_server(
@@ -247,7 +253,12 @@ def get_claim_available(
             ]
 
         if not tiers:
-            return {"server_name": server_name, "items": [], "debug": debug_info} if debug else {"server_name": server_name, "items": []}
+            tiers = [{"min_steps": r["min_steps"], "label": r["label"]} for r in DEFAULT_REWARDS]
+            if debug:
+                debug_info["tiers"] = [
+                    {"min_steps": t["min_steps"], "label": t["label"]}
+                    for t in tiers
+                ]
 
         items = []
         for day in days:

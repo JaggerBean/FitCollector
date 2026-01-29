@@ -127,7 +127,12 @@ def get_claim_available_player(
             ]
 
         if not tiers:
-            return {"server_name": server_name, "items": [], "debug": debug_info} if debug else {"server_name": server_name, "items": []}
+            tiers = [{"min_steps": r["min_steps"], "label": r["label"]} for r in DEFAULT_REWARDS]
+            if debug:
+                debug_info["tiers"] = [
+                    {"min_steps": t["min_steps"], "label": t["label"]}
+                    for t in tiers
+                ]
 
         items = []
         for day in days:
