@@ -24,7 +24,12 @@ public final class StepCraftNav {
         NavEntry entry = fromHandler(handler);
         if (entry == null) return;
 
-        STACKS.computeIfAbsent(player.getUuid(), id -> new ArrayDeque<>()).push(entry);
+        Deque<NavEntry> stack = STACKS.computeIfAbsent(player.getUuid(), id -> new ArrayDeque<>());
+        NavEntry top = stack.peek();
+        if (top != null && top.isSameAs(entry)) {
+            return;
+        }
+        stack.push(entry);
     }
 
     public static void goBack(ServerPlayerEntity player, Runnable fallback) {
@@ -174,6 +179,23 @@ public final class StepCraftNav {
         private NavEntry withTotalPlayers(int totalPlayers) {
             this.totalPlayers = totalPlayers;
             return this;
+        }
+
+        private boolean isSameAs(NavEntry other) {
+            if (other == null || this.type != other.type) return false;
+            if (!safeEquals(this.targetPlayer, other.targetPlayer)) return false;
+            if (this.action != other.action) return false;
+            if (this.returnToPlayerList != other.returnToPlayerList) return false;
+            if (!safeEquals(this.query, other.query)) return false;
+            if (this.page != other.page) return false;
+            if (this.totalPlayers != other.totalPlayers) return false;
+            return true;
+        }
+
+        private boolean safeEquals(String a, String b) {
+            if (a == null && b == null) return true;
+            if (a == null || b == null) return false;
+            return a.equals(b);
         }
     }
 }

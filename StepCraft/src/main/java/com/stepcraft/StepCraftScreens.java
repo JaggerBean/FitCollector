@@ -30,7 +30,9 @@ public final class StepCraftScreens {
     }
 
             public static void openPlayerList(ServerPlayerEntity player, List<String> players, String query, int page, int totalPlayers, StepCraftPlayerAction action) {
-        StepCraftNav.pushCurrent(player);
+        if (!(player.currentScreenHandler instanceof StepCraftPlayerListScreenHandler)) {
+            StepCraftNav.pushCurrent(player);
+        }
         player.openHandledScreen(new SimpleNamedScreenHandlerFactory(
                 (int syncId, PlayerInventory playerInv, PlayerEntity p) ->
                     new StepCraftPlayerListScreenHandler(syncId, playerInv, players, query, page, totalPlayers, action),
