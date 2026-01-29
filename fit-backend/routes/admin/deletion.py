@@ -34,40 +34,72 @@ def admin_delete_player(
     
     try:
         with engine.begin() as conn:
-            # Check if player exists on this server
+            # Check if player exists on this server (in any table)
             exists = conn.execute(
                 text("""
-                    SELECT COUNT(*) as count FROM step_ingest
-                    WHERE minecraft_username = :minecraft_username
-                    AND server_name = :server_name
+                    SELECT
+                        (SELECT COUNT(*) FROM step_ingest WHERE server_name = :server_name AND LOWER(minecraft_username) = LOWER(:minecraft_username)) AS ingest_count,
+                        (SELECT COUNT(*) FROM player_keys WHERE server_name = :server_name AND LOWER(minecraft_username) = LOWER(:minecraft_username)) AS keys_count,
+                        (SELECT COUNT(*) FROM step_claims WHERE server_name = :server_name AND LOWER(minecraft_username) = LOWER(:minecraft_username)) AS claims_count,
+                        (SELECT COUNT(*) FROM bans WHERE server_name = :server_name AND LOWER(minecraft_username) = LOWER(:minecraft_username)) AS bans_count
                 """),
                 {"minecraft_username": minecraft_username, "server_name": server_name}
             ).fetchone()
-            
-            if exists[0] == 0:
+
+            if not exists or sum(exists) == 0:
                 raise HTTPException(
                     status_code=404,
                     detail=f"Player '{minecraft_username}' not found on server '{server_name}'"
                 )
-            
-            # Delete player data from this server
-            result = conn.execute(
+
+            deleted = {"step_ingest": 0, "player_keys": 0, "step_claims": 0, "bans": 0}
+
+            deleted["step_claims"] = conn.execute(
                 text("""
-                    DELETE FROM step_ingest
-                    WHERE minecraft_username = :minecraft_username
-                    AND server_name = :server_name
+                    DELETE FROM step_claims
+                    WHERE server_name = :server_name
+                    AND LOWER(minecraft_username) = LOWER(:minecraft_username)
                 """),
                 {"minecraft_username": minecraft_username, "server_name": server_name}
-            )
-            rows_deleted = result.rowcount
-            
+            ).rowcount
+
+            deleted["step_ingest"] = conn.execute(
+                text("""
+                    DELETE FROM step_ingest
+                    WHERE server_name = :server_name
+                    AND LOWER(minecraft_username) = LOWER(:minecraft_username)
+                """),
+                {"minecraft_username": minecraft_username, "server_name": server_name}
+            ).rowcount
+
+            deleted["player_keys"] = conn.execute(
+                text("""
+                    DELETE FROM player_keys
+                    WHERE server_name = :server_name
+                    AND LOWER(minecraft_username) = LOWER(:minecraft_username)
+                """),
+                {"minecraft_username": minecraft_username, "server_name": server_name}
+            ).rowcount
+
+            deleted["bans"] = conn.execute(
+                text("""
+                    DELETE FROM bans
+                    WHERE server_name = :server_name
+                    AND LOWER(minecraft_username) = LOWER(:minecraft_username)
+                """),
+                {"minecraft_username": minecraft_username, "server_name": server_name}
+            ).rowcount
+
+            total = sum(deleted.values())
+
             return {
                 "ok": True,
                 "action": "admin_deleted_player",
                 "server_name": server_name,
                 "minecraft_username": minecraft_username,
-                "rows_deleted": rows_deleted,
-                "message": f"Deleted {rows_deleted} record(s) for '{minecraft_username}' on server '{server_name}'"
+                "deleted": deleted,
+                "rows_deleted": total,
+                "message": f"Deleted {total} record(s) for '{minecraft_username}' on server '{server_name}'"
             }
     
     except HTTPException:
@@ -96,37 +128,67 @@ def admin_delete_all_server_players(
     
     try:
         with engine.begin() as conn:
-            # Check if server has any data
+            # Check if server has any data (in any table)
             exists = conn.execute(
                 text("""
-                    SELECT COUNT(*) as count FROM step_ingest
-                    WHERE server_name = :server_name
+                    SELECT
+                        (SELECT COUNT(*) FROM step_ingest WHERE server_name = :server_name) AS ingest_count,
+                        (SELECT COUNT(*) FROM player_keys WHERE server_name = :server_name) AS keys_count,
+                        (SELECT COUNT(*) FROM step_claims WHERE server_name = :server_name) AS claims_count,
+                        (SELECT COUNT(*) FROM bans WHERE server_name = :server_name) AS bans_count
                 """),
                 {"server_name": server_name}
             ).fetchone()
-            
-            if exists[0] == 0:
+
+            if not exists or sum(exists) == 0:
                 raise HTTPException(
                     status_code=404,
                     detail=f"No player data found on server '{server_name}'"
                 )
-            
-            # Delete all player data from this server
-            result = conn.execute(
+
+            deleted = {"step_ingest": 0, "player_keys": 0, "step_claims": 0, "bans": 0}
+
+            deleted["step_claims"] = conn.execute(
+                text("""
+                    DELETE FROM step_claims
+                    WHERE server_name = :server_name
+                """),
+                {"server_name": server_name}
+            ).rowcount
+
+            deleted["step_ingest"] = conn.execute(
                 text("""
                     DELETE FROM step_ingest
                     WHERE server_name = :server_name
                 """),
                 {"server_name": server_name}
-            )
-            rows_deleted = result.rowcount
-            
+            ).rowcount
+
+            deleted["player_keys"] = conn.execute(
+                text("""
+                    DELETE FROM player_keys
+                    WHERE server_name = :server_name
+                """),
+                {"server_name": server_name}
+            ).rowcount
+
+            deleted["bans"] = conn.execute(
+                text("""
+                    DELETE FROM bans
+                    WHERE server_name = :server_name
+                """),
+                {"server_name": server_name}
+            ).rowcount
+
+            total = sum(deleted.values())
+
             return {
                 "ok": True,
                 "action": "admin_deleted_all_server_players",
                 "server_name": server_name,
-                "rows_deleted": rows_deleted,
-                "message": f"Deleted {rows_deleted} record(s) for all players on server '{server_name}'"
+                "deleted": deleted,
+                "rows_deleted": total,
+                "message": f"Deleted {total} record(s) for all players on server '{server_name}'"
             }
     
     except HTTPException:
