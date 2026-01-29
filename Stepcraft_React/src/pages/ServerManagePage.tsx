@@ -577,7 +577,6 @@ export default function ServerManagePage() {
                 </button>
                 <button
                   type="button"
-                  disabled={actionLoading || !username.trim()}
                   onClick={() =>
                     runAction(() =>
                       getClaimStatus(
@@ -596,7 +595,6 @@ export default function ServerManagePage() {
                 </button>
                 <button
                   type="button"
-                  disabled={actionLoading || !username.trim()}
                   onClick={() =>
                     runAction(() =>
                       claimReward(
