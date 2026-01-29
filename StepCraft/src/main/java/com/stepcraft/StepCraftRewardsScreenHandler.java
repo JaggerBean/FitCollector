@@ -28,7 +28,7 @@ public class StepCraftRewardsScreenHandler extends GenericContainerScreenHandler
     private final SimpleInventory inventory;
 
     public StepCraftRewardsScreenHandler(int syncId, PlayerInventory playerInventory) {
-        super(ScreenHandlerType.GENERIC_9X1, syncId, playerInventory, new SimpleInventory(ROWS * 9), ROWS);
+        super(ScreenHandlerType.GENERIC_9X6, syncId, playerInventory, new SimpleInventory(ROWS * 9), ROWS);
         this.inventory = (SimpleInventory) this.getInventory();
 
         ItemStack pane = new ItemStack(Items.PURPLE_STAINED_GLASS_PANE);

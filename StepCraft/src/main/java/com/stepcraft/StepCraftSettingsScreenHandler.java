@@ -29,7 +29,7 @@ public class StepCraftSettingsScreenHandler extends GenericContainerScreenHandle
     private final ServerPlayerEntity viewer;
 
     public StepCraftSettingsScreenHandler(int syncId, PlayerInventory playerInventory) {
-        super(ScreenHandlerType.GENERIC_9X1, syncId, playerInventory, new SimpleInventory(ROWS * 9), ROWS);
+        super(ScreenHandlerType.GENERIC_9X6, syncId, playerInventory, new SimpleInventory(ROWS * 9), ROWS);
         this.inventory = (SimpleInventory) this.getInventory();
         this.viewer = (ServerPlayerEntity) playerInventory.player;
 

@@ -20,7 +20,7 @@ public class StepCraftActionMenuScreenHandler extends GenericContainerScreenHand
     private static final int ROWS = 6;
 
     public StepCraftActionMenuScreenHandler(int syncId, PlayerInventory playerInventory, String targetPlayer) {
-        super(ScreenHandlerType.GENERIC_9X2, syncId, playerInventory, new SimpleInventory(ROWS * 9), ROWS);
+        super(ScreenHandlerType.GENERIC_9X6, syncId, playerInventory, new SimpleInventory(ROWS * 9), ROWS);
         this.targetPlayer = targetPlayer;
         this.inventory = (SimpleInventory) this.getInventory();
 
