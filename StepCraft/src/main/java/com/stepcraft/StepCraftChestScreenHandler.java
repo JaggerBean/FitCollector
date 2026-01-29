@@ -76,7 +76,7 @@ public class StepCraftChestScreenHandler extends GenericContainerScreenHandler {
                     case 32 -> { StepCraftUIHelper.openPlayerSelectList(serverPlayer, null, 0, StepCraftPlayerAction.DELETE); return; }
                     case 34 -> {
                         serverPlayer.closeHandledScreen();
-                        Text message = Text.literal("Open Push Notifications Dashboard")
+                        Text message = Text.literal("Open StepCraft Dashboard")
                                 .setStyle(Style.EMPTY
                                         .withColor(TextColor.fromRgb(0x55AAFF))
                                         .withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, DASHBOARD_URL))

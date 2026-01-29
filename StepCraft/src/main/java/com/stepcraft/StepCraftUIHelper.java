@@ -51,7 +51,7 @@ public class StepCraftUIHelper {
                     {Items.IRON_SWORD, "Ban Player", "Ban a player", Formatting.RED},
                     {Items.PAPER, "Unban Player", "Unban a player", Formatting.GREEN},
                     {Items.BARRIER, "Delete Player", "Delete player record", Formatting.DARK_RED},
-                        {Items.BELL, "Push Notifications", "Open dashboard to schedule", Formatting.LIGHT_PURPLE},
+                        {Items.BELL, "Web Dashboard", "Open StepCraft dashboard", Formatting.LIGHT_PURPLE},
                 };
 
                             int[] slotLayout = new int[]{
