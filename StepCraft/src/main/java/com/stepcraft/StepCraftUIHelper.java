@@ -57,7 +57,7 @@ public class StepCraftUIHelper {
                             int[] slotLayout = new int[]{
                                 10, 12, 14, 16,
                                 19, 21, 23, 25,
-                                28, 30, 32, 52
+                                28, 30, 32, 50
                             };
 
             for (int i = 0; i < commandItems.length && i < slotLayout.length; i++) {
@@ -83,7 +83,7 @@ public class StepCraftUIHelper {
             ItemStack settings = new ItemStack(Items.COMPASS);
             settings.set(DataComponentTypes.CUSTOM_NAME, menuName("Settings", Formatting.LIGHT_PURPLE));
             settings.set(DataComponentTypes.LORE, new LoreComponent(List.of(menuLore("API key + Rewards"))));
-            items.set(49, settings);
+            items.set(48, settings);
 
                 ItemStack glass = new ItemStack(Items.PURPLE_STAINED_GLASS_PANE);
                 glass.set(DataComponentTypes.HIDE_TOOLTIP, Unit.INSTANCE);
