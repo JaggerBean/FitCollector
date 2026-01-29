@@ -10,6 +10,7 @@ import {
   getClaimWindow,
   getOwnedServers,
   getInactivePruneSettings,
+  getRewards,
   getServerInfo,
   getYesterdaySteps,
   listBans,
@@ -26,6 +27,7 @@ import type {
   InactivePruneSettingsResponse,
   InactivePruneRunResponse,
   PlayersListResponse,
+  RewardsResponse,
   ServerInfo,
   ServerSummary,
 } from "../api/types";
@@ -48,7 +50,8 @@ export default function ServerManagePage() {
   const [limit, setLimit] = useState(100);
   const [offset, setOffset] = useState(0);
   const [actionDay, setActionDay] = useState("");
-  const [actionMinSteps, setActionMinSteps] = useState("");
+  const [selectedTierMinSteps, setSelectedTierMinSteps] = useState<number | null>(null);
+  const [rewardTiers, setRewardTiers] = useState<RewardsResponse["tiers"]>([]);
   const [claimWindow, setClaimWindow] = useState<ClaimWindowResponse | null>(null);
   const [claimWindowSaving, setClaimWindowSaving] = useState(false);
   const [pruneSettings, setPruneSettings] = useState<InactivePruneSettingsResponse | null>(null);
@@ -106,13 +109,17 @@ export default function ServerManagePage() {
       listPlayers(token, decodedName, 200, 0),
       getInactivePruneSettings(token, decodedName),
       getClaimWindow(token, decodedName),
+      getRewards(token, decodedName),
     ])
-      .then(([infoResponse, owned, playersResponse, pruneResponse, claimWindowResponse]) => {
+      .then(([infoResponse, owned, playersResponse, pruneResponse, claimWindowResponse, rewardsResponse]) => {
         setInfo(infoResponse);
         setMeta(owned.servers.find((server) => server.server_name === decodedName) ?? null);
         setPlayers(playersResponse);
         setPruneSettings(pruneResponse);
         setClaimWindow(claimWindowResponse);
+        setRewardTiers(rewardsResponse.tiers ?? []);
+        const firstTier = rewardsResponse.tiers?.[0];
+        if (firstTier) setSelectedTierMinSteps(firstTier.min_steps);
       })
       .catch((err) => setError((err as Error).message))
       .finally(() => setLoading(false));
@@ -496,15 +503,21 @@ export default function ServerManagePage() {
                 />
               </div>
               <div>
-                <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Min steps (tier)</label>
-                <input
-                  type="number"
-                  min={0}
+                <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Reward tier</label>
+                <select
                   className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
-                  value={actionMinSteps}
-                  onChange={(event) => setActionMinSteps(event.target.value)}
-                  placeholder="Required for claim status/claim"
-                />
+                  value={selectedTierMinSteps ?? ""}
+                  onChange={(event) =>
+                    setSelectedTierMinSteps(event.target.value ? Number(event.target.value) : null)
+                  }
+                >
+                  {rewardTiers.length === 0 && <option value="">No tiers loaded</option>}
+                  {rewardTiers.map((tier) => (
+                    <option key={tier.min_steps} value={tier.min_steps}>
+                      {tier.label} · {tier.min_steps}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div className="grid gap-4 md:grid-cols-3">
                 <div>
@@ -572,11 +585,12 @@ export default function ServerManagePage() {
                         decodedName,
                         username.trim(),
                         actionDay.trim() || undefined,
-                        actionMinSteps.trim() ? Number(actionMinSteps) : undefined,
+                        selectedTierMinSteps ?? undefined,
                       ),
                     )
                   }
                   className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 hover:border-slate-300 dark:border-slate-700 dark:text-slate-200"
+                  disabled={actionLoading || !username.trim() || selectedTierMinSteps == null}
                 >
                   Claim status
                 </button>
@@ -590,11 +604,12 @@ export default function ServerManagePage() {
                         decodedName,
                         username.trim(),
                         actionDay.trim() || undefined,
-                        actionMinSteps.trim() ? Number(actionMinSteps) : undefined,
+                        selectedTierMinSteps ?? undefined,
                       ),
                     )
                   }
                   className="rounded-lg bg-emerald-600 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-70"
+                  disabled={actionLoading || !username.trim() || selectedTierMinSteps == null}
                 >
                   Mark claimed
                 </button>
