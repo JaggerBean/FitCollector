@@ -8,15 +8,24 @@ import {
   claimReward,
   getClaimStatus,
   getOwnedServers,
+  getInactivePruneSettings,
   getServerInfo,
   getYesterdaySteps,
   listBans,
   listPlayers,
+  runInactivePrune,
   togglePrivacy,
   unbanPlayer,
+  updateInactivePruneSettings,
   wipePlayer,
 } from "../api/servers";
-import type { PlayersListResponse, ServerInfo, ServerSummary } from "../api/types";
+import type {
+  InactivePruneSettingsResponse,
+  InactivePruneRunResponse,
+  PlayersListResponse,
+  ServerInfo,
+  ServerSummary,
+} from "../api/types";
 
 export default function ServerManagePage() {
   const { serverName } = useParams();
@@ -35,6 +44,11 @@ export default function ServerManagePage() {
   const [query, setQuery] = useState("");
   const [limit, setLimit] = useState(100);
   const [offset, setOffset] = useState(0);
+  const [pruneSettings, setPruneSettings] = useState<InactivePruneSettingsResponse | null>(null);
+  const [pruneSaving, setPruneSaving] = useState(false);
+  const [pruneRunning, setPruneRunning] = useState(false);
+  const [pruneError, setPruneError] = useState<string | null>(null);
+  const [pruneOutput, setPruneOutput] = useState<InactivePruneRunResponse | null>(null);
 
   const usernameSuggestions = useMemo(
     () => players?.players?.map((player) => player.minecraft_username) ?? [],
@@ -83,15 +97,59 @@ export default function ServerManagePage() {
       getServerInfo(token, decodedName),
       getOwnedServers(token),
       listPlayers(token, decodedName, 200, 0),
+      getInactivePruneSettings(token, decodedName),
     ])
-      .then(([infoResponse, owned, playersResponse]) => {
+      .then(([infoResponse, owned, playersResponse, pruneResponse]) => {
         setInfo(infoResponse);
         setMeta(owned.servers.find((server) => server.server_name === decodedName) ?? null);
         setPlayers(playersResponse);
+        setPruneSettings(pruneResponse);
       })
       .catch((err) => setError((err as Error).message))
       .finally(() => setLoading(false));
   }, [token, decodedName]);
+
+  const updatePruneSetting = (patch: Partial<InactivePruneSettingsResponse>) => {
+    setPruneSettings((prev) => (prev ? { ...prev, ...patch } : prev));
+  };
+
+  const savePruneSettings = async () => {
+    if (!token || !decodedName || !pruneSettings) return;
+    setPruneSaving(true);
+    setPruneError(null);
+    try {
+      const response = await updateInactivePruneSettings(token, decodedName, {
+        enabled: pruneSettings.enabled,
+        max_inactive_days: pruneSettings.enabled ? pruneSettings.max_inactive_days ?? 30 : null,
+        mode: pruneSettings.mode,
+      });
+      setPruneSettings(response);
+    } catch (err) {
+      setPruneError((err as Error).message);
+    } finally {
+      setPruneSaving(false);
+    }
+  };
+
+  const runPrune = async (dryRun: boolean) => {
+    if (!token || !decodedName) return;
+    if (!dryRun) {
+      const shouldContinue = window.confirm(
+        `Run inactive cleanup on ${decodedName}? This will ${pruneSettings?.mode === "wipe" ? "permanently delete" : "deactivate"} players.`,
+      );
+      if (!shouldContinue) return;
+    }
+    setPruneRunning(true);
+    setPruneError(null);
+    try {
+      const response = await runInactivePrune(token, decodedName, dryRun);
+      setPruneOutput(response);
+    } catch (err) {
+      setPruneError((err as Error).message);
+    } finally {
+      setPruneRunning(false);
+    }
+  };
 
   const onTogglePrivacy = async () => {
     if (!token || !decodedName || !info) return;
@@ -230,6 +288,89 @@ export default function ServerManagePage() {
                   </div>
                 </div>
               )}
+            </div>
+            <div className="rounded-2xl border border-emerald-100 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Inactive cleanup</h2>
+              <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+                Remove players who haven’t claimed a reward within your threshold.
+              </p>
+              <div className="mt-4 space-y-3 text-sm text-slate-700 dark:text-slate-200">
+                <label className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={pruneSettings?.enabled ?? false}
+                    onChange={(event) => updatePruneSetting({ enabled: event.target.checked })}
+                  />
+                  Enable auto cleanup
+                </label>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div>
+                    <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                      Max inactive days
+                    </label>
+                    <input
+                      type="number"
+                      min={1}
+                      className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+                      value={pruneSettings?.max_inactive_days ?? ""}
+                      onChange={(event) =>
+                        updatePruneSetting({
+                          max_inactive_days: event.target.value ? Number(event.target.value) : null,
+                        })
+                      }
+                      disabled={!pruneSettings?.enabled}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Mode</label>
+                    <select
+                      className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+                      value={pruneSettings?.mode ?? "deactivate"}
+                      onChange={(event) => updatePruneSetting({ mode: event.target.value as "deactivate" | "wipe" })}
+                      disabled={!pruneSettings?.enabled}
+                    >
+                      <option value="deactivate">Deactivate (reversible)</option>
+                      <option value="wipe">Wipe data (permanent)</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={savePruneSettings}
+                    disabled={pruneSaving}
+                    className="rounded-lg bg-emerald-600 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-70"
+                  >
+                    {pruneSaving ? "Saving..." : "Save settings"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => runPrune(true)}
+                    disabled={pruneRunning || !pruneSettings?.enabled}
+                    className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 hover:border-slate-300 disabled:opacity-70 dark:border-slate-700 dark:text-slate-200"
+                  >
+                    {pruneRunning ? "Running..." : "Dry run"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => runPrune(false)}
+                    disabled={pruneRunning || !pruneSettings?.enabled}
+                    className="rounded-lg border border-red-200 px-3 py-2 text-sm font-medium text-red-700 hover:border-red-300 disabled:opacity-70"
+                  >
+                    Run now
+                  </button>
+                </div>
+                {pruneError && (
+                  <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900/40 dark:bg-red-900/20 dark:text-red-200">
+                    {pruneError}
+                  </div>
+                )}
+                {pruneOutput && (
+                  <pre className="max-h-64 overflow-auto rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200">
+                    {JSON.stringify(pruneOutput, null, 2)}
+                  </pre>
+                )}
+              </div>
             </div>
           </div>
           <div className="rounded-2xl border border-emerald-100 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">

@@ -15,6 +15,8 @@ import type {
   YesterdayStepsResponse,
   BansResponse,
   ActionResponse,
+  InactivePruneSettingsResponse,
+  InactivePruneRunResponse,
 } from "./types";
 
 export async function login(email: string, password: string): Promise<LoginResponse> {
@@ -234,6 +236,44 @@ export async function wipePlayer(
   return apiRequest<ActionResponse>(
     `/v1/servers/players/${encodeURIComponent(username)}?server=${encodeURIComponent(server)}`,
     { method: "DELETE" },
+    token,
+  );
+}
+
+export async function getInactivePruneSettings(
+  token: string,
+  server: string,
+): Promise<InactivePruneSettingsResponse> {
+  return apiRequest<InactivePruneSettingsResponse>(
+    `/v1/owner/servers/${encodeURIComponent(server)}/inactive-prune`,
+    {},
+    token,
+  );
+}
+
+export async function updateInactivePruneSettings(
+  token: string,
+  server: string,
+  payload: { enabled: boolean; max_inactive_days: number | null; mode: "deactivate" | "wipe" },
+): Promise<InactivePruneSettingsResponse> {
+  return apiRequest<InactivePruneSettingsResponse>(
+    `/v1/owner/servers/${encodeURIComponent(server)}/inactive-prune`,
+    {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    },
+    token,
+  );
+}
+
+export async function runInactivePrune(
+  token: string,
+  server: string,
+  dryRun: boolean,
+): Promise<InactivePruneRunResponse> {
+  return apiRequest<InactivePruneRunResponse>(
+    `/v1/owner/servers/${encodeURIComponent(server)}/inactive-prune/run?dry_run=${dryRun ? "true" : "false"}`,
+    { method: "POST" },
     token,
   );
 }

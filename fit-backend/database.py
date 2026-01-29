@@ -133,6 +133,22 @@ def init_db() -> None:
         ADD COLUMN IF NOT EXISTS invite_code TEXT;
         """))
 
+        # 5e) Migration: add inactivity cleanup settings
+        conn.execute(text("""
+        ALTER TABLE servers
+        ADD COLUMN IF NOT EXISTS inactive_prune_enabled BOOLEAN DEFAULT FALSE;
+        """))
+
+        conn.execute(text("""
+        ALTER TABLE servers
+        ADD COLUMN IF NOT EXISTS inactive_prune_days INTEGER;
+        """))
+
+        conn.execute(text("""
+        ALTER TABLE servers
+        ADD COLUMN IF NOT EXISTS inactive_prune_mode TEXT DEFAULT 'deactivate';
+        """))
+
         conn.execute(text("""
         CREATE UNIQUE INDEX IF NOT EXISTS idx_servers_invite_code
         ON servers(invite_code)

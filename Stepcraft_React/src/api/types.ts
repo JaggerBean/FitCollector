@@ -125,3 +125,27 @@ export interface PushCreateResponse {
   server_name: string;
   item: PushItem;
 }
+
+export interface InactivePruneSettingsResponse {
+  server_name: string;
+  enabled: boolean;
+  max_inactive_days: number | null;
+  mode: "deactivate" | "wipe";
+}
+
+export interface InactivePruneRunResponse {
+  server_name: string;
+  dry_run: boolean;
+  mode: "deactivate" | "wipe";
+  max_inactive_days: number;
+  total_candidates?: number;
+  total_removed?: number;
+  candidates?: Array<{
+    minecraft_username: string;
+    device_id: string;
+    last_claimed_at: string | null;
+    created_at: string;
+  }>;
+  removed_players?: string[];
+  records_affected?: Record<string, number>;
+}
