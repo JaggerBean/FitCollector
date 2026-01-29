@@ -21,6 +21,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
@@ -455,39 +456,6 @@ fun DashboardScreen(
                     scope.launch { syncSteps(true) }
                 })
             }
-
-            item {
-                val trackedList = trackedTiers.entries.toList()
-                val currentSteps = stepsToday ?: 0L
-                AnimatedVisibility(
-                    visible = trackedList.isNotEmpty(),
-                    enter = animationSpec,
-                    exit = exitSpec
-                ) {
-                    Surface(
-                        color = MaterialTheme.colorScheme.surfaceVariant,
-                        shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Column(Modifier.padding(16.dp)) {
-                            Text("Tracked milestones", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
-                            Spacer(Modifier.height(8.dp))
-                            trackedList.forEach { (server, minSteps) ->
-                                val label = rewardTiersByServer[server]?.firstOrNull { it.min_steps == minSteps }?.label
-                                    ?: "Milestone"
-                                val progress = if (minSteps > 0) (currentSteps.toFloat() / minSteps.toFloat()).coerceIn(0f, 1f) else 0f
-                                Column(Modifier.padding(vertical = 8.dp)) {
-                                    Text("$server · $label", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
-                                    Spacer(Modifier.height(4.dp))
-                                    LinearProgressIndicator(progress = progress, modifier = Modifier.fillMaxWidth())
-                                    Spacer(Modifier.height(4.dp))
-                                    Text("$currentSteps / $minSteps steps", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
-                                }
-                            }
-                        }
-                    }
-                }
-            }
             
             blockedSourcesWarning?.let { sources ->
                 item {
@@ -515,6 +483,102 @@ fun DashboardScreen(
                         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             if (successMsg != null) SyncStatusBanner(msg = successMsg, isSuccess = true, timestamp = lastSyncInstant)
                             if (errorMsg != null) SyncStatusBanner(msg = errorMsg, isSuccess = false, timestamp = null)
+                        }
+                    }
+                }
+            }
+            item {
+                val trackedList = trackedTiers.entries.toList()
+                val currentSteps = stepsToday ?: 0L
+                AnimatedVisibility(
+                    visible = trackedList.isNotEmpty(),
+                    enter = animationSpec,
+                    exit = exitSpec
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(androidx.compose.foundation.shape.RoundedCornerShape(16.dp))
+                            .background(
+                                Brush.verticalGradient(
+                                    listOf(Color(0xFF1B3A20), Color(0xFF0F2414))
+                                )
+                            )
+                            .padding(16.dp)
+                    ) {
+                        Column {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text("👣", fontSize = 22.sp)
+                                Spacer(Modifier.width(8.dp))
+                                Column {
+                                    Text("Tracked milestones", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Color(0xFFE8F5E9))
+                                    Text("Keep stepping — you’re getting close!", style = MaterialTheme.typography.bodySmall, color = Color(0xFFB7D5BB))
+                                }
+                            }
+                            Spacer(Modifier.height(12.dp))
+                            trackedList.forEach { (server, minSteps) ->
+                                val label = rewardTiersByServer[server]?.firstOrNull { it.min_steps == minSteps }?.label
+                                    ?: "Milestone"
+                                val progress = if (minSteps > 0) (currentSteps.toFloat() / minSteps.toFloat()).coerceIn(0f, 1f) else 0f
+
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clip(androidx.compose.foundation.shape.RoundedCornerShape(12.dp))
+                                        .background(
+                                            Brush.verticalGradient(
+                                                listOf(Color(0xFF1D1F1A), Color(0xFF0F120D))
+                                            )
+                                        )
+                                        .padding(12.dp)
+                                ) {
+                                    Column {
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Text("🏁", fontSize = 18.sp)
+                                            Spacer(Modifier.width(6.dp))
+                                            Text(
+                                                "$server · $label",
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                fontWeight = FontWeight.SemiBold,
+                                                color = Color(0xFFEAE7D6)
+                                            )
+                                            Spacer(Modifier.weight(1f))
+                                            if (progress >= 1f) {
+                                                Text("✅", fontSize = 18.sp)
+                                            } else if (progress >= 0.8f) {
+                                                Text("🔥", fontSize = 18.sp)
+                                            }
+                                        }
+                                        Spacer(Modifier.height(8.dp))
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .height(16.dp)
+                                                .clip(androidx.compose.foundation.shape.RoundedCornerShape(10.dp))
+                                                .background(Color(0xFF2A3326))
+                                        ) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .fillMaxHeight()
+                                                    .fillMaxWidth(progress)
+                                                    .background(
+                                                        Brush.horizontalGradient(
+                                                            listOf(Color(0xFF7BE07B), Color(0xFF47C1FF))
+                                                        )
+                                                    )
+                                            )
+                                            Box(
+                                                modifier = Modifier
+                                                    .fillMaxSize()
+                                                    .background(Color.White.copy(alpha = 0.06f))
+                                            )
+                                        }
+                                        Spacer(Modifier.height(6.dp))
+                                        Text("$currentSteps / $minSteps steps", style = MaterialTheme.typography.bodySmall, color = Color(0xFFBDB7A6))
+                                    }
+                                }
+                                Spacer(Modifier.height(10.dp))
+                            }
                         }
                     }
                 }
