@@ -8,7 +8,7 @@ from database import engine
 from models import PlayerRegistrationRequest, PlayerApiKeyResponse, KeyRecoveryRequest
 from utils import generate_opaque_token, hash_token
 import json
-from auth import require_api_key
+from auth import require_api_key, validate_and_get_server
 
 CENTRAL_TZ = ZoneInfo("America/Chicago")
 router = APIRouter()
@@ -18,6 +18,17 @@ DEFAULT_REWARDS = [
     {"min_steps": 5000, "label": "Walker", "rewards": ["give {player} minecraft:iron_ingot 3"]},
     {"min_steps": 10000, "label": "Legend", "rewards": ["give {player} minecraft:diamond 1"]},
 ]
+
+
+def _get_claim_buffer_days(server_name: str) -> int:
+    with engine.begin() as conn:
+        row = conn.execute(
+            text("SELECT claim_buffer_days FROM servers WHERE server_name = :server"),
+            {"server": server_name},
+        ).fetchone()
+    if not row or row[0] is None:
+        return 1
+    return max(0, int(row[0]))
 
 # ...existing code...
 
@@ -71,6 +82,106 @@ def get_claim_status_player(
         return {"claimed": row[0], "claimed_at": row[1], "day": str(target_day), "min_steps": min_steps}
     else:
         return {"claimed": False, "claimed_at": None, "day": str(target_day), "min_steps": min_steps}
+
+
+@router.get("/v1/players/claim-available")
+def get_claim_available_player(
+    device_id: str = Query(...),
+    player_api_key: str = Query(...),
+    debug: bool = Query(default=False),
+):
+    """
+    List all claimable reward tiers within the claim window for the authenticated player.
+    Returns items with day + min_steps + label (one entry per tier per day).
+    """
+    server_name, minecraft_username = validate_and_get_server(device_id, player_api_key)
+    today = datetime.now(CENTRAL_TZ).date()
+    buffer_days = _get_claim_buffer_days(server_name)
+    days = [today - timedelta(days=offset) for offset in range(buffer_days + 1)]
+
+    debug_info = {
+        "server_name": server_name,
+        "minecraft_username": minecraft_username,
+        "buffer_days": buffer_days,
+        "days": [str(d) for d in days],
+        "tiers": [],
+        "steps_by_day": {},
+        "claimed_by_day": {},
+    }
+
+    with engine.begin() as conn:
+        tiers = conn.execute(
+            text("""
+                SELECT min_steps, label
+                FROM server_rewards
+                WHERE server_name = :server
+                ORDER BY min_steps ASC, position ASC
+            """),
+            {"server": server_name},
+        ).mappings().all()
+
+        if debug:
+            debug_info["tiers"] = [
+                {"min_steps": t["min_steps"], "label": t["label"]}
+                for t in tiers
+            ]
+
+        if not tiers:
+            return {"server_name": server_name, "items": [], "debug": debug_info} if debug else {"server_name": server_name, "items": []}
+
+        items = []
+        for day in days:
+            day_str = str(day)
+            steps_row = conn.execute(
+                text("""
+                    SELECT steps_today FROM step_ingest
+                    WHERE minecraft_username = :username
+                      AND server_name = :server
+                      AND CAST(day AS TEXT) = :day
+                    LIMIT 1
+                """),
+                {"username": minecraft_username, "server": server_name, "day": day_str},
+            ).fetchone()
+
+            if not steps_row:
+                if debug:
+                    debug_info["steps_by_day"][day_str] = None
+                continue
+
+            steps = steps_row[0]
+            if debug:
+                debug_info["steps_by_day"][day_str] = steps
+
+            eligible = [tier for tier in tiers if steps >= tier["min_steps"]]
+            if not eligible:
+                continue
+
+            claimed_rows = conn.execute(
+                text("""
+                    SELECT min_steps FROM step_claims
+                    WHERE minecraft_username = :username
+                      AND server_name = :server
+                      AND CAST(day AS TEXT) = :day
+                      AND claimed = TRUE
+                """),
+                {"username": minecraft_username, "server": server_name, "day": day_str},
+            ).fetchall()
+            claimed_set = {row[0] for row in claimed_rows}
+            if debug:
+                debug_info["claimed_by_day"][day_str] = sorted(claimed_set)
+
+            for tier in eligible:
+                if tier["min_steps"] in claimed_set:
+                    continue
+                items.append(
+                    {
+                        "day": day_str,
+                        "min_steps": tier["min_steps"],
+                        "label": tier["label"],
+                    }
+                )
+
+    return {"server_name": server_name, "items": items, "debug": debug_info} if debug else {"server_name": server_name, "items": items}
 
 
 @router.get("/v1/players/push/next")
