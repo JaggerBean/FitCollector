@@ -256,7 +256,10 @@ public class StepCraftClaimRewardsScreenHandler extends GenericContainerScreenHa
             return Items.EMERALD;
         }
         try {
-            Identifier id = Identifier.of(itemId);
+            Identifier id = Identifier.tryParse(itemId);
+            if (id == null) {
+                return Items.EMERALD;
+            }
             return Registries.ITEM.get(id);
         } catch (Exception ignored) {
             return Items.EMERALD;
