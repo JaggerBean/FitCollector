@@ -1,0 +1,264 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		A1000001 /* FitCollectorIOSApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000001 /* FitCollectorIOSApp.swift */; };
+		A1000002 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000002 /* RootView.swift */; };
+		A1000003 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000003 /* Models.swift */; };
+		A1000004 /* ApiClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000004 /* ApiClient.swift */; };
+		A1000005 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000005 /* AppState.swift */; };
+		A1000006 /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000006 /* NotificationManager.swift */; };
+		A1000007 /* HealthKitManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000007 /* HealthKitManager.swift */; };
+		A1000008 /* SyncService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000008 /* SyncService.swift */; };
+		A1000009 /* OnboardingScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000009 /* OnboardingScreen.swift */; };
+		A100000A /* DashboardScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = A200000A /* DashboardScreen.swift */; };
+		A100000B /* SettingsScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = A200000B /* SettingsScreen.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		A2000001 /* FitCollectorIOSApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FitCollectorIOSApp.swift; sourceTree = "<group>"; };
+		A2000002 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
+		A2000003 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
+		A2000004 /* ApiClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApiClient.swift; sourceTree = "<group>"; };
+		A2000005 /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
+		A2000006 /* NotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationManager.swift; sourceTree = "<group>"; };
+		A2000007 /* HealthKitManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthKitManager.swift; sourceTree = "<group>"; };
+		A2000008 /* SyncService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncService.swift; sourceTree = "<group>"; };
+		A2000009 /* OnboardingScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingScreen.swift; sourceTree = "<group>"; };
+		A200000A /* DashboardScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardScreen.swift; sourceTree = "<group>"; };
+		A200000B /* SettingsScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsScreen.swift; sourceTree = "<group>"; };
+		A200000C /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		A200000D /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		A200000E /* FitCollectorIOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; path = FitCollectorIOS.app; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		A3000001 /* FitCollectorIOS */ = {
+			isa = PBXGroup;
+			children = (
+				A2000001 /* FitCollectorIOSApp.swift */,
+				A2000002 /* RootView.swift */,
+				A3000002 /* Models */,
+				A3000003 /* Services */,
+				A3000004 /* Screens */,
+				A200000D /* Assets.xcassets */,
+				A200000C /* Info.plist */,
+			);
+			path = FitCollectorIOS;
+			sourceTree = "<group>";
+		};
+		A3000002 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				A2000003 /* Models.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		A3000003 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				A2000004 /* ApiClient.swift */,
+				A2000005 /* AppState.swift */,
+				A2000006 /* NotificationManager.swift */,
+				A2000007 /* HealthKitManager.swift */,
+				A2000008 /* SyncService.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		A3000004 /* Screens */ = {
+			isa = PBXGroup;
+			children = (
+				A2000009 /* OnboardingScreen.swift */,
+				A200000A /* DashboardScreen.swift */,
+				A200000B /* SettingsScreen.swift */,
+			);
+			path = Screens;
+			sourceTree = "<group>";
+		};
+		A3000005 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				A200000E /* FitCollectorIOS.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		A3000000 /* Root */ = {
+			isa = PBXGroup;
+			children = (
+				A3000001 /* FitCollectorIOS */,
+				A3000005 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		A4000001 /* FitCollectorIOS */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A5000001 /* Build configuration list for PBXNativeTarget "FitCollectorIOS" */;
+			buildPhases = (
+				A6000001 /* Sources */,
+				A6000002 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = FitCollectorIOS;
+			productName = FitCollectorIOS;
+			productReference = A200000E /* FitCollectorIOS.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		A4000000 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastUpgradeCheck = 1510;
+				TargetAttributes = {
+					A4000001 = {
+						CreatedOnToolsVersion = 15.1;
+					};
+				};
+			};
+			buildConfigurationList = A5000000 /* Build configuration list for PBXProject "FitCollectorIOS" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			mainGroup = A3000000;
+			productRefGroup = A3000005 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				A4000001 /* FitCollectorIOS */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		A6000002 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		A6000001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A1000001 /* FitCollectorIOSApp.swift in Sources */,
+				A1000002 /* RootView.swift in Sources */,
+				A1000003 /* Models.swift in Sources */,
+				A1000004 /* ApiClient.swift in Sources */,
+				A1000005 /* AppState.swift in Sources */,
+				A1000006 /* NotificationManager.swift in Sources */,
+				A1000007 /* HealthKitManager.swift in Sources */,
+				A1000008 /* SyncService.swift in Sources */,
+				A1000009 /* OnboardingScreen.swift in Sources */,
+				A100000A /* DashboardScreen.swift in Sources */,
+				A100000B /* SettingsScreen.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		A7000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_MODULES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "";
+				DEVELOPMENT_TEAM = "";
+				ENABLE_PREVIEWS = YES;
+				INFOPLIST_FILE = FitCollectorIOS/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.FitCollectorIOS;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		A7000002 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_MODULES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "";
+				DEVELOPMENT_TEAM = "";
+				INFOPLIST_FILE = FitCollectorIOS/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.FitCollectorIOS;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		A7000003 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = "";
+				PRODUCT_NAME = FitCollectorIOS;
+			};
+			name = Debug;
+		};
+		A7000004 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = "";
+				PRODUCT_NAME = FitCollectorIOS;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		A5000000 /* Build configuration list for PBXProject "FitCollectorIOS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A7000001 /* Debug */,
+				A7000002 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		A5000001 /* Build configuration list for PBXNativeTarget "FitCollectorIOS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A7000003 /* Debug */,
+				A7000004 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = A4000000 /* Project object */;
+}
