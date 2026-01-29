@@ -86,9 +86,13 @@ public class BackendClient {
         }
     }
                             // Server endpoint: mark reward as claimed for a player
-                            public static String claimRewardForPlayer(String username) throws IOException {
+                            public static String claimRewardForPlayer(String username, long minSteps, String day) throws IOException {
+                                String url = BASE_URL + "/v1/servers/players/" + username + "/claim-reward?min_steps=" + minSteps;
+                                if (day != null && !day.isBlank()) {
+                                    url += "&day=" + java.net.URLEncoder.encode(day, java.nio.charset.StandardCharsets.UTF_8);
+                                }
                                 Request request = new Request.Builder()
-                                        .url(BASE_URL + "/v1/servers/players/" + username + "/claim-reward")
+                                        .url(url)
                                         .header("X-API-Key", StepCraftConfig.getApiKey())
                                         .post(okhttp3.RequestBody.create(new byte[0]))
                                         .build();
@@ -229,9 +233,13 @@ public class BackendClient {
                     return executeRequest(request, true);
                 }
             // Server endpoint: get claim status for a player
-            public static String getClaimStatusForPlayer(String username) throws IOException {
+            public static String getClaimStatusForPlayer(String username, long minSteps, String day) throws IOException {
+                String url = BASE_URL + "/v1/servers/players/" + username + "/claim-status?min_steps=" + minSteps;
+                if (day != null && !day.isBlank()) {
+                    url += "&day=" + java.net.URLEncoder.encode(day, java.nio.charset.StandardCharsets.UTF_8);
+                }
                 Request request = new Request.Builder()
-                        .url(BASE_URL + "/v1/servers/players/" + username + "/claim-status")
+                        .url(url)
                         .header("X-API-Key", StepCraftConfig.getApiKey())
                         .build();
                 return executeRequest(request, true);

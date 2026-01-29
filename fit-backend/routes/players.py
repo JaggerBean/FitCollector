@@ -23,25 +23,54 @@ DEFAULT_REWARDS = [
 
 
 @router.get("/v1/players/claim-status/{minecraft_username}")
-def get_claim_status_player(minecraft_username: str, server_name: str = Query(...)):
+def get_claim_status_player(
+    minecraft_username: str,
+    server_name: str = Query(...),
+    day: str | None = Query(default=None),
+    min_steps: int | None = Query(default=None),
+):
     """
-    Check if the player has claimed their reward for yesterday (app use).
-    Uses Central Time timezone to match server logic.
+    Check if the player has claimed a specific reward tier for a day (app use).
+    Defaults to today if day not provided.
     """
-    yesterday = (datetime.now(CENTRAL_TZ) - timedelta(days=1)).date()
+    if min_steps is None:
+        raise HTTPException(status_code=400, detail="min_steps is required")
+    if min_steps < 0:
+        raise HTTPException(status_code=400, detail="min_steps must be >= 0")
+
+    today = datetime.now(CENTRAL_TZ).date()
+    if day:
+        try:
+            target_day = datetime.fromisoformat(day).date()
+        except Exception:
+            raise HTTPException(status_code=400, detail="Invalid day format (YYYY-MM-DD)")
+    else:
+        target_day = today
+
+    if target_day > today:
+        raise HTTPException(status_code=400, detail="Cannot claim future days")
+
     with engine.begin() as conn:
         row = conn.execute(
             text("""
                 SELECT claimed, claimed_at FROM step_claims
-                WHERE minecraft_username = :username AND server_name = :server AND day = :yesterday
+                WHERE minecraft_username = :username
+                  AND server_name = :server
+                  AND day = :day
+                  AND min_steps = :min_steps
                 LIMIT 1
             """),
-            {"username": minecraft_username, "server": server_name, "yesterday": yesterday}
+            {
+                "username": minecraft_username,
+                "server": server_name,
+                "day": target_day,
+                "min_steps": min_steps,
+            }
         ).fetchone()
     if row:
-        return {"claimed": row[0], "claimed_at": row[1]}
+        return {"claimed": row[0], "claimed_at": row[1], "day": str(target_day), "min_steps": min_steps}
     else:
-        return {"claimed": False, "claimed_at": None}
+        return {"claimed": False, "claimed_at": None, "day": str(target_day), "min_steps": min_steps}
 
 
 @router.get("/v1/players/push/next")

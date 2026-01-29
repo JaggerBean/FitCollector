@@ -48,6 +48,7 @@ export default function ServerManagePage() {
   const [limit, setLimit] = useState(100);
   const [offset, setOffset] = useState(0);
   const [actionDay, setActionDay] = useState("");
+  const [actionMinSteps, setActionMinSteps] = useState("");
   const [claimWindow, setClaimWindow] = useState<ClaimWindowResponse | null>(null);
   const [claimWindowSaving, setClaimWindowSaving] = useState(false);
   const [pruneSettings, setPruneSettings] = useState<InactivePruneSettingsResponse | null>(null);
@@ -494,6 +495,17 @@ export default function ServerManagePage() {
                   placeholder="Optional"
                 />
               </div>
+              <div>
+                <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Min steps (tier)</label>
+                <input
+                  type="number"
+                  min={0}
+                  className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+                  value={actionMinSteps}
+                  onChange={(event) => setActionMinSteps(event.target.value)}
+                  placeholder="Required for claim status/claim"
+                />
+              </div>
               <div className="grid gap-4 md:grid-cols-3">
                 <div>
                   <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Search query</label>
@@ -554,7 +566,15 @@ export default function ServerManagePage() {
                   type="button"
                   disabled={actionLoading || !username.trim()}
                   onClick={() =>
-                    runAction(() => getClaimStatus(token!, decodedName, username.trim(), actionDay.trim() || undefined))
+                    runAction(() =>
+                      getClaimStatus(
+                        token!,
+                        decodedName,
+                        username.trim(),
+                        actionDay.trim() || undefined,
+                        actionMinSteps.trim() ? Number(actionMinSteps) : undefined,
+                      ),
+                    )
                   }
                   className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 hover:border-slate-300 dark:border-slate-700 dark:text-slate-200"
                 >
@@ -564,7 +584,15 @@ export default function ServerManagePage() {
                   type="button"
                   disabled={actionLoading || !username.trim()}
                   onClick={() =>
-                    runAction(() => claimReward(token!, decodedName, username.trim(), actionDay.trim() || undefined))
+                    runAction(() =>
+                      claimReward(
+                        token!,
+                        decodedName,
+                        username.trim(),
+                        actionDay.trim() || undefined,
+                        actionMinSteps.trim() ? Number(actionMinSteps) : undefined,
+                      ),
+                    )
                   }
                   className="rounded-lg bg-emerald-600 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-70"
                 >

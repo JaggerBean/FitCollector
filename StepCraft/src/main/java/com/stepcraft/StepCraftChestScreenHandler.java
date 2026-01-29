@@ -179,11 +179,6 @@ public class StepCraftChestScreenHandler extends GenericContainerScreenHandler {
         CompletableFuture
                 .supplyAsync(() -> {
                     try {
-                        String claimJson = BackendClient.getClaimStatusForPlayer(targetPlayer);
-                        ClaimStatus claimStatus = extractClaimStatus(claimJson);
-                        if (claimStatus.claimed) {
-                            return new ClaimContext(-1, null, true, claimStatus.claimedAt);
-                        }
                         String stepsJson = BackendClient.getYesterdayStepsForPlayer(targetPlayer);
                         long steps = extractSteps(stepsJson);
                         if (steps < 0) {
@@ -191,6 +186,14 @@ public class StepCraftChestScreenHandler extends GenericContainerScreenHandler {
                         }
                         String rewardsJson = BackendClient.getServerRewards();
                         RewardTier tier = pickTier(parseRewardTiers(rewardsJson), steps);
+                        if (tier == null) {
+                            return new ClaimContext(steps, null, false, null);
+                        }
+                        String claimJson = BackendClient.getClaimStatusForPlayer(targetPlayer, tier.minSteps, getYesterdayDayParam());
+                        ClaimStatus claimStatus = extractClaimStatus(claimJson);
+                        if (claimStatus.claimed) {
+                            return new ClaimContext(-1, null, true, claimStatus.claimedAt);
+                        }
                         // if (claimStatus.claimed) {
                         //     return new ClaimContext(steps, tier, false, null);
                         // }
@@ -247,7 +250,7 @@ public class StepCraftChestScreenHandler extends GenericContainerScreenHandler {
                         CompletableFuture
                                 .supplyAsync(() -> {
                                     try {
-                                        return BackendClient.claimRewardForPlayer(targetPlayer);
+                                        return BackendClient.claimRewardForPlayer(targetPlayer, ctx.tier.minSteps, getYesterdayDayParam());
                                     } catch (Exception e) {
                                         throw new RuntimeException(e);
                                     }
@@ -283,7 +286,7 @@ public class StepCraftChestScreenHandler extends GenericContainerScreenHandler {
         }
     }
 
-    private static long extractSteps(String stepsJson) {
+    static long extractSteps(String stepsJson) {
         if (stepsJson == null) return -1;
         if (stepsJson.startsWith("Error:")) {
             throw new RuntimeException(stepsJson);
@@ -296,7 +299,7 @@ public class StepCraftChestScreenHandler extends GenericContainerScreenHandler {
         return -1;
     }
 
-    private static ClaimStatus extractClaimStatus(String claimJson) {
+    static ClaimStatus extractClaimStatus(String claimJson) {
         if (claimJson == null) return new ClaimStatus(false, null);
         if (claimJson.startsWith("Error:")) {
             throw new RuntimeException(claimJson);
@@ -338,7 +341,7 @@ public class StepCraftChestScreenHandler extends GenericContainerScreenHandler {
         return tiers;
     }
 
-    private static RewardTier pickTier(List<RewardTier> tiers, long steps) {
+    static RewardTier pickTier(List<RewardTier> tiers, long steps) {
         RewardTier best = null;
         for (RewardTier tier : tiers) {
             if (tier.minSteps <= steps) {
@@ -350,10 +353,33 @@ public class StepCraftChestScreenHandler extends GenericContainerScreenHandler {
         return best;
     }
 
-    static record RewardTier(long minSteps, String label, List<String> rewards) {}
+    public static record RewardTier(long minSteps, String label, List<String> rewards) {}
 
     private record ClaimContext(long steps, RewardTier tier, boolean alreadyClaimed, String claimedAt) {}
 
     private record ClaimStatus(boolean claimed, String claimedAt) {}
+
+    static RewardTier getTierForYesterday(String username) throws Exception {
+        String stepsJson = BackendClient.getYesterdayStepsForPlayer(username);
+        long steps = extractSteps(stepsJson);
+        if (steps < 0) {
+            return null;
+        }
+        String rewardsJson = BackendClient.getServerRewards();
+        return pickTier(parseRewardTiers(rewardsJson), steps);
+    }
+
+    static String getClaimStatusForYesterdayTier(String username) throws Exception {
+        RewardTier tier = getTierForYesterday(username);
+        if (tier == null) {
+            return "No reward tier found for yesterday's steps.";
+        }
+        return BackendClient.getClaimStatusForPlayer(username, tier.minSteps, getYesterdayDayParam());
+    }
+
+    static String getYesterdayDayParam() {
+        java.time.LocalDate day = java.time.LocalDate.now(java.time.ZoneId.of("America/Chicago")).minusDays(1);
+        return day.toString();
+    }
 
 }

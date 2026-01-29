@@ -147,7 +147,7 @@ public class StepCraftPlayerListScreenHandler extends GenericContainerScreenHand
             if (action != StepCraftPlayerAction.NONE) {
                 if (action == StepCraftPlayerAction.CLAIM_STATUS) {
                     StepCraftChestScreenHandler.sendBackendToLectern(serverPlayer, "Claim Status",
-                            () -> BackendClient.getClaimStatusForPlayer(target));
+                            () -> StepCraftChestScreenHandler.getClaimStatusForYesterdayTier(target));
                 } else if (action == StepCraftPlayerAction.YESTERDAY_STEPS) {
                     StepCraftChestScreenHandler.sendBackendToLectern(serverPlayer, "Yesterday's Steps",
                             () -> BackendClient.getYesterdayStepsForPlayer(target));
@@ -289,8 +289,17 @@ public class StepCraftPlayerListScreenHandler extends GenericContainerScreenHand
         }
 
         try {
-            String claimJson = BackendClient.getClaimStatusForPlayer(username);
-            claimStatus = extractClaimStatus(claimJson);
+            StepCraftChestScreenHandler.RewardTier tier = StepCraftChestScreenHandler.getTierForYesterday(username);
+            if (tier == null) {
+                claimError = true;
+            } else {
+                String claimJson = BackendClient.getClaimStatusForPlayer(
+                        username,
+                        tier.minSteps(),
+                        StepCraftChestScreenHandler.getYesterdayDayParam()
+                );
+                claimStatus = extractClaimStatus(claimJson);
+            }
         } catch (Exception e) {
             claimError = true;
         }

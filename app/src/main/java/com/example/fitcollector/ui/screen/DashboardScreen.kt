@@ -86,7 +86,7 @@ fun DashboardScreen(
     var lastSyncInstant by remember { mutableStateOf<Instant?>(null) }
     var client by remember { mutableStateOf<androidx.health.connect.client.HealthConnectClient?>(null) }
     var autoTimeDisabled by remember { mutableStateOf(false) }
-    var claimStatuses by remember { mutableStateOf<Map<String, ClaimStatusResponse>>(emptyMap()) }
+    var claimStatuses by remember { mutableStateOf<Map<String, Map<Long, ClaimStatusResponse>>>(emptyMap()) }
     var yesterdaySteps by remember { mutableStateOf<Map<String, Long>>(emptyMap()) }
     var blockedSourcesWarning by remember { mutableStateOf<List<String>?>(null) }
     var rewardTiersByServer by remember { mutableStateOf<Map<String, List<RewardTier>>>(emptyMap()) }
@@ -177,13 +177,10 @@ fun DashboardScreen(
         if (mcUsername.isBlank()) return
         val selectedServers = getSelectedServers(context)
         val globalApi = buildApi(BASE_URL, GLOBAL_API_KEY)
-        val newStatuses = mutableMapOf<String, ClaimStatusResponse>()
+        val newStatuses = mutableMapOf<String, Map<Long, ClaimStatusResponse>>()
         val newSteps = mutableMapOf<String, Long>()
         selectedServers.forEach { server ->
             try {
-                val status = globalApi.getClaimStatus(mcUsername, server)
-                newStatuses[server] = status
-                
                 newSteps[server] = 0L
                 
                 val key = getServerKey(context, mcUsername, server)
@@ -193,10 +190,32 @@ fun DashboardScreen(
                         newSteps[server] = stepsResp.steps_yesterday
                     }
                 }
+
+                val tiers = rewardTiersByServer[server].orEmpty().sortedBy { it.min_steps }
+                val steps = newSteps[server] ?: 0L
+                val eligible = tiers.filter { steps >= it.min_steps }
+                val tierStatuses = mutableMapOf<Long, ClaimStatusResponse>()
+                eligible.forEach { tier ->
+                    val status = globalApi.getClaimStatus(
+                        mcUsername,
+                        server,
+                        tier.min_steps,
+                        stepsRespDay(yesterday = true)
+                    )
+                    tierStatuses[tier.min_steps] = status
+                }
+                newStatuses[server] = tierStatuses
             } catch (e: Exception) { }
         }
         claimStatuses = newStatuses
         yesterdaySteps = newSteps
+    }
+
+    fun stepsRespDay(yesterday: Boolean): String? {
+        return if (yesterday) {
+            val day = java.time.LocalDate.now(deviceZone).minusDays(1)
+            day.toString()
+        } else null
     }
 
     suspend fun refreshRewardTiers() {
@@ -334,8 +353,8 @@ fun DashboardScreen(
         
         if (successServers.isNotEmpty()) {
             lastSyncInstant = Instant.now()
-            refreshClaimStatuses()
             refreshRewardTiers()
+            refreshClaimStatuses()
         }
     }
 
@@ -349,8 +368,8 @@ fun DashboardScreen(
                 stepsToday = readStepsForRange(client!!, ZonedDateTime.now(deviceZone).toLocalDate().atStartOfDay(deviceZone).toInstant(), Instant.now())
             }
         }
-        refreshClaimStatuses()
         refreshRewardTiers()
+        refreshClaimStatuses()
     }
 
     Scaffold(
@@ -403,7 +422,11 @@ fun DashboardScreen(
             val exitSpec = fadeOut() + shrinkVertically()
 
             // 1. Unclaimed Rewards
-            val unclaimedServersWithSteps = claimStatuses.filter { !it.value.claimed && (yesterdaySteps[it.key] ?: 0L) > 0 }
+            val unclaimedServersWithSteps = claimStatuses.filter { entry ->
+                val steps = yesterdaySteps[entry.key] ?: 0L
+                if (steps <= 0L) return@filter false
+                entry.value.values.any { !it.claimed }
+            }
             item {
                 AnimatedVisibility(
                     visible = unclaimedServersWithSteps.isNotEmpty(),
@@ -428,7 +451,11 @@ fun DashboardScreen(
             }
 
             // 2. Claimed Rewards
-            val claimedServersWithSteps = claimStatuses.filter { it.value.claimed && (yesterdaySteps[it.key] ?: 0L) > 0 }
+            val claimedServersWithSteps = claimStatuses.filter { entry ->
+                val steps = yesterdaySteps[entry.key] ?: 0L
+                if (steps <= 0L) return@filter false
+                entry.value.isNotEmpty() && entry.value.values.all { it.claimed }
+            }
             item {
                 AnimatedVisibility(
                     visible = claimedServersWithSteps.isNotEmpty(),

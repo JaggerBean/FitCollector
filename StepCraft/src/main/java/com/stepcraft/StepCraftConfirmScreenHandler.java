@@ -75,7 +75,7 @@ public class StepCraftConfirmScreenHandler extends GenericContainerScreenHandler
                 result -> updateResult(serverPlayer, "Claim reward: " + result),
                 error -> updateResult(serverPlayer, "Error: " + error));
             case CLAIM_STATUS -> StepCraftChestScreenHandler.sendBackendWithCallback(serverPlayer,
-                () -> BackendClient.getClaimStatusForPlayer(targetPlayer),
+                () -> StepCraftChestScreenHandler.getClaimStatusForYesterdayTier(targetPlayer),
                 result -> updateResult(serverPlayer, "Claim status: " + result),
                 error -> updateResult(serverPlayer, "Error: " + error));
             case YESTERDAY_STEPS -> StepCraftChestScreenHandler.sendBackendWithCallback(serverPlayer,

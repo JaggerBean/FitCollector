@@ -75,7 +75,9 @@ data class RegisterResponse(
 data class ClaimStatusResponse(
     val claimed: Boolean,
     val claimed_at: String?,
-    val steps_claimed: Long?
+    val steps_claimed: Long?,
+    val day: String? = null,
+    val min_steps: Long? = null
 )
 
 data class StepsYesterdayResponse(
@@ -132,7 +134,9 @@ interface FitApi {
     @GET("v1/players/claim-status/{minecraft_username}")
     suspend fun getClaimStatus(
         @Path("minecraft_username") username: String,
-        @Query("server_name") serverName: String
+        @Query("server_name") serverName: String,
+        @Query("min_steps") minSteps: Long,
+        @Query("day") day: String? = null
     ): ClaimStatusResponse
 
     @GET("v1/players/steps-yesterday")

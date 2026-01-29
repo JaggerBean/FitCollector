@@ -15,47 +15,69 @@ router = APIRouter()
 def get_claim_status_server(
     minecraft_username: str,
     day: str | None = Query(default=None),
+    min_steps: int | None = Query(default=None),
     server_name: str = Depends(require_server_access),
 ):
     """
     Check if the player has claimed their reward for a specific day.
     Defaults to today if day is not provided.
     """
+    if min_steps is None:
+        raise HTTPException(status_code=400, detail="min_steps is required")
+    if min_steps < 0:
+        raise HTTPException(status_code=400, detail="min_steps must be >= 0")
+
     target_day = _resolve_claim_day(day, server_name)
     with engine.begin() as conn:
         row = conn.execute(
             text("""
                 SELECT claimed, claimed_at FROM step_claims
-                WHERE minecraft_username = :username AND server_name = :server AND day = :day
+                WHERE minecraft_username = :username AND server_name = :server AND day = :day AND min_steps = :min_steps
                 LIMIT 1
             """),
-            {"username": minecraft_username, "server": server_name, "day": target_day}
+            {
+                "username": minecraft_username,
+                "server": server_name,
+                "day": target_day,
+                "min_steps": min_steps,
+            }
         ).fetchone()
     if row:
-        return {"claimed": row[0], "claimed_at": row[1], "day": str(target_day)}
+        return {"claimed": row[0], "claimed_at": row[1], "day": str(target_day), "min_steps": min_steps}
     else:
-        return {"claimed": False, "claimed_at": None, "day": str(target_day)}
+        return {"claimed": False, "claimed_at": None, "day": str(target_day), "min_steps": min_steps}
 
 @router.post("/v1/servers/players/{minecraft_username}/claim-reward")
 def claim_reward_server(
     minecraft_username: str,
     day: str | None = Query(default=None),
+    min_steps: int | None = Query(default=None),
     server_name: str = Depends(require_server_access),
 ):
     """
     Mark the player's reward as claimed for a specific day.
     Defaults to today if day is not provided.
     """
+    if min_steps is None:
+        raise HTTPException(status_code=400, detail="min_steps is required")
+    if min_steps < 0:
+        raise HTTPException(status_code=400, detail="min_steps must be >= 0")
+
     target_day = _resolve_claim_day(day, server_name)
     now = datetime.now(timezone.utc)
     with engine.begin() as conn:
         existing = conn.execute(
             text("""
                 SELECT claimed, claimed_at FROM step_claims
-                WHERE minecraft_username = :username AND server_name = :server AND day = :day
+                WHERE minecraft_username = :username AND server_name = :server AND day = :day AND min_steps = :min_steps
                 LIMIT 1
             """),
-            {"username": minecraft_username, "server": server_name, "day": target_day}
+            {
+                "username": minecraft_username,
+                "server": server_name,
+                "day": target_day,
+                "min_steps": min_steps,
+            }
         ).fetchone()
 
         if existing and existing[0]:
@@ -64,23 +86,25 @@ def claim_reward_server(
                 "claimed_at": existing[1],
                 "already_claimed": True,
                 "day": str(target_day),
+                "min_steps": min_steps,
             }
 
         conn.execute(
             text("""
-                INSERT INTO step_claims (minecraft_username, server_name, day, claimed, claimed_at)
-                VALUES (:username, :server, :day, TRUE, :claimed_at)
-                ON CONFLICT (minecraft_username, server_name, day)
+                INSERT INTO step_claims (minecraft_username, server_name, day, min_steps, claimed, claimed_at)
+                VALUES (:username, :server, :day, :min_steps, TRUE, :claimed_at)
+                ON CONFLICT (minecraft_username, server_name, day, min_steps)
                 DO UPDATE SET claimed = TRUE, claimed_at = :claimed_at
             """),
             {
                 "username": minecraft_username,
                 "server": server_name,
                 "day": target_day,
+                "min_steps": min_steps,
                 "claimed_at": now,
             }
         )
-    return {"claimed": True, "claimed_at": now.isoformat(), "day": str(target_day)}
+    return {"claimed": True, "claimed_at": now.isoformat(), "day": str(target_day), "min_steps": min_steps}
 
 @router.get("/v1/servers/players")
 def get_server_players(

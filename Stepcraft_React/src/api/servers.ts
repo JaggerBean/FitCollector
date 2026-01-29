@@ -162,9 +162,11 @@ export async function getClaimStatus(
   server: string,
   username: string,
   day?: string,
+  minSteps?: number,
 ): Promise<ClaimStatusResponse> {
   const params = new URLSearchParams({ server: server });
   if (day) params.set("day", day);
+  if (minSteps !== undefined) params.set("min_steps", String(minSteps));
   return apiRequest<ClaimStatusResponse>(
     `/v1/servers/players/${encodeURIComponent(username)}/claim-status?${params.toString()}`,
     {},
@@ -177,9 +179,11 @@ export async function claimReward(
   server: string,
   username: string,
   day?: string,
+  minSteps?: number,
 ): Promise<ClaimStatusResponse> {
   const params = new URLSearchParams({ server: server });
   if (day) params.set("day", day);
+  if (minSteps !== undefined) params.set("min_steps", String(minSteps));
   return apiRequest<ClaimStatusResponse>(
     `/v1/servers/players/${encodeURIComponent(username)}/claim-reward?${params.toString()}`,
     { method: "POST" },

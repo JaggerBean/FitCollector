@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 from sqlalchemy import create_engine, text
 
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///fitcollector.db")
+IS_SQLITE = DATABASE_URL.startswith("sqlite")
 engine = create_engine(DATABASE_URL, future=True)
 
 
@@ -19,10 +20,64 @@ def init_db() -> None:
             minecraft_username TEXT NOT NULL,
             server_name TEXT NOT NULL,
             day DATE NOT NULL,
+            min_steps BIGINT NOT NULL DEFAULT 0,
             claimed BOOLEAN NOT NULL DEFAULT FALSE,
             claimed_at TIMESTAMPTZ,
-            UNIQUE(minecraft_username, server_name, day)
+            UNIQUE(minecraft_username, server_name, day, min_steps)
         );
+        """))
+
+        # Migration: add min_steps if missing
+        conn.execute(text("""
+        ALTER TABLE step_claims
+        ADD COLUMN IF NOT EXISTS min_steps BIGINT NOT NULL DEFAULT 0;
+        """))
+
+        # Migration: drop legacy unique constraint (per-day) and add per-tier unique index
+        if not IS_SQLITE:
+            conn.execute(text("""
+            ALTER TABLE step_claims
+            DROP CONSTRAINT IF EXISTS step_claims_minecraft_username_server_name_day_key;
+            """))
+
+            conn.execute(text("""
+            DROP INDEX IF EXISTS idx_step_claims_unique_user_server_day;
+            """))
+
+        # SQLite requires table rebuild to drop unique constraints
+        if IS_SQLITE:
+            cols = [row[1] for row in conn.execute(text("PRAGMA table_info(step_claims)"))]
+            if cols:
+                conn.execute(text("ALTER TABLE step_claims RENAME TO step_claims_old"))
+                conn.execute(text("""
+                CREATE TABLE step_claims (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    minecraft_username TEXT NOT NULL,
+                    server_name TEXT NOT NULL,
+                    day DATE NOT NULL,
+                    min_steps BIGINT NOT NULL DEFAULT 0,
+                    claimed BOOLEAN NOT NULL DEFAULT FALSE,
+                    claimed_at TIMESTAMPTZ,
+                    UNIQUE(minecraft_username, server_name, day, min_steps)
+                );
+                """))
+                if "min_steps" in cols:
+                    conn.execute(text("""
+                    INSERT INTO step_claims (id, minecraft_username, server_name, day, min_steps, claimed, claimed_at)
+                    SELECT id, minecraft_username, server_name, day, min_steps, claimed, claimed_at
+                    FROM step_claims_old
+                    """))
+                else:
+                    conn.execute(text("""
+                    INSERT INTO step_claims (id, minecraft_username, server_name, day, min_steps, claimed, claimed_at)
+                    SELECT id, minecraft_username, server_name, day, 0, claimed, claimed_at
+                    FROM step_claims_old
+                    """))
+                conn.execute(text("DROP TABLE step_claims_old"))
+
+        conn.execute(text("""
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_step_claims_unique_user_server_day_tier
+        ON step_claims(minecraft_username, server_name, day, min_steps);
         """))
         # 1) Create step_ingest table if it doesn't exist
         conn.execute(text("""

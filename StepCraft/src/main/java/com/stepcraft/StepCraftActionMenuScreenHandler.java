@@ -83,7 +83,7 @@ public class StepCraftActionMenuScreenHandler extends GenericContainerScreenHand
             }
             case 11 -> {
                 StepCraftChestScreenHandler.sendBackendToLectern(serverPlayer, "Claim Status",
-                        () -> BackendClient.getClaimStatusForPlayer(targetPlayer));
+                        () -> StepCraftChestScreenHandler.getClaimStatusForYesterdayTier(targetPlayer));
                 return;
             }
             case 13 -> {

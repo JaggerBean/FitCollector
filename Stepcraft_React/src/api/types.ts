@@ -23,6 +23,7 @@ export interface ClaimStatusResponse {
   claimed: boolean;
   claimed_at: string | null;
   day?: string;
+  min_steps?: number;
   already_claimed?: boolean;
 }
 
