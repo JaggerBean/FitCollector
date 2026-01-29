@@ -179,25 +179,14 @@ public class StepCraftChestScreenHandler extends GenericContainerScreenHandler {
         CompletableFuture
                 .supplyAsync(() -> {
                     try {
-                        String stepsJson = BackendClient.getYesterdayStepsForPlayer(targetPlayer);
-                        long steps = extractSteps(stepsJson);
-                        if (steps < 0) {
-                            throw new RuntimeException("No steps found for yesterday.");
+                        String claimableJson = BackendClient.getClaimAvailableForPlayer(targetPlayer);
+                        List<ClaimableItem> items = parseClaimableItems(claimableJson);
+                        if (items.isEmpty()) {
+                            return new ClaimBatchContext(items, null);
                         }
                         String rewardsJson = BackendClient.getServerRewards();
-                        RewardTier tier = pickTier(parseRewardTiers(rewardsJson), steps);
-                        if (tier == null) {
-                            return new ClaimContext(steps, null, false, null);
-                        }
-                        String claimJson = BackendClient.getClaimStatusForPlayer(targetPlayer, tier.minSteps, getYesterdayDayParam());
-                        ClaimStatus claimStatus = extractClaimStatus(claimJson);
-                        if (claimStatus.claimed) {
-                            return new ClaimContext(-1, null, true, claimStatus.claimedAt);
-                        }
-                        // if (claimStatus.claimed) {
-                        //     return new ClaimContext(steps, tier, false, null);
-                        // }
-                        return new ClaimContext(steps, tier, false, null);
+                        List<RewardTier> tiers = parseRewardTiers(rewardsJson);
+                        return new ClaimBatchContext(items, tiers);
                     } catch (Exception e) {
                         throw new RuntimeException(e);
                     }
@@ -210,62 +199,52 @@ public class StepCraftChestScreenHandler extends GenericContainerScreenHandler {
                         }
                         return;
                     }
-
-                    if (ctx != null && ctx.alreadyClaimed) {
+                    if (ctx == null || ctx.items.isEmpty() || ctx.tiers == null) {
                         if (onSuccess != null) {
-                            if (ctx.claimedAt != null && !ctx.claimedAt.isBlank()) {
-                                onSuccess.accept("Already claimed at " + ctx.claimedAt + ".");
-                            } else {
-                                onSuccess.accept("Already claimed.");
-                            }
+                            onSuccess.accept("No claimable rewards right now.");
                         }
                         return;
                     }
 
-                    if (ctx == null || ctx.tier == null) {
-                        if (onSuccess != null) {
-                            onSuccess.accept("No reward tier for " + (ctx == null ? "" : ctx.steps) + " steps.");
-                        }
-                        return;
-                    }
+                    CompletableFuture
+                            .supplyAsync(() -> {
+                                StringBuilder summary = new StringBuilder();
+                                for (ClaimableItem item : ctx.items) {
+                                    RewardTier tier = findTier(ctx.tiers, item.minSteps);
+                                    if (tier == null) {
+                                        summary.append("Missing tier ").append(item.minSteps).append(" for ").append(item.day).append(". ");
+                                        continue;
+                                    }
 
-                    CompletableFuture<Void> commandFuture = new CompletableFuture<>();
-                    player.getServer().execute(() -> {
-                        try {
-                            runRewardCommands(player, targetPlayer, ctx.tier.rewards);
-                            commandFuture.complete(null);
-                        } catch (Exception e) {
-                            commandFuture.completeExceptionally(e);
-                        }
-                    });
-
-                    commandFuture.whenComplete((ignored, cmdError) -> {
-                        if (cmdError != null) {
-                            if (onError != null) {
-                                onError.accept("Reward command failed: " + cmdError.getMessage());
-                            }
-                            return;
-                        }
-
-                        CompletableFuture
-                                .supplyAsync(() -> {
                                     try {
-                                        return BackendClient.claimRewardForPlayer(targetPlayer, ctx.tier.minSteps, getYesterdayDayParam());
+                                        CompletableFuture<Void> commandFuture = new CompletableFuture<>();
+                                        player.getServer().execute(() -> {
+                                            try {
+                                                runRewardCommands(player, targetPlayer, tier.rewards);
+                                                commandFuture.complete(null);
+                                            } catch (Exception e) {
+                                                commandFuture.completeExceptionally(e);
+                                            }
+                                        });
+                                        commandFuture.join();
+                                        BackendClient.claimRewardForPlayer(targetPlayer, item.minSteps, item.day);
+                                        summary.append("Claimed ").append(tier.label).append(" (" + item.day + "). ");
                                     } catch (Exception e) {
-                                        throw new RuntimeException(e);
+                                        summary.append("Failed ").append(tier.label).append(" (" + item.day + "). ");
                                     }
-                                }, BACKEND_EXECUTOR)
-                                .whenComplete((result, claimError) -> player.getServer().execute(() -> {
-                                    if (claimError != null) {
-                                        Throwable cause = claimError.getCause() != null ? claimError.getCause() : claimError;
-                                        if (onError != null) {
-                                            onError.accept(cause.getMessage());
-                                        }
-                                    } else if (onSuccess != null) {
-                                        onSuccess.accept("Tier: " + ctx.tier.label + " (" + ctx.steps + " steps). Claim: " + result);
+                                }
+                                return summary.toString().trim();
+                            }, BACKEND_EXECUTOR)
+                            .whenComplete((result, claimError) -> player.getServer().execute(() -> {
+                                if (claimError != null) {
+                                    Throwable cause = claimError.getCause() != null ? claimError.getCause() : claimError;
+                                    if (onError != null) {
+                                        onError.accept(cause.getMessage());
                                     }
-                                }));
-                    });
+                                } else if (onSuccess != null) {
+                                    onSuccess.accept(result);
+                                }
+                            }));
                 }));
     }
 
@@ -341,6 +320,28 @@ public class StepCraftChestScreenHandler extends GenericContainerScreenHandler {
         return tiers;
     }
 
+    static List<ClaimableItem> parseClaimableItems(String claimableJson) {
+        List<ClaimableItem> items = new ArrayList<>();
+        if (claimableJson == null || claimableJson.isBlank()) return items;
+        if (claimableJson.startsWith("Error:")) {
+            throw new RuntimeException(claimableJson);
+        }
+        JsonObject root = GSON.fromJson(claimableJson, JsonObject.class);
+        if (root == null || !root.has("items") || !root.get("items").isJsonArray()) return items;
+        JsonArray arr = root.getAsJsonArray("items");
+        for (JsonElement el : arr) {
+            if (!el.isJsonObject()) continue;
+            JsonObject obj = el.getAsJsonObject();
+            String day = obj.has("day") ? obj.get("day").getAsString() : null;
+            long minSteps = obj.has("min_steps") ? obj.get("min_steps").getAsLong() : 0;
+            String label = obj.has("label") ? obj.get("label").getAsString() : "";
+            if (day != null && !day.isBlank()) {
+                items.add(new ClaimableItem(day, minSteps, label));
+            }
+        }
+        return items;
+    }
+
     static RewardTier pickTier(List<RewardTier> tiers, long steps) {
         RewardTier best = null;
         for (RewardTier tier : tiers) {
@@ -353,11 +354,24 @@ public class StepCraftChestScreenHandler extends GenericContainerScreenHandler {
         return best;
     }
 
+    static RewardTier findTier(List<RewardTier> tiers, long minSteps) {
+        for (RewardTier tier : tiers) {
+            if (tier.minSteps == minSteps) {
+                return tier;
+            }
+        }
+        return null;
+    }
+
     public static record RewardTier(long minSteps, String label, List<String> rewards) {}
 
     private record ClaimContext(long steps, RewardTier tier, boolean alreadyClaimed, String claimedAt) {}
 
     private record ClaimStatus(boolean claimed, String claimedAt) {}
+
+    private record ClaimableItem(String day, long minSteps, String label) {}
+
+    private record ClaimBatchContext(List<ClaimableItem> items, List<RewardTier> tiers) {}
 
     static RewardTier getTierForYesterday(String username) throws Exception {
         String stepsJson = BackendClient.getYesterdayStepsForPlayer(username);

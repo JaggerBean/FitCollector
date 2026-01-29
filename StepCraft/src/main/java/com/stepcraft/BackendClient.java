@@ -244,6 +244,14 @@ public class BackendClient {
                         .build();
                 return executeRequest(request, true);
             }
+        // Server endpoint: list claimable tiers for a player
+        public static String getClaimAvailableForPlayer(String username) throws IOException {
+            Request request = new Request.Builder()
+                    .url(BASE_URL + "/v1/servers/players/" + username + "/claim-available")
+                    .header("X-API-Key", StepCraftConfig.getApiKey())
+                    .build();
+            return executeRequest(request, true);
+        }
         // Server endpoint: get server info
         public static String getServerInfo() throws IOException {
             Request request = new Request.Builder()

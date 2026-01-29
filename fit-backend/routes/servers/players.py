@@ -201,6 +201,78 @@ def get_day_steps_server(
         return {"minecraft_username": minecraft_username, "server_name": server_name, "day": str(target_day), "steps": row[0]}
     raise HTTPException(status_code=404, detail=f"No step record found for {minecraft_username} on {str(target_day)}.")
 
+
+@router.get("/v1/servers/players/{minecraft_username}/claim-available")
+def get_claim_available(
+    minecraft_username: str,
+    server_name: str = Depends(require_server_access),
+):
+    """
+    List all claimable reward tiers within the claim window for a player.
+    Returns items with day + min_steps + label (one entry per tier per day).
+    """
+    today = datetime.now(CENTRAL_TZ).date()
+    buffer_days = _get_claim_buffer_days(server_name)
+    days = [today - timedelta(days=offset) for offset in range(buffer_days + 1)]
+
+    with engine.begin() as conn:
+        tiers = conn.execute(
+            text("""
+                SELECT min_steps, label
+                FROM server_rewards
+                WHERE server_name = :server
+                ORDER BY min_steps ASC, position ASC
+            """),
+            {"server": server_name},
+        ).mappings().all()
+
+        if not tiers:
+            return {"server_name": server_name, "items": []}
+
+        items = []
+        for day in days:
+            steps_row = conn.execute(
+                text("""
+                    SELECT steps_today FROM step_ingest
+                    WHERE minecraft_username = :username AND server_name = :server AND day = :day
+                    LIMIT 1
+                """),
+                {"username": minecraft_username, "server": server_name, "day": day},
+            ).fetchone()
+
+            if not steps_row:
+                continue
+
+            steps = steps_row[0]
+            eligible = [tier for tier in tiers if steps >= tier["min_steps"]]
+            if not eligible:
+                continue
+
+            claimed_rows = conn.execute(
+                text("""
+                    SELECT min_steps FROM step_claims
+                    WHERE minecraft_username = :username
+                      AND server_name = :server
+                      AND day = :day
+                      AND claimed = TRUE
+                """),
+                {"username": minecraft_username, "server": server_name, "day": day},
+            ).fetchall()
+            claimed_set = {row[0] for row in claimed_rows}
+
+            for tier in eligible:
+                if tier["min_steps"] in claimed_set:
+                    continue
+                items.append(
+                    {
+                        "day": str(day),
+                        "min_steps": tier["min_steps"],
+                        "label": tier["label"],
+                    }
+                )
+
+    return {"server_name": server_name, "items": items}
+
 @router.delete("/v1/servers/players/{minecraft_username}")
 def delete_player(
     minecraft_username: str,
