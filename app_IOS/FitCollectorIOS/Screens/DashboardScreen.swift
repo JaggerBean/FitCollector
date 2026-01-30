@@ -27,6 +27,14 @@ struct DashboardScreen: View {
                     ClaimedRewardsBanner(groups: claimedGroups)
                 }
 
+                if appState.selectedServers.isEmpty {
+                    SyncStatusBanner(
+                        message: "No servers selected. Add a server in Settings to enable sync.",
+                        isSuccess: false,
+                        timestamp: nil
+                    )
+                }
+
                 ActivityCard(stepsToday: stepsToday, canSync: canSync) {
                     Task { await syncService.syncSteps(appState: appState, manual: true) }
                 }
@@ -200,12 +208,17 @@ private struct SyncStatusBanner: View {
     let timestamp: Date?
 
     var body: some View {
-        let bg = isSuccess ? AppColors.healthLightGreen : Color.red.opacity(0.12)
+        let accent = isSuccess ? AppColors.healthGreen : Color.red
         let icon = isSuccess ? "checkmark.circle.fill" : "xmark.octagon.fill"
 
         HStack(spacing: 12) {
-            Image(systemName: icon)
-                .foregroundColor(isSuccess ? AppColors.healthGreen : .red)
+            ZStack {
+                Circle()
+                    .fill(accent.opacity(0.18))
+                    .frame(width: 36, height: 36)
+                Image(systemName: icon)
+                    .foregroundColor(accent)
+            }
             VStack(alignment: .leading, spacing: 2) {
                 Text(message)
                     .font(.subheadline)
@@ -216,10 +229,15 @@ private struct SyncStatusBanner: View {
                         .foregroundColor(.secondary)
                 }
             }
+            Spacer(minLength: 0)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(12)
-        .background(bg)
+        .background(Color(.secondarySystemBackground))
+        .overlay(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .stroke(accent.opacity(0.35), lineWidth: 1)
+        )
         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
 

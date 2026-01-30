@@ -21,6 +21,7 @@ struct SettingsScreen: View {
     @State private var notificationsAuthorized = false
     @State private var usernameStatusMessage: (String, Bool)?
     @State private var serverStatusMessage: (String, Bool)?
+    private let noServersSelectedMessage = "No servers selected. Sync is disabled until you add one."
     @State private var scannerError: String?
     @State private var timeUntilReset: String = ""
     @State private var isAutoSavingServers = false
@@ -217,11 +218,13 @@ struct SettingsScreen: View {
                 await loadServers()
                 await loadRewards()
                 await refreshNotificationStatus()
+                updateServerSelectionStatus()
             }
             .onChange(of: selectedServers) { _ in
                 Task {
                     await loadRewards()
                     await autoSaveServers()
+                    updateServerSelectionStatus()
                 }
             }
         }
@@ -445,10 +448,13 @@ struct SettingsScreen: View {
 
     private func autoSaveServers() async {
         guard !isAutoSavingServers else { return }
-        let trimmed = appState.minecraftUsername.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty, !selectedServers.isEmpty else { return }
         isAutoSavingServers = true
         appState.selectedServers = selectedServers.sorted()
+        let trimmed = appState.minecraftUsername.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty, !selectedServers.isEmpty else {
+            isAutoSavingServers = false
+            return
+        }
         for server in appState.selectedServers {
             if appState.serverKey(for: server) != nil { continue }
             do {
@@ -474,6 +480,14 @@ struct SettingsScreen: View {
             }
         }
         isAutoSavingServers = false
+    }
+
+    private func updateServerSelectionStatus() {
+        if selectedServers.isEmpty {
+            serverStatusMessage = (noServersSelectedMessage, false)
+        } else if serverStatusMessage?.0 == noServersSelectedMessage {
+            serverStatusMessage = nil
+        }
     }
 
     private func timeUntilNextReset() -> String {
