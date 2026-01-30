@@ -59,60 +59,6 @@ struct SettingsScreen: View {
                                 .background(Color(.secondarySystemBackground))
                                 .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
                         }
-
-                        VStack(alignment: .leading, spacing: 6) {
-                            Text("Private Server Invite Code")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                            Text("Add a private server using its invite code.")
-                                .font(.caption2)
-                                .foregroundColor(.secondary)
-                            TextField("Invite Code", text: $inviteCode)
-                                .padding(12)
-                                .background(Color(.secondarySystemBackground))
-                                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
-                        }
-
-                        if !appState.queuedUsername.isEmpty {
-                            HStack(spacing: 12) {
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text("Next up: \(appState.queuedUsername)")
-                                        .font(.caption)
-                                        .fontWeight(.semibold)
-                                    Text("Applying in \(timeUntilReset)")
-                                        .font(.caption2)
-                                        .foregroundColor(.secondary)
-                                }
-                                Spacer()
-                                Button("Cancel") {
-                                    appState.clearQueuedUsername()
-                                }
-                                .font(.caption)
-                                .foregroundColor(.red)
-                            }
-                            .padding(10)
-                            .background(Color(.secondarySystemBackground))
-                            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-                        } else if !appState.canChangeUsernameToday()
-                            && usernameDraft.trimmingCharacters(in: .whitespacesAndNewlines) != appState.minecraftUsername {
-                            Text("Changed once today. Wait \(timeUntilReset) or queue for tomorrow.")
-                                .font(.caption)
-                                .foregroundColor(.red)
-                        }
-
-                        HStack(spacing: 10) {
-                            Button("Add Private Server") { Task { await addInviteCode() } }
-                                .buttonStyle(PillPrimaryButton())
-                                .disabled(inviteCode.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                            Button("Scan QR") { showScanner = true }
-                                .buttonStyle(PillSecondaryButton())
-                        }
-
-                        Button(selectedServers.isEmpty ? "Select Servers" : "Servers: \(selectedServers.count) selected") {
-                            showServerSelector = true
-                        }
-                        .buttonStyle(PillSecondaryButton())
-
                         let changingUsername = usernameDraft.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
                             != appState.minecraftUsername.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
                         let saveTitle = isSaving ? "Saving…" : (changingUsername && !appState.canChangeUsernameToday() ? "Queue for Tomorrow" : "Save & Register All")
@@ -131,6 +77,67 @@ struct SettingsScreen: View {
                                 .foregroundColor(.red)
                                 .font(.caption)
                         }
+                    }
+
+                    if !appState.queuedUsername.isEmpty || !appState.canChangeUsernameToday() {
+                        SectionHeader(title: "Username Change")
+                        SettingsCard {
+                            if !appState.queuedUsername.isEmpty {
+                                HStack(spacing: 12) {
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text("Next up: \(appState.queuedUsername)")
+                                            .font(.caption)
+                                            .fontWeight(.semibold)
+                                        Text("Applying in \(timeUntilReset)")
+                                            .font(.caption2)
+                                            .foregroundColor(.secondary)
+                                    }
+                                    Spacer()
+                                    Button("Cancel") {
+                                        appState.clearQueuedUsername()
+                                    }
+                                    .font(.caption)
+                                    .foregroundColor(.red)
+                                }
+                                .padding(10)
+                                .background(Color(.secondarySystemBackground))
+                                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                            } else if !appState.canChangeUsernameToday()
+                                && usernameDraft.trimmingCharacters(in: .whitespacesAndNewlines) != appState.minecraftUsername {
+                                Text("Changed once today. Wait \(timeUntilReset) or queue for tomorrow.")
+                                    .font(.caption)
+                                    .foregroundColor(.red)
+                            }
+                        }
+                    }
+
+                    SectionHeader(title: "Servers")
+                    SettingsCard {
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("Private Server Invite Code")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                            Text("Add a private server using its invite code.")
+                                .font(.caption2)
+                                .foregroundColor(.secondary)
+                            TextField("Invite Code", text: $inviteCode)
+                                .padding(12)
+                                .background(Color(.secondarySystemBackground))
+                                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                        }
+
+                        HStack(spacing: 10) {
+                            Button("Add Private Server") { Task { await addInviteCode() } }
+                                .buttonStyle(PillPrimaryButton())
+                                .disabled(inviteCode.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                            Button("Scan QR") { showScanner = true }
+                                .buttonStyle(PillSecondaryButton())
+                        }
+
+                        Button(selectedServers.isEmpty ? "Select Servers" : "Servers: \(selectedServers.count) selected") {
+                            showServerSelector = true
+                        }
+                        .buttonStyle(PillSecondaryButton())
                     }
 
                     SectionHeader(title: "Sync & Permissions")
