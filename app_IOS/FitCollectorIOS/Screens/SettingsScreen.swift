@@ -62,7 +62,7 @@ struct SettingsScreen: View {
                         }
                         let changingUsername = usernameDraft.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
                             != appState.minecraftUsername.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-                        if changingUsername && !appState.canChangeUsernameToday() {
+                        if changingUsername {
                             Button("Queue for Tomorrow") {
                                 Task { await saveProfile() }
                             }
