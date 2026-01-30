@@ -17,39 +17,42 @@ struct OnboardingScreen: View {
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 20) {
-                Text("Welcome to StepCraft")
-                    .font(.largeTitle)
-                    .fontWeight(.bold)
+            ScrollView {
+                VStack(spacing: 20) {
+                    VStack(spacing: 6) {
+                        Text("Welcome to StepCraft")
+                            .font(.system(size: 26, weight: .black))
+                            .foregroundColor(AppColors.healthGreen)
+                        Text("Complete these steps to start earning rewards.")
+                            .foregroundColor(.secondary)
+                    }
 
-                Text("Complete setup to start syncing steps.")
-                    .foregroundColor(.secondary)
+                    StepProgressBar(step: step, total: 4)
 
-                ProgressView(value: Double(step), total: 4)
-                    .padding(.horizontal)
+                    Group {
+                        switch step {
+                        case 1:
+                            healthKitStep
+                        case 2:
+                            notificationStep
+                        case 3:
+                            usernameStep
+                        case 4:
+                            serversStep
+                        default:
+                            EmptyView()
+                        }
+                    }
 
-                Group {
-                    switch step {
-                    case 1:
-                        healthKitStep
-                    case 2:
-                        notificationStep
-                    case 3:
-                        usernameStep
-                    case 4:
-                        serversStep
-                    default:
-                        EmptyView()
+                    if let errorMessage {
+                        Text(errorMessage)
+                            .foregroundColor(.red)
+                            .multilineTextAlignment(.center)
+                            .font(.subheadline)
                     }
                 }
-
-                if let errorMessage {
-                    Text(errorMessage)
-                        .foregroundColor(.red)
-                        .multilineTextAlignment(.center)
-                }
+                .padding(16)
             }
-            .padding()
             .navigationTitle("Onboarding")
             .task {
                 username = appState.minecraftUsername
@@ -60,12 +63,7 @@ struct OnboardingScreen: View {
     }
 
     private var healthKitStep: some View {
-        VStack(spacing: 16) {
-            Text("Step 1 · HealthKit")
-                .font(.headline)
-            Text("Allow StepCraft to read your step count.")
-                .multilineTextAlignment(.center)
-
+        StepCard(title: "Health Permissions", subtitle: "Allow StepCraft to read your daily step count from HealthKit.", icon: "heart.fill") {
             Button(healthKitAuthorized ? "Authorized" : "Authorize HealthKit") {
                 Task {
                     do {
@@ -77,17 +75,12 @@ struct OnboardingScreen: View {
                     }
                 }
             }
-            .buttonStyle(.borderedProminent)
+            .buttonStyle(PrimaryButtonStyle())
         }
     }
 
     private var notificationStep: some View {
-        VStack(spacing: 16) {
-            Text("Step 2 · Notifications")
-                .font(.headline)
-            Text("Enable notifications for rewards and admin updates.")
-                .multilineTextAlignment(.center)
-
+        StepCard(title: "Notifications", subtitle: "Get notified about rewards and admin updates.", icon: "bell.fill") {
             Button(notificationsAuthorized ? "Enabled" : "Enable Notifications") {
                 Task {
                     do {
@@ -98,78 +91,67 @@ struct OnboardingScreen: View {
                     step = 3
                 }
             }
-            .buttonStyle(.borderedProminent)
+            .buttonStyle(PrimaryButtonStyle())
 
-            Button("Skip") {
-                step = 3
-            }
+            Button("Skip") { step = 3 }
+                .buttonStyle(SecondaryButtonStyle())
         }
     }
 
     private var usernameStep: some View {
-        VStack(spacing: 16) {
-            Text("Step 3 · Minecraft Username")
-                .font(.headline)
-
+        StepCard(title: "Minecraft Username", subtitle: "We’ll use this to sync rewards with your server.", icon: "person.fill") {
             TextField("Username", text: $username)
                 .textInputAutocapitalization(.never)
                 .autocorrectionDisabled()
-                .textFieldStyle(.roundedBorder)
+                .padding(12)
+                .background(Color(.secondarySystemBackground))
+                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
 
             if isValidating {
                 ProgressView("Validating…")
             } else if let usernameValid {
                 Text(usernameValid ? "Username looks valid" : "Username not found")
-                    .foregroundColor(usernameValid ? .green : .red)
+                    .foregroundColor(usernameValid ? AppColors.healthGreen : .red)
             }
 
-            Button("Continue") {
-                Task {
-                    await validateUsernameAndContinue()
-                }
-            }
-            .buttonStyle(.borderedProminent)
-            .disabled(username.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            Button("Continue") { Task { await validateUsernameAndContinue() } }
+                .buttonStyle(PrimaryButtonStyle())
+                .disabled(username.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
         }
     }
 
     private var serversStep: some View {
-        VStack(spacing: 16) {
-            Text("Step 4 · Servers")
-                .font(.headline)
-
+        StepCard(title: "Servers", subtitle: "Select the servers you want to sync.", icon: "server.rack") {
             if availableServers.isEmpty {
                 Text("No servers loaded yet.")
                     .foregroundColor(.secondary)
             }
 
-            ScrollView {
-                VStack(alignment: .leading, spacing: 8) {
-                    ForEach(availableServers, id: \.serverName) { server in
-                        Toggle(server.serverName, isOn: Binding(
-                            get: { selectedServers.contains(server.serverName) },
-                            set: { enabled in
-                                if enabled { selectedServers.insert(server.serverName) }
-                                else { selectedServers.remove(server.serverName) }
-                            }
-                        ))
-                    }
+            VStack(alignment: .leading, spacing: 8) {
+                ForEach(availableServers, id: \.serverName) { server in
+                    Toggle(server.serverName, isOn: Binding(
+                        get: { selectedServers.contains(server.serverName) },
+                        set: { enabled in
+                            if enabled { selectedServers.insert(server.serverName) }
+                            else { selectedServers.remove(server.serverName) }
+                        }
+                    ))
                 }
             }
-            .frame(maxHeight: 240)
 
-            HStack {
+            HStack(spacing: 8) {
                 TextField("Invite code", text: $inviteCode)
-                    .textFieldStyle(.roundedBorder)
+                    .padding(12)
+                    .background(Color(.secondarySystemBackground))
+                    .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
                 Button("Add") { Task { await addInviteCode() } }
+                    .buttonStyle(SecondaryButtonStyle())
                     .disabled(inviteCode.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             }
 
-            Button(isLoading ? "Finishing…" : "Finish Setup") {
-                Task { await finishSetup() }
-            }
-            .buttonStyle(.borderedProminent)
-            .disabled(isLoading || selectedServers.isEmpty)
+            Button(isLoading ? "Finishing…" : "Finish Setup") { Task { await finishSetup() } }
+                .buttonStyle(PrimaryButtonStyle())
+                .disabled(isLoading || selectedServers.isEmpty)
         }
     }
 
@@ -248,5 +230,53 @@ struct OnboardingScreen: View {
         }
         appState.onboardingComplete = appState.isConfigured()
         isLoading = false
+    }
+}
+
+private struct StepProgressBar: View {
+    let step: Int
+    let total: Int
+
+    var body: some View {
+        HStack(spacing: 8) {
+            ForEach(1...total, id: \.self) { index in
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .fill(index <= step ? AppColors.healthGreen : Color.gray.opacity(0.25))
+                    .frame(height: 6)
+            }
+        }
+        .padding(.horizontal, 8)
+    }
+}
+
+private struct StepCard<Content: View>: View {
+    let title: String
+    let subtitle: String
+    let icon: String
+    let content: Content
+
+    init(title: String, subtitle: String, icon: String, @ViewBuilder content: () -> Content) {
+        self.title = title
+        self.subtitle = subtitle
+        self.icon = icon
+        self.content = content()
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 10) {
+                Image(systemName: icon)
+                    .foregroundColor(AppColors.healthGreen)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(title)
+                        .font(.headline)
+                    Text(subtitle)
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                }
+            }
+            content
+        }
+        .cardSurface()
     }
 }

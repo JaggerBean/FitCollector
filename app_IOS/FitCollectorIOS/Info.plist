@@ -22,6 +22,8 @@
 	<string>1</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSHealthClinicalHealthRecordsShareUsageDescription</key>
+	<string>StepCraft reads your step count to sync rewards.</string>
 	<key>NSHealthShareUsageDescription</key>
 	<string>StepCraft reads your step count to sync rewards.</string>
 	<key>NSHealthUpdateUsageDescription</key>

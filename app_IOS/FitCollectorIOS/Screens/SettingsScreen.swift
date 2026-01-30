@@ -13,89 +13,99 @@ struct SettingsScreen: View {
 
     var body: some View {
         NavigationStack {
-            Form {
-                Section(header: Text("Account")) {
-                    TextField("Minecraft Username", text: $usernameDraft)
-                        .textInputAutocapitalization(.never)
-                        .autocorrectionDisabled()
+            ScrollView {
+                VStack(spacing: 16) {
+                    SettingsSection(title: "Account") {
+                        TextField("Minecraft Username", text: $usernameDraft)
+                            .textInputAutocapitalization(.never)
+                            .autocorrectionDisabled()
+                            .padding(12)
+                            .background(Color(.secondarySystemBackground))
+                            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
 
-                    Toggle("Auto-sync", isOn: $appState.autoSyncEnabled)
+                        Toggle("Auto-sync", isOn: $appState.autoSyncEnabled)
 
-                    Button(isSaving ? "Saving…" : "Save Profile") {
-                        Task { await saveProfile() }
-                    }
-                    .disabled(isSaving || usernameDraft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                }
-
-                Section(header: Text("Servers")) {
-                    if isRefreshingServers {
-                        ProgressView("Loading servers…")
-                    }
-
-                    ForEach(availableServers, id: \.serverName) { server in
-                        Toggle(server.serverName, isOn: bindingForServer(server.serverName))
+                        Button(isSaving ? "Saving…" : "Save Profile") {
+                            Task { await saveProfile() }
+                        }
+                        .buttonStyle(PrimaryButtonStyle())
+                        .disabled(isSaving || usernameDraft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                     }
 
-                    HStack {
-                        TextField("Invite code", text: $inviteCode)
-                        Button("Add") { Task { await addInviteCode() } }
-                            .disabled(inviteCode.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    SettingsSection(title: "Servers") {
+                        if isRefreshingServers {
+                            ProgressView("Loading servers…")
+                        }
+
+                        ForEach(availableServers, id: \.serverName) { server in
+                            Toggle(server.serverName, isOn: bindingForServer(server.serverName))
+                        }
+
+                        HStack(spacing: 8) {
+                            TextField("Invite code", text: $inviteCode)
+                                .padding(10)
+                                .background(Color(.secondarySystemBackground))
+                                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                            Button("Add") { Task { await addInviteCode() } }
+                                .buttonStyle(SecondaryButtonStyle())
+                                .disabled(inviteCode.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                        }
+
+                        Button("Refresh Servers") { Task { await loadServers() } }
+                            .buttonStyle(SecondaryButtonStyle())
                     }
 
-                    Button("Refresh Servers") {
-                        Task { await loadServers() }
-                    }
-                }
-
-                Section(header: Text("Milestones")) {
-                    if rewardTiersByServer.isEmpty {
-                        Text("No reward tiers loaded yet")
-                            .foregroundColor(.secondary)
-                    } else {
-                        ForEach(appState.selectedServers, id: \ .self) { server in
-                            if let tiers = rewardTiersByServer[server] {
-                                Picker("Track for \(server)", selection: trackedTierBinding(server: server)) {
-                                    Text("None").tag(0)
-                                    ForEach(tiers) { tier in
-                                        Text("\(tier.label) – \(tier.minSteps)").tag(tier.minSteps)
+                    SettingsSection(title: "Milestones") {
+                        if rewardTiersByServer.isEmpty {
+                            Text("No reward tiers loaded yet")
+                                .foregroundColor(.secondary)
+                        } else {
+                            ForEach(appState.selectedServers, id: \.self) { server in
+                                if let tiers = rewardTiersByServer[server] {
+                                    Picker("Track for \(server)", selection: trackedTierBinding(server: server)) {
+                                        Text("None").tag(0)
+                                        ForEach(tiers) { tier in
+                                            Text("\(tier.label) – \(tier.minSteps)").tag(tier.minSteps)
+                                        }
                                     }
                                 }
                             }
                         }
                     }
-                }
 
-                Section(header: Text("Notifications")) {
-                    Toggle("Enable admin updates", isOn: adminPushBinding())
+                    SettingsSection(title: "Notifications") {
+                        Toggle("Enable admin updates", isOn: adminPushBinding())
 
-                    if !rewardTiersByServer.isEmpty {
-                        ForEach(appState.selectedServers, id: \ .self) { server in
-                            if let tiers = rewardTiersByServer[server] {
-                                ForEach(tiers) { tier in
-                                    Toggle(
-                                        "\(server): \(tier.label)",
-                                        isOn: milestoneNotifyBinding(server: server, minSteps: tier.minSteps)
-                                    )
+                        if !rewardTiersByServer.isEmpty {
+                            ForEach(appState.selectedServers, id: \.self) { server in
+                                if let tiers = rewardTiersByServer[server] {
+                                    ForEach(tiers) { tier in
+                                        Toggle(
+                                            "\(server): \(tier.label)",
+                                            isOn: milestoneNotifyBinding(server: server, minSteps: tier.minSteps)
+                                        )
+                                    }
                                 }
                             }
                         }
                     }
-                }
 
-                Section(header: Text("Diagnostics")) {
-                    NavigationLink("Recent Activity Log") {
-                        ActivityLogScreen()
+                    SettingsSection(title: "Diagnostics") {
+                        NavigationLink("Recent Activity Log") {
+                            ActivityLogScreen()
+                        }
+                        NavigationLink("Raw Health Data") {
+                            RawHealthDataScreen()
+                        }
                     }
-                    NavigationLink("Raw Health Data") {
-                        RawHealthDataScreen()
-                    }
-                }
 
-                if let errorMessage {
-                    Section {
-                        Text(errorMessage).foregroundColor(.red)
+                    if let errorMessage {
+                        Text(errorMessage)
+                            .foregroundColor(.red)
+                            .font(.subheadline)
                     }
                 }
+                .padding(16)
             }
             .navigationTitle("Settings")
             .task {
@@ -238,5 +248,25 @@ struct SettingsScreen: View {
         }
         appState.onboardingComplete = true
         isSaving = false
+    }
+}
+
+private struct SettingsSection<Content: View>: View {
+    let title: String
+    let content: Content
+
+    init(title: String, @ViewBuilder content: () -> Content) {
+        self.title = title
+        self.content = content()
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(title)
+                .font(.headline)
+                .foregroundColor(AppColors.healthGreen)
+            content
+        }
+        .cardSurface()
     }
 }

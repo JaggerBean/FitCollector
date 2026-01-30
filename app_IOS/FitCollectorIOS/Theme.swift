@@ -36,3 +36,25 @@ struct CardSurface: ViewModifier {
 extension View {
     func cardSurface() -> some View { modifier(CardSurface()) }
 }
+
+struct PrimaryButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 12)
+            .background(AppColors.healthGreen.opacity(configuration.isPressed ? 0.85 : 1))
+            .foregroundColor(.white)
+            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+    }
+}
+
+struct SecondaryButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 10)
+            .background(Color(.secondarySystemBackground))
+            .foregroundColor(AppColors.healthGreen)
+            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+    }
+}

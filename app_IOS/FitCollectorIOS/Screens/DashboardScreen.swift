@@ -11,6 +11,8 @@ struct DashboardScreen: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 16) {
+                HeaderRow(title: "StepCraft")
+
                 ActivityCard(stepsToday: stepsToday, canSync: canSync) {
                     Task { await syncService.syncSteps(appState: appState, manual: true) }
                 }
@@ -31,10 +33,13 @@ struct DashboardScreen: View {
                 }
 
                 if let errorMessage {
-                    Text(errorMessage).foregroundColor(.red)
+                    Text(errorMessage)
+                        .foregroundColor(.red)
+                        .font(.subheadline)
                 }
             }
-            .padding()
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
         }
         .navigationTitle("Dashboard")
         .task {
@@ -87,16 +92,20 @@ private struct SyncStatusBanner: View {
     let isSuccess: Bool
 
     var body: some View {
-        HStack {
-            Image(systemName: isSuccess ? "checkmark.circle.fill" : "xmark.octagon.fill")
-                .foregroundColor(isSuccess ? .green : .red)
+        let bg = isSuccess ? AppColors.healthLightGreen : Color.red.opacity(0.12)
+        let icon = isSuccess ? "checkmark.circle.fill" : "xmark.octagon.fill"
+
+        HStack(spacing: 10) {
+            Image(systemName: icon)
+                .foregroundColor(isSuccess ? AppColors.healthGreen : .red)
             Text(message)
                 .font(.subheadline)
+                .foregroundColor(.primary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding()
-        .background(Color.primary.opacity(0.05))
-        .cornerRadius(12)
+        .padding(12)
+        .background(bg)
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
 }
 
@@ -106,32 +115,42 @@ private struct ActivityCard: View {
     let onSync: () -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 14) {
             Text("Steps Today")
                 .font(.headline)
+                .foregroundColor(.white.opacity(0.85))
+
             Text(stepsToday.formatted())
-                .font(.system(size: 42, weight: .bold))
+                .font(.system(size: 54, weight: .black))
+                .foregroundColor(.white)
+
             Text("HealthKit · StepCraft")
                 .font(.subheadline)
-                .foregroundColor(.secondary)
+                .foregroundColor(.white.opacity(0.7))
 
             Button(action: onSync) {
-                HStack {
+                HStack(spacing: 10) {
                     Image(systemName: "arrow.triangle.2.circlepath")
-                    Text("Sync Now")
-                        .fontWeight(.semibold)
+                    Text("SYNC NOW")
+                        .fontWeight(.black)
+                        .tracking(1)
                 }
                 .frame(maxWidth: .infinity)
+                .padding(.vertical, 12)
             }
-            .buttonStyle(.borderedProminent)
+            .buttonStyle(.plain)
+            .background(Color.white)
+            .foregroundColor(AppColors.healthGreen)
+            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+            .opacity(canSync ? 1 : 0.5)
             .disabled(!canSync)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding()
+        .padding(20)
         .background(
-            LinearGradient(colors: [Color.green.opacity(0.4), Color.blue.opacity(0.4)], startPoint: .topLeading, endPoint: .bottomTrailing)
+            LinearGradient(colors: [AppColors.healthGreen, Color(hex: 0xFF1B5E20)], startPoint: .topLeading, endPoint: .bottomTrailing)
         )
-        .cornerRadius(16)
+        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
     }
 }
 
@@ -147,9 +166,10 @@ private struct TrackedMilestonesCard: View {
                 VStack(alignment: .leading) {
                     Text("Tracked milestones")
                         .font(.headline)
+                        .foregroundColor(Color(hex: 0xFFE8F5E9))
                     Text("Keep stepping — you’re getting close!")
                         .font(.subheadline)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(Color(hex: 0xFFB7D5BB))
                 }
             }
 
@@ -161,9 +181,9 @@ private struct TrackedMilestonesCard: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding()
         .background(
-            LinearGradient(colors: [Color(red: 0.1, green: 0.3, blue: 0.18), Color(red: 0.07, green: 0.18, blue: 0.12)], startPoint: .topLeading, endPoint: .bottomTrailing)
+            LinearGradient(colors: [Color(hex: 0xFF1B3A20), Color(hex: 0xFF0F2414)], startPoint: .topLeading, endPoint: .bottomTrailing)
         )
-        .cornerRadius(16)
+        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
     }
 }
 
@@ -180,6 +200,7 @@ private struct MilestoneRow: View {
                 Text("\(server) · \(label)")
                     .font(.subheadline)
                     .fontWeight(.semibold)
+                    .foregroundColor(Color(hex: 0xFFEAE7D6))
                 Spacer()
                 if stepsToday >= minSteps {
                     Text("✅")
@@ -188,15 +209,45 @@ private struct MilestoneRow: View {
                 }
             }
 
-            ProgressView(value: min(1, Double(stepsToday) / Double(max(minSteps, 1))))
-                .tint(.green)
+            GeometryReader { geo in
+                let progress = CGFloat(min(1, Double(stepsToday) / Double(max(minSteps, 1))))
+                ZStack(alignment: .leading) {
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .fill(Color(hex: 0xFF2A3326))
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .fill(LinearGradient(colors: [Color(hex: 0xFF7BE07B), Color(hex: 0xFF47C1FF)], startPoint: .leading, endPoint: .trailing))
+                        .frame(width: max(10, geo.size.width * progress))
+                        .opacity(minSteps > 0 ? 1 : 0)
+                }
+            }
+            .frame(height: 14)
 
             Text("\(stepsToday) / \(minSteps) steps")
                 .font(.caption)
-                .foregroundColor(.secondary)
+                .foregroundColor(Color(hex: 0xFFBDB7A6))
         }
         .padding(12)
-        .background(Color.black.opacity(0.15))
-        .cornerRadius(12)
+        .background(Color.black.opacity(0.2))
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+    }
+}
+
+private struct HeaderRow: View {
+    let title: String
+
+    var body: some View {
+        HStack(spacing: 12) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.system(size: 28, weight: .black))
+                    .foregroundColor(AppColors.healthGreen)
+                Text("Collect steps. Earn rewards.")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+            }
+            Spacer()
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.top, 4)
     }
 }
