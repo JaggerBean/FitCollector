@@ -63,12 +63,13 @@ struct OnboardingScreen: View {
                         }
 
                         if let errorMessage {
-                            Text(errorMessage)
+                            let errorText = errorMessage
+                            Text(errorText)
                                 .foregroundColor(.red)
                                 .multilineTextAlignment(.center)
                                 .font(.subheadline)
 
-                            if shouldOfferReset(for: errorMessage) {
+                            if shouldOfferReset(for: errorText) {
                                 Text("This device is already registered on that server with a different username. Log in with the original username to recover your key. You can change your username later in Settings.")
                                     .font(.footnote)
                                     .foregroundColor(secondaryTextColor)
@@ -80,7 +81,7 @@ struct OnboardingScreen: View {
                                         let previous = appState.minecraftUsername
                                         username = previous
                                         pendingUsername = previous
-                                        errorMessage = nil
+                                        self.errorMessage = nil
                                         step = 4
                                     }
                                     .buttonStyle(PillSecondaryButton())
