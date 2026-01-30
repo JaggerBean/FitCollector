@@ -343,6 +343,17 @@ fun OnboardingScreen(
                                 ) {
                                     Text("Open Health Connect Settings", style = MaterialTheme.typography.labelSmall)
                                 }
+                                Spacer(Modifier.height(8.dp))
+                                OutlinedButton(
+                                    onClick = {
+                                        error = null
+                                        setAllowedStepSources(context, emptySet())
+                                        step = 4
+                                    },
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Text("Skip for now")
+                                }
                             }
                         }
                     } else {
