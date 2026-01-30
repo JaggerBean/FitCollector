@@ -1,4 +1,5 @@
 import SwiftUI
+import AVFoundation
 
 struct OnboardingScreen: View {
     @EnvironmentObject private var appState: AppState
@@ -454,6 +455,8 @@ private struct PrivateServerSheet: View {
     @Binding var inviteCode: String
     var onAdd: () -> Void
     var onClose: () -> Void
+    @State private var showScanner = false
+    @State private var scannerError: String?
 
     var body: some View {
         NavigationStack {
@@ -467,10 +470,16 @@ private struct PrivateServerSheet: View {
                     .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
 
                 HStack(spacing: 12) {
-                    Button("Scan QR") { }
+                    Button("Scan QR") { showScanner = true }
                         .buttonStyle(PillSecondaryButton())
                     Button("Add") { onAdd() }
                         .buttonStyle(PillPrimaryButton())
+                }
+
+                if let scannerError {
+                    Text(scannerError)
+                        .foregroundColor(.red)
+                        .font(.footnote)
                 }
 
                 Spacer()
@@ -480,5 +489,131 @@ private struct PrivateServerSheet: View {
             }
             .padding(20)
         }
+        .sheet(isPresented: $showScanner) {
+            NavigationStack {
+                ZStack {
+                    QRCodeScannerView(
+                        onFound: { raw in
+                            inviteCode = extractInviteCode(from: raw)
+                            showScanner = false
+                        },
+                        onError: { message in
+                            scannerError = message
+                            showScanner = false
+                        }
+                    )
+                    .ignoresSafeArea()
+
+                    VStack {
+                        Text("Scan invite QR")
+                            .font(.headline)
+                            .padding(8)
+                            .background(.ultraThinMaterial)
+                            .clipShape(Capsule())
+                        Spacer()
+                    }
+                    .padding(.top, 20)
+                }
+                .toolbar {
+                    ToolbarItem(placement: .topBarLeading) {
+                        Button("Close") { showScanner = false }
+                    }
+                }
+            }
+        }
     }
+}
+
+private struct QRCodeScannerView: UIViewRepresentable {
+    var onFound: (String) -> Void
+    var onError: (String) -> Void
+
+    func makeCoordinator() -> Coordinator { Coordinator(self) }
+
+    func makeUIView(context: Context) -> UIView {
+        let view = UIView()
+        let session = AVCaptureSession()
+
+        guard let device = AVCaptureDevice.default(for: .video) else {
+            DispatchQueue.main.async {
+                onError("Camera not available")
+            }
+            return view
+        }
+
+        do {
+            let input = try AVCaptureDeviceInput(device: device)
+            if session.canAddInput(input) {
+                session.addInput(input)
+            }
+
+            let output = AVCaptureMetadataOutput()
+            if session.canAddOutput(output) {
+                session.addOutput(output)
+                output.setMetadataObjectsDelegate(context.coordinator, queue: .main)
+                output.metadataObjectTypes = [.qr]
+            }
+
+            let preview = AVCaptureVideoPreviewLayer(session: session)
+            preview.videoGravity = .resizeAspectFill
+            preview.frame = view.bounds
+            view.layer.addSublayer(preview)
+
+            context.coordinator.session = session
+            context.coordinator.previewLayer = preview
+            session.startRunning()
+        } catch {
+            DispatchQueue.main.async {
+                onError(error.localizedDescription)
+            }
+        }
+
+        return view
+    }
+
+    func updateUIView(_ uiView: UIView, context: Context) {
+        context.coordinator.previewLayer?.frame = uiView.bounds
+    }
+
+    static func dismantleUIView(_ uiView: UIView, coordinator: Coordinator) {
+        coordinator.session?.stopRunning()
+    }
+
+    final class Coordinator: NSObject, AVCaptureMetadataOutputObjectsDelegate {
+        let parent: QRCodeScannerView
+        var session: AVCaptureSession?
+        var previewLayer: AVCaptureVideoPreviewLayer?
+        private var didScan = false
+
+        init(_ parent: QRCodeScannerView) {
+            self.parent = parent
+        }
+
+        func metadataOutput(
+            _ output: AVCaptureMetadataOutput,
+            didOutput metadataObjects: [AVMetadataObject],
+            from connection: AVCaptureConnection
+        ) {
+            guard !didScan,
+                  let first = metadataObjects.first as? AVMetadataMachineReadableCodeObject,
+                  first.type == .qr,
+                  let value = first.stringValue else { return }
+            didScan = true
+            parent.onFound(value)
+        }
+    }
+}
+
+private func extractInviteCode(from raw: String) -> String {
+    let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+    guard !trimmed.isEmpty else { return trimmed }
+    if let components = URLComponents(string: trimmed) {
+        let key = ["code", "invite", "invite_code"].first { name in
+            components.queryItems?.contains { $0.name == name } == true
+        }
+        if let key, let value = components.queryItems?.first(where: { $0.name == key })?.value, !value.isEmpty {
+            return value
+        }
+    }
+    return trimmed
 }
