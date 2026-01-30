@@ -82,6 +82,34 @@ struct StepsYesterdayResponse: Codable {
     }
 }
 
+struct ClaimStatusListItem: Codable, Hashable {
+    let day: String
+    let minSteps: Int
+    let label: String
+    let itemId: String?
+    let claimed: Bool
+    let claimedAt: String?
+
+    enum CodingKeys: String, CodingKey {
+        case day
+        case minSteps = "min_steps"
+        case label
+        case itemId = "item_id"
+        case claimed
+        case claimedAt = "claimed_at"
+    }
+}
+
+struct ClaimStatusListResponse: Codable {
+    let serverName: String
+    let items: [ClaimStatusListItem]
+
+    enum CodingKeys: String, CodingKey {
+        case serverName = "server_name"
+        case items
+    }
+}
+
 struct RewardTier: Codable, Hashable, Identifiable {
     var id: String { "\(minSteps)-\(label)" }
     let minSteps: Int

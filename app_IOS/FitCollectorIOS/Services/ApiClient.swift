@@ -65,6 +65,18 @@ final class ApiClient {
         return try JSONDecoder().decode(StepsYesterdayResponse.self, from: data)
     }
 
+    func getClaimStatusList(deviceId: String, playerApiKey: String) async throws -> ClaimStatusListResponse {
+        var components = URLComponents(url: baseURL.appendingPathComponent("/v1/players/claim-status-list"), resolvingAgainstBaseURL: false)!
+        components.queryItems = [
+            URLQueryItem(name: "device_id", value: deviceId),
+            URLQueryItem(name: "player_api_key", value: playerApiKey)
+        ]
+        var request = URLRequest(url: components.url!)
+        request.setValue(globalApiKey, forHTTPHeaderField: "X-API-Key")
+        let (data, _) = try await URLSession.shared.data(for: request)
+        return try JSONDecoder().decode(ClaimStatusListResponse.self, from: data)
+    }
+
     func register(deviceId: String, minecraftUsername: String, serverName: String, inviteCode: String?) async throws -> PlayerApiKeyResponse {
         let url = baseURL.appendingPathComponent("/v1/players/register")
         var request = URLRequest(url: url)

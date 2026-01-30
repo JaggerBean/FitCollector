@@ -17,7 +17,15 @@ final class SyncService: ObservableObject {
         }
 
         do {
-            let stepsToday = try await HealthKitManager.shared.readTodaySteps()
+            let stepsToday: Int
+            do {
+                stepsToday = try await HealthKitManager.shared.readTodaySteps()
+            } catch {
+                if shouldSuppress(error: error) {
+                    return
+                }
+                throw error
+            }
             appState.lastKnownSteps = stepsToday
 
             let dayKey = Self.centralDayKey()
@@ -65,8 +73,17 @@ final class SyncService: ObservableObject {
             )
             appState.addSyncLogEntry(logEntry)
         } catch {
+            if shouldSuppress(error: error) { return }
             lastErrorMessage = error.localizedDescription
         }
+    }
+
+    private func shouldSuppress(error: Error) -> Bool {
+        let message = error.localizedDescription.lowercased()
+        if message.contains("no data available for the specified predicate") { return true }
+        if message.contains("data couldn't be read because it is missing") { return true }
+        if message.contains("data couldn’t be read because it is missing") { return true }
+        return false
     }
 
     private func getOrRecoverKey(appState: AppState, server: String) async throws -> String {

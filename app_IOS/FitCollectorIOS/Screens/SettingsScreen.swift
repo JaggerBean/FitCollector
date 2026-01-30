@@ -107,7 +107,6 @@ struct SettingsScreen: View {
                 }
                 .padding(16)
             }
-            .navigationTitle("Settings")
             .task {
                 usernameDraft = appState.minecraftUsername
                 await loadServers()

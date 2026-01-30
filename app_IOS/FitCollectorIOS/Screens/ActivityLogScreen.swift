@@ -30,6 +30,5 @@ struct ActivityLogScreen: View {
                 }
             }
         }
-        .navigationTitle("Recent Activity")
     }
 }

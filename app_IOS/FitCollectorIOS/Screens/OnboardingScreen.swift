@@ -20,6 +20,8 @@ struct OnboardingScreen: View {
     @State private var showPrivateServer = false
     @State private var serverSearch = ""
     @State private var privateInviteCode = ""
+    @State private var privateInviteError: String?
+    @State private var isAddingPrivate = false
 
     var body: some View {
         NavigationStack {
@@ -62,7 +64,6 @@ struct OnboardingScreen: View {
                 }
                 .padding(24)
             }
-            .navigationTitle("Onboarding")
             .task {
                 username = appState.minecraftUsername
                 selectedServers = Set(appState.selectedServers)
@@ -215,12 +216,20 @@ struct OnboardingScreen: View {
                         .foregroundColor(.secondary)
                 } else {
                     ForEach(selectedServers.sorted(), id: \.self) { server in
-                        HStack(spacing: 10) {
-                            Image(systemName: "checkmark.square.fill")
-                                .foregroundColor(AppColors.healthGreen)
-                            Text(server)
-                                .foregroundColor(.primary)
-                            Spacer()
+                        Button {
+                            if selectedServers.contains(server) {
+                                selectedServers.remove(server)
+                            } else {
+                                selectedServers.insert(server)
+                            }
+                        } label: {
+                            HStack(spacing: 10) {
+                                Image(systemName: "checkmark.square.fill")
+                                    .foregroundColor(AppColors.healthGreen)
+                                Text(server)
+                                    .foregroundColor(.primary)
+                                Spacer()
+                            }
                         }
                     }
                 }
@@ -241,15 +250,28 @@ struct OnboardingScreen: View {
             )
         }
         .sheet(isPresented: $showPrivateServer) {
-            PrivateServerSheet(inviteCode: $privateInviteCode, onAdd: {
-                inviteCode = privateInviteCode
-                Task { await addInviteCode() }
-                privateInviteCode = ""
-                showPrivateServer = false
-            }, onClose: {
-                showPrivateServer = false
-            })
+            PrivateServerSheet(
+                inviteCode: $privateInviteCode,
+                errorMessage: $privateInviteError,
+                isLoading: $isAddingPrivate,
+                onAdd: {
+                    Task {
+                        inviteCode = privateInviteCode
+                        let success = await addInviteCode()
+                        if success {
+                            privateInviteCode = ""
+                            showPrivateServer = false
+                        } else {
+                            showPrivateServer = true
+                        }
+                    }
+                },
+                onClose: {
+                    showPrivateServer = false
+                }
+            )
         }
+        .interactiveDismissDisabled(isAddingPrivate)
     }
 
     private func validateUsernameAndContinue() async {
@@ -275,18 +297,38 @@ struct OnboardingScreen: View {
         }
     }
 
-    private func addInviteCode() async {
+    @MainActor
+    private func addInviteCode() async -> Bool {
+        privateInviteError = nil
+        isAddingPrivate = true
         let code = inviteCode.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !code.isEmpty else { return }
+        guard !code.isEmpty else {
+            privateInviteError = "Enter an invite code."
+            isAddingPrivate = false
+            return false
+        }
         do {
             let response = try await ApiClient.shared.getAvailableServers(inviteCode: code)
             let existing = Set(availableServers.map { $0.serverName })
             let newServers = response.servers.filter { !existing.contains($0.serverName) }
+            if newServers.isEmpty {
+                privateInviteError = "No servers found for that invite code."
+                isAddingPrivate = false
+                return false
+            }
+
             availableServers.append(contentsOf: newServers)
-            newServers.forEach { appState.setInviteCode(server: $0.serverName, code: code) }
+            for server in newServers {
+                appState.setInviteCode(server: server.serverName, code: code)
+                selectedServers.insert(server.serverName)
+            }
             inviteCode = ""
+            isAddingPrivate = false
+            return true
         } catch {
-            errorMessage = error.localizedDescription
+            privateInviteError = error.localizedDescription
+            isAddingPrivate = false
+            return false
         }
     }
 
@@ -453,6 +495,8 @@ private struct PublicServersSheet: View {
 
 private struct PrivateServerSheet: View {
     @Binding var inviteCode: String
+    @Binding var errorMessage: String?
+    @Binding var isLoading: Bool
     var onAdd: () -> Void
     var onClose: () -> Void
     @State private var showScanner = false
@@ -469,11 +513,18 @@ private struct PrivateServerSheet: View {
                     .background(Color(.secondarySystemBackground))
                     .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
 
+                if let errorMessage {
+                    Text(errorMessage)
+                        .foregroundColor(.red)
+                        .font(.footnote)
+                }
+
                 HStack(spacing: 12) {
                     Button("Scan QR") { showScanner = true }
                         .buttonStyle(PillSecondaryButton())
-                    Button("Add") { onAdd() }
+                    Button(isLoading ? "Adding…" : "Add") { onAdd() }
                         .buttonStyle(PillPrimaryButton())
+                        .disabled(isLoading)
                 }
 
                 if let scannerError {
