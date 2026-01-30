@@ -86,8 +86,7 @@ fun DashboardScreen(
     var lastSyncInstant by remember { mutableStateOf<Instant?>(null) }
     var client by remember { mutableStateOf<androidx.health.connect.client.HealthConnectClient?>(null) }
     var autoTimeDisabled by remember { mutableStateOf(false) }
-    var claimStatuses by remember { mutableStateOf<Map<String, Map<Long, ClaimStatusResponse>>>(emptyMap()) }
-    var yesterdaySteps by remember { mutableStateOf<Map<String, Long>>(emptyMap()) }
+    var claimStatuses by remember { mutableStateOf<Map<String, List<ClaimStatusListItem>>>(emptyMap()) }
     var blockedSourcesWarning by remember { mutableStateOf<List<String>?>(null) }
     var rewardTiersByServer by remember { mutableStateOf<Map<String, List<RewardTier>>>(emptyMap()) }
     var trackedTiers by remember { mutableStateOf(getTrackedTiersByServer(context)) }
@@ -184,38 +183,19 @@ fun DashboardScreen(
         if (mcUsername.isBlank()) return
         val selectedServers = getSelectedServers(context)
         val globalApi = buildApi(BASE_URL, GLOBAL_API_KEY)
-        val newStatuses = mutableMapOf<String, Map<Long, ClaimStatusResponse>>()
-        val newSteps = mutableMapOf<String, Long>()
+        val newStatuses = mutableMapOf<String, List<ClaimStatusListItem>>()
         selectedServers.forEach { server ->
             try {
-                newSteps[server] = 0L
-                
                 val key = getServerKey(context, mcUsername, server)
                 if (key != null) {
-                    val stepsResp = globalApi.getStepsYesterday(mcUsername, key)
-                    if (stepsResp.server_name == server) {
-                        newSteps[server] = stepsResp.steps_yesterday
+                    val statusResp = globalApi.getClaimStatusList(deviceId, key)
+                    if (statusResp.server_name == server) {
+                        newStatuses[server] = statusResp.items
                     }
                 }
-
-                val tiers = rewardTiersByServer[server].orEmpty().sortedBy { it.min_steps }
-                val steps = newSteps[server] ?: 0L
-                val eligible = tiers.filter { steps >= it.min_steps }
-                val tierStatuses = mutableMapOf<Long, ClaimStatusResponse>()
-                eligible.forEach { tier ->
-                    val status = globalApi.getClaimStatus(
-                        mcUsername,
-                        server,
-                        tier.min_steps,
-                        getDayString(yesterday = true)
-                    )
-                    tierStatuses[tier.min_steps] = status
-                }
-                newStatuses[server] = tierStatuses
             } catch (e: Exception) { }
         }
         claimStatuses = newStatuses
-        yesterdaySteps = newSteps
     }
 
     fun stepsRespDay(yesterday: Boolean): String? {
@@ -429,11 +409,9 @@ fun DashboardScreen(
             val exitSpec = fadeOut() + shrinkVertically()
 
             // 1. Unclaimed Rewards
-            val unclaimedServersWithSteps = claimStatuses.filter { entry ->
-                val steps = yesterdaySteps[entry.key] ?: 0L
-                if (steps <= 0L) return@filter false
-                entry.value.values.any { !it.claimed }
-            }
+            val unclaimedServersWithSteps = claimStatuses
+                .mapValues { (_, items) -> items.filter { !it.claimed } }
+                .filter { it.value.isNotEmpty() }
             item {
                 AnimatedVisibility(
                     visible = unclaimedServersWithSteps.isNotEmpty(),
@@ -445,10 +423,12 @@ fun DashboardScreen(
                             Text("🎁", fontSize = 24.sp)
                             Spacer(Modifier.width(12.dp))
                             Column {
-                                Text("Unclaimed rewards for yesterday's steps:", style = MaterialTheme.typography.labelSmall, color = Color(0xFF574300), fontWeight = FontWeight.Bold)
-                                unclaimedServersWithSteps.forEach { (server, _) ->
-                                    val steps = yesterdaySteps[server] ?: 0L
-                                    Text("• $server: $steps steps", style = MaterialTheme.typography.bodySmall, color = Color(0xFF574300))
+                                Text("Unclaimed rewards:", style = MaterialTheme.typography.labelSmall, color = Color(0xFF574300), fontWeight = FontWeight.Bold)
+                                unclaimedServersWithSteps.forEach { (server, items) ->
+                                    items.forEach { item ->
+                                        val label = item.label.ifBlank { "${item.min_steps} steps" }
+                                        Text("• $server: $label · ${item.day}", style = MaterialTheme.typography.bodySmall, color = Color(0xFF574300))
+                                    }
                                 }
                                 Text("Join the server to claim rewards!", style = MaterialTheme.typography.labelSmall, color = Color(0xFF574300), fontWeight = FontWeight.Bold)
                             }
@@ -458,11 +438,9 @@ fun DashboardScreen(
             }
 
             // 2. Claimed Rewards
-            val claimedServersWithSteps = claimStatuses.filter { entry ->
-                val steps = yesterdaySteps[entry.key] ?: 0L
-                if (steps <= 0L) return@filter false
-                entry.value.isNotEmpty() && entry.value.values.all { it.claimed }
-            }
+            val claimedServersWithSteps = claimStatuses
+                .mapValues { (_, items) -> items.filter { it.claimed } }
+                .filter { it.value.isNotEmpty() }
             item {
                 AnimatedVisibility(
                     visible = claimedServersWithSteps.isNotEmpty(),
@@ -474,10 +452,12 @@ fun DashboardScreen(
                             Text("🎉", fontSize = 24.sp)
                             Spacer(Modifier.width(12.dp))
                             Column {
-                                Text("Rewards claimed for yesterday's steps:", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onPrimaryContainer, fontWeight = FontWeight.Bold)
-                                claimedServersWithSteps.forEach { (server, _) ->
-                                    val steps = yesterdaySteps[server] ?: 0L
-                                    Text("• $server: $steps steps", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                                Text("Rewards claimed:", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onPrimaryContainer, fontWeight = FontWeight.Bold)
+                                claimedServersWithSteps.forEach { (server, items) ->
+                                    items.forEach { item ->
+                                        val label = item.label.ifBlank { "${item.min_steps} steps" }
+                                        Text("• $server: $label · ${item.day}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                                    }
                                 }
                             }
                         }
