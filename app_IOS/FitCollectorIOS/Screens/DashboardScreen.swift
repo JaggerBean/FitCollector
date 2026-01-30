@@ -224,7 +224,7 @@ private struct StepCraftHeader: View {
             }
 
             HStack(spacing: 8) {
-                StepCraftLogo()
+                StepCraftLogoImage()
                 Text("StepCraft")
                     .font(.system(size: 24, weight: .bold, design: .rounded))
                     .foregroundColor(AppColors.healthGreen)
@@ -242,23 +242,16 @@ private struct StepCraftHeader: View {
     }
 }
 
-private struct StepCraftLogo: View {
+private struct StepCraftLogoImage: View {
     var body: some View {
-        ZStack(alignment: .top) {
-            RoundedRectangle(cornerRadius: 5, style: .continuous)
-                .fill(AppColors.minecraftDirt)
-                .frame(width: 26, height: 22)
-            RoundedRectangle(cornerRadius: 5, style: .continuous)
-                .fill(AppColors.minecraftGrass)
-                .frame(width: 26, height: 8)
+        AsyncImage(url: URL(string: "https://stepcraft.org/static/logo.png")) { image in
+            image.resizable()
+        } placeholder: {
+            RoundedRectangle(cornerRadius: 6, style: .continuous)
+                .fill(Color.gray.opacity(0.2))
         }
-        .overlay(
-            Image(systemName: "figure.run")
-                .font(.system(size: 12, weight: .bold))
-                .foregroundColor(Color.white.opacity(0.9))
-                .offset(y: 4)
-        )
-        .frame(width: 28, height: 24)
+        .frame(width: 28, height: 28)
+        .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
     }
 }
 
