@@ -5,7 +5,6 @@ struct DashboardScreen: View {
     @StateObject private var syncService = SyncService()
     @State private var rewards: [RewardTier] = []
     @State private var claimStatuses: [String: [ClaimStatusListItem]] = [:]
-    @State private var stepsYesterdayByServer: [String: Int] = [:]
     @State private var isLoading = false
     @State private var errorMessage: String?
     @State private var stepsToday: Int = 0
@@ -20,10 +19,9 @@ struct DashboardScreen: View {
                     ResetTimerCard(timeRemaining: timeUntilReset)
                 }
 
-                if !unclaimedServers.isEmpty {
+                if !unclaimedGroups.isEmpty {
                     UnclaimedRewardsBanner(
-                        servers: unclaimedServers,
-                        stepsYesterdayByServer: stepsYesterdayByServer
+                        groups: unclaimedGroups
                     )
                 }
 
@@ -71,7 +69,6 @@ struct DashboardScreen: View {
         .task {
             await refreshSteps()
             await refreshClaimStatuses()
-            await refreshStepsYesterday()
             await refreshRewards()
             if appState.autoSyncEnabled {
                 await syncService.syncSteps(appState: appState, manual: false)
@@ -135,26 +132,6 @@ struct DashboardScreen: View {
         claimStatuses = updated
     }
 
-    private func refreshStepsYesterday() async {
-        guard appState.isConfigured() else { return }
-        var updated: [String: Int] = [:]
-        for server in appState.selectedServers {
-            guard let key = appState.serverKey(for: server) else { continue }
-            do {
-                let response = try await ApiClient.shared.getStepsYesterday(
-                    minecraftUsername: appState.minecraftUsername,
-                    playerApiKey: key
-                )
-                updated[server] = response.stepsYesterday
-            } catch {
-                if !shouldSuppress(error: error) {
-                    errorMessage = error.localizedDescription
-                }
-            }
-        }
-        stepsYesterdayByServer = updated
-    }
-
     private func startResetTimer() {
         updateResetTimer()
         Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { _ in
@@ -175,24 +152,14 @@ struct DashboardScreen: View {
         timeUntilReset = String(format: "%02d:%02d:%02d", hours, minutes, seconds)
     }
 
-    private var unclaimedServers: [String] {
-        let yesterday = centralDayString(yesterday: true)
-        return claimStatuses
-            .mapValues { $0.filter { !$0.claimed && $0.day == yesterday } }
-            .filter { !$0.value.isEmpty }
-            .map { $0.key }
-            .sorted()
-    }
-
-    private func centralDayString(yesterday: Bool) -> String {
-        let central = TimeZone(identifier: "America/Chicago") ?? .current
-        var calendar = Calendar.current
-        calendar.timeZone = central
-        let date = calendar.date(byAdding: .day, value: yesterday ? -1 : 0, to: Date()) ?? Date()
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd"
-        formatter.timeZone = central
-        return formatter.string(from: date)
+    private var unclaimedGroups: [UnclaimedServerGroup] {
+        claimStatuses
+            .compactMap { server, items in
+                let unclaimed = items.filter { !$0.claimed }
+                guard !unclaimed.isEmpty else { return nil }
+                return UnclaimedServerGroup(server: server, items: unclaimed)
+            }
+            .sorted { $0.server.lowercased() < $1.server.lowercased() }
     }
 
     private func shouldSuppress(error: Error) -> Bool {
@@ -261,7 +228,11 @@ private struct StepCraftHeader: View {
             }
 
             HStack(spacing: 6) {
-                LogoBadge()
+                Image("logo")
+                    .resizable()
+                    .renderingMode(.original)
+                    .frame(width: 24, height: 24)
+                    .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
                 Text("StepCraft")
                     .font(.system(size: 24, weight: .bold, design: .rounded))
                     .foregroundColor(AppColors.healthGreen)
@@ -276,25 +247,6 @@ private struct StepCraftHeader: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.top, 4)
-    }
-}
-
-private struct LogoBadge: View {
-    var body: some View {
-        VStack(spacing: 2) {
-            Image(systemName: "figure.run")
-                .font(.system(size: 18, weight: .bold))
-                .foregroundColor(AppColors.healthGreen)
-            ZStack(alignment: .top) {
-                RoundedRectangle(cornerRadius: 2, style: .continuous)
-                    .fill(AppColors.minecraftDirt)
-                    .frame(width: 20, height: 12)
-                RoundedRectangle(cornerRadius: 2, style: .continuous)
-                    .fill(AppColors.minecraftGrass)
-                    .frame(width: 20, height: 4)
-            }
-        }
-        .frame(width: 28, height: 32)
     }
 }
 
@@ -368,22 +320,21 @@ private struct ActivityCard: View {
 }
 
 private struct UnclaimedRewardsBanner: View {
-    let servers: [String]
-    let stepsYesterdayByServer: [String: Int]
+    let groups: [UnclaimedServerGroup]
 
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
             Text("🎁")
                 .font(.system(size: 22))
             VStack(alignment: .leading, spacing: 4) {
-                Text("Unclaimed rewards for yesterday's steps:")
+                Text("Unclaimed rewards:")
                     .font(.caption)
                     .foregroundColor(Color(hex: 0xFF574300))
                     .fontWeight(.bold)
 
-                ForEach(servers, id: \.self) { server in
-                    let steps = stepsYesterdayByServer[server] ?? 0
-                    Text("• \(server): \(steps) steps")
+                ForEach(groups) { group in
+                    let summary = summaryText(for: group.items)
+                    Text("• \(group.server): \(summary)")
                         .font(.caption)
                         .foregroundColor(Color(hex: 0xFF574300))
                 }
@@ -399,6 +350,24 @@ private struct UnclaimedRewardsBanner: View {
         .background(Color(hex: 0xFFFFF4C4))
         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
+
+    private func summaryText(for items: [ClaimStatusListItem]) -> String {
+        let grouped = Dictionary(grouping: items) { item in
+            item.label.isEmpty ? "\(item.minSteps) steps" : item.label
+        }
+        return grouped
+            .sorted { $0.key.lowercased() < $1.key.lowercased() }
+            .map { label, list in
+                list.count > 1 ? "\(label) x\(list.count)" : label
+            }
+            .joined(separator: ", ")
+    }
+}
+
+private struct UnclaimedServerGroup: Identifiable {
+    let server: String
+    let items: [ClaimStatusListItem]
+    var id: String { server }
 }
 
 private struct TrackedMilestonesCard: View {
