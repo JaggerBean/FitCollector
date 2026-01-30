@@ -425,10 +425,11 @@ fun DashboardScreen(
                             Column {
                                 Text("Unclaimed rewards:", style = MaterialTheme.typography.labelSmall, color = Color(0xFF574300), fontWeight = FontWeight.Bold)
                                 unclaimedServersWithSteps.forEach { (server, items) ->
-                                    items.forEach { item ->
-                                        val label = item.label.ifBlank { "${item.min_steps} steps" }
-                                        Text("• $server: $label · ${item.day}", style = MaterialTheme.typography.bodySmall, color = Color(0xFF574300))
+                                    val grouped = items.groupBy { it.label.ifBlank { "${it.min_steps} steps" } }
+                                    val summary = grouped.entries.joinToString(", ") { (label, list) ->
+                                        if (list.size > 1) "$label x${list.size}" else label
                                     }
+                                    Text("• $server: ${items.size} unclaimed (${summary})", style = MaterialTheme.typography.bodySmall, color = Color(0xFF574300))
                                 }
                                 Text("Join the server to claim rewards!", style = MaterialTheme.typography.labelSmall, color = Color(0xFF574300), fontWeight = FontWeight.Bold)
                             }
@@ -454,10 +455,11 @@ fun DashboardScreen(
                             Column {
                                 Text("Rewards claimed:", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onPrimaryContainer, fontWeight = FontWeight.Bold)
                                 claimedServersWithSteps.forEach { (server, items) ->
-                                    items.forEach { item ->
-                                        val label = item.label.ifBlank { "${item.min_steps} steps" }
-                                        Text("• $server: $label · ${item.day}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                                    val grouped = items.groupBy { it.label.ifBlank { "${it.min_steps} steps" } }
+                                    val summary = grouped.entries.joinToString(", ") { (label, list) ->
+                                        if (list.size > 1) "$label x${list.size}" else label
                                     }
+                                    Text("• $server: ${items.size} claimed (${summary})", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onPrimaryContainer)
                                 }
                             }
                         }
