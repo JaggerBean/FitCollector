@@ -20,9 +20,11 @@ struct DashboardScreen: View {
                 }
 
                 if !unclaimedGroups.isEmpty {
-                    UnclaimedRewardsBanner(
-                        groups: unclaimedGroups
-                    )
+                    UnclaimedRewardsBanner(groups: unclaimedGroups)
+                }
+
+                if !claimedGroups.isEmpty {
+                    ClaimedRewardsBanner(groups: claimedGroups)
                 }
 
                 ActivityCard(stepsToday: stepsToday, canSync: canSync) {
@@ -159,6 +161,16 @@ struct DashboardScreen: View {
                 let unclaimed = items.filter { !$0.claimed }
                 guard !unclaimed.isEmpty else { return nil }
                 return UnclaimedServerGroup(server: server, items: unclaimed)
+            }
+            .sorted { $0.server.lowercased() < $1.server.lowercased() }
+    }
+
+    private var claimedGroups: [UnclaimedServerGroup] {
+        claimStatuses
+            .compactMap { server, items in
+                let claimed = items.filter { $0.claimed }
+                guard !claimed.isEmpty else { return nil }
+                return UnclaimedServerGroup(server: server, items: claimed)
             }
             .sorted { $0.server.lowercased() < $1.server.lowercased() }
     }
@@ -361,6 +373,46 @@ private struct UnclaimedRewardsBanner: View {
         .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Color(hex: 0xFFFFF4C4))
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+    }
+
+    private func summaryText(for items: [ClaimStatusListItem]) -> String {
+        let grouped = Dictionary(grouping: items) { item in
+            item.label.isEmpty ? "\(item.minSteps) steps" : item.label
+        }
+        return grouped
+            .sorted { $0.key.lowercased() < $1.key.lowercased() }
+            .map { label, list in
+                list.count > 1 ? "\(label) x\(list.count)" : label
+            }
+            .joined(separator: ", ")
+    }
+}
+
+private struct ClaimedRewardsBanner: View {
+    let groups: [UnclaimedServerGroup]
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 12) {
+            Text("🎉")
+                .font(.system(size: 22))
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Rewards claimed:")
+                    .font(.caption)
+                    .foregroundColor(AppColors.healthGreen)
+                    .fontWeight(.bold)
+
+                ForEach(groups) { group in
+                    let summary = summaryText(for: group.items)
+                    Text("• \(group.server): \(summary)")
+                        .font(.caption)
+                        .foregroundColor(AppColors.healthGreen)
+                }
+            }
+        }
+        .padding(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(AppColors.healthLightGreen)
         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
 
