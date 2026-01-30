@@ -117,38 +117,42 @@ struct DashboardScreen: View {
 
     private func refreshClaimStatuses() async {
         guard appState.isConfigured() else { return }
-        do {
-            var updated: [String: [ClaimStatusListItem]] = [:]
-            for server in appState.selectedServers {
-                guard let key = appState.serverKey(for: server) else { continue }
+        var updated: [String: [ClaimStatusListItem]] = [:]
+        for server in appState.selectedServers {
+            guard let key = appState.serverKey(for: server) else { continue }
+            do {
                 let response = try await ApiClient.shared.getClaimStatusList(
                     deviceId: appState.deviceId,
                     playerApiKey: key
                 )
                 updated[server] = response.items
+            } catch {
+                if !shouldSuppress(error: error) {
+                    errorMessage = error.localizedDescription
+                }
             }
-            claimStatuses = updated
-        } catch {
-            errorMessage = error.localizedDescription
         }
+        claimStatuses = updated
     }
 
     private func refreshStepsYesterday() async {
         guard appState.isConfigured() else { return }
-        do {
-            var updated: [String: Int] = [:]
-            for server in appState.selectedServers {
-                guard let key = appState.serverKey(for: server) else { continue }
+        var updated: [String: Int] = [:]
+        for server in appState.selectedServers {
+            guard let key = appState.serverKey(for: server) else { continue }
+            do {
                 let response = try await ApiClient.shared.getStepsYesterday(
                     minecraftUsername: appState.minecraftUsername,
                     playerApiKey: key
                 )
                 updated[server] = response.stepsYesterday
+            } catch {
+                if !shouldSuppress(error: error) {
+                    errorMessage = error.localizedDescription
+                }
             }
-            stepsYesterdayByServer = updated
-        } catch {
-            errorMessage = error.localizedDescription
         }
+        stepsYesterdayByServer = updated
     }
 
     private func startResetTimer() {
@@ -189,6 +193,14 @@ struct DashboardScreen: View {
         formatter.dateFormat = "yyyy-MM-dd"
         formatter.timeZone = central
         return formatter.string(from: date)
+    }
+
+    private func shouldSuppress(error: Error) -> Bool {
+        let message = error.localizedDescription.lowercased()
+        if message.contains("no data available for the specified predicate") { return true }
+        if message.contains("data couldn't be read because it is missing") { return true }
+        if message.contains("data couldn’t be read because it is missing") { return true }
+        return false
     }
 }
 
