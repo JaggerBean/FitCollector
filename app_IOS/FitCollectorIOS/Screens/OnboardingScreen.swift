@@ -27,43 +27,50 @@ struct OnboardingScreen: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: 20) {
-                    VStack(spacing: 6) {
-                        Text("Welcome to StepCraft")
-                            .font(.system(size: 24, weight: .bold))
-                            .foregroundColor(AppColors.healthGreen)
-                        Text("Complete these steps to start earning rewards.")
-                            .font(.subheadline)
-                            .foregroundColor(secondaryTextColor)
-                    }
+                GeometryReader { geo in
+                    VStack(spacing: 20) {
+                        Spacer(minLength: 0)
 
-                    StepProgressBar(step: step, total: 5)
-
-                    Group {
-                        switch step {
-                        case 1:
-                            healthKitStep
-                        case 2:
-                            notificationStep
-                        case 3:
-                            usernameEntryStep
-                        case 4:
-                            confirmUsernameStep
-                        case 5:
-                            serversSelectionStep
-                        default:
-                            EmptyView()
+                        VStack(spacing: 6) {
+                            Text("Welcome to StepCraft")
+                                .font(.system(size: 24, weight: .bold))
+                                .foregroundColor(AppColors.healthGreen)
+                            Text("Complete these steps to start earning rewards.")
+                                .font(.subheadline)
+                                .foregroundColor(secondaryTextColor)
                         }
-                    }
 
-                    if let errorMessage {
-                        Text(errorMessage)
-                            .foregroundColor(.red)
-                            .multilineTextAlignment(.center)
-                            .font(.subheadline)
+                        StepProgressBar(step: step, total: 5)
+
+                        Group {
+                            switch step {
+                            case 1:
+                                healthKitStep
+                            case 2:
+                                notificationStep
+                            case 3:
+                                usernameEntryStep
+                            case 4:
+                                confirmUsernameStep
+                            case 5:
+                                serversSelectionStep
+                            default:
+                                EmptyView()
+                            }
+                        }
+
+                        if let errorMessage {
+                            Text(errorMessage)
+                                .foregroundColor(.red)
+                                .multilineTextAlignment(.center)
+                                .font(.subheadline)
+                        }
+
+                        Spacer(minLength: 0)
                     }
+                    .padding(24)
+                    .frame(minHeight: geo.size.height)
                 }
-                .padding(24)
             }
             .background(baseBackground)
             .task {
