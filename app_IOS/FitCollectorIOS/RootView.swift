@@ -4,7 +4,7 @@ struct RootView: View {
     @EnvironmentObject private var appState: AppState
 
     var body: some View {
-        if appState.onboardingComplete {
+        if appState.onboardingComplete && appState.isConfigured() {
             TabView {
                 NavigationStack {
                     DashboardScreen()

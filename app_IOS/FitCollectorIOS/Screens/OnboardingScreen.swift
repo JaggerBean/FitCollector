@@ -384,7 +384,6 @@ struct OnboardingScreen: View {
             errorMessage = nil
         }
 
-        let previousUsername = appState.minecraftUsername
         let trimmed = username.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else {
             await MainActor.run {
@@ -426,24 +425,8 @@ struct OnboardingScreen: View {
                         }
                         continue
                     } catch {
-                        if previousUsername.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() != trimmed.lowercased() {
-                            do {
-                                let fallback = try await ApiClient.shared.recoverKey(
-                                    deviceId: appState.deviceId,
-                                    minecraftUsername: previousUsername,
-                                    serverName: server
-                                )
-                                await MainActor.run {
-                                    appState.setServerKey(server: server, apiKey: fallback.playerApiKey)
-                                }
-                                continue
-                            } catch {
-                                // Match Android behavior: ignore recover failure on 409 and allow onboarding to finish.
-                                continue
-                            }
-                        }
-                        // Match Android behavior: ignore recover failure on 409 and allow onboarding to finish.
-                        continue
+                        registrationError = error.localizedDescription
+                        break
                     }
                 } else {
                     registrationError = error.localizedDescription
@@ -460,7 +443,7 @@ struct OnboardingScreen: View {
             return
         }
         await MainActor.run {
-            appState.onboardingComplete = true
+            appState.onboardingComplete = appState.isConfigured()
             isLoading = false
         }
     }
