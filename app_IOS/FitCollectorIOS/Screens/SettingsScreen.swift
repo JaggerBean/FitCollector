@@ -1,154 +1,308 @@
 import SwiftUI
+import UIKit
+import AVFoundation
+import UserNotifications
 
 struct SettingsScreen: View {
     @EnvironmentObject private var appState: AppState
     @State private var rewardTiersByServer: [String: [RewardTier]] = [:]
-    @State private var errorMessage: String?
-    @State private var allowNotifications = false
     @State private var availableServers: [ServerInfo] = []
     @State private var inviteCode = ""
     @State private var isRefreshingServers = false
     @State private var isSaving = false
     @State private var usernameDraft = ""
+    @State private var selectedServers: Set<String> = []
+    @State private var showServerSelector = false
+    @State private var showScanner = false
+    @State private var showTrackDialog = false
+    @State private var showNotifyDialog = false
+    @State private var selectedTrackServer: String?
+    @State private var selectedNotifyServer: String?
+    @State private var notificationsAuthorized = false
+    @State private var statusMessage: (String, Bool)?
+    @State private var scannerError: String?
 
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: 16) {
-                    SettingsSection(title: "Account") {
-                        TextField("Minecraft Username", text: $usernameDraft)
-                            .textInputAutocapitalization(.never)
-                            .autocorrectionDisabled()
-                            .padding(12)
-                            .background(Color(.secondarySystemBackground))
-                            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                VStack(alignment: .leading, spacing: 16) {
+                    Text("Settings")
+                        .font(.largeTitle)
+                        .fontWeight(.bold)
 
-                        Toggle("Auto-sync", isOn: $appState.autoSyncEnabled)
-
-                        Button(isSaving ? "Saving…" : "Save Profile") {
-                            Task { await saveProfile() }
+                    NavigationLink(destination: ActivityLogScreen()) {
+                        HStack(spacing: 12) {
+                            Image(systemName: "list.bullet")
+                            Text("RECENT ACTIVITY LOG")
+                                .fontWeight(.bold)
+                            Spacer()
                         }
-                        .buttonStyle(PrimaryButtonStyle())
-                        .disabled(isSaving || usernameDraft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 14)
+                        .padding(.horizontal, 16)
+                        .background(Color(hex: 0xFF64B5F6))
+                        .foregroundColor(.black)
+                        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
                     }
 
-                    SettingsSection(title: "Servers") {
-                        if isRefreshingServers {
-                            ProgressView("Loading servers…")
+                    SectionHeader(title: "Appearance")
+                    SettingsCard {
+                        Text("Theme Mode")
+                            .font(.subheadline)
+                            .fontWeight(.semibold)
+                        Picker("Theme Mode", selection: $appState.themeMode) {
+                            ForEach(ThemeMode.allCases) { mode in
+                                Text(mode.rawValue).tag(mode)
+                            }
                         }
+                        .pickerStyle(.segmented)
+                    }
 
-                        ForEach(availableServers, id: \.serverName) { server in
-                            Toggle(server.serverName, isOn: bindingForServer(server.serverName))
-                        }
-
-                        HStack(spacing: 8) {
-                            TextField("Invite code", text: $inviteCode)
-                                .padding(10)
+                    SectionHeader(title: "Account Settings")
+                    SettingsCard {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Minecraft Username")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                            TextField("Minecraft Username", text: $usernameDraft)
+                                .textInputAutocapitalization(.never)
+                                .autocorrectionDisabled()
+                                .padding(12)
                                 .background(Color(.secondarySystemBackground))
                                 .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
-                            Button("Add") { Task { await addInviteCode() } }
-                                .buttonStyle(SecondaryButtonStyle())
-                                .disabled(inviteCode.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                         }
 
-                        Button("Refresh Servers") { Task { await loadServers() } }
-                            .buttonStyle(SecondaryButtonStyle())
-                    }
-
-                    SettingsSection(title: "Milestones") {
-                        if rewardTiersByServer.isEmpty {
-                            Text("No reward tiers loaded yet")
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("Private Server Invite Code")
+                                .font(.caption)
                                 .foregroundColor(.secondary)
-                        } else {
-                            ForEach(appState.selectedServers, id: \.self) { server in
-                                if let tiers = rewardTiersByServer[server] {
-                                    Picker("Track for \(server)", selection: trackedTierBinding(server: server)) {
-                                        Text("None").tag(0)
-                                        ForEach(tiers) { tier in
-                                            Text("\(tier.label) – \(tier.minSteps)").tag(tier.minSteps)
-                                        }
-                                    }
-                                }
+                            Text("Add a private server using its invite code.")
+                                .font(.caption2)
+                                .foregroundColor(.secondary)
+                            TextField("Invite Code", text: $inviteCode)
+                                .padding(12)
+                                .background(Color(.secondarySystemBackground))
+                                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                        }
+
+                        HStack(spacing: 10) {
+                            Button("Add Private Server") { Task { await addInviteCode() } }
+                                .buttonStyle(PillPrimaryButton())
+                                .disabled(inviteCode.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                            Button("Scan QR") { showScanner = true }
+                                .buttonStyle(PillSecondaryButton())
+                        }
+
+                        Button(selectedServers.isEmpty ? "Select Servers" : "Servers: \(selectedServers.count) selected") {
+                            showServerSelector = true
+                        }
+                        .buttonStyle(PillSecondaryButton())
+
+                        Button(isSaving ? "Saving…" : "Save & Register All") {
+                            Task { await saveProfile() }
+                        }
+                        .buttonStyle(PillPrimaryButton())
+                        .disabled(!hasChanges || isSaving)
+
+                        if let statusMessage {
+                            StatusBanner(message: statusMessage.0, isSuccess: statusMessage.1)
+                        }
+
+                        if let scannerError {
+                            Text(scannerError)
+                                .foregroundColor(.red)
+                                .font(.caption)
+                        }
+                    }
+
+                    SectionHeader(title: "Sync & Permissions")
+                    SettingsCard {
+                        SettingsToggleRow(
+                            title: "Auto-Sync on Open",
+                            subtitle: "Sync steps immediately when you open the app.",
+                            isOn: $appState.autoSyncEnabled
+                        )
+
+                        Divider().padding(.vertical, 6)
+
+                        SettingsToggleRow(
+                            title: "Background Sync",
+                            subtitle: backgroundSyncDescription,
+                            isOn: $appState.backgroundSyncEnabled
+                        )
+
+                        if appState.backgroundSyncEnabled {
+                            VStack(alignment: .leading, spacing: 6) {
+                                Text("Sync Frequency")
+                                    .font(.subheadline)
+                                    .fontWeight(.semibold)
+                                Text("Every \(appState.backgroundSyncIntervalMinutes) minutes")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                                Slider(
+                                    value: Binding(
+                                        get: { Double(appState.backgroundSyncIntervalMinutes) },
+                                        set: { appState.backgroundSyncIntervalMinutes = Int($0) }
+                                    ),
+                                    in: 15...120,
+                                    step: 15
+                                )
                             }
                         }
-                    }
 
-                    SettingsSection(title: "Notifications") {
-                        Toggle("Enable admin updates", isOn: adminPushBinding())
+                        Divider().padding(.vertical, 6)
 
-                        if !rewardTiersByServer.isEmpty {
-                            ForEach(appState.selectedServers, id: \.self) { server in
-                                if let tiers = rewardTiersByServer[server] {
-                                    ForEach(tiers) { tier in
-                                        Toggle(
-                                            "\(server): \(tier.label)",
-                                            isOn: milestoneNotifyBinding(server: server, minSteps: tier.minSteps)
-                                        )
-                                    }
-                                }
+                        SettingsToggleRow(
+                            title: "High Reliability Mode",
+                            subtitle: "Ignore battery optimizations to keep sync running smoothly.",
+                            isOn: $appState.highReliabilityMode
+                        )
+
+                        Button(action: openHealthSettings) {
+                            HStack(spacing: 8) {
+                                Image(systemName: "gearshape")
+                                Text("Open Health Connect Settings")
+                                    .fontWeight(.semibold)
                             }
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 12)
+                            .background(Color(hex: 0xFF64B5F6))
+                            .foregroundColor(.black)
+                            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                         }
                     }
 
-                    SettingsSection(title: "Diagnostics") {
-                        NavigationLink("Recent Activity Log") {
-                            ActivityLogScreen()
-                        }
-                        NavigationLink("Raw Health Data") {
-                            RawHealthDataScreen()
-                        }
-                    }
-
-                    if let errorMessage {
-                        Text(errorMessage)
-                            .foregroundColor(.red)
+                    SectionHeader(title: "Health Connect Settings")
+                    SettingsCard {
+                        Text("Choose your step source")
                             .font(.subheadline)
+                            .fontWeight(.semibold)
+                        Text("No step sources found in the last 7 days.")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+
+                    SectionHeader(title: "Notifications")
+                    SettingsCard {
+                        Text("Enable notifications")
+                            .font(.subheadline)
+                            .fontWeight(.semibold)
+                        Text("Get alerts about rewards and server updates.")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+
+                        if !notificationsAuthorized {
+                            Button("Enable notifications") {
+                                Task { await requestNotificationPermissions() }
+                            }
+                            .buttonStyle(PillSecondaryButton())
+                        }
+
+                        Button("Manage server notifications") {
+                            showNotifyDialog = true
+                        }
+                        .buttonStyle(PillPrimaryButton())
+                    }
+
+                    SectionHeader(title: "Milestones")
+                    SettingsCard {
+                        Text("Track milestones")
+                            .font(.subheadline)
+                            .fontWeight(.semibold)
+                        Text("Select one milestone per server to track on your dashboard.")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        Button("Track milestones") { showTrackDialog = true }
+                            .buttonStyle(PillPrimaryButton())
                     }
                 }
                 .padding(16)
             }
             .task {
                 usernameDraft = appState.minecraftUsername
+                selectedServers = Set(appState.selectedServers)
                 await loadServers()
                 await loadRewards()
-                await requestNotificationPermissions()
+                await refreshNotificationStatus()
+            }
+            .onChange(of: selectedServers) { _ in
+                Task { await loadRewards() }
+            }
+        }
+        .sheet(isPresented: $showServerSelector) {
+            ServerSelectorSheet(
+                availableServers: availableServers,
+                privateServerNames: Set(appState.inviteCodesByServer.keys),
+                selectedServers: $selectedServers
+            )
+        }
+        .sheet(isPresented: $showNotifyDialog) {
+            ServerNotificationsSheet(
+                rewardTiersByServer: rewardTiersByServer,
+                selectedServer: $selectedNotifyServer,
+                appState: appState
+            )
+            .presentationDetents([.fraction(0.85)])
+        }
+        .sheet(isPresented: $showTrackDialog) {
+            TrackMilestonesSheet(
+                rewardTiersByServer: rewardTiersByServer,
+                selectedServer: $selectedTrackServer,
+                appState: appState
+            )
+            .presentationDetents([.fraction(0.85)])
+        }
+        .fullScreenCover(isPresented: $showScanner) {
+            NavigationStack {
+                ZStack {
+                    QRCodeScannerView(
+                        onFound: { raw in
+                            inviteCode = extractInviteCode(from: raw)
+                            statusMessage = ("Invite code scanned.", true)
+                            showScanner = false
+                        },
+                        onError: { message in
+                            scannerError = message
+                            showScanner = false
+                        }
+                    )
+                    .ignoresSafeArea()
+
+                    VStack {
+                        Text("Scan invite QR")
+                            .font(.headline)
+                            .padding(8)
+                            .background(.ultraThinMaterial)
+                            .clipShape(Capsule())
+                        Spacer()
+                    }
+                    .padding(.top, 20)
+                }
+                .toolbar {
+                    ToolbarItem(placement: .topBarLeading) {
+                        Button("Close") { showScanner = false }
+                    }
+                }
             }
         }
     }
 
-    private func bindingForServer(_ server: String) -> Binding<Bool> {
-        return Binding(
-            get: { appState.selectedServers.contains(server) },
-            set: { enabled in
-                if enabled {
-                    if !appState.selectedServers.contains(server) {
-                        appState.selectedServers.append(server)
-                    }
-                } else {
-                    appState.selectedServers.removeAll { $0 == server }
-                }
-            }
-        )
+    private var hasChanges: Bool {
+        let trimmed = usernameDraft.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed != appState.minecraftUsername || selectedServers != Set(appState.selectedServers)
     }
 
-    private func trackedTierBinding(server: String) -> Binding<Int> {
-        let current = appState.trackedMilestonesByServer[server] ?? 0
-        return Binding(
-            get: { current },
-            set: { value in
-                if value == 0 {
-                    appState.setTrackedMilestone(server: server, minSteps: nil)
-                } else {
-                    appState.setTrackedMilestone(server: server, minSteps: value)
-                }
-            }
-        )
+    private var backgroundSyncDescription: String {
+        if appState.backgroundSyncEnabled {
+            return "Periodic sync every \(appState.backgroundSyncIntervalMinutes) minutes while app is closed."
+        }
+        return "Disabled. No periodic sync while app is closed."
     }
 
     private func loadRewards() async {
         guard appState.isConfigured() else { return }
         var merged: [String: [RewardTier]] = [:]
-        for server in appState.selectedServers {
+        for server in selectedServers.sorted() {
             guard let key = appState.serverKey(for: server) else { continue }
             do {
                 let response = try await ApiClient.shared.getRewards(
@@ -158,45 +312,48 @@ struct SettingsScreen: View {
                 )
                 merged[server] = response.tiers
             } catch {
-                errorMessage = error.localizedDescription
+                statusMessage = (error.localizedDescription, false)
             }
         }
         rewardTiersByServer = merged
     }
 
-    private func adminPushBinding() -> Binding<Bool> {
-        return Binding(
-            get: { appState.selectedServers.allSatisfy { appState.isAdminPushEnabled(server: $0) } },
-            set: { value in
-                appState.selectedServers.forEach { appState.setAdminPushEnabled(server: $0, enabled: value) }
-            }
-        )
-    }
-
-    private func milestoneNotifyBinding(server: String, minSteps: Int) -> Binding<Bool> {
-        return Binding(
-            get: { appState.notificationTiers(server: server).contains(minSteps) },
-            set: { value in
-                appState.setNotificationTier(server: server, minSteps: minSteps, enabled: value)
-            }
-        )
-    }
-
     private func requestNotificationPermissions() async {
         do {
-            allowNotifications = try await NotificationManager.shared.requestAuthorization()
+            notificationsAuthorized = try await NotificationManager.shared.requestAuthorization()
         } catch {
-            allowNotifications = false
+            notificationsAuthorized = false
         }
+    }
+
+    private func refreshNotificationStatus() async {
+        let center = UNUserNotificationCenter.current()
+        let settings = await center.notificationSettings()
+        notificationsAuthorized = settings.authorizationStatus == .authorized || settings.authorizationStatus == .provisional
     }
 
     private func loadServers() async {
         isRefreshingServers = true
         do {
             let response = try await ApiClient.shared.getAvailableServers(inviteCode: nil)
-            availableServers = response.servers.sorted { $0.serverName.lowercased() < $1.serverName.lowercased() }
+            var merged = response.servers
+
+            let storedInvites = appState.inviteCodesByServer
+            let uniqueCodes = Set(storedInvites.values)
+            for code in uniqueCodes {
+                do {
+                    let privateResp = try await ApiClient.shared.getAvailableServers(inviteCode: code)
+                    let existing = Set(merged.map { $0.serverName })
+                    let newServers = privateResp.servers.filter { !existing.contains($0.serverName) }
+                    merged.append(contentsOf: newServers)
+                } catch {
+                    continue
+                }
+            }
+
+            availableServers = merged.sorted { $0.serverName.lowercased() < $1.serverName.lowercased() }
         } catch {
-            errorMessage = error.localizedDescription
+            statusMessage = (error.localizedDescription, false)
         }
         isRefreshingServers = false
     }
@@ -204,24 +361,42 @@ struct SettingsScreen: View {
     private func addInviteCode() async {
         let code = inviteCode.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !code.isEmpty else { return }
+        let trimmedUsername = usernameDraft.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedUsername.isEmpty else {
+            statusMessage = ("Set your Minecraft username before adding private servers.", false)
+            return
+        }
         do {
             let response = try await ApiClient.shared.getAvailableServers(inviteCode: code)
             let existing = Set(availableServers.map { $0.serverName })
             let newServers = response.servers.filter { !existing.contains($0.serverName) }
+            if newServers.isEmpty {
+                statusMessage = ("Invite code not found.", false)
+                return
+            }
             availableServers.append(contentsOf: newServers)
             newServers.forEach { appState.setInviteCode(server: $0.serverName, code: code) }
+            newServers.forEach { selectedServers.insert($0.serverName) }
             inviteCode = ""
+            let serverDisplayName = newServers.count == 1 ? newServers[0].serverName : "multiple servers"
+            statusMessage = ("You registered to \(serverDisplayName)", true)
         } catch {
-            errorMessage = error.localizedDescription
+            statusMessage = ("Could not add invite code: \(error.localizedDescription)", false)
         }
     }
 
     private func saveProfile() async {
         isSaving = true
         let trimmed = usernameDraft.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { isSaving = false; return }
+        guard !trimmed.isEmpty else {
+            statusMessage = ("Enter a username.", false)
+            isSaving = false
+            return
+        }
 
         appState.minecraftUsername = trimmed
+        appState.selectedServers = selectedServers.sorted()
+
         for server in appState.selectedServers {
             do {
                 let resp = try await ApiClient.shared.recoverKey(
@@ -241,31 +416,510 @@ struct SettingsScreen: View {
                     )
                     appState.setServerKey(server: server, apiKey: resp.playerApiKey)
                 } catch {
-                    errorMessage = error.localizedDescription
+                    statusMessage = (error.localizedDescription, false)
                 }
             }
         }
         appState.onboardingComplete = true
         isSaving = false
+        statusMessage = ("Settings saved & registered!", true)
+    }
+
+    private func openHealthSettings() {
+        if let url = URL(string: "x-apple-health://"), UIApplication.shared.canOpenURL(url) {
+            UIApplication.shared.open(url)
+        } else if let url = URL(string: UIApplication.openSettingsURLString) {
+            UIApplication.shared.open(url)
+        }
     }
 }
 
-private struct SettingsSection<Content: View>: View {
+private struct SectionHeader: View {
     let title: String
+
+    var body: some View {
+        Text(title)
+            .font(.headline)
+            .fontWeight(.bold)
+            .foregroundColor(.primary)
+    }
+}
+
+private struct SettingsCard<Content: View>: View {
     let content: Content
 
-    init(title: String, @ViewBuilder content: () -> Content) {
-        self.title = title
+    init(@ViewBuilder content: () -> Content) {
         self.content = content()
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text(title)
-                .font(.headline)
-                .foregroundColor(AppColors.healthGreen)
             content
         }
         .cardSurface()
     }
+}
+
+private struct StatusBanner: View {
+    let message: String
+    let isSuccess: Bool
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Image(systemName: isSuccess ? "checkmark.circle.fill" : "xmark.octagon.fill")
+                .foregroundColor(isSuccess ? AppColors.healthGreen : .red)
+            Text(message)
+                .foregroundColor(isSuccess ? AppColors.healthGreen : .red)
+                .font(.caption)
+                .fontWeight(.semibold)
+        }
+        .padding(10)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(isSuccess ? AppColors.healthLightGreen : Color.red.opacity(0.12))
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+    }
+}
+
+private struct SettingsToggleRow: View {
+    let title: String
+    let subtitle: String
+    @Binding var isOn: Bool
+
+    var body: some View {
+        HStack(alignment: .top) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title)
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+                Text(subtitle)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+            Spacer()
+            Toggle("", isOn: $isOn)
+                .labelsHidden()
+        }
+    }
+}
+
+private struct PillPrimaryButton: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 12)
+            .background(AppColors.healthGreen.opacity(configuration.isPressed ? 0.9 : 1))
+            .foregroundColor(.white)
+            .clipShape(Capsule())
+    }
+}
+
+private struct PillSecondaryButton: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 12)
+            .background(Color.clear)
+            .overlay(Capsule().stroke(Color.gray.opacity(0.4), lineWidth: 1))
+            .foregroundColor(.primary)
+    }
+}
+
+private struct ServerSelectorSheet: View {
+    let availableServers: [ServerInfo]
+    let privateServerNames: Set<String>
+    @Binding var selectedServers: Set<String>
+    @Environment(\.dismiss) private var dismiss
+    @State private var searchText = ""
+
+    var body: some View {
+        NavigationStack {
+            VStack(alignment: .leading, spacing: 16) {
+                Text("Select From Available Servers")
+                    .font(.headline)
+
+                HStack(spacing: 8) {
+                    Image(systemName: "magnifyingglass")
+                        .foregroundColor(.secondary)
+                    TextField("Search Servers", text: $searchText)
+                }
+                .padding(12)
+                .background(Color(.secondarySystemBackground))
+                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 12) {
+                        if !privateServers.isEmpty {
+                            Text("Private servers")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                            ForEach(privateServers, id: \.serverName) { server in
+                                ServerRow(server: server.serverName, selected: selectedServers.contains(server.serverName)) {
+                                    toggleServer(server.serverName)
+                                }
+                            }
+                        }
+
+                        if !publicServers.isEmpty {
+                            Text("Public servers")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                                .padding(.top, 8)
+                            ForEach(publicServers, id: \.serverName) { server in
+                                ServerRow(server: server.serverName, selected: selectedServers.contains(server.serverName)) {
+                                    toggleServer(server.serverName)
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Button("Done") { dismiss() }
+                    .buttonStyle(PillPrimaryButton())
+            }
+            .padding(20)
+        }
+    }
+
+    private var filteredServers: [ServerInfo] {
+        if searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            return availableServers
+        }
+        return availableServers.filter { $0.serverName.lowercased().contains(searchText.lowercased()) }
+    }
+
+    private var privateServers: [ServerInfo] {
+        filteredServers
+            .filter { privateServerNames.contains($0.serverName) }
+            .sorted { $0.serverName.lowercased() < $1.serverName.lowercased() }
+    }
+
+    private var publicServers: [ServerInfo] {
+        filteredServers
+            .filter { !privateServerNames.contains($0.serverName) }
+            .sorted { $0.serverName.lowercased() < $1.serverName.lowercased() }
+    }
+
+    private func toggleServer(_ server: String) {
+        if selectedServers.contains(server) {
+            selectedServers.remove(server)
+        } else {
+            selectedServers.insert(server)
+        }
+    }
+}
+
+private struct ServerRow: View {
+    let server: String
+    let selected: Bool
+    let onToggle: () -> Void
+
+    var body: some View {
+        Button(action: onToggle) {
+            HStack(spacing: 10) {
+                Image(systemName: selected ? "checkmark.square" : "square")
+                Text(server)
+                Spacer()
+            }
+            .foregroundColor(.primary)
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+private struct ServerNotificationsSheet: View {
+    let rewardTiersByServer: [String: [RewardTier]]
+    @Binding var selectedServer: String?
+    @ObservedObject var appState: AppState
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            VStack(alignment: .leading, spacing: 12) {
+                Text("Server notifications")
+                    .font(.title3)
+                    .fontWeight(.bold)
+                Text("Select a server to manage admin updates and milestone alerts.")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+
+                if servers.isEmpty {
+                    Text("No reward tiers found.")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                } else {
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: 10) {
+                            ForEach(servers, id: \.self) { server in
+                                Button {
+                                    selectedServer = server
+                                } label: {
+                                    HStack(spacing: 10) {
+                                        Image(systemName: selectedServer == server ? "checkmark.circle.fill" : "circle")
+                                            .foregroundColor(AppColors.healthGreen)
+                                        Text(server)
+                                        Spacer()
+                                    }
+                                }
+                                .buttonStyle(.plain)
+                            }
+
+                            if let server = selectedServer {
+                                Divider().padding(.vertical, 6)
+
+                                HStack {
+                                    Text("Admin updates")
+                                        .font(.subheadline)
+                                        .fontWeight(.semibold)
+                                    Spacer()
+                                    Toggle("", isOn: Binding(
+                                        get: { appState.isAdminPushEnabled(server: server) },
+                                        set: { appState.setAdminPushEnabled(server: server, enabled: $0) }
+                                    ))
+                                    .labelsHidden()
+                                }
+
+                                if let tiers = rewardTiersByServer[server], !tiers.isEmpty {
+                                    Text("Milestone alerts")
+                                        .font(.subheadline)
+                                        .fontWeight(.semibold)
+                                        .padding(.top, 6)
+                                    ForEach(tiers.sorted { $0.minSteps < $1.minSteps }) { tier in
+                                        let enabled = appState.notificationTiers(server: server).contains(tier.minSteps)
+                                        Button {
+                                            appState.setNotificationTier(server: server, minSteps: tier.minSteps, enabled: !enabled)
+                                        } label: {
+                                            HStack(spacing: 10) {
+                                                Image(systemName: enabled ? "checkmark.square" : "square")
+                                                Text("\(tier.label) · \(tier.minSteps) steps")
+                                                Spacer()
+                                            }
+                                            .font(.caption)
+                                        }
+                                        .buttonStyle(.plain)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Button("Done") { dismiss() }
+                    .buttonStyle(PillPrimaryButton())
+            }
+            .padding(20)
+            .onAppear {
+                if selectedServer == nil {
+                    selectedServer = servers.first
+                }
+            }
+        }
+    }
+
+    private var servers: [String] {
+        rewardTiersByServer.keys.sorted()
+    }
+}
+
+private struct TrackMilestonesSheet: View {
+    let rewardTiersByServer: [String: [RewardTier]]
+    @Binding var selectedServer: String?
+    @ObservedObject var appState: AppState
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            VStack(alignment: .leading, spacing: 12) {
+                Text("Track milestones")
+                    .font(.title3)
+                    .fontWeight(.bold)
+                Text("Select a server, then choose one milestone to track.")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+
+                if servers.isEmpty {
+                    Text("No reward tiers found.")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                } else {
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: 10) {
+                            ForEach(servers, id: \.self) { server in
+                                Button {
+                                    selectedServer = server
+                                } label: {
+                                    HStack(spacing: 10) {
+                                        Image(systemName: selectedServer == server ? "checkmark.circle.fill" : "circle")
+                                            .foregroundColor(AppColors.healthGreen)
+                                        Text(server)
+                                        Spacer()
+                                    }
+                                }
+                                .buttonStyle(.plain)
+                            }
+
+                            if let server = selectedServer {
+                                Divider().padding(.vertical, 6)
+                                Text("Milestones")
+                                    .font(.subheadline)
+                                    .fontWeight(.semibold)
+                                if let tiers = rewardTiersByServer[server], !tiers.isEmpty {
+                                    ForEach(tiers.sorted { $0.minSteps < $1.minSteps }) { tier in
+                                        let checked = appState.trackedMilestonesByServer[server] == tier.minSteps
+                                        Button {
+                                            appState.setTrackedMilestone(server: server, minSteps: tier.minSteps)
+                                        } label: {
+                                            HStack(spacing: 10) {
+                                                Image(systemName: checked ? "checkmark.circle.fill" : "circle")
+                                                    .foregroundColor(AppColors.healthGreen)
+                                                Text("\(tier.label) · \(tier.minSteps) steps")
+                                                Spacer()
+                                            }
+                                            .font(.caption)
+                                        }
+                                        .buttonStyle(.plain)
+                                    }
+                                    Button("Clear selection") {
+                                        appState.setTrackedMilestone(server: server, minSteps: nil)
+                                    }
+                                    .font(.caption)
+                                    .foregroundColor(AppColors.healthGreen)
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Button("Done") { dismiss() }
+                    .buttonStyle(PillPrimaryButton())
+            }
+            .padding(20)
+            .onAppear {
+                if selectedServer == nil {
+                    selectedServer = servers.first
+                }
+            }
+        }
+    }
+
+    private var servers: [String] {
+        rewardTiersByServer.keys.sorted()
+    }
+}
+
+private struct QRCodeScannerView: UIViewRepresentable {
+    var onFound: (String) -> Void
+    var onError: (String) -> Void
+
+    func makeCoordinator() -> Coordinator { Coordinator(self) }
+
+    func makeUIView(context: Context) -> UIView {
+        let view = UIView()
+        let session = AVCaptureSession()
+
+        let status = AVCaptureDevice.authorizationStatus(for: .video)
+        if status == .notDetermined {
+            AVCaptureDevice.requestAccess(for: .video) { granted in
+                DispatchQueue.main.async {
+                    if granted {
+                        context.coordinator.configureSession(session, in: view)
+                    } else {
+                        onError("Camera permission denied")
+                    }
+                }
+            }
+            return view
+        }
+
+        if status == .denied || status == .restricted {
+            DispatchQueue.main.async {
+                onError("Camera permission denied")
+            }
+            return view
+        }
+
+        context.coordinator.configureSession(session, in: view)
+        return view
+    }
+
+    func updateUIView(_ uiView: UIView, context: Context) {
+        context.coordinator.previewLayer?.frame = uiView.bounds
+    }
+
+    static func dismantleUIView(_ uiView: UIView, coordinator: Coordinator) {
+        coordinator.session?.stopRunning()
+    }
+
+    final class Coordinator: NSObject, AVCaptureMetadataOutputObjectsDelegate {
+        let parent: QRCodeScannerView
+        var session: AVCaptureSession?
+        var previewLayer: AVCaptureVideoPreviewLayer?
+        private var didScan = false
+
+        init(_ parent: QRCodeScannerView) {
+            self.parent = parent
+        }
+
+        func configureSession(_ session: AVCaptureSession, in view: UIView) {
+            guard let device = AVCaptureDevice.default(for: .video) else {
+                DispatchQueue.main.async {
+                    self.parent.onError("Camera not available")
+                }
+                return
+            }
+
+            do {
+                let input = try AVCaptureDeviceInput(device: device)
+                if session.canAddInput(input) {
+                    session.addInput(input)
+                }
+
+                let output = AVCaptureMetadataOutput()
+                if session.canAddOutput(output) {
+                    session.addOutput(output)
+                    output.setMetadataObjectsDelegate(self, queue: .main)
+                    output.metadataObjectTypes = [.qr]
+                }
+
+                let preview = AVCaptureVideoPreviewLayer(session: session)
+                preview.videoGravity = .resizeAspectFill
+                preview.frame = view.bounds
+                view.layer.addSublayer(preview)
+
+                self.session = session
+                self.previewLayer = preview
+                session.startRunning()
+            } catch {
+                DispatchQueue.main.async {
+                    self.parent.onError(error.localizedDescription)
+                }
+            }
+        }
+
+        func metadataOutput(
+            _ output: AVCaptureMetadataOutput,
+            didOutput metadataObjects: [AVMetadataObject],
+            from connection: AVCaptureConnection
+        ) {
+            guard !didScan,
+                  let first = metadataObjects.first as? AVMetadataMachineReadableCodeObject,
+                  first.type == .qr,
+                  let value = first.stringValue else { return }
+            didScan = true
+            parent.onFound(value)
+        }
+    }
+}
+
+private func extractInviteCode(from raw: String) -> String {
+    let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+    guard !trimmed.isEmpty else { return trimmed }
+    if let components = URLComponents(string: trimmed) {
+        let key = ["code", "invite", "invite_code"].first { name in
+            components.queryItems?.contains { $0.name == name } == true
+        }
+        if let key, let value = components.queryItems?.first(where: { $0.name == key })?.value, !value.isEmpty {
+            return value
+        }
+    }
+    return trimmed
 }

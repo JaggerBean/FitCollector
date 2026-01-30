@@ -20,8 +20,10 @@ struct RootView: View {
                     Label("Settings", systemImage: "gearshape")
                 }
             }
+            .preferredColorScheme(appState.themeMode.colorScheme)
         } else {
             OnboardingScreen()
+                .preferredColorScheme(appState.themeMode.colorScheme)
         }
     }
 }
