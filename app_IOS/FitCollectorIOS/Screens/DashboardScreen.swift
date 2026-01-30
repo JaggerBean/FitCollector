@@ -228,14 +228,16 @@ private struct StepCraftHeader: View {
                     .frame(width: 32, height: 32)
             }
 
-            HStack(spacing: 6) {
+            Spacer()
+
+            HStack(spacing: 8) {
                 Image(uiImage: loadLogo())
                     .resizable()
                     .renderingMode(.original)
-                    .frame(width: 24, height: 24)
+                    .frame(width: 28, height: 28)
                     .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
                 Text("StepCraft")
-                    .font(.system(size: 24, weight: .bold, design: .rounded))
+                    .font(.system(size: 26, weight: .bold, design: .rounded))
                     .foregroundColor(AppColors.healthGreen)
             }
 
@@ -246,8 +248,9 @@ private struct StepCraftHeader: View {
                     .foregroundColor(.secondary)
             }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.top, 4)
+        .frame(maxWidth: .infinity)
+        .padding(.top, 8)
+        .padding(.bottom, 4)
     }
 
     private func loadLogo() -> UIImage {
