@@ -173,6 +173,13 @@ fun DashboardScreen(
         }
     }
 
+    fun getDayString(yesterday: Boolean): String? {
+        return if (yesterday) {
+            val day = java.time.LocalDate.now(deviceZone).minusDays(1)
+                day.toString()
+            } else null
+    }
+
     suspend fun refreshClaimStatuses() {
         if (mcUsername.isBlank()) return
         val selectedServers = getSelectedServers(context)
@@ -200,7 +207,7 @@ fun DashboardScreen(
                         mcUsername,
                         server,
                         tier.min_steps,
-                        stepsRespDay(yesterday = true)
+                        getDayString(yesterday = true)
                     )
                     tierStatuses[tier.min_steps] = status
                 }

@@ -7,11 +7,16 @@ struct DashboardScreen: View {
     @State private var isLoading = false
     @State private var errorMessage: String?
     @State private var stepsToday: Int = 0
+    @State private var timeUntilReset: String = ""
 
     var body: some View {
         ScrollView {
             VStack(spacing: 16) {
-                HeaderRow(title: "StepCraft")
+                StepCraftHeader(username: appState.minecraftUsername)
+
+                if !timeUntilReset.isEmpty {
+                    ResetTimerCard(timeRemaining: timeUntilReset)
+                }
 
                 ActivityCard(stepsToday: stepsToday, canSync: canSync) {
                     Task { await syncService.syncSteps(appState: appState, manual: true) }
@@ -48,6 +53,7 @@ struct DashboardScreen: View {
             if appState.autoSyncEnabled {
                 await syncService.syncSteps(appState: appState, manual: false)
             }
+            startResetTimer()
         }
     }
 
@@ -85,6 +91,25 @@ struct DashboardScreen: View {
         }
         isLoading = false
     }
+
+    private func startResetTimer() {
+        updateResetTimer()
+        Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { _ in
+            updateResetTimer()
+        }
+    }
+
+    private func updateResetTimer() {
+        let central = TimeZone(identifier: "America/Chicago") ?? .current
+        var calendar = Calendar.current
+        calendar.timeZone = central
+        let now = Date()
+        let startOfTomorrow = calendar.startOfDay(for: now).addingTimeInterval(24 * 60 * 60)
+        let diff = Int(startOfTomorrow.timeIntervalSince(now))
+        let hours = max(0, diff / 3600)
+        let minutes = max(0, (diff % 3600) / 60)
+        timeUntilReset = String(format: "%02d:%02d", hours, minutes)
+    }
 }
 
 private struct SyncStatusBanner: View {
@@ -106,6 +131,76 @@ private struct SyncStatusBanner: View {
         .padding(12)
         .background(bg)
         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+    }
+}
+
+private struct StepCraftHeader: View {
+    let username: String
+
+    var body: some View {
+        HStack(spacing: 12) {
+            LogoBadge()
+            VStack(alignment: .leading, spacing: 2) {
+                Text("StepCraft")
+                    .font(.system(size: 26, weight: .black, design: .monospaced))
+                    .foregroundColor(AppColors.healthGreen)
+                Text("Collect steps. Earn rewards.")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+            }
+            Spacer()
+            if !username.isEmpty, let url = URL(string: "https://minotar.net/avatar/\(username)/48") {
+                AsyncImage(url: url) { image in
+                    image.resizable()
+                } placeholder: {
+                    Color.gray.opacity(0.2)
+                }
+                .frame(width: 36, height: 36)
+                .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.top, 4)
+    }
+}
+
+private struct LogoBadge: View {
+    var body: some View {
+        VStack(spacing: 2) {
+            Image(systemName: "figure.run")
+                .font(.system(size: 18, weight: .bold))
+                .foregroundColor(AppColors.healthGreen)
+            ZStack(alignment: .top) {
+                RoundedRectangle(cornerRadius: 2, style: .continuous)
+                    .fill(AppColors.minecraftDirt)
+                    .frame(width: 20, height: 12)
+                RoundedRectangle(cornerRadius: 2, style: .continuous)
+                    .fill(AppColors.minecraftGrass)
+                    .frame(width: 20, height: 4)
+            }
+        }
+        .frame(width: 28, height: 32)
+    }
+}
+
+private struct ResetTimerCard: View {
+    let timeRemaining: String
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "timer")
+                .foregroundColor(AppColors.healthBlue)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Next reset in")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                Text(timeRemaining)
+                    .font(.headline)
+                    .foregroundColor(AppColors.healthBlue)
+            }
+            Spacer()
+        }
+        .cardSurface()
     }
 }
 
@@ -232,22 +327,3 @@ private struct MilestoneRow: View {
     }
 }
 
-private struct HeaderRow: View {
-    let title: String
-
-    var body: some View {
-        HStack(spacing: 12) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title)
-                    .font(.system(size: 28, weight: .black))
-                    .foregroundColor(AppColors.healthGreen)
-                Text("Collect steps. Earn rewards.")
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-            }
-            Spacer()
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.top, 4)
-    }
-}

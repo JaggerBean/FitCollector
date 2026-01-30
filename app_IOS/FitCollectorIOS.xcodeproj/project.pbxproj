@@ -18,6 +18,7 @@
 		A1000009 /* OnboardingScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000009 /* OnboardingScreen.swift */; };
 		A100000A /* DashboardScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = A200000A /* DashboardScreen.swift */; };
 		A100000B /* SettingsScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = A200000B /* SettingsScreen.swift */; };
+		B168A6A42F2C5D7B0024EBF4 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = B168A6A32F2C5D7B0024EBF4 /* Theme.swift */; };
 		B1941CD92F2C5843004E26F7 /* ActivityLogScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1941CD72F2C5843004E26F7 /* ActivityLogScreen.swift */; };
 		B1941CDA2F2C5843004E26F7 /* RawHealthDataScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1941CD82F2C5843004E26F7 /* RawHealthDataScreen.swift */; };
 /* End PBXBuildFile section */
@@ -37,6 +38,7 @@
 		A200000C /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		A200000D /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		A200000E /* FitCollectorIOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; path = FitCollectorIOS.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		B168A6A32F2C5D7B0024EBF4 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		B1941CD72F2C5843004E26F7 /* ActivityLogScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityLogScreen.swift; sourceTree = "<group>"; };
 		B1941CD82F2C5843004E26F7 /* RawHealthDataScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RawHealthDataScreen.swift; sourceTree = "<group>"; };
 		B1941CDB2F2C5959004E26F7 /* FitCollectorIOS.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = FitCollectorIOS.entitlements; sourceTree = "<group>"; };
@@ -54,6 +56,7 @@
 		A3000001 /* FitCollectorIOS */ = {
 			isa = PBXGroup;
 			children = (
+				B168A6A32F2C5D7B0024EBF4 /* Theme.swift */,
 				B1941CDB2F2C5959004E26F7 /* FitCollectorIOS.entitlements */,
 				A2000001 /* FitCollectorIOSApp.swift */,
 				A2000002 /* RootView.swift */,
@@ -185,6 +188,7 @@
 				A1000009 /* OnboardingScreen.swift in Sources */,
 				A100000A /* DashboardScreen.swift in Sources */,
 				A100000B /* SettingsScreen.swift in Sources */,
+				B168A6A42F2C5D7B0024EBF4 /* Theme.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

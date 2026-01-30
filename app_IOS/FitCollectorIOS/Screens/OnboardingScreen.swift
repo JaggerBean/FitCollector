@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 struct OnboardingScreen: View {
     @EnvironmentObject private var appState: AppState
@@ -21,9 +22,10 @@ struct OnboardingScreen: View {
                 VStack(spacing: 20) {
                     VStack(spacing: 6) {
                         Text("Welcome to StepCraft")
-                            .font(.system(size: 26, weight: .black))
+                            .font(.system(size: 24, weight: .bold))
                             .foregroundColor(AppColors.healthGreen)
                         Text("Complete these steps to start earning rewards.")
+                            .font(.subheadline)
                             .foregroundColor(.secondary)
                     }
 
@@ -51,7 +53,7 @@ struct OnboardingScreen: View {
                             .font(.subheadline)
                     }
                 }
-                .padding(16)
+                .padding(24)
             }
             .navigationTitle("Onboarding")
             .task {
@@ -63,7 +65,15 @@ struct OnboardingScreen: View {
     }
 
     private var healthKitStep: some View {
-        StepCard(title: "Health Permissions", subtitle: "Allow StepCraft to read your daily step count from HealthKit.", icon: "heart.fill") {
+        VStack(spacing: 16) {
+            StepIcon(systemName: "heart.fill")
+            Text("Step 1: HealthKit Permissions")
+                .font(.headline)
+            Text("Allow StepCraft to read your daily step count from HealthKit.")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+
             Button(healthKitAuthorized ? "Authorized" : "Authorize HealthKit") {
                 Task {
                     do {
@@ -75,12 +85,20 @@ struct OnboardingScreen: View {
                     }
                 }
             }
-            .buttonStyle(PrimaryButtonStyle())
+            .buttonStyle(PillPrimaryButton())
         }
     }
 
     private var notificationStep: some View {
-        StepCard(title: "Notifications", subtitle: "Get notified about rewards and admin updates.", icon: "bell.fill") {
+        VStack(spacing: 16) {
+            StepIcon(systemName: "bell.fill")
+            Text("Step 2: Notifications")
+                .font(.headline)
+            Text("Enable notifications for rewards and admin updates.")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+
             Button(notificationsAuthorized ? "Enabled" : "Enable Notifications") {
                 Task {
                     do {
@@ -91,15 +109,23 @@ struct OnboardingScreen: View {
                     step = 3
                 }
             }
-            .buttonStyle(PrimaryButtonStyle())
+            .buttonStyle(PillPrimaryButton())
 
             Button("Skip") { step = 3 }
-                .buttonStyle(SecondaryButtonStyle())
+                .buttonStyle(PillSecondaryButton())
         }
     }
 
     private var usernameStep: some View {
-        StepCard(title: "Minecraft Username", subtitle: "We’ll use this to sync rewards with your server.", icon: "person.fill") {
+        VStack(spacing: 16) {
+            StepIcon(systemName: "person.fill")
+            Text("Step 3: Minecraft Username")
+                .font(.headline)
+            Text("We’ll use this to sync rewards with your server.")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+
             TextField("Username", text: $username)
                 .textInputAutocapitalization(.never)
                 .autocorrectionDisabled()
@@ -115,13 +141,21 @@ struct OnboardingScreen: View {
             }
 
             Button("Continue") { Task { await validateUsernameAndContinue() } }
-                .buttonStyle(PrimaryButtonStyle())
+                .buttonStyle(PillPrimaryButton())
                 .disabled(username.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
         }
     }
 
     private var serversStep: some View {
-        StepCard(title: "Servers", subtitle: "Select the servers you want to sync.", icon: "server.rack") {
+        VStack(spacing: 16) {
+            StepIcon(systemName: "server.rack")
+            Text("Step 4: Servers")
+                .font(.headline)
+            Text("Select the servers you want to sync.")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+
             if availableServers.isEmpty {
                 Text("No servers loaded yet.")
                     .foregroundColor(.secondary)
@@ -145,12 +179,12 @@ struct OnboardingScreen: View {
                     .background(Color(.secondarySystemBackground))
                     .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
                 Button("Add") { Task { await addInviteCode() } }
-                    .buttonStyle(SecondaryButtonStyle())
+                    .buttonStyle(PillSecondaryButton())
                     .disabled(inviteCode.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             }
 
             Button(isLoading ? "Finishing…" : "Finish Setup") { Task { await finishSetup() } }
-                .buttonStyle(PrimaryButtonStyle())
+                .buttonStyle(PillPrimaryButton())
                 .disabled(isLoading || selectedServers.isEmpty)
         }
     }
@@ -231,6 +265,7 @@ struct OnboardingScreen: View {
         appState.onboardingComplete = appState.isConfigured()
         isLoading = false
     }
+
 }
 
 private struct StepProgressBar: View {
@@ -240,43 +275,46 @@ private struct StepProgressBar: View {
     var body: some View {
         HStack(spacing: 8) {
             ForEach(1...total, id: \.self) { index in
-                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                Capsule()
                     .fill(index <= step ? AppColors.healthGreen : Color.gray.opacity(0.25))
-                    .frame(height: 6)
+                    .frame(height: 4)
             }
         }
         .padding(.horizontal, 8)
     }
 }
 
-private struct StepCard<Content: View>: View {
-    let title: String
-    let subtitle: String
-    let icon: String
-    let content: Content
-
-    init(title: String, subtitle: String, icon: String, @ViewBuilder content: () -> Content) {
-        self.title = title
-        self.subtitle = subtitle
-        self.icon = icon
-        self.content = content()
-    }
+private struct StepIcon: View {
+    let systemName: String
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(spacing: 10) {
-                Image(systemName: icon)
-                    .foregroundColor(AppColors.healthGreen)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(title)
-                        .font(.headline)
-                    Text(subtitle)
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                }
-            }
-            content
-        }
-        .cardSurface()
+        Image(systemName: systemName)
+            .font(.system(size: 34, weight: .bold))
+            .foregroundColor(AppColors.healthGreen)
+            .padding(.bottom, 4)
+    }
+}
+
+private struct PillPrimaryButton: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 12)
+            .background(AppColors.healthGreen.opacity(configuration.isPressed ? 0.9 : 1))
+            .foregroundColor(.white)
+            .clipShape(Capsule())
+    }
+}
+
+private struct PillSecondaryButton: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 12)
+            .background(Color.clear)
+            .overlay(
+                Capsule().stroke(Color.gray.opacity(0.5), lineWidth: 1)
+            )
+            .foregroundColor(.primary)
     }
 }
