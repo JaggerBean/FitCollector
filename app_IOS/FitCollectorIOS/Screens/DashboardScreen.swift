@@ -40,7 +40,7 @@ struct DashboardScreen: View {
                 }
                 if let error = syncService.lastErrorMessage {
                     SyncStatusBanner(
-                        message: error,
+                        message: friendlyMessage(error),
                         isSuccess: false,
                         timestamp: syncService.lastSyncDate
                     )
@@ -55,7 +55,7 @@ struct DashboardScreen: View {
                 }
 
                 if let errorMessage {
-                    Text(errorMessage)
+                    Text(friendlyMessage(errorMessage))
                         .foregroundColor(.red)
                         .font(.subheadline)
                 }
