@@ -19,7 +19,8 @@ struct SettingsScreen: View {
     @State private var selectedTrackServer: String?
     @State private var selectedNotifyServer: String?
     @State private var notificationsAuthorized = false
-    @State private var statusMessage: (String, Bool)?
+    @State private var usernameStatusMessage: (String, Bool)?
+    @State private var serverStatusMessage: (String, Bool)?
     @State private var scannerError: String?
     @State private var timeUntilReset: String = ""
     @State private var isAutoSavingServers = false
@@ -92,14 +93,8 @@ struct SettingsScreen: View {
                             .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                         }
 
-                        if let statusMessage {
-                            StatusBanner(message: statusMessage.0, isSuccess: statusMessage.1)
-                        }
-
-                        if let scannerError {
-                            Text(scannerError)
-                                .foregroundColor(.red)
-                                .font(.caption)
+                        if let usernameStatusMessage {
+                            StatusBanner(message: usernameStatusMessage.0, isSuccess: usernameStatusMessage.1)
                         }
                     }
 
@@ -130,6 +125,16 @@ struct SettingsScreen: View {
                             showServerSelector = true
                         }
                         .buttonStyle(PillSecondaryButton())
+
+                        if let serverStatusMessage {
+                            StatusBanner(message: serverStatusMessage.0, isSuccess: serverStatusMessage.1)
+                        }
+
+                        if let scannerError {
+                            Text(scannerError)
+                                .foregroundColor(.red)
+                                .font(.caption)
+                        }
                     }
 
                     SectionHeader(title: "Sync & Permissions")
@@ -249,7 +254,7 @@ struct SettingsScreen: View {
                     QRCodeScannerView(
                         onFound: { raw in
                             inviteCode = extractInviteCode(from: raw)
-                            statusMessage = ("Invite code scanned.", true)
+                            serverStatusMessage = ("Invite code scanned.", true)
                             showScanner = false
                         },
                         onError: { message in
@@ -303,7 +308,7 @@ struct SettingsScreen: View {
                 )
                 merged[server] = response.tiers
             } catch {
-                statusMessage = (error.localizedDescription, false)
+                serverStatusMessage = (error.localizedDescription, false)
             }
         }
         rewardTiersByServer = merged
@@ -344,7 +349,7 @@ struct SettingsScreen: View {
 
             availableServers = merged.sorted { $0.serverName.lowercased() < $1.serverName.lowercased() }
         } catch {
-            statusMessage = (error.localizedDescription, false)
+            serverStatusMessage = (error.localizedDescription, false)
         }
         isRefreshingServers = false
     }
@@ -354,7 +359,7 @@ struct SettingsScreen: View {
         guard !code.isEmpty else { return }
         let trimmedUsername = usernameDraft.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedUsername.isEmpty else {
-            statusMessage = ("Set your Minecraft username before adding private servers.", false)
+            usernameStatusMessage = ("Set your Minecraft username before adding private servers.", false)
             return
         }
         do {
@@ -362,7 +367,7 @@ struct SettingsScreen: View {
             let existing = Set(availableServers.map { $0.serverName })
             let newServers = response.servers.filter { !existing.contains($0.serverName) }
             if newServers.isEmpty {
-                statusMessage = ("Invite code not found.", false)
+                serverStatusMessage = ("Invite code not found.", false)
                 return
             }
             availableServers.append(contentsOf: newServers)
@@ -370,10 +375,10 @@ struct SettingsScreen: View {
             newServers.forEach { selectedServers.insert($0.serverName) }
             inviteCode = ""
             let serverDisplayName = newServers.count == 1 ? newServers[0].serverName : "multiple servers"
-            statusMessage = ("You registered to \(serverDisplayName)", true)
+            serverStatusMessage = ("You registered to \(serverDisplayName)", true)
             await autoSaveServers()
         } catch {
-            statusMessage = ("Could not add invite code: \(error.localizedDescription)", false)
+            serverStatusMessage = ("Could not add invite code: \(error.localizedDescription)", false)
         }
     }
 
@@ -381,7 +386,7 @@ struct SettingsScreen: View {
         isSaving = true
         let trimmed = usernameDraft.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else {
-            statusMessage = ("Enter a username.", false)
+            usernameStatusMessage = ("Enter a username.", false)
             isSaving = false
             return
         }
@@ -390,7 +395,7 @@ struct SettingsScreen: View {
         if changingUsername {
             let isValid = await ApiClient.shared.validateMinecraftUsername(trimmed)
             if !isValid {
-                statusMessage = ("Minecraft username not found.", false)
+                usernameStatusMessage = ("Minecraft username not found.", false)
                 isSaving = false
                 return
             }
@@ -398,7 +403,7 @@ struct SettingsScreen: View {
         if changingUsername && (forceQueue || !appState.canChangeUsernameToday()) {
             appState.queueUsername(trimmed)
             appState.selectedServers = selectedServers.sorted()
-            statusMessage = ("Username queued for tomorrow!", true)
+            usernameStatusMessage = ("Username queued for tomorrow!", true)
             isSaving = false
             return
         }
@@ -429,13 +434,13 @@ struct SettingsScreen: View {
                     )
                     appState.setServerKey(server: server, apiKey: resp.playerApiKey)
                 } catch {
-                    statusMessage = (error.localizedDescription, false)
+                    serverStatusMessage = (error.localizedDescription, false)
                 }
             }
         }
         appState.onboardingComplete = true
         isSaving = false
-        statusMessage = ("Settings saved & registered!", true)
+        serverStatusMessage = ("Settings saved & registered!", true)
     }
 
     private func autoSaveServers() async {
@@ -464,7 +469,7 @@ struct SettingsScreen: View {
                     )
                     appState.setServerKey(server: server, apiKey: resp.playerApiKey)
                 } catch {
-                    statusMessage = (error.localizedDescription, false)
+                    serverStatusMessage = (error.localizedDescription, false)
                 }
             }
         }
