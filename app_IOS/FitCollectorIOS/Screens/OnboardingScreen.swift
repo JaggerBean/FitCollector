@@ -3,6 +3,7 @@ import AVFoundation
 
 struct OnboardingScreen: View {
     @EnvironmentObject private var appState: AppState
+    @Environment(\.colorScheme) private var colorScheme
 
     @State private var step = 1
     @State private var username = ""
@@ -33,7 +34,7 @@ struct OnboardingScreen: View {
                             .foregroundColor(AppColors.healthGreen)
                         Text("Complete these steps to start earning rewards.")
                             .font(.subheadline)
-                            .foregroundColor(.secondary)
+                            .foregroundColor(secondaryTextColor)
                     }
 
                     StepProgressBar(step: step, total: 5)
@@ -64,6 +65,7 @@ struct OnboardingScreen: View {
                 }
                 .padding(24)
             }
+            .background(baseBackground)
             .task {
                 username = appState.minecraftUsername
                 selectedServers = Set(appState.selectedServers)
@@ -79,7 +81,7 @@ struct OnboardingScreen: View {
                 .font(.headline)
             Text("Allow StepCraft to read your daily step count from HealthKit.")
                 .font(.subheadline)
-                .foregroundColor(.secondary)
+                .foregroundColor(secondaryTextColor)
                 .multilineTextAlignment(.center)
 
             Button(healthKitAuthorized ? "Authorized" : "Authorize HealthKit") {
@@ -104,7 +106,7 @@ struct OnboardingScreen: View {
                 .font(.headline)
             Text("Enable notifications for rewards and admin updates.")
                 .font(.subheadline)
-                .foregroundColor(.secondary)
+                .foregroundColor(secondaryTextColor)
                 .multilineTextAlignment(.center)
 
             Button(notificationsAuthorized ? "Enabled" : "Enable Notifications") {
@@ -131,14 +133,14 @@ struct OnboardingScreen: View {
                 .font(.headline)
             Text("Enter your exact Minecraft username.")
                 .font(.subheadline)
-                .foregroundColor(.secondary)
+                .foregroundColor(secondaryTextColor)
                 .multilineTextAlignment(.center)
 
             TextField("Minecraft Username", text: $username)
                 .textInputAutocapitalization(.never)
                 .autocorrectionDisabled()
                 .padding(12)
-                .background(Color.white)
+                .background(inputBackground)
                 .overlay(
                     RoundedRectangle(cornerRadius: 10, style: .continuous)
                         .stroke(Color.gray.opacity(0.4), lineWidth: 1)
@@ -162,7 +164,7 @@ struct OnboardingScreen: View {
                 .font(.headline)
             Text("Is this the correct Minecraft username?")
                 .font(.subheadline)
-                .foregroundColor(.secondary)
+                .foregroundColor(secondaryTextColor)
                 .multilineTextAlignment(.center)
 
             if let url = avatarURL(for: pendingUsername) {
@@ -195,7 +197,7 @@ struct OnboardingScreen: View {
                 .font(.headline)
             Text("Choose which servers to sync with.")
                 .font(.subheadline)
-                .foregroundColor(.secondary)
+                .foregroundColor(secondaryTextColor)
                 .multilineTextAlignment(.center)
 
             HStack(spacing: 12) {
@@ -208,12 +210,12 @@ struct OnboardingScreen: View {
             VStack(alignment: .leading, spacing: 10) {
                 Text("Selected servers:")
                     .font(.footnote)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(secondaryTextColor)
 
                 if selectedServers.isEmpty {
                     Text("No servers selected.")
                         .font(.subheadline)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(secondaryTextColor)
                 } else {
                     ForEach(selectedServers.sorted(), id: \.self) { server in
                         Button {
@@ -377,6 +379,18 @@ struct OnboardingScreen: View {
         guard !cleaned.isEmpty else { return nil }
         let encoded = cleaned.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? cleaned
         return URL(string: "https://minotar.net/armor/bust/\(encoded)/128")
+    }
+
+    private var baseBackground: Color {
+        colorScheme == .dark ? AppColors.darkBackground : Color(.systemBackground)
+    }
+
+    private var inputBackground: Color {
+        colorScheme == .dark ? AppColors.darkSurface : Color.white
+    }
+
+    private var secondaryTextColor: Color {
+        colorScheme == .dark ? Color(hex: 0xFFB0B0B0) : .secondary
     }
 }
 
