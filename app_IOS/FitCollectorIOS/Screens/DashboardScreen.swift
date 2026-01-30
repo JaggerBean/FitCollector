@@ -1,5 +1,4 @@
 import SwiftUI
-import UIKit
 
 struct DashboardScreen: View {
     @EnvironmentObject private var appState: AppState
@@ -230,15 +229,11 @@ private struct StepCraftHeader: View {
             }
 
             HStack(spacing: 6) {
-                if let logoImage = UIImage(named: "logo") ?? UIImage(named: "logo.png") ?? loadLogoFromBundle() {
-                    Image(uiImage: logoImage)
-                        .resizable()
-                        .renderingMode(.original)
-                        .frame(width: 24, height: 24)
-                        .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
-                } else {
-                    LogoBadge()
-                }
+                Image("logo")
+                    .resizable()
+                    .renderingMode(.original)
+                    .frame(width: 24, height: 24)
+                    .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
                 Text("StepCraft")
                     .font(.system(size: 24, weight: .bold, design: .rounded))
                     .foregroundColor(AppColors.healthGreen)
@@ -273,30 +268,6 @@ private struct ResetTimerCard: View {
         .padding(10)
         .background(Color(hex: 0xFFE6F0FF))
         .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
-    }
-}
-
-private func loadLogoFromBundle() -> UIImage? {
-    guard let path = Bundle.main.path(forResource: "logo", ofType: "png") else { return nil }
-    return UIImage(contentsOfFile: path)
-}
-
-private struct LogoBadge: View {
-    var body: some View {
-        VStack(spacing: 2) {
-            Image(systemName: "figure.run")
-                .font(.system(size: 18, weight: .bold))
-                .foregroundColor(AppColors.healthGreen)
-            ZStack(alignment: .top) {
-                RoundedRectangle(cornerRadius: 2, style: .continuous)
-                    .fill(AppColors.minecraftDirt)
-                    .frame(width: 20, height: 12)
-                RoundedRectangle(cornerRadius: 2, style: .continuous)
-                    .fill(AppColors.minecraftGrass)
-                    .frame(width: 20, height: 4)
-            }
-        }
-        .frame(width: 28, height: 32)
     }
 }
 

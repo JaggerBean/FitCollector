@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		A1000001 /* FitCollectorIOSApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000001 /* FitCollectorIOSApp.swift */; };
+		C0000002 /* logo.png in Resources */ = {isa = PBXBuildFile; fileRef = C0000001 /* logo.png */; };
 		A1000002 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000002 /* RootView.swift */; };
 		A1000003 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000003 /* Models.swift */; };
 		A1000004 /* ApiClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000004 /* ApiClient.swift */; };
@@ -25,6 +26,7 @@
 
 /* Begin PBXFileReference section */
 		A2000001 /* FitCollectorIOSApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FitCollectorIOSApp.swift; sourceTree = "<group>"; };
+		C0000001 /* logo.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Assets.xcassets/logo.png; sourceTree = "<group>"; };
 		A2000002 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		A2000003 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
 		A2000004 /* ApiClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApiClient.swift; sourceTree = "<group>"; };
@@ -64,6 +66,7 @@
 				A3000003 /* Services */,
 				A3000004 /* Screens */,
 				A200000D /* Assets.xcassets */,
+				C0000001 /* logo.png */,
 				A200000C /* Info.plist */,
 			);
 			path = FitCollectorIOS;
@@ -165,6 +168,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C0000002 /* logo.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
