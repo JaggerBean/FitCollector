@@ -234,7 +234,7 @@ private struct StepCraftHeader: View {
                 Image(uiImage: loadLogo())
                     .resizable()
                     .renderingMode(.original)
-                    .frame(width: 28, height: 28)
+                    .frame(width: 34, height: 34)
                     .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
                 Text("StepCraft")
                     .font(.system(size: 26, weight: .bold, design: .rounded))
