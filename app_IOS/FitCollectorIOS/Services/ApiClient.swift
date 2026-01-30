@@ -140,6 +140,7 @@ final class ApiClient {
         if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
             if let detail = json["detail"] as? String { return detail }
             if let message = json["message"] as? String { return message }
+            if let error = json["error"] as? String { return error }
         }
         if let text = String(data: data, encoding: .utf8), !text.isEmpty {
             return text
