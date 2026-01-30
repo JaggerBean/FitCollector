@@ -1,11 +1,11 @@
 import SwiftUI
-import UIKit
 
 struct OnboardingScreen: View {
     @EnvironmentObject private var appState: AppState
 
     @State private var step = 1
     @State private var username = ""
+    @State private var pendingUsername = ""
     @State private var inviteCode = ""
     @State private var availableServers: [ServerInfo] = []
     @State private var selectedServers: Set<String> = []
@@ -15,6 +15,10 @@ struct OnboardingScreen: View {
     @State private var notificationsAuthorized = false
     @State private var usernameValid: Bool?
     @State private var isValidating = false
+    @State private var showPublicServers = false
+    @State private var showPrivateServer = false
+    @State private var serverSearch = ""
+    @State private var privateInviteCode = ""
 
     var body: some View {
         NavigationStack {
@@ -29,7 +33,7 @@ struct OnboardingScreen: View {
                             .foregroundColor(.secondary)
                     }
 
-                    StepProgressBar(step: step, total: 4)
+                    StepProgressBar(step: step, total: 6)
 
                     Group {
                         switch step {
@@ -38,9 +42,13 @@ struct OnboardingScreen: View {
                         case 2:
                             notificationStep
                         case 3:
-                            usernameStep
+                            placeholderStep
                         case 4:
-                            serversStep
+                            usernameEntryStep
+                        case 5:
+                            confirmUsernameStep
+                        case 6:
+                            serversSelectionStep
                         default:
                             EmptyView()
                         }
@@ -116,76 +124,128 @@ struct OnboardingScreen: View {
         }
     }
 
-    private var usernameStep: some View {
+    private var placeholderStep: some View {
         VStack(spacing: 16) {
-            StepIcon(systemName: "person.fill")
-            Text("Step 3: Minecraft Username")
+            StepIcon(systemName: "checkmark.seal.fill")
+            Text("Step 3: Ready to Sync")
                 .font(.headline)
-            Text("We’ll use this to sync rewards with your server.")
+            Text("You’re almost set — let’s confirm your account.")
                 .font(.subheadline)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
 
-            TextField("Username", text: $username)
-                .textInputAutocapitalization(.never)
-                .autocorrectionDisabled()
-                .padding(12)
-                .background(Color(.secondarySystemBackground))
-                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
-
-            if isValidating {
-                ProgressView("Validating…")
-            } else if let usernameValid {
-                Text(usernameValid ? "Username looks valid" : "Username not found")
-                    .foregroundColor(usernameValid ? AppColors.healthGreen : .red)
-            }
-
-            Button("Continue") { Task { await validateUsernameAndContinue() } }
+            Button("Continue") { step = 4 }
                 .buttonStyle(PillPrimaryButton())
-                .disabled(username.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
         }
     }
 
-    private var serversStep: some View {
+    private var usernameEntryStep: some View {
         VStack(spacing: 16) {
-            StepIcon(systemName: "server.rack")
-            Text("Step 4: Servers")
+            StepIcon(systemName: "person.fill")
+            Text("Step 4: Minecraft Username")
                 .font(.headline)
-            Text("Select the servers you want to sync.")
+            Text("Enter your exact Minecraft username.")
                 .font(.subheadline)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
 
-            if availableServers.isEmpty {
-                Text("No servers loaded yet.")
-                    .foregroundColor(.secondary)
+            TextField("Minecraft Username", text: $username)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
+                .padding(12)
+                .background(Color.white)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .stroke(Color.gray.opacity(0.4), lineWidth: 1)
+                )
+
+            if isValidating {
+                ProgressView("Validating…")
             }
 
-            VStack(alignment: .leading, spacing: 8) {
-                ForEach(availableServers, id: \.serverName) { server in
-                    Toggle(server.serverName, isOn: Binding(
-                        get: { selectedServers.contains(server.serverName) },
-                        set: { enabled in
-                            if enabled { selectedServers.insert(server.serverName) }
-                            else { selectedServers.remove(server.serverName) }
-                        }
-                    ))
+            Button("Next") { Task { await validateUsernameAndContinue() } }
+                .buttonStyle(PillPrimaryButton())
+                .disabled(username.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                .opacity(username.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? 0.4 : 1)
+        }
+    }
+
+    private var confirmUsernameStep: some View {
+        VStack(spacing: 16) {
+            StepIcon(systemName: "person.fill")
+            Text("Step 5: Confirm Username")
+                .font(.headline)
+            Text("Is this the correct Minecraft username?")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+
+            if let url = avatarURL(for: pendingUsername) {
+                AsyncImage(url: url) { image in
+                    image.resizable()
+                } placeholder: {
+                    Color.gray.opacity(0.2)
                 }
+                .frame(width: 90, height: 90)
+                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
             }
 
-            HStack(spacing: 8) {
-                TextField("Invite code", text: $inviteCode)
-                    .padding(12)
-                    .background(Color(.secondarySystemBackground))
-                    .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
-                Button("Add") { Task { await addInviteCode() } }
+            Text(pendingUsername)
+                .font(.title3)
+                .fontWeight(.bold)
+
+            HStack(spacing: 12) {
+                Button("Back") { step = 4 }
                     .buttonStyle(PillSecondaryButton())
-                    .disabled(inviteCode.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                Button("Confirm") { step = 6 }
+                    .buttonStyle(PillPrimaryButton())
+            }
+        }
+    }
+
+    private var serversSelectionStep: some View {
+        VStack(spacing: 16) {
+            StepIcon(systemName: "server.rack")
+            Text("Step 6: Select Servers")
+                .font(.headline)
+            Text("Choose which servers to sync with.")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+
+            HStack(spacing: 12) {
+                Button("Browse public") { showPublicServers = true }
+                    .buttonStyle(PillSecondaryButton())
+                Button("Add private") { showPrivateServer = true }
+                    .buttonStyle(PillSecondaryButton())
             }
 
-            Button(isLoading ? "Finishing…" : "Finish Setup") { Task { await finishSetup() } }
+            Text(selectedServers.isEmpty ? "No servers selected." : "\(selectedServers.count) servers selected.")
+                .font(.footnote)
+                .foregroundColor(.secondary)
+
+            Button(isLoading ? "Finishing…" : "Complete setup") { Task { await finishSetup() } }
                 .buttonStyle(PillPrimaryButton())
                 .disabled(isLoading || selectedServers.isEmpty)
+                .opacity(selectedServers.isEmpty ? 0.4 : 1)
+        }
+        .sheet(isPresented: $showPublicServers) {
+            PublicServersSheet(
+                servers: availableServers,
+                selectedServers: $selectedServers,
+                searchText: $serverSearch,
+                onDone: { showPublicServers = false }
+            )
+        }
+        .sheet(isPresented: $showPrivateServer) {
+            PrivateServerSheet(inviteCode: $privateInviteCode, onAdd: {
+                inviteCode = privateInviteCode
+                Task { await addInviteCode() }
+                privateInviteCode = ""
+                showPrivateServer = false
+            }, onClose: {
+                showPrivateServer = false
+            })
         }
     }
 
@@ -196,7 +256,8 @@ struct OnboardingScreen: View {
         usernameValid = valid
         isValidating = false
         if valid {
-            step = 4
+            pendingUsername = username
+            step = 5
         } else {
             errorMessage = "Minecraft username not found."
         }
@@ -266,6 +327,12 @@ struct OnboardingScreen: View {
         isLoading = false
     }
 
+    private func avatarURL(for name: String) -> URL? {
+        let cleaned = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !cleaned.isEmpty else { return nil }
+        let encoded = cleaned.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? cleaned
+        return URL(string: "https://minotar.net/armor/bust/\(encoded)/128")
+    }
 }
 
 private struct StepProgressBar: View {
@@ -316,5 +383,100 @@ private struct PillSecondaryButton: ButtonStyle {
                 Capsule().stroke(Color.gray.opacity(0.5), lineWidth: 1)
             )
             .foregroundColor(.primary)
+    }
+}
+
+private struct PublicServersSheet: View {
+    let servers: [ServerInfo]
+    @Binding var selectedServers: Set<String>
+    @Binding var searchText: String
+    let onDone: () -> Void
+
+    var body: some View {
+        NavigationStack {
+            VStack(alignment: .leading, spacing: 16) {
+                Text("Public servers")
+                    .font(.headline)
+
+                HStack(spacing: 8) {
+                    Image(systemName: "magnifyingglass")
+                        .foregroundColor(.secondary)
+                    TextField("Search Servers", text: $searchText)
+                }
+                .padding(12)
+                .background(Color(.secondarySystemBackground))
+                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+
+                VStack(alignment: .leading, spacing: 12) {
+                    ForEach(filteredServers, id: \.serverName) { server in
+                        Button {
+                            toggleServer(server.serverName)
+                        } label: {
+                            HStack(spacing: 12) {
+                                Image(systemName: selectedServers.contains(server.serverName) ? "checkmark.square" : "square")
+                                    .foregroundColor(.primary)
+                                Text(server.serverName)
+                                    .foregroundColor(.primary)
+                                Spacer()
+                            }
+                        }
+                    }
+                }
+
+                Spacer()
+
+                Button("Done") { onDone() }
+                    .buttonStyle(PillPrimaryButton())
+            }
+            .padding(20)
+        }
+    }
+
+    private var filteredServers: [ServerInfo] {
+        if searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            return servers
+        }
+        return servers.filter { $0.serverName.lowercased().contains(searchText.lowercased()) }
+    }
+
+    private func toggleServer(_ server: String) {
+        if selectedServers.contains(server) {
+            selectedServers.remove(server)
+        } else {
+            selectedServers.insert(server)
+        }
+    }
+}
+
+private struct PrivateServerSheet: View {
+    @Binding var inviteCode: String
+    var onAdd: () -> Void
+    var onClose: () -> Void
+
+    var body: some View {
+        NavigationStack {
+            VStack(alignment: .leading, spacing: 16) {
+                Text("Add private server")
+                    .font(.headline)
+
+                TextField("Invite Code", text: $inviteCode)
+                    .padding(12)
+                    .background(Color(.secondarySystemBackground))
+                    .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+
+                HStack(spacing: 12) {
+                    Button("Scan QR") { }
+                        .buttonStyle(PillSecondaryButton())
+                    Button("Add") { onAdd() }
+                        .buttonStyle(PillPrimaryButton())
+                }
+
+                Spacer()
+
+                Button("Close") { onClose() }
+                    .foregroundColor(AppColors.healthGreen)
+            }
+            .padding(20)
+        }
     }
 }
