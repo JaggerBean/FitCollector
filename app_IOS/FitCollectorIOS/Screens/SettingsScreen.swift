@@ -61,12 +61,35 @@ struct SettingsScreen: View {
                         }
                         let changingUsername = usernameDraft.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
                             != appState.minecraftUsername.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-                        let saveTitle = isSaving ? "Saving…" : (changingUsername && !appState.canChangeUsernameToday() ? "Queue for Tomorrow" : "Save & Register All")
-                        Button(saveTitle) {
-                            Task { await saveProfile() }
+                        if changingUsername && !appState.canChangeUsernameToday() {
+                            Button("Queue for Tomorrow") {
+                                Task { await saveProfile() }
+                            }
+                            .buttonStyle(PillPrimaryButton())
+                            .disabled(isSaving)
                         }
-                        .buttonStyle(PillPrimaryButton())
-                        .disabled(!hasChanges || isSaving)
+
+                        if !appState.queuedUsername.isEmpty {
+                            HStack(spacing: 12) {
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text("Next up: \(appState.queuedUsername)")
+                                        .font(.caption)
+                                        .fontWeight(.semibold)
+                                    Text("Applying in \(timeUntilReset)")
+                                        .font(.caption2)
+                                        .foregroundColor(.secondary)
+                                }
+                                Spacer()
+                                Button("Cancel") {
+                                    appState.clearQueuedUsername()
+                                }
+                                .font(.caption)
+                                .foregroundColor(.red)
+                            }
+                            .padding(10)
+                            .background(Color(.secondarySystemBackground))
+                            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                        }
 
                         if let statusMessage {
                             StatusBanner(message: statusMessage.0, isSuccess: statusMessage.1)
@@ -76,38 +99,6 @@ struct SettingsScreen: View {
                             Text(scannerError)
                                 .foregroundColor(.red)
                                 .font(.caption)
-                        }
-                    }
-
-                    if !appState.queuedUsername.isEmpty || !appState.canChangeUsernameToday() {
-                        SectionHeader(title: "Username Change")
-                        SettingsCard {
-                            if !appState.queuedUsername.isEmpty {
-                                HStack(spacing: 12) {
-                                    VStack(alignment: .leading, spacing: 4) {
-                                        Text("Next up: \(appState.queuedUsername)")
-                                            .font(.caption)
-                                            .fontWeight(.semibold)
-                                        Text("Applying in \(timeUntilReset)")
-                                            .font(.caption2)
-                                            .foregroundColor(.secondary)
-                                    }
-                                    Spacer()
-                                    Button("Cancel") {
-                                        appState.clearQueuedUsername()
-                                    }
-                                    .font(.caption)
-                                    .foregroundColor(.red)
-                                }
-                                .padding(10)
-                                .background(Color(.secondarySystemBackground))
-                                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-                            } else if !appState.canChangeUsernameToday()
-                                && usernameDraft.trimmingCharacters(in: .whitespacesAndNewlines) != appState.minecraftUsername {
-                                Text("Changed once today. Wait \(timeUntilReset) or queue for tomorrow.")
-                                    .font(.caption)
-                                    .foregroundColor(.red)
-                            }
                         }
                     }
 
@@ -138,6 +129,12 @@ struct SettingsScreen: View {
                             showServerSelector = true
                         }
                         .buttonStyle(PillSecondaryButton())
+                        let saveTitle = isSaving ? "Saving…" : "Save & Register All"
+                        Button(saveTitle) {
+                            Task { await saveProfile() }
+                        }
+                        .buttonStyle(PillPrimaryButton())
+                        .disabled(!hasChanges || isSaving)
                     }
 
                     SectionHeader(title: "Sync & Permissions")
