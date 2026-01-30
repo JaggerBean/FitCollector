@@ -33,7 +33,7 @@ struct OnboardingScreen: View {
                             .foregroundColor(.secondary)
                     }
 
-                    StepProgressBar(step: step, total: 6)
+                    StepProgressBar(step: step, total: 5)
 
                     Group {
                         switch step {
@@ -42,12 +42,10 @@ struct OnboardingScreen: View {
                         case 2:
                             notificationStep
                         case 3:
-                            placeholderStep
-                        case 4:
                             usernameEntryStep
-                        case 5:
+                        case 4:
                             confirmUsernameStep
-                        case 6:
+                        case 5:
                             serversSelectionStep
                         default:
                             EmptyView()
@@ -124,25 +122,10 @@ struct OnboardingScreen: View {
         }
     }
 
-    private var placeholderStep: some View {
-        VStack(spacing: 16) {
-            StepIcon(systemName: "checkmark.seal.fill")
-            Text("Step 3: Ready to Sync")
-                .font(.headline)
-            Text("You’re almost set — let’s confirm your account.")
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-                .multilineTextAlignment(.center)
-
-            Button("Continue") { step = 4 }
-                .buttonStyle(PillPrimaryButton())
-        }
-    }
-
     private var usernameEntryStep: some View {
         VStack(spacing: 16) {
             StepIcon(systemName: "person.fill")
-            Text("Step 4: Minecraft Username")
+            Text("Step 3: Minecraft Username")
                 .font(.headline)
             Text("Enter your exact Minecraft username.")
                 .font(.subheadline)
@@ -173,7 +156,7 @@ struct OnboardingScreen: View {
     private var confirmUsernameStep: some View {
         VStack(spacing: 16) {
             StepIcon(systemName: "person.fill")
-            Text("Step 5: Confirm Username")
+            Text("Step 4: Confirm Username")
                 .font(.headline)
             Text("Is this the correct Minecraft username?")
                 .font(.subheadline)
@@ -195,9 +178,9 @@ struct OnboardingScreen: View {
                 .fontWeight(.bold)
 
             HStack(spacing: 12) {
-                Button("Back") { step = 4 }
+                Button("Back") { step = 3 }
                     .buttonStyle(PillSecondaryButton())
-                Button("Confirm") { step = 6 }
+                Button("Confirm") { step = 5 }
                     .buttonStyle(PillPrimaryButton())
             }
         }
@@ -206,7 +189,7 @@ struct OnboardingScreen: View {
     private var serversSelectionStep: some View {
         VStack(spacing: 16) {
             StepIcon(systemName: "server.rack")
-            Text("Step 6: Select Servers")
+            Text("Step 5: Select Servers")
                 .font(.headline)
             Text("Choose which servers to sync with.")
                 .font(.subheadline)
@@ -220,9 +203,28 @@ struct OnboardingScreen: View {
                     .buttonStyle(PillSecondaryButton())
             }
 
-            Text(selectedServers.isEmpty ? "No servers selected." : "\(selectedServers.count) servers selected.")
-                .font(.footnote)
-                .foregroundColor(.secondary)
+            VStack(alignment: .leading, spacing: 10) {
+                Text("Selected servers:")
+                    .font(.footnote)
+                    .foregroundColor(.secondary)
+
+                if selectedServers.isEmpty {
+                    Text("No servers selected.")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                } else {
+                    ForEach(selectedServers.sorted(), id: \.self) { server in
+                        HStack(spacing: 10) {
+                            Image(systemName: "checkmark.square.fill")
+                                .foregroundColor(AppColors.healthGreen)
+                            Text(server)
+                                .foregroundColor(.primary)
+                            Spacer()
+                        }
+                    }
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
 
             Button(isLoading ? "Finishing…" : "Complete setup") { Task { await finishSetup() } }
                 .buttonStyle(PillPrimaryButton())
@@ -257,7 +259,7 @@ struct OnboardingScreen: View {
         isValidating = false
         if valid {
             pendingUsername = username
-            step = 5
+            step = 4
         } else {
             errorMessage = "Minecraft username not found."
         }
