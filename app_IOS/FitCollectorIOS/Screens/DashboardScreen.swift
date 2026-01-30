@@ -229,7 +229,7 @@ private struct StepCraftHeader: View {
             }
 
             HStack(spacing: 6) {
-                Image("logo")
+                Image(uiImage: loadLogo())
                     .resizable()
                     .renderingMode(.original)
                     .frame(width: 24, height: 24)
@@ -248,6 +248,15 @@ private struct StepCraftHeader: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.top, 4)
+    }
+
+    private func loadLogo() -> UIImage {
+        if let path = Bundle.main.path(forResource: "logo", ofType: "png"),
+           let image = UIImage(contentsOfFile: path) {
+            return image
+        }
+        assertionFailure("logo.png not found in bundle")
+        return UIImage()
     }
 }
 
