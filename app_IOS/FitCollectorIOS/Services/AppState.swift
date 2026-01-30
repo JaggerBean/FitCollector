@@ -129,6 +129,12 @@ final class AppState: ObservableObject {
         milestoneNotifiedByKey["\(server)|\(minSteps)"] = dayKey
     }
 
+    func resetDeviceId() {
+        let newId = "ios-" + UUID().uuidString
+        deviceId = newId
+        serverKeysByUserServer = [:]
+    }
+
     private static func loadDeviceId() -> String {
         if let keychain = KeychainHelper.shared.readString(forKey: Keys.deviceId), !keychain.isEmpty {
             return keychain

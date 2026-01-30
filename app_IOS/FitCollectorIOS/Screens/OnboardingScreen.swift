@@ -67,6 +67,25 @@ struct OnboardingScreen: View {
                                 .foregroundColor(.red)
                                 .multilineTextAlignment(.center)
                                 .font(.subheadline)
+
+                            if shouldOfferReset(for: errorMessage) {
+                                Text("This device is already registered on that server with a different username. Log in with the original username to recover your key. You can change your username later in Settings.")
+                                    .font(.footnote)
+                                    .foregroundColor(secondaryTextColor)
+                                    .multilineTextAlignment(.center)
+
+                                if !appState.minecraftUsername.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+                                   appState.minecraftUsername.lowercased() != username.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() {
+                                    Button("Use previous username") {
+                                        let previous = appState.minecraftUsername
+                                        username = previous
+                                        pendingUsername = previous
+                                        errorMessage = nil
+                                        step = 4
+                                    }
+                                    .buttonStyle(PillSecondaryButton())
+                                }
+                            }
                         }
 
                         Spacer(minLength: 0)
@@ -465,6 +484,13 @@ struct OnboardingScreen: View {
 
     private var secondaryTextColor: Color {
         colorScheme == .dark ? Color(hex: 0xFFB0B0B0) : .secondary
+    }
+
+    private func shouldOfferReset(for message: String) -> Bool {
+        let lowered = message.lowercased()
+        if lowered.contains("device already registered") { return true }
+        if lowered.contains("no active registration found") { return true }
+        return false
     }
 }
 
