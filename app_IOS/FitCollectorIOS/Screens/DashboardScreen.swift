@@ -89,6 +89,7 @@ struct DashboardScreen: View {
             stepsToday = steps
         } catch {
             stepsToday = appState.lastKnownSteps ?? 0
+            errorMessage = friendlyMessage(error.localizedDescription)
         }
     }
 
@@ -181,6 +182,15 @@ struct DashboardScreen: View {
         if message.contains("data couldn't be read because it is missing") { return true }
         if message.contains("data couldn’t be read because it is missing") { return true }
         return false
+    }
+
+    private func friendlyMessage(_ message: String) -> String {
+        let lowered = message.lowercased()
+        if lowered.contains("data couldn't be read because it is missing")
+            || lowered.contains("data couldn’t be read because it is missing") {
+            return "No step data yet."
+        }
+        return message
     }
 }
 
