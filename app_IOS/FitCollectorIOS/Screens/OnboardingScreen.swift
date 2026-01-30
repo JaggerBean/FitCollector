@@ -289,8 +289,18 @@ struct OnboardingScreen: View {
             let response = try await ApiClient.shared.getAvailableServers(inviteCode: code)
             let existing = Set(availableServers.map { $0.serverName })
             let newServers = response.servers.filter { !existing.contains($0.serverName) }
-            availableServers.append(contentsOf: newServers)
-            newServers.forEach { appState.setInviteCode(server: $0.serverName, code: code) }
+            if !newServers.isEmpty {
+                availableServers.append(contentsOf: newServers)
+            }
+
+            if response.servers.isEmpty {
+                errorMessage = "No servers found for that invite code."
+            } else {
+                for server in response.servers {
+                    appState.setInviteCode(server: server.serverName, code: code)
+                    selectedServers.insert(server.serverName)
+                }
+            }
             inviteCode = ""
         } catch {
             errorMessage = error.localizedDescription
