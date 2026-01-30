@@ -2,8 +2,11 @@ import Foundation
 import SwiftUI
 
 final class AppState: ObservableObject {
-    @Published var deviceId: String = UserDefaults.standard.string(forKey: Keys.deviceId) ?? UUID().uuidString {
-        didSet { UserDefaults.standard.set(deviceId, forKey: Keys.deviceId) }
+    @Published var deviceId: String = AppState.loadDeviceId() {
+        didSet {
+            UserDefaults.standard.set(deviceId, forKey: Keys.deviceId)
+            KeychainHelper.shared.saveString(deviceId, forKey: Keys.deviceId)
+        }
     }
     @Published var minecraftUsername: String = UserDefaults.standard.string(forKey: Keys.minecraftUsername) ?? "" {
         didSet { UserDefaults.standard.set(minecraftUsername, forKey: Keys.minecraftUsername) }
@@ -118,6 +121,20 @@ final class AppState: ObservableObject {
 
     func markNotifiedMilestone(server: String, minSteps: Int, dayKey: String) {
         milestoneNotifiedByKey["\(server)|\(minSteps)"] = dayKey
+    }
+
+    private static func loadDeviceId() -> String {
+        if let keychain = KeychainHelper.shared.readString(forKey: Keys.deviceId), !keychain.isEmpty {
+            return keychain
+        }
+        if let stored = UserDefaults.standard.string(forKey: Keys.deviceId), !stored.isEmpty {
+            KeychainHelper.shared.saveString(stored, forKey: Keys.deviceId)
+            return stored
+        }
+        let newId = "ios-" + UUID().uuidString
+        KeychainHelper.shared.saveString(newId, forKey: Keys.deviceId)
+        UserDefaults.standard.set(newId, forKey: Keys.deviceId)
+        return newId
     }
 
     private enum Keys {

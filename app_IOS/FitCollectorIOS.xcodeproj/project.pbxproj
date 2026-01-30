@@ -13,6 +13,7 @@
 		A1000003 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000003 /* Models.swift */; };
 		A1000004 /* ApiClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000004 /* ApiClient.swift */; };
 		A1000005 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000005 /* AppState.swift */; };
+		C0000004 /* KeychainHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0000003 /* KeychainHelper.swift */; };
 		A1000006 /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000006 /* NotificationManager.swift */; };
 		A1000007 /* HealthKitManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000007 /* HealthKitManager.swift */; };
 		A1000008 /* SyncService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000008 /* SyncService.swift */; };
@@ -31,6 +32,7 @@
 		A2000003 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
 		A2000004 /* ApiClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApiClient.swift; sourceTree = "<group>"; };
 		A2000005 /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
+		C0000003 /* KeychainHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainHelper.swift; sourceTree = "<group>"; };
 		A2000006 /* NotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationManager.swift; sourceTree = "<group>"; };
 		A2000007 /* HealthKitManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthKitManager.swift; sourceTree = "<group>"; };
 		A2000008 /* SyncService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncService.swift; sourceTree = "<group>"; };
@@ -85,6 +87,7 @@
 			children = (
 				A2000004 /* ApiClient.swift */,
 				A2000005 /* AppState.swift */,
+				C0000003 /* KeychainHelper.swift */,
 				A2000006 /* NotificationManager.swift */,
 				A2000007 /* HealthKitManager.swift */,
 				A2000008 /* SyncService.swift */,
@@ -186,6 +189,7 @@
 				B1941CDA2F2C5843004E26F7 /* RawHealthDataScreen.swift in Sources */,
 				A1000004 /* ApiClient.swift in Sources */,
 				A1000005 /* AppState.swift in Sources */,
+				C0000004 /* KeychainHelper.swift in Sources */,
 				A1000006 /* NotificationManager.swift in Sources */,
 				A1000007 /* HealthKitManager.swift in Sources */,
 				A1000008 /* SyncService.swift in Sources */,
