@@ -26,8 +26,8 @@ struct OnboardingScreen: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                GeometryReader { geo in
+            GeometryReader { geo in
+                ScrollView {
                     VStack(spacing: 20) {
                         Spacer(minLength: 0)
 
@@ -71,12 +71,12 @@ struct OnboardingScreen: View {
                     .padding(24)
                     .frame(minHeight: geo.size.height)
                 }
-            }
-            .background(baseBackground)
-            .task {
-                username = appState.minecraftUsername
-                selectedServers = Set(appState.selectedServers)
-                await loadServers(inviteCode: nil)
+                .background(baseBackground)
+                .task {
+                    username = appState.minecraftUsername
+                    selectedServers = Set(appState.selectedServers)
+                    await loadServers(inviteCode: nil)
+                }
             }
         }
     }
