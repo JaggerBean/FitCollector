@@ -214,12 +214,20 @@ struct OnboardingScreen: View {
                         .foregroundColor(.secondary)
                 } else {
                     ForEach(selectedServers.sorted(), id: \.self) { server in
-                        HStack(spacing: 10) {
-                            Image(systemName: "checkmark.square.fill")
-                                .foregroundColor(AppColors.healthGreen)
-                            Text(server)
-                                .foregroundColor(.primary)
-                            Spacer()
+                        Button {
+                            if selectedServers.contains(server) {
+                                selectedServers.remove(server)
+                            } else {
+                                selectedServers.insert(server)
+                            }
+                        } label: {
+                            HStack(spacing: 10) {
+                                Image(systemName: "checkmark.square.fill")
+                                    .foregroundColor(AppColors.healthGreen)
+                                Text(server)
+                                    .foregroundColor(.primary)
+                                Spacer()
+                            }
                         }
                     }
                 }
