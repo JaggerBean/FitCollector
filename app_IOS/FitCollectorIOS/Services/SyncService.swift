@@ -21,6 +21,10 @@ final class SyncService: ObservableObject {
             do {
                 stepsToday = try await HealthKitManager.shared.readTodaySteps()
             } catch {
+                if isMissingDataError(error) {
+                    lastErrorMessage = "No step data yet."
+                    return
+                }
                 if shouldSuppress(error: error) {
                     return
                 }
@@ -61,7 +65,7 @@ final class SyncService: ObservableObject {
                 lastSyncMessage = successMsg
                 lastSyncDate = Date()
             }
-            if let errorMsg { lastErrorMessage = errorMsg }
+            if let errorMsg { lastErrorMessage = friendlyMessage(errorMsg) }
 
             let logMessage = successMsg ?? errorMsg ?? "Unknown failure"
             let logEntry = SyncLogEntry(
@@ -74,8 +78,23 @@ final class SyncService: ObservableObject {
             appState.addSyncLogEntry(logEntry)
         } catch {
             if shouldSuppress(error: error) { return }
-            lastErrorMessage = error.localizedDescription
+            lastErrorMessage = friendlyMessage(error.localizedDescription)
         }
+    }
+
+    private func isMissingDataError(_ error: Error) -> Bool {
+        let message = error.localizedDescription.lowercased()
+        return message.contains("data couldn't be read because it is missing")
+            || message.contains("data couldn’t be read because it is missing")
+    }
+
+    private func friendlyMessage(_ message: String) -> String {
+        let lowered = message.lowercased()
+        if lowered.contains("data couldn't be read because it is missing")
+            || lowered.contains("data couldn’t be read because it is missing") {
+            return "No step data yet."
+        }
+        return message
     }
 
     private func shouldSuppress(error: Error) -> Bool {
