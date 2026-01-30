@@ -184,3 +184,15 @@ struct AvailableServersResponse: Codable {
         case servers
     }
 }
+
+struct DeviceUsernameResponse: Codable {
+    let minecraftUsername: String
+    let deviceId: String
+    let serverName: String
+
+    enum CodingKeys: String, CodingKey {
+        case minecraftUsername = "minecraft_username"
+        case deviceId = "device_id"
+        case serverName = "server_name"
+    }
+}

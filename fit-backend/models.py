@@ -56,6 +56,12 @@ class KeyRecoveryRequest(BaseModel):
     server_name: str = Field(..., min_length=3, max_length=50)
 
 
+class DeviceUsernameResponse(BaseModel):
+    minecraft_username: str
+    device_id: str
+    server_name: str
+
+
 class ApiKeyResponse(BaseModel):
     api_key: str
     server_name: str

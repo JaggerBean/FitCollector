@@ -5,7 +5,7 @@ from sqlalchemy import text
 from zoneinfo import ZoneInfo
 from datetime import datetime, timezone
 from database import engine
-from models import PlayerRegistrationRequest, PlayerApiKeyResponse, KeyRecoveryRequest
+from models import PlayerRegistrationRequest, PlayerApiKeyResponse, KeyRecoveryRequest, DeviceUsernameResponse
 from utils import generate_opaque_token, hash_token
 import json
 from auth import require_api_key, validate_and_get_server
@@ -627,6 +627,46 @@ def recover_key(request: KeyRecoveryRequest) -> PlayerApiKeyResponse:
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to recover key: {str(e)}")
+
+
+@router.get("/v1/players/device-username")
+def get_device_username(
+    device_id: str = Query(...),
+    server_name: str = Query(...),
+) -> DeviceUsernameResponse:
+    """
+    Return the most recently used minecraft_username for a device on a server.
+    """
+    try:
+        with engine.begin() as conn:
+            row = conn.execute(
+                text("""
+                    SELECT minecraft_username
+                    FROM player_keys
+                    WHERE device_id = :device_id
+                      AND server_name = :server_name
+                      AND active = TRUE
+                    ORDER BY last_used DESC NULLS LAST, id DESC
+                    LIMIT 1
+                """),
+                {
+                    "device_id": device_id,
+                    "server_name": server_name,
+                }
+            ).fetchone()
+
+        if not row:
+            raise HTTPException(status_code=404, detail="No active registration found for this device/server")
+
+        return DeviceUsernameResponse(
+            minecraft_username=row[0],
+            device_id=device_id,
+            server_name=server_name,
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to lookup device username: {str(e)}")
 
 @router.get("/v1/players/steps-yesterday")
 def get_steps_yesterday(minecraft_username: str = Query(...), player_api_key: str = Query(...)):

@@ -159,6 +159,26 @@ final class ApiClient {
         return try JSONDecoder().decode(AvailableServersResponse.self, from: data)
     }
 
+    func getDeviceUsername(deviceId: String, serverName: String) async throws -> DeviceUsernameResponse {
+        var components = URLComponents(url: baseURL.appendingPathComponent("/v1/players/device-username"), resolvingAgainstBaseURL: false)!
+        components.queryItems = [
+            URLQueryItem(name: "device_id", value: deviceId),
+            URLQueryItem(name: "server_name", value: serverName)
+        ]
+        var request = URLRequest(url: components.url!)
+        request.setValue(globalApiKey, forHTTPHeaderField: "X-API-Key")
+        let (data, response) = try await URLSession.shared.data(for: request)
+        let http = response as? HTTPURLResponse
+        if let http, !(200...299).contains(http.statusCode) {
+            let detail = decodeErrorDetail(data) ?? "Server error (status \(http.statusCode))."
+            throw APIError(message: detail)
+        }
+        guard !data.isEmpty else {
+            throw APIError(message: "Server returned empty response.")
+        }
+        return try JSONDecoder().decode(DeviceUsernameResponse.self, from: data)
+    }
+
     func ingest(_ payload: IngestPayload) async throws -> IngestResponse {
         let url = baseURL.appendingPathComponent("/v1/ingest")
         var request = URLRequest(url: url)

@@ -26,7 +26,8 @@ struct OnboardingScreen: View {
     @State private var privateInviteError: String?
     @State private var isAddingPrivate = false
     @State private var didLoad = false
-    @State private var previousUsernameHint = ""
+    @State private var remoteUsernameHint = ""
+    @State private var isLoadingUsernameHint = false
 
     var body: some View {
         NavigationStack {
@@ -76,12 +77,12 @@ struct OnboardingScreen: View {
                                     .foregroundColor(secondaryTextColor)
                                     .multilineTextAlignment(.center)
 
-                                          let previous = previousUsernameHint.trimmingCharacters(in: .whitespacesAndNewlines)
-                                if !previous.isEmpty,
-                                   previous.lowercased() != username.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() {
-                                    Button("Login with \(previous)") {
-                                        username = previous
-                                        pendingUsername = previous
+                                        let suggested = remoteUsernameHint.trimmingCharacters(in: .whitespacesAndNewlines)
+                                        if !suggested.isEmpty,
+                                           suggested.lowercased() != username.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() {
+                                            Button("Login with \(suggested)") {
+                                                username = suggested
+                                                pendingUsername = suggested
                                         self.errorMessage = nil
                                         step = 4
                                     }
@@ -101,7 +102,6 @@ struct OnboardingScreen: View {
                     didLoad = true
                     await MainActor.run {
                         username = appState.minecraftUsername
-                        previousUsernameHint = appState.minecraftUsername
                         selectedServers = Set(appState.selectedServers)
                     }
                     await loadServers(inviteCode: nil)
@@ -406,7 +406,6 @@ struct OnboardingScreen: View {
             errorMessage = nil
         }
 
-        let storedPrevious = appState.minecraftUsername
         let trimmed = username.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else {
             await MainActor.run {
@@ -419,9 +418,6 @@ struct OnboardingScreen: View {
         await MainActor.run {
             appState.minecraftUsername = trimmed
             appState.selectedServers = Array(selectedServers).sorted()
-            if previousUsernameHint.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                previousUsernameHint = storedPrevious
-            }
         }
 
         var registrationError: String?
@@ -466,6 +462,12 @@ struct OnboardingScreen: View {
                 errorMessage = registrationError
                 isLoading = false
             }
+            if shouldOfferReset(for: registrationError) {
+                let serverHint = appState.selectedServers.sorted().first
+                if let serverHint {
+                    await fetchRemoteUsernameHint(server: serverHint)
+                }
+            }
             return
         }
         await MainActor.run {
@@ -498,6 +500,28 @@ struct OnboardingScreen: View {
         if lowered.contains("device already registered") { return true }
         if lowered.contains("no active registration found") { return true }
         return false
+    }
+
+    private func fetchRemoteUsernameHint(server: String) async {
+        await MainActor.run {
+            if isLoadingUsernameHint { return }
+            isLoadingUsernameHint = true
+            remoteUsernameHint = ""
+        }
+        do {
+            let response = try await ApiClient.shared.getDeviceUsername(
+                deviceId: appState.deviceId,
+                serverName: server
+            )
+            await MainActor.run {
+                remoteUsernameHint = response.minecraftUsername
+                isLoadingUsernameHint = false
+            }
+        } catch {
+            await MainActor.run {
+                isLoadingUsernameHint = false
+            }
+        }
     }
 }
 
