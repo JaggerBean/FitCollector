@@ -26,6 +26,7 @@ struct OnboardingScreen: View {
     @State private var privateInviteError: String?
     @State private var isAddingPrivate = false
     @State private var didLoad = false
+    @State private var previousUsernameHint = ""
 
     var body: some View {
         NavigationStack {
@@ -75,7 +76,7 @@ struct OnboardingScreen: View {
                                     .foregroundColor(secondaryTextColor)
                                     .multilineTextAlignment(.center)
 
-                                let previous = appState.minecraftUsername.trimmingCharacters(in: .whitespacesAndNewlines)
+                                          let previous = previousUsernameHint.trimmingCharacters(in: .whitespacesAndNewlines)
                                 if !previous.isEmpty,
                                    previous.lowercased() != username.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() {
                                     Button("Login with \(previous)") {
@@ -100,6 +101,7 @@ struct OnboardingScreen: View {
                     didLoad = true
                     await MainActor.run {
                         username = appState.minecraftUsername
+                        previousUsernameHint = appState.minecraftUsername
                         selectedServers = Set(appState.selectedServers)
                     }
                     await loadServers(inviteCode: nil)
@@ -404,6 +406,7 @@ struct OnboardingScreen: View {
             errorMessage = nil
         }
 
+        let storedPrevious = appState.minecraftUsername
         let trimmed = username.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else {
             await MainActor.run {
@@ -416,6 +419,9 @@ struct OnboardingScreen: View {
         await MainActor.run {
             appState.minecraftUsername = trimmed
             appState.selectedServers = Array(selectedServers).sorted()
+            if previousUsernameHint.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                previousUsernameHint = storedPrevious
+            }
         }
 
         var registrationError: String?
