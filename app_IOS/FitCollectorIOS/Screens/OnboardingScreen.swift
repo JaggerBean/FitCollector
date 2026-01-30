@@ -328,8 +328,11 @@ struct OnboardingScreen: View {
                 availableServers = sorted
             }
         } catch {
+            let message = error.localizedDescription
             await MainActor.run {
-                errorMessage = error.localizedDescription
+                if !shouldSuppressError(message) {
+                    errorMessage = message
+                }
             }
         }
     }
@@ -420,8 +423,11 @@ struct OnboardingScreen: View {
                         appState.setServerKey(server: server, apiKey: resp.playerApiKey)
                     }
                 } catch {
+                    let message = error.localizedDescription
                     await MainActor.run {
-                        errorMessage = error.localizedDescription
+                        if !shouldSuppressError(message) {
+                            errorMessage = message
+                        }
                     }
                 }
             }
@@ -449,6 +455,14 @@ struct OnboardingScreen: View {
 
     private var secondaryTextColor: Color {
         colorScheme == .dark ? Color(hex: 0xFFB0B0B0) : .secondary
+    }
+
+    private func shouldSuppressError(_ message: String) -> Bool {
+        let lowered = message.lowercased()
+        if lowered.contains("no data available for the specified predicate") { return true }
+        if lowered.contains("data couldn't be read because it is missing") { return true }
+        if lowered.contains("data couldn’t be read because it is missing") { return true }
+        return false
     }
 }
 
