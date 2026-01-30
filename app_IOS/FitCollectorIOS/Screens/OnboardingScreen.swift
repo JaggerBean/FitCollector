@@ -25,6 +25,7 @@ struct OnboardingScreen: View {
     @State private var privateInviteCode = ""
     @State private var privateInviteError: String?
     @State private var isAddingPrivate = false
+    @State private var didLoad = false
 
     var body: some View {
         NavigationStack {
@@ -75,8 +76,12 @@ struct OnboardingScreen: View {
                 }
                 .background(baseBackground)
                 .task {
-                    username = appState.minecraftUsername
-                    selectedServers = Set(appState.selectedServers)
+                    guard !didLoad else { return }
+                    didLoad = true
+                    await MainActor.run {
+                        username = appState.minecraftUsername
+                        selectedServers = Set(appState.selectedServers)
+                    }
                     await loadServers(inviteCode: nil)
                 }
             }
@@ -293,39 +298,49 @@ struct OnboardingScreen: View {
         .interactiveDismissDisabled(isAddingPrivate)
     }
 
-    @MainActor
     private func validateUsernameAndContinue() async {
-        errorMessage = nil
-        isValidating = true
-        defer { isValidating = false }
+        await MainActor.run {
+            errorMessage = nil
+            isValidating = true
+        }
         let valid = await ApiClient.shared.validateMinecraftUsername(username)
-        usernameValid = valid
-        if valid {
-            pendingUsername = username
-            step = 4
-        } else {
-            errorMessage = "Minecraft username not found."
+        await MainActor.run {
+            usernameValid = valid
+            isValidating = false
+            if valid {
+                pendingUsername = username
+                step = 4
+            } else {
+                errorMessage = "Minecraft username not found."
+            }
         }
     }
 
-    @MainActor
     private func loadServers(inviteCode: String?) async {
         do {
             let response = try await ApiClient.shared.getAvailableServers(inviteCode: inviteCode)
-            availableServers = response.servers.sorted { $0.serverName.lowercased() < $1.serverName.lowercased() }
+            let sorted = response.servers.sorted { $0.serverName.lowercased() < $1.serverName.lowercased() }
+            await MainActor.run {
+                availableServers = sorted
+            }
         } catch {
-            errorMessage = error.localizedDescription
+            await MainActor.run {
+                errorMessage = error.localizedDescription
+            }
         }
     }
 
-    @MainActor
     private func addInviteCode() async -> Bool {
-        privateInviteError = nil
-        isAddingPrivate = true
+        await MainActor.run {
+            privateInviteError = nil
+            isAddingPrivate = true
+        }
         let code = inviteCode.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !code.isEmpty else {
-            privateInviteError = "Enter an invite code."
-            isAddingPrivate = false
+            await MainActor.run {
+                privateInviteError = "Enter an invite code."
+                isAddingPrivate = false
+            }
             return false
         }
         do {
@@ -333,40 +348,51 @@ struct OnboardingScreen: View {
             let existing = Set(availableServers.map { $0.serverName })
             let newServers = response.servers.filter { !existing.contains($0.serverName) }
             if newServers.isEmpty {
-                privateInviteError = "No servers found for that invite code."
-                isAddingPrivate = false
+                await MainActor.run {
+                    privateInviteError = "No servers found for that invite code."
+                    isAddingPrivate = false
+                }
                 return false
             }
 
-            availableServers.append(contentsOf: newServers)
-            for server in newServers {
-                appState.setInviteCode(server: server.serverName, code: code)
-                selectedServers.insert(server.serverName)
+            await MainActor.run {
+                availableServers.append(contentsOf: newServers)
+                for server in newServers {
+                    appState.setInviteCode(server: server.serverName, code: code)
+                    selectedServers.insert(server.serverName)
+                }
+                inviteCode = ""
+                isAddingPrivate = false
             }
-            inviteCode = ""
-            isAddingPrivate = false
             return true
         } catch {
-            privateInviteError = error.localizedDescription
-            isAddingPrivate = false
+            await MainActor.run {
+                privateInviteError = error.localizedDescription
+                isAddingPrivate = false
+            }
             return false
         }
     }
 
-    @MainActor
     private func finishSetup() async {
-        isLoading = true
-        errorMessage = nil
+        await MainActor.run {
+            isLoading = true
+            errorMessage = nil
+        }
 
         let trimmed = username.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else {
-            errorMessage = "Enter a username."
-            isLoading = false
+            await MainActor.run {
+                errorMessage = "Enter a username."
+                isLoading = false
+            }
             return
         }
 
-        appState.minecraftUsername = trimmed
-        appState.selectedServers = Array(selectedServers).sorted()
+        await MainActor.run {
+            appState.minecraftUsername = trimmed
+            appState.selectedServers = Array(selectedServers).sorted()
+        }
 
         for server in appState.selectedServers {
             do {
@@ -375,7 +401,9 @@ struct OnboardingScreen: View {
                     minecraftUsername: appState.minecraftUsername,
                     serverName: server
                 )
-                appState.setServerKey(server: server, apiKey: resp.playerApiKey)
+                await MainActor.run {
+                    appState.setServerKey(server: server, apiKey: resp.playerApiKey)
+                }
             } catch {
                 do {
                     let resp = try await ApiClient.shared.register(
@@ -384,14 +412,20 @@ struct OnboardingScreen: View {
                         serverName: server,
                         inviteCode: appState.inviteCodesByServer[server]
                     )
-                    appState.setServerKey(server: server, apiKey: resp.playerApiKey)
+                    await MainActor.run {
+                        appState.setServerKey(server: server, apiKey: resp.playerApiKey)
+                    }
                 } catch {
-                    errorMessage = error.localizedDescription
+                    await MainActor.run {
+                        errorMessage = error.localizedDescription
+                    }
                 }
             }
         }
-        appState.onboardingComplete = appState.isConfigured()
-        isLoading = false
+        await MainActor.run {
+            appState.onboardingComplete = appState.isConfigured()
+            isLoading = false
+        }
     }
 
     private func avatarURL(for name: String) -> URL? {
