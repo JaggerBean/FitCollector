@@ -264,11 +264,6 @@ private struct StepCraftHeader: View {
             }
 
             Spacer()
-
-            NavigationLink(destination: SettingsScreen()) {
-                Image(systemName: "gearshape")
-                    .foregroundColor(.secondary)
-            }
         }
         .frame(maxWidth: .infinity)
         .padding(.top, 8)
