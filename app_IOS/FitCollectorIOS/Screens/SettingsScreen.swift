@@ -64,7 +64,7 @@ struct SettingsScreen: View {
                             != appState.minecraftUsername.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
                         if changingUsername {
                             Button("Queue for Tomorrow") {
-                                Task { await saveProfile() }
+                                Task { await saveProfile(forceQueue: true) }
                             }
                             .buttonStyle(PillPrimaryButton())
                             .disabled(isSaving)
@@ -378,7 +378,7 @@ struct SettingsScreen: View {
         }
     }
 
-    private func saveProfile() async {
+    private func saveProfile(forceQueue: Bool = false) async {
         isSaving = true
         let trimmed = usernameDraft.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else {
@@ -396,7 +396,7 @@ struct SettingsScreen: View {
                 return
             }
         }
-        if changingUsername && !appState.canChangeUsernameToday() {
+        if changingUsername && (forceQueue || !appState.canChangeUsernameToday()) {
             appState.queueUsername(trimmed)
             appState.selectedServers = selectedServers.sorted()
             statusMessage = ("Username queued for tomorrow!", true)
