@@ -206,7 +206,6 @@ struct SettingsScreen: View {
                 .padding(16)
             }
             .task {
-                _ = appState.applyQueuedUsernameIfReady()
                 usernameDraft = appState.minecraftUsername
                 selectedServers = Set(appState.selectedServers)
                 timeUntilReset = timeUntilNextReset()
