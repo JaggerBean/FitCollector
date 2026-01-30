@@ -14,6 +14,9 @@ final class AppState: ObservableObject {
     @Published var queuedUsername: String = UserDefaults.standard.string(forKey: Keys.queuedUsername) ?? "" {
         didSet { UserDefaults.standard.set(queuedUsername, forKey: Keys.queuedUsername) }
     }
+    @Published var queuedUsernameDay: String = UserDefaults.standard.string(forKey: Keys.queuedUsernameDay) ?? "" {
+        didSet { UserDefaults.standard.set(queuedUsernameDay, forKey: Keys.queuedUsernameDay) }
+    }
     @Published var lastUsernameChangeDay: String = UserDefaults.standard.string(forKey: Keys.lastUsernameChangeDay) ?? "" {
         didSet { UserDefaults.standard.set(lastUsernameChangeDay, forKey: Keys.lastUsernameChangeDay) }
     }
@@ -77,18 +80,23 @@ final class AppState: ObservableObject {
 
     func queueUsername(_ name: String) {
         queuedUsername = name
+        queuedUsernameDay = AppState.dayKey()
     }
 
     func clearQueuedUsername() {
         queuedUsername = ""
+        queuedUsernameDay = ""
     }
 
     @discardableResult
     func applyQueuedUsernameIfReady() -> Bool {
         let queued = queuedUsername.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !queued.isEmpty, canChangeUsernameToday() else { return false }
+        let queuedDay = queuedUsernameDay.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !queued.isEmpty, !queuedDay.isEmpty else { return false }
+        let today = AppState.dayKey()
+        guard queuedDay != today, canChangeUsernameToday() else { return false }
         minecraftUsername = queued
-        queuedUsername = ""
+        clearQueuedUsername()
         markUsernameChangedToday()
         return true
     }
@@ -185,6 +193,7 @@ final class AppState: ObservableObject {
         static let deviceId = "device_id"
         static let minecraftUsername = "minecraft_username"
         static let queuedUsername = "queued_minecraft_username"
+        static let queuedUsernameDay = "queued_minecraft_username_day"
         static let lastUsernameChangeDay = "last_username_change_day"
         static let selectedServers = "selected_servers"
         static let serverKeys = "server_keys"
