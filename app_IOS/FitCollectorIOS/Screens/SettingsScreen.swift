@@ -22,6 +22,7 @@ struct SettingsScreen: View {
     @State private var statusMessage: (String, Bool)?
     @State private var scannerError: String?
     @State private var timeUntilReset: String = ""
+    @State private var isAutoSavingServers = false
 
     var body: some View {
         NavigationStack {
@@ -129,12 +130,6 @@ struct SettingsScreen: View {
                             showServerSelector = true
                         }
                         .buttonStyle(PillSecondaryButton())
-                        let saveTitle = isSaving ? "Saving…" : "Save & Register All"
-                        Button(saveTitle) {
-                            Task { await saveProfile() }
-                        }
-                        .buttonStyle(PillPrimaryButton())
-                        .disabled(!hasChanges || isSaving)
                     }
 
                     SectionHeader(title: "Sync & Permissions")
@@ -220,7 +215,10 @@ struct SettingsScreen: View {
                 await refreshNotificationStatus()
             }
             .onChange(of: selectedServers) { _ in
-                Task { await loadRewards() }
+                Task {
+                    await loadRewards()
+                    await autoSaveServers()
+                }
             }
         }
         .sheet(isPresented: $showServerSelector) {
@@ -374,6 +372,7 @@ struct SettingsScreen: View {
             inviteCode = ""
             let serverDisplayName = newServers.count == 1 ? newServers[0].serverName : "multiple servers"
             statusMessage = ("You registered to \(serverDisplayName)", true)
+            await autoSaveServers()
         } catch {
             statusMessage = ("Could not add invite code: \(error.localizedDescription)", false)
         }
@@ -389,6 +388,14 @@ struct SettingsScreen: View {
         }
 
         let changingUsername = trimmed.lowercased() != appState.minecraftUsername.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        if changingUsername {
+            let isValid = await ApiClient.shared.validateMinecraftUsername(trimmed)
+            if !isValid {
+                statusMessage = ("Minecraft username not found.", false)
+                isSaving = false
+                return
+            }
+        }
         if changingUsername && !appState.canChangeUsernameToday() {
             appState.queueUsername(trimmed)
             appState.selectedServers = selectedServers.sorted()
@@ -430,6 +437,39 @@ struct SettingsScreen: View {
         appState.onboardingComplete = true
         isSaving = false
         statusMessage = ("Settings saved & registered!", true)
+    }
+
+    private func autoSaveServers() async {
+        guard !isAutoSavingServers else { return }
+        let trimmed = appState.minecraftUsername.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty, !selectedServers.isEmpty else { return }
+        isAutoSavingServers = true
+        appState.selectedServers = selectedServers.sorted()
+        for server in appState.selectedServers {
+            if appState.serverKey(for: server) != nil { continue }
+            do {
+                let resp = try await ApiClient.shared.recoverKey(
+                    deviceId: appState.deviceId,
+                    minecraftUsername: trimmed,
+                    serverName: server
+                )
+                appState.setServerKey(server: server, apiKey: resp.playerApiKey)
+            } catch {
+                do {
+                    let invite = appState.inviteCodesByServer[server]
+                    let resp = try await ApiClient.shared.register(
+                        deviceId: appState.deviceId,
+                        minecraftUsername: trimmed,
+                        serverName: server,
+                        inviteCode: invite
+                    )
+                    appState.setServerKey(server: server, apiKey: resp.playerApiKey)
+                } catch {
+                    statusMessage = (error.localizedDescription, false)
+                }
+            }
+        }
+        isAutoSavingServers = false
     }
 
     private func timeUntilNextReset() -> String {
