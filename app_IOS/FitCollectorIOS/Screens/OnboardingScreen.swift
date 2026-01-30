@@ -17,6 +17,8 @@ struct OnboardingScreen: View {
     @State private var notificationsAuthorized = false
     @State private var usernameValid: Bool?
     @State private var isValidating = false
+    @State private var isAuthorizingHealthKit = false
+    @State private var isRequestingNotifications = false
     @State private var showPublicServers = false
     @State private var showPrivateServer = false
     @State private var serverSearch = ""
@@ -93,6 +95,8 @@ struct OnboardingScreen: View {
 
             Button(healthKitAuthorized ? "Authorized" : "Authorize HealthKit") {
                 Task {
+                    guard !isAuthorizingHealthKit else { return }
+                    isAuthorizingHealthKit = true
                     do {
                         try await HealthKitManager.shared.requestAuthorization()
                         healthKitAuthorized = true
@@ -100,9 +104,11 @@ struct OnboardingScreen: View {
                     } catch {
                         errorMessage = error.localizedDescription
                     }
+                    isAuthorizingHealthKit = false
                 }
             }
             .buttonStyle(PillPrimaryButton())
+            .disabled(isAuthorizingHealthKit)
         }
     }
 
@@ -118,15 +124,19 @@ struct OnboardingScreen: View {
 
             Button(notificationsAuthorized ? "Enabled" : "Enable Notifications") {
                 Task {
+                    guard !isRequestingNotifications else { return }
+                    isRequestingNotifications = true
                     do {
                         notificationsAuthorized = try await NotificationManager.shared.requestAuthorization()
                     } catch {
                         notificationsAuthorized = false
                     }
                     step = 3
+                    isRequestingNotifications = false
                 }
             }
             .buttonStyle(PillPrimaryButton())
+            .disabled(isRequestingNotifications)
 
             Button("Skip") { step = 3 }
                 .buttonStyle(PillSecondaryButton())
@@ -283,12 +293,13 @@ struct OnboardingScreen: View {
         .interactiveDismissDisabled(isAddingPrivate)
     }
 
+    @MainActor
     private func validateUsernameAndContinue() async {
         errorMessage = nil
         isValidating = true
+        defer { isValidating = false }
         let valid = await ApiClient.shared.validateMinecraftUsername(username)
         usernameValid = valid
-        isValidating = false
         if valid {
             pendingUsername = username
             step = 4
@@ -297,6 +308,7 @@ struct OnboardingScreen: View {
         }
     }
 
+    @MainActor
     private func loadServers(inviteCode: String?) async {
         do {
             let response = try await ApiClient.shared.getAvailableServers(inviteCode: inviteCode)
@@ -341,6 +353,7 @@ struct OnboardingScreen: View {
         }
     }
 
+    @MainActor
     private func finishSetup() async {
         isLoading = true
         errorMessage = nil
