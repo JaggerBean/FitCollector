@@ -384,6 +384,7 @@ struct OnboardingScreen: View {
             errorMessage = nil
         }
 
+        let previousUsername = appState.minecraftUsername
         let trimmed = username.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else {
             await MainActor.run {
@@ -420,6 +421,23 @@ struct OnboardingScreen: View {
                         appState.setServerKey(server: server, apiKey: resp.playerApiKey)
                     }
                 } catch {
+                    if let apiError = error as? ApiClient.APIError,
+                       apiError.message.lowercased().contains("device already registered"),
+                       previousUsername.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() != trimmed.lowercased() {
+                        do {
+                            let fallback = try await ApiClient.shared.recoverKey(
+                                deviceId: appState.deviceId,
+                                minecraftUsername: previousUsername,
+                                serverName: server
+                            )
+                            await MainActor.run {
+                                appState.setServerKey(server: server, apiKey: fallback.playerApiKey)
+                            }
+                            continue
+                        } catch {
+                            // fall through to surface error
+                        }
+                    }
                     await MainActor.run {
                         errorMessage = error.localizedDescription
                     }

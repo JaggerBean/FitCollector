@@ -9,6 +9,11 @@ final class ApiClient {
 
     private init() {}
 
+    struct APIError: LocalizedError {
+        let message: String
+        var errorDescription: String? { message }
+    }
+
     func getRewards(deviceId: String, serverName: String, playerApiKey: String) async throws -> RewardsResponse {
         var components = URLComponents(url: baseURL.appendingPathComponent("/v1/players/rewards"), resolvingAgainstBaseURL: false)!
         components.queryItems = [
@@ -92,7 +97,15 @@ final class ApiClient {
         ]
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
 
-        let (data, _) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await URLSession.shared.data(for: request)
+        let http = response as? HTTPURLResponse
+        if let http, !(200...299).contains(http.statusCode) {
+            let detail = decodeErrorDetail(data) ?? "Server error (status \(http.statusCode))."
+            throw APIError(message: detail)
+        }
+        guard !data.isEmpty else {
+            throw APIError(message: "Server returned empty response.")
+        }
         return try JSONDecoder().decode(PlayerApiKeyResponse.self, from: data)
     }
 
@@ -110,8 +123,28 @@ final class ApiClient {
         ]
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
 
-        let (data, _) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await URLSession.shared.data(for: request)
+        let http = response as? HTTPURLResponse
+        if let http, !(200...299).contains(http.statusCode) {
+            let detail = decodeErrorDetail(data) ?? "Server error (status \(http.statusCode))."
+            throw APIError(message: detail)
+        }
+        guard !data.isEmpty else {
+            throw APIError(message: "Server returned empty response.")
+        }
         return try JSONDecoder().decode(PlayerApiKeyResponse.self, from: data)
+    }
+
+    private func decodeErrorDetail(_ data: Data) -> String? {
+        guard !data.isEmpty else { return nil }
+        if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+            if let detail = json["detail"] as? String { return detail }
+            if let message = json["message"] as? String { return message }
+        }
+        if let text = String(data: data, encoding: .utf8), !text.isEmpty {
+            return text
+        }
+        return nil
     }
 
     func getAvailableServers(inviteCode: String?) async throws -> AvailableServersResponse {
