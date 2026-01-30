@@ -75,10 +75,10 @@ struct OnboardingScreen: View {
                                     .foregroundColor(secondaryTextColor)
                                     .multilineTextAlignment(.center)
 
-                                if !appState.minecraftUsername.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
-                                   appState.minecraftUsername.lowercased() != username.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() {
-                                    Button("Use previous username") {
-                                        let previous = appState.minecraftUsername
+                                let previous = appState.minecraftUsername.trimmingCharacters(in: .whitespacesAndNewlines)
+                                if !previous.isEmpty,
+                                   previous.lowercased() != username.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() {
+                                    Button("Login with \(previous)") {
                                         username = previous
                                         pendingUsername = previous
                                         self.errorMessage = nil
