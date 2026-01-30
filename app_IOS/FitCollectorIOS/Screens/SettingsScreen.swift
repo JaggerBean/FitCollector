@@ -112,6 +112,31 @@ struct SettingsScreen: View {
 
                         Divider().padding(.vertical, 6)
 
+                        SettingsToggleRow(
+                            title: "Background Sync",
+                            subtitle: backgroundSyncDescription,
+                            isOn: $appState.backgroundSyncEnabled
+                        )
+
+                        if appState.backgroundSyncEnabled {
+                            VStack(alignment: .leading, spacing: 6) {
+                                Text("Sync Frequency")
+                                    .font(.subheadline)
+                                    .fontWeight(.semibold)
+                                Text("Every \(appState.backgroundSyncIntervalMinutes) minutes")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                                Slider(
+                                    value: Binding(
+                                        get: { Double(appState.backgroundSyncIntervalMinutes) },
+                                        set: { appState.backgroundSyncIntervalMinutes = Int($0) }
+                                    ),
+                                    in: 15...120,
+                                    step: 15
+                                )
+                            }
+                        }
+
                     }
 
                     SectionHeader(title: "Notifications")
@@ -222,6 +247,13 @@ struct SettingsScreen: View {
     private var hasChanges: Bool {
         let trimmed = usernameDraft.trimmingCharacters(in: .whitespacesAndNewlines)
         return trimmed != appState.minecraftUsername || selectedServers != Set(appState.selectedServers)
+    }
+
+    private var backgroundSyncDescription: String {
+        if appState.backgroundSyncEnabled {
+            return "Periodic sync every \(appState.backgroundSyncIntervalMinutes) minutes while app is closed."
+        }
+        return "Disabled. No periodic sync while app is closed."
     }
 
     private func loadRewards() async {

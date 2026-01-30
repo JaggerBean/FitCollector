@@ -26,6 +26,12 @@ final class AppState: ObservableObject {
     @Published var autoSyncEnabled: Bool = UserDefaults.standard.object(forKey: Keys.autoSyncEnabled) as? Bool ?? true {
         didSet { UserDefaults.standard.set(autoSyncEnabled, forKey: Keys.autoSyncEnabled) }
     }
+    @Published var backgroundSyncEnabled: Bool = UserDefaults.standard.object(forKey: Keys.backgroundSyncEnabled) as? Bool ?? false {
+        didSet { UserDefaults.standard.set(backgroundSyncEnabled, forKey: Keys.backgroundSyncEnabled) }
+    }
+    @Published var backgroundSyncIntervalMinutes: Int = UserDefaults.standard.object(forKey: Keys.backgroundSyncIntervalMinutes) as? Int ?? 15 {
+        didSet { UserDefaults.standard.set(backgroundSyncIntervalMinutes, forKey: Keys.backgroundSyncIntervalMinutes) }
+    }
     @Published var lastKnownSteps: Int? = AppState.loadLastKnownSteps().steps {
         didSet { AppState.saveLastKnownSteps(steps: lastKnownSteps, dayKey: AppState.dayKey()) }
     }
@@ -145,6 +151,8 @@ final class AppState: ObservableObject {
         static let inviteCodes = "invite_codes_by_server"
         static let onboardingComplete = "onboarding_complete"
         static let autoSyncEnabled = "auto_sync_enabled"
+        static let backgroundSyncEnabled = "background_sync_enabled"
+        static let backgroundSyncIntervalMinutes = "background_sync_interval_minutes"
         static let lastKnownSteps = "last_known_steps"
         static let lastKnownStepsDay = "last_known_steps_day"
         static let syncLog = "sync_log"
