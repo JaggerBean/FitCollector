@@ -4,6 +4,8 @@ struct DashboardScreen: View {
     @EnvironmentObject private var appState: AppState
     @StateObject private var syncService = SyncService()
     @State private var rewards: [RewardTier] = []
+    @State private var claimStatuses: [String: [ClaimStatusListItem]] = [:]
+    @State private var stepsYesterdayByServer: [String: Int] = [:]
     @State private var isLoading = false
     @State private var errorMessage: String?
     @State private var stepsToday: Int = 0
@@ -18,15 +20,30 @@ struct DashboardScreen: View {
                     ResetTimerCard(timeRemaining: timeUntilReset)
                 }
 
+                if !unclaimedServers.isEmpty {
+                    UnclaimedRewardsBanner(
+                        servers: unclaimedServers,
+                        stepsYesterdayByServer: stepsYesterdayByServer
+                    )
+                }
+
                 ActivityCard(stepsToday: stepsToday, canSync: canSync) {
                     Task { await syncService.syncSteps(appState: appState, manual: true) }
                 }
 
                 if let msg = syncService.lastSyncMessage {
-                    SyncStatusBanner(message: msg, isSuccess: true)
+                    SyncStatusBanner(
+                        message: msg,
+                        isSuccess: true,
+                        timestamp: syncService.lastSyncDate
+                    )
                 }
                 if let error = syncService.lastErrorMessage {
-                    SyncStatusBanner(message: error, isSuccess: false)
+                    SyncStatusBanner(
+                        message: error,
+                        isSuccess: false,
+                        timestamp: syncService.lastSyncDate
+                    )
                 }
 
                 if !appState.trackedMilestonesByServer.isEmpty {
@@ -42,13 +59,19 @@ struct DashboardScreen: View {
                         .foregroundColor(.red)
                         .font(.subheadline)
                 }
+
+                Text("Auto-sync & Background-sync enabled (\(appState.selectedServers.count) servers).")
+                    .font(.footnote)
+                    .foregroundColor(.secondary)
+                    .padding(.top, 8)
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 12)
         }
-        .navigationTitle("Dashboard")
         .task {
             await refreshSteps()
+            await refreshClaimStatuses()
+            await refreshStepsYesterday()
             await refreshRewards()
             if appState.autoSyncEnabled {
                 await syncService.syncSteps(appState: appState, manual: false)
@@ -92,9 +115,45 @@ struct DashboardScreen: View {
         isLoading = false
     }
 
+    private func refreshClaimStatuses() async {
+        guard appState.isConfigured() else { return }
+        do {
+            var updated: [String: [ClaimStatusListItem]] = [:]
+            for server in appState.selectedServers {
+                guard let key = appState.serverKey(for: server) else { continue }
+                let response = try await ApiClient.shared.getClaimStatusList(
+                    deviceId: appState.deviceId,
+                    playerApiKey: key
+                )
+                updated[server] = response.items
+            }
+            claimStatuses = updated
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    private func refreshStepsYesterday() async {
+        guard appState.isConfigured() else { return }
+        do {
+            var updated: [String: Int] = [:]
+            for server in appState.selectedServers {
+                guard let key = appState.serverKey(for: server) else { continue }
+                let response = try await ApiClient.shared.getStepsYesterday(
+                    minecraftUsername: appState.minecraftUsername,
+                    playerApiKey: key
+                )
+                updated[server] = response.stepsYesterday
+            }
+            stepsYesterdayByServer = updated
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
     private func startResetTimer() {
         updateResetTimer()
-        Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { _ in
+        Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { _ in
             updateResetTimer()
         }
     }
@@ -108,29 +167,65 @@ struct DashboardScreen: View {
         let diff = Int(startOfTomorrow.timeIntervalSince(now))
         let hours = max(0, diff / 3600)
         let minutes = max(0, (diff % 3600) / 60)
-        timeUntilReset = String(format: "%02d:%02d", hours, minutes)
+        let seconds = max(0, diff % 60)
+        timeUntilReset = String(format: "%02d:%02d:%02d", hours, minutes, seconds)
+    }
+
+    private var unclaimedServers: [String] {
+        let yesterday = centralDayString(yesterday: true)
+        return claimStatuses
+            .mapValues { $0.filter { !$0.claimed && $0.day == yesterday } }
+            .filter { !$0.value.isEmpty }
+            .map { $0.key }
+            .sorted()
+    }
+
+    private func centralDayString(yesterday: Bool) -> String {
+        let central = TimeZone(identifier: "America/Chicago") ?? .current
+        var calendar = Calendar.current
+        calendar.timeZone = central
+        let date = calendar.date(byAdding: .day, value: yesterday ? -1 : 0, to: Date()) ?? Date()
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        formatter.timeZone = central
+        return formatter.string(from: date)
     }
 }
 
 private struct SyncStatusBanner: View {
     let message: String
     let isSuccess: Bool
+    let timestamp: Date?
 
     var body: some View {
         let bg = isSuccess ? AppColors.healthLightGreen : Color.red.opacity(0.12)
         let icon = isSuccess ? "checkmark.circle.fill" : "xmark.octagon.fill"
 
-        HStack(spacing: 10) {
+        HStack(spacing: 12) {
             Image(systemName: icon)
                 .foregroundColor(isSuccess ? AppColors.healthGreen : .red)
-            Text(message)
-                .font(.subheadline)
-                .foregroundColor(.primary)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(message)
+                    .font(.subheadline)
+                    .foregroundColor(.primary)
+                if let timestamp {
+                    Text(timeAgo(from: timestamp))
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(12)
         .background(bg)
         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+    }
+
+    private func timeAgo(from date: Date) -> String {
+        let seconds = Int(Date().timeIntervalSince(date))
+        if seconds < 60 { return "Just now" }
+        if seconds < 3600 { return "\(seconds / 60) minutes ago" }
+        return "\(seconds / 3600) hours ago"
     }
 }
 
@@ -139,24 +234,32 @@ private struct StepCraftHeader: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            LogoBadge()
-            VStack(alignment: .leading, spacing: 2) {
-                Text("StepCraft")
-                    .font(.system(size: 26, weight: .black, design: .monospaced))
-                    .foregroundColor(AppColors.healthGreen)
-                Text("Collect steps. Earn rewards.")
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-            }
-            Spacer()
             if !username.isEmpty, let url = URL(string: "https://minotar.net/avatar/\(username)/48") {
                 AsyncImage(url: url) { image in
                     image.resizable()
                 } placeholder: {
                     Color.gray.opacity(0.2)
                 }
-                .frame(width: 36, height: 36)
+                .frame(width: 32, height: 32)
                 .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+            } else {
+                RoundedRectangle(cornerRadius: 6, style: .continuous)
+                    .fill(Color.gray.opacity(0.2))
+                    .frame(width: 32, height: 32)
+            }
+
+            HStack(spacing: 6) {
+                LogoBadge()
+                Text("StepCraft")
+                    .font(.system(size: 24, weight: .bold, design: .rounded))
+                    .foregroundColor(AppColors.healthGreen)
+            }
+
+            Spacer()
+
+            NavigationLink(destination: SettingsScreen()) {
+                Image(systemName: "gearshape")
+                    .foregroundColor(.secondary)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -187,20 +290,19 @@ private struct ResetTimerCard: View {
     let timeRemaining: String
 
     var body: some View {
-        HStack(spacing: 12) {
-            Image(systemName: "timer")
+        HStack(spacing: 8) {
+            Text("Time Until Daily Step Reset:")
+                .font(.caption)
                 .foregroundColor(AppColors.healthBlue)
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Next reset in")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                Text(timeRemaining)
-                    .font(.headline)
-                    .foregroundColor(AppColors.healthBlue)
-            }
+            Text(timeRemaining)
+                .font(.caption)
+                .foregroundColor(AppColors.healthBlue)
+                .fontWeight(.semibold)
             Spacer()
         }
-        .cardSurface()
+        .padding(10)
+        .background(Color(hex: 0xFFE6F0FF))
+        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
     }
 }
 
@@ -210,18 +312,22 @@ private struct ActivityCard: View {
     let onSync: () -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            Text("Steps Today")
-                .font(.headline)
-                .foregroundColor(.white.opacity(0.85))
+        VStack(spacing: 16) {
+            HStack(spacing: 8) {
+                Image(systemName: "figure.run")
+                    .foregroundColor(.white)
+                Text("Steps Today")
+                    .font(.headline)
+                    .foregroundColor(.white)
+            }
 
             Text(stepsToday.formatted())
                 .font(.system(size: 54, weight: .black))
                 .foregroundColor(.white)
 
-            Text("HealthKit · StepCraft")
+            Text("Small steps lead to big accomplishments.")
                 .font(.subheadline)
-                .foregroundColor(.white.opacity(0.7))
+                .foregroundColor(.white.opacity(0.85))
 
             Button(action: onSync) {
                 HStack(spacing: 10) {
@@ -240,12 +346,46 @@ private struct ActivityCard: View {
             .opacity(canSync ? 1 : 0.5)
             .disabled(!canSync)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(maxWidth: .infinity)
         .padding(20)
         .background(
-            LinearGradient(colors: [AppColors.healthGreen, Color(hex: 0xFF1B5E20)], startPoint: .topLeading, endPoint: .bottomTrailing)
+            LinearGradient(colors: [Color(hex: 0xFF2E7D32), Color(hex: 0xFF1B5E20)], startPoint: .topLeading, endPoint: .bottomTrailing)
         )
         .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+    }
+}
+
+private struct UnclaimedRewardsBanner: View {
+    let servers: [String]
+    let stepsYesterdayByServer: [String: Int]
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 12) {
+            Text("🎁")
+                .font(.system(size: 22))
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Unclaimed rewards for yesterday's steps:")
+                    .font(.caption)
+                    .foregroundColor(Color(hex: 0xFF574300))
+                    .fontWeight(.bold)
+
+                ForEach(servers, id: \.self) { server in
+                    let steps = stepsYesterdayByServer[server] ?? 0
+                    Text("• \(server): \(steps) steps")
+                        .font(.caption)
+                        .foregroundColor(Color(hex: 0xFF574300))
+                }
+
+                Text("Join the server to claim rewards!")
+                    .font(.caption)
+                    .foregroundColor(Color(hex: 0xFF574300))
+                    .fontWeight(.bold)
+            }
+        }
+        .padding(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color(hex: 0xFFFFF4C4))
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
 }
 

@@ -47,7 +47,6 @@ struct RawHealthDataScreen: View {
                 }
             }
         }
-        .navigationTitle("Health Data Debug")
         .task {
             await loadSamples()
         }
