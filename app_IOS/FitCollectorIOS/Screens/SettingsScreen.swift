@@ -21,6 +21,7 @@ struct SettingsScreen: View {
     @State private var notificationsAuthorized = false
     @State private var statusMessage: (String, Bool)?
     @State private var scannerError: String?
+    @State private var timeUntilReset: String = ""
 
     var body: some View {
         NavigationStack {
@@ -70,6 +71,33 @@ struct SettingsScreen: View {
                                 .padding(12)
                                 .background(Color(.secondarySystemBackground))
                                 .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                        }
+
+                        if !appState.queuedUsername.isEmpty {
+                            HStack(spacing: 12) {
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text("Next up: \(appState.queuedUsername)")
+                                        .font(.caption)
+                                        .fontWeight(.semibold)
+                                    Text("Applying in \(timeUntilReset)")
+                                        .font(.caption2)
+                                        .foregroundColor(.secondary)
+                                }
+                                Spacer()
+                                Button("Cancel") {
+                                    appState.clearQueuedUsername()
+                                }
+                                .font(.caption)
+                                .foregroundColor(.red)
+                            }
+                            .padding(10)
+                            .background(Color(.secondarySystemBackground))
+                            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                        } else if !appState.canChangeUsernameToday()
+                            && usernameDraft.trimmingCharacters(in: .whitespacesAndNewlines) != appState.minecraftUsername {
+                            Text("Changed once today. Wait \(timeUntilReset) or queue for tomorrow.")
+                                .font(.caption)
+                                .foregroundColor(.red)
                         }
 
                         HStack(spacing: 10) {
@@ -176,8 +204,10 @@ struct SettingsScreen: View {
                 .padding(16)
             }
             .task {
+                _ = appState.applyQueuedUsernameIfReady()
                 usernameDraft = appState.minecraftUsername
                 selectedServers = Set(appState.selectedServers)
+                timeUntilReset = timeUntilNextReset()
                 await loadServers()
                 await loadRewards()
                 await refreshNotificationStatus()
@@ -351,8 +381,21 @@ struct SettingsScreen: View {
             return
         }
 
+        let changingUsername = trimmed.lowercased() != appState.minecraftUsername.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        if changingUsername && !appState.canChangeUsernameToday() {
+            appState.queueUsername(trimmed)
+            appState.selectedServers = selectedServers.sorted()
+            statusMessage = ("Username queued for tomorrow!", true)
+            isSaving = false
+            return
+        }
+
         appState.minecraftUsername = trimmed
         appState.selectedServers = selectedServers.sorted()
+        if changingUsername {
+            appState.markUsernameChangedToday()
+            appState.clearQueuedUsername()
+        }
 
         for server in appState.selectedServers {
             do {
@@ -380,6 +423,19 @@ struct SettingsScreen: View {
         appState.onboardingComplete = true
         isSaving = false
         statusMessage = ("Settings saved & registered!", true)
+    }
+
+    private func timeUntilNextReset() -> String {
+        let central = TimeZone(identifier: "America/Chicago") ?? .current
+        var calendar = Calendar.current
+        calendar.timeZone = central
+        let now = Date()
+        let startOfTomorrow = calendar.startOfDay(for: now).addingTimeInterval(24 * 60 * 60)
+        let diff = Int(startOfTomorrow.timeIntervalSince(now))
+        let hours = max(0, diff / 3600)
+        let minutes = max(0, (diff % 3600) / 60)
+        let seconds = max(0, diff % 60)
+        return String(format: "%02d:%02d:%02d", hours, minutes, seconds)
     }
 
 }

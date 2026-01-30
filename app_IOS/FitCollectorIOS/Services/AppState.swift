@@ -11,6 +11,12 @@ final class AppState: ObservableObject {
     @Published var minecraftUsername: String = UserDefaults.standard.string(forKey: Keys.minecraftUsername) ?? "" {
         didSet { UserDefaults.standard.set(minecraftUsername, forKey: Keys.minecraftUsername) }
     }
+    @Published var queuedUsername: String = UserDefaults.standard.string(forKey: Keys.queuedUsername) ?? "" {
+        didSet { UserDefaults.standard.set(queuedUsername, forKey: Keys.queuedUsername) }
+    }
+    @Published var lastUsernameChangeDay: String = UserDefaults.standard.string(forKey: Keys.lastUsernameChangeDay) ?? "" {
+        didSet { UserDefaults.standard.set(lastUsernameChangeDay, forKey: Keys.lastUsernameChangeDay) }
+    }
     @Published var selectedServers: [String] = AppState.loadSelectedServers() {
         didSet { AppState.saveSelectedServers(selectedServers) }
     }
@@ -59,6 +65,32 @@ final class AppState: ObservableObject {
         guard !minecraftUsername.isEmpty else { return false }
         guard !selectedServers.isEmpty else { return false }
         return selectedServers.allSatisfy { serverKey(for: $0) != nil }
+    }
+
+    func canChangeUsernameToday() -> Bool {
+        lastUsernameChangeDay != AppState.dayKey()
+    }
+
+    func markUsernameChangedToday() {
+        lastUsernameChangeDay = AppState.dayKey()
+    }
+
+    func queueUsername(_ name: String) {
+        queuedUsername = name
+    }
+
+    func clearQueuedUsername() {
+        queuedUsername = ""
+    }
+
+    @discardableResult
+    func applyQueuedUsernameIfReady() -> Bool {
+        let queued = queuedUsername.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !queued.isEmpty, canChangeUsernameToday() else { return false }
+        minecraftUsername = queued
+        queuedUsername = ""
+        markUsernameChangedToday()
+        return true
     }
 
     func serverKey(for server: String) -> String? {
@@ -152,6 +184,8 @@ final class AppState: ObservableObject {
     private enum Keys {
         static let deviceId = "device_id"
         static let minecraftUsername = "minecraft_username"
+        static let queuedUsername = "queued_minecraft_username"
+        static let lastUsernameChangeDay = "last_username_change_day"
         static let selectedServers = "selected_servers"
         static let serverKeys = "server_keys"
         static let inviteCodes = "invite_codes_by_server"
