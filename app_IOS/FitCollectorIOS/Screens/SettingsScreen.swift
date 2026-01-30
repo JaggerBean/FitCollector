@@ -45,19 +45,6 @@ struct SettingsScreen: View {
                         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
                     }
 
-                    SectionHeader(title: "Appearance")
-                    SettingsCard {
-                        Text("Theme Mode")
-                            .font(.subheadline)
-                            .fontWeight(.semibold)
-                        Picker("Theme Mode", selection: $appState.themeMode) {
-                            ForEach(ThemeMode.allCases) { mode in
-                                Text(mode.rawValue).tag(mode)
-                            }
-                        }
-                        .pickerStyle(.segmented)
-                    }
-
                     SectionHeader(title: "Account Settings")
                     SettingsCard {
                         VStack(alignment: .leading, spacing: 8) {
@@ -152,34 +139,6 @@ struct SettingsScreen: View {
 
                         Divider().padding(.vertical, 6)
 
-                        SettingsToggleRow(
-                            title: "High Reliability Mode",
-                            subtitle: "Ignore battery optimizations to keep sync running smoothly.",
-                            isOn: $appState.highReliabilityMode
-                        )
-
-                        Button(action: openHealthSettings) {
-                            HStack(spacing: 8) {
-                                Image(systemName: "gearshape")
-                                Text("Open Health Connect Settings")
-                                    .fontWeight(.semibold)
-                            }
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 12)
-                            .background(Color(hex: 0xFF64B5F6))
-                            .foregroundColor(.black)
-                            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-                        }
-                    }
-
-                    SectionHeader(title: "Health Connect Settings")
-                    SettingsCard {
-                        Text("Choose your step source")
-                            .font(.subheadline)
-                            .fontWeight(.semibold)
-                        Text("No step sources found in the last 7 days.")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
                     }
 
                     SectionHeader(title: "Notifications")
@@ -425,13 +384,6 @@ struct SettingsScreen: View {
         statusMessage = ("Settings saved & registered!", true)
     }
 
-    private func openHealthSettings() {
-        if let url = URL(string: "x-apple-health://"), UIApplication.shared.canOpenURL(url) {
-            UIApplication.shared.open(url)
-        } else if let url = URL(string: UIApplication.openSettingsURLString) {
-            UIApplication.shared.open(url)
-        }
-    }
 }
 
 private struct SectionHeader: View {
