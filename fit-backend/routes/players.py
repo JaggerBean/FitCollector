@@ -190,6 +190,84 @@ def get_claim_available_player(
     return {"server_name": server_name, "items": items, "debug": debug_info} if debug else {"server_name": server_name, "items": items}
 
 
+@router.get("/v1/players/claim-status-list")
+def get_claim_status_list_player(
+    device_id: str = Query(...),
+    player_api_key: str = Query(...),
+):
+    """
+    List claim status for all eligible reward tiers within the claim window for the authenticated player.
+    Returns one entry per eligible tier per day with claimed status.
+    """
+    server_name, minecraft_username = validate_and_get_server(device_id, player_api_key)
+    today = datetime.now(CENTRAL_TZ).date()
+    buffer_days = _get_claim_buffer_days(server_name)
+    days = [today - timedelta(days=offset) for offset in range(buffer_days + 1)]
+
+    with engine.begin() as conn:
+        tiers = conn.execute(
+            text("""
+                SELECT min_steps, label, item_id
+                FROM server_rewards
+                WHERE server_name = :server
+                ORDER BY min_steps ASC, position ASC
+            """),
+            {"server": server_name},
+        ).mappings().all()
+
+        if not tiers:
+            tiers = [{"min_steps": r["min_steps"], "label": r["label"], "item_id": r.get("item_id")} for r in DEFAULT_REWARDS]
+
+        items = []
+        for day in days:
+            day_str = str(day)
+            steps_row = conn.execute(
+                text("""
+                    SELECT steps_today FROM step_ingest
+                    WHERE minecraft_username = :username
+                      AND server_name = :server
+                      AND CAST(day AS TEXT) = :day
+                    LIMIT 1
+                """),
+                {"username": minecraft_username, "server": server_name, "day": day_str},
+            ).fetchone()
+
+            if not steps_row:
+                continue
+
+            steps = steps_row[0]
+            eligible = [tier for tier in tiers if steps >= tier["min_steps"]]
+            if not eligible:
+                continue
+
+            claimed_rows = conn.execute(
+                text("""
+                    SELECT min_steps, claimed, claimed_at FROM step_claims
+                    WHERE minecraft_username = :username
+                      AND server_name = :server
+                      AND CAST(day AS TEXT) = :day
+                """),
+                {"username": minecraft_username, "server": server_name, "day": day_str},
+            ).fetchall()
+
+            claimed_map = {row[0]: (bool(row[1]), row[2]) for row in claimed_rows}
+
+            for tier in eligible:
+                claimed, claimed_at = claimed_map.get(tier["min_steps"], (False, None))
+                items.append(
+                    {
+                        "day": day_str,
+                        "min_steps": tier["min_steps"],
+                        "label": tier["label"],
+                        "item_id": tier.get("item_id"),
+                        "claimed": claimed,
+                        "claimed_at": claimed_at,
+                    }
+                )
+
+    return {"server_name": server_name, "items": items}
+
+
 @router.get("/v1/players/push/next")
 def get_next_push_notification(
     minecraft_username: str = Query(...),

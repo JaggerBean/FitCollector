@@ -80,6 +80,20 @@ data class ClaimStatusResponse(
     val min_steps: Long? = null
 )
 
+data class ClaimStatusListItem(
+    val day: String,
+    val min_steps: Long,
+    val label: String,
+    val item_id: String? = null,
+    val claimed: Boolean,
+    val claimed_at: String? = null
+)
+
+data class ClaimStatusListResponse(
+    val server_name: String,
+    val items: List<ClaimStatusListItem> = emptyList()
+)
+
 data class StepsYesterdayResponse(
     val minecraft_username: String,
     val server_name: String,
@@ -138,6 +152,12 @@ interface FitApi {
         @Query("min_steps") minSteps: Long,
         @Query("day") day: String? = null
     ): ClaimStatusResponse
+
+    @GET("v1/players/claim-status-list")
+    suspend fun getClaimStatusList(
+        @Query("device_id") deviceId: String,
+        @Query("player_api_key") apiKey: String
+    ): ClaimStatusListResponse
 
     @GET("v1/players/steps-yesterday")
     suspend fun getStepsYesterday(
