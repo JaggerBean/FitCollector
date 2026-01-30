@@ -384,6 +384,7 @@ struct OnboardingScreen: View {
             errorMessage = nil
         }
 
+        let previousUsername = appState.minecraftUsername
         let trimmed = username.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else {
             await MainActor.run {
@@ -398,7 +399,9 @@ struct OnboardingScreen: View {
             appState.selectedServers = Array(selectedServers).sorted()
         }
 
+        var registrationError: String?
         for server in appState.selectedServers {
+            if appState.serverKey(for: server) != nil { continue }
             do {
                 let resp = try await ApiClient.shared.register(
                     deviceId: appState.deviceId,
@@ -423,13 +426,38 @@ struct OnboardingScreen: View {
                         }
                         continue
                     } catch {
-                        // fall through to surface error
+                        if previousUsername.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() != trimmed.lowercased() {
+                            do {
+                                let fallback = try await ApiClient.shared.recoverKey(
+                                    deviceId: appState.deviceId,
+                                    minecraftUsername: previousUsername,
+                                    serverName: server
+                                )
+                                await MainActor.run {
+                                    appState.setServerKey(server: server, apiKey: fallback.playerApiKey)
+                                }
+                                continue
+                            } catch {
+                                registrationError = error.localizedDescription
+                                break
+                            }
+                        }
+                        registrationError = error.localizedDescription
+                        break
                     }
-                }
-                await MainActor.run {
-                    errorMessage = error.localizedDescription
+                } else {
+                    registrationError = error.localizedDescription
+                    break
                 }
             }
+        }
+
+        if let registrationError {
+            await MainActor.run {
+                errorMessage = registrationError
+                isLoading = false
+            }
+            return
         }
         await MainActor.run {
             appState.onboardingComplete = appState.isConfigured()
