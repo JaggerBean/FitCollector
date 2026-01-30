@@ -438,12 +438,12 @@ struct OnboardingScreen: View {
                                 }
                                 continue
                             } catch {
-                                registrationError = error.localizedDescription
-                                break
+                                // Match Android behavior: ignore recover failure on 409 and allow onboarding to finish.
+                                continue
                             }
                         }
-                        registrationError = error.localizedDescription
-                        break
+                        // Match Android behavior: ignore recover failure on 409 and allow onboarding to finish.
+                        continue
                     }
                 } else {
                     registrationError = error.localizedDescription
