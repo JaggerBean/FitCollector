@@ -11,7 +11,9 @@ struct DashboardScreen: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 16) {
-                ActivityCard(stepsToday: stepsToday)
+                ActivityCard(stepsToday: stepsToday, canSync: canSync) {
+                    Task { await syncService.syncSteps(appState: appState, manual: true) }
+                }
 
                 if let msg = syncService.lastSyncMessage {
                     SyncStatusBanner(message: msg, isSuccess: true)
@@ -36,7 +38,24 @@ struct DashboardScreen: View {
         }
         .navigationTitle("Dashboard")
         .task {
+            await refreshSteps()
             await refreshRewards()
+            if appState.autoSyncEnabled {
+                await syncService.syncSteps(appState: appState, manual: false)
+            }
+        }
+    }
+
+    private var canSync: Bool {
+        appState.isConfigured()
+    }
+
+    private func refreshSteps() async {
+        do {
+            let steps = try await HealthKitManager.shared.readTodaySteps()
+            stepsToday = steps
+        } catch {
+            stepsToday = appState.lastKnownSteps ?? 0
         }
     }
 
@@ -45,12 +64,17 @@ struct DashboardScreen: View {
         isLoading = true
         errorMessage = nil
         do {
-            let response = try await ApiClient.shared.getRewards(
-                deviceId: appState.deviceId,
-                serverName: appState.serverName,
-                playerApiKey: appState.playerApiKey
-            )
-            rewards = response.tiers
+            var merged: [RewardTier] = []
+            for server in appState.selectedServers {
+                guard let key = appState.serverKey(for: server) else { continue }
+                let response = try await ApiClient.shared.getRewards(
+                    deviceId: appState.deviceId,
+                    serverName: server,
+                    playerApiKey: key
+                )
+                merged.append(contentsOf: response.tiers)
+            }
+            rewards = merged
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -78,16 +102,29 @@ private struct SyncStatusBanner: View {
 
 private struct ActivityCard: View {
     let stepsToday: Int
+    let canSync: Bool
+    let onSync: () -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Today’s steps")
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Steps Today")
                 .font(.headline)
-            Text("\(stepsToday)")
-                .font(.system(size: 36, weight: .bold))
-            Text("Sync via HealthKit soon")
+            Text(stepsToday.formatted())
+                .font(.system(size: 42, weight: .bold))
+            Text("HealthKit · StepCraft")
                 .font(.subheadline)
                 .foregroundColor(.secondary)
+
+            Button(action: onSync) {
+                HStack {
+                    Image(systemName: "arrow.triangle.2.circlepath")
+                    Text("Sync Now")
+                        .fontWeight(.semibold)
+                }
+                .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.borderedProminent)
+            .disabled(!canSync)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding()

@@ -8,11 +8,26 @@ final class AppState: ObservableObject {
     @Published var minecraftUsername: String = UserDefaults.standard.string(forKey: Keys.minecraftUsername) ?? "" {
         didSet { UserDefaults.standard.set(minecraftUsername, forKey: Keys.minecraftUsername) }
     }
-    @Published var serverName: String = UserDefaults.standard.string(forKey: Keys.serverName) ?? "" {
-        didSet { UserDefaults.standard.set(serverName, forKey: Keys.serverName) }
+    @Published var selectedServers: [String] = AppState.loadSelectedServers() {
+        didSet { AppState.saveSelectedServers(selectedServers) }
     }
-    @Published var playerApiKey: String = UserDefaults.standard.string(forKey: Keys.playerApiKey) ?? "" {
-        didSet { UserDefaults.standard.set(playerApiKey, forKey: Keys.playerApiKey) }
+    @Published var serverKeysByUserServer: [String: String] = AppState.loadServerKeys() {
+        didSet { AppState.saveServerKeys(serverKeysByUserServer) }
+    }
+    @Published var inviteCodesByServer: [String: String] = AppState.loadInviteCodes() {
+        didSet { AppState.saveInviteCodes(inviteCodesByServer) }
+    }
+    @Published var onboardingComplete: Bool = UserDefaults.standard.bool(forKey: Keys.onboardingComplete) {
+        didSet { UserDefaults.standard.set(onboardingComplete, forKey: Keys.onboardingComplete) }
+    }
+    @Published var autoSyncEnabled: Bool = UserDefaults.standard.object(forKey: Keys.autoSyncEnabled) as? Bool ?? true {
+        didSet { UserDefaults.standard.set(autoSyncEnabled, forKey: Keys.autoSyncEnabled) }
+    }
+    @Published var lastKnownSteps: Int? = AppState.loadLastKnownSteps().steps {
+        didSet { AppState.saveLastKnownSteps(steps: lastKnownSteps, dayKey: AppState.dayKey()) }
+    }
+    @Published var syncLog: [SyncLogEntry] = AppState.loadSyncLog() {
+        didSet { AppState.saveSyncLog(syncLog) }
     }
 
     @Published var trackedMilestonesByServer: [String: Int] = AppState.loadTrackedMilestones() {
@@ -32,7 +47,39 @@ final class AppState: ObservableObject {
     }
 
     func isConfigured() -> Bool {
-        !minecraftUsername.isEmpty && !serverName.isEmpty && !playerApiKey.isEmpty
+        guard !minecraftUsername.isEmpty else { return false }
+        guard !selectedServers.isEmpty else { return false }
+        return selectedServers.allSatisfy { serverKey(for: $0) != nil }
+    }
+
+    func serverKey(for server: String) -> String? {
+        let key = makeServerKey(username: minecraftUsername, server: server)
+        return serverKeysByUserServer[key]
+    }
+
+    func setServerKey(server: String, apiKey: String) {
+        let key = makeServerKey(username: minecraftUsername, server: server)
+        serverKeysByUserServer[key] = apiKey
+    }
+
+    func removeServerKey(server: String) {
+        let key = makeServerKey(username: minecraftUsername, server: server)
+        serverKeysByUserServer.removeValue(forKey: key)
+    }
+
+    func setInviteCode(server: String, code: String?) {
+        if let code, !code.isEmpty {
+            inviteCodesByServer[server] = code
+        } else {
+            inviteCodesByServer.removeValue(forKey: server)
+        }
+    }
+
+    func addSyncLogEntry(_ entry: SyncLogEntry) {
+        var updated = syncLog
+        updated.insert(entry, at: 0)
+        if updated.count > 25 { updated.removeLast(updated.count - 25) }
+        syncLog = updated
     }
 
     func setTrackedMilestone(server: String, minSteps: Int?) {
@@ -76,13 +123,90 @@ final class AppState: ObservableObject {
     private enum Keys {
         static let deviceId = "device_id"
         static let minecraftUsername = "minecraft_username"
-        static let serverName = "server_name"
-        static let playerApiKey = "player_api_key"
+        static let selectedServers = "selected_servers"
+        static let serverKeys = "server_keys"
+        static let inviteCodes = "invite_codes_by_server"
+        static let onboardingComplete = "onboarding_complete"
+        static let autoSyncEnabled = "auto_sync_enabled"
+        static let lastKnownSteps = "last_known_steps"
+        static let lastKnownStepsDay = "last_known_steps_day"
+        static let syncLog = "sync_log"
         static let trackedMilestones = "tracked_milestones_by_server"
         static let adminPushEnabled = "admin_push_by_server"
         static let notifyTiers = "notify_tiers_by_server"
         static let milestoneNotified = "milestone_notified_by_key"
     }
+    private static func loadSelectedServers() -> [String] {
+        guard let data = UserDefaults.standard.data(forKey: Keys.selectedServers) else { return [] }
+        return (try? JSONDecoder().decode([String].self, from: data)) ?? []
+    }
+
+    private static func saveSelectedServers(_ value: [String]) {
+        if let data = try? JSONEncoder().encode(value) {
+            UserDefaults.standard.set(data, forKey: Keys.selectedServers)
+        }
+    }
+
+    private static func loadServerKeys() -> [String: String] {
+        guard let data = UserDefaults.standard.data(forKey: Keys.serverKeys) else { return [:] }
+        return (try? JSONDecoder().decode([String: String].self, from: data)) ?? [:]
+    }
+
+    private static func saveServerKeys(_ value: [String: String]) {
+        if let data = try? JSONEncoder().encode(value) {
+            UserDefaults.standard.set(data, forKey: Keys.serverKeys)
+        }
+    }
+
+    private static func loadInviteCodes() -> [String: String] {
+        guard let data = UserDefaults.standard.data(forKey: Keys.inviteCodes) else { return [:] }
+        return (try? JSONDecoder().decode([String: String].self, from: data)) ?? [:]
+    }
+
+    private static func saveInviteCodes(_ value: [String: String]) {
+        if let data = try? JSONEncoder().encode(value) {
+            UserDefaults.standard.set(data, forKey: Keys.inviteCodes)
+        }
+    }
+
+    private static func loadLastKnownSteps() -> (steps: Int?, dayKey: String?) {
+        let day = UserDefaults.standard.string(forKey: Keys.lastKnownStepsDay)
+        let stored = UserDefaults.standard.object(forKey: Keys.lastKnownSteps) as? Int
+        guard day == dayKey() else { return (nil, day) }
+        return (stored, day)
+    }
+
+    private static func saveLastKnownSteps(steps: Int?, dayKey: String) {
+        UserDefaults.standard.set(dayKey, forKey: Keys.lastKnownStepsDay)
+        if let steps {
+            UserDefaults.standard.set(steps, forKey: Keys.lastKnownSteps)
+        } else {
+            UserDefaults.standard.removeObject(forKey: Keys.lastKnownSteps)
+        }
+    }
+
+    private static func loadSyncLog() -> [SyncLogEntry] {
+        guard let data = UserDefaults.standard.data(forKey: Keys.syncLog) else { return [] }
+        return (try? JSONDecoder().decode([SyncLogEntry].self, from: data)) ?? []
+    }
+
+    private static func saveSyncLog(_ value: [SyncLogEntry]) {
+        if let data = try? JSONEncoder().encode(value) {
+            UserDefaults.standard.set(data, forKey: Keys.syncLog)
+        }
+    }
+
+    private static func dayKey() -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        formatter.timeZone = TimeZone(identifier: "America/Chicago")
+        return formatter.string(from: Date())
+    }
+
+    private func makeServerKey(username: String, server: String) -> String {
+        "\(username)|\(server)"
+    }
+
 
     private static func loadTrackedMilestones() -> [String: Int] {
         guard let data = UserDefaults.standard.data(forKey: Keys.trackedMilestones) else { return [:] }

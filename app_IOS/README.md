@@ -1,28 +1,33 @@
 # FitCollector iOS (SwiftUI)
 
-This is a starter SwiftUI port scaffold for the FitCollector app.
+This is the SwiftUI port of the Android FitCollector app.
 
 ## What’s included
-- SwiftUI app shell with onboarding, dashboard, and settings screens
-- URLSession-based API client matching the backend endpoints
-- UserDefaults-backed preferences (device id, username, server selection, milestones)
-- Simple data models mirroring backend JSON
+- Multi-step onboarding (HealthKit, notifications, username, server selection)
+- Dashboard with step count + manual sync
+- Settings with server management, milestones, and notifications
+- Activity log and HealthKit raw data viewer
+- URLSession-based API client with StepCraft backend endpoints
+- UserDefaults-backed preferences (device id, username, servers, keys, milestones)
 
 ## Next steps
-1. Open this folder in Xcode and create a new iOS App target named **FitCollectorIOS**.
-2. Drag the `FitCollectorIOS` folder into the Xcode project (check “Copy items if needed”).
-3. Add HealthKit/Health Connect analogs on iOS (HealthKit + Background Tasks).
-4. Wire push notifications (UNUserNotificationCenter) and background fetch.
-5. Replace placeholder UI elements with finalized designs.
+1. Open this folder in Xcode and ensure the app target includes the FitCollectorIOS folder.
+2. In the target’s **Signing & Capabilities**, add **HealthKit**.
+3. Build and run on a real device (HealthKit data is limited on the simulator).
+4. Optionally enable Background Modes → Background fetch if you want periodic sync.
 
 ## Windows limitation
 Building iOS apps requires macOS/Xcode. On Windows you can only edit code. Use a Mac or cloud Mac to build and run.
 
 ## Backend compatibility
 The API client expects these endpoints (already in backend):
-- `GET /v1/players/rewards`
-- `GET /v1/players/push/next`
-- `POST /v1/players/register`
-- `POST /v1/players/recover-key`
+- GET /v1/players/rewards
+- GET /v1/players/push/next
+- POST /v1/players/register
+- POST /v1/players/recover-key
+- POST /v1/ingest
+- GET /v1/servers/available
+- GET /v1/players/claim-status/{minecraft_username}
+- GET /v1/players/steps-yesterday
 
-You’ll need to set the `baseURL` in `ApiClient`.
+The base URL is set to https://api.stepcraft.org/ in the API client.

@@ -1,5 +1,87 @@
 import Foundation
 
+struct SyncLogEntry: Codable, Hashable, Identifiable {
+    let id: UUID
+    let timestamp: String
+    let steps: Int
+    let source: String
+    let success: Bool
+    let message: String
+
+    init(timestamp: String, steps: Int, source: String, success: Bool, message: String, id: UUID = UUID()) {
+        self.id = id
+        self.timestamp = timestamp
+        self.steps = steps
+        self.source = source
+        self.success = success
+        self.message = message
+    }
+}
+
+struct IngestPayload: Codable {
+    let minecraftUsername: String
+    let deviceId: String
+    let stepsToday: Int
+    let playerApiKey: String
+    let day: String
+    let source: String
+    let timestamp: String
+
+    enum CodingKeys: String, CodingKey {
+        case minecraftUsername = "minecraft_username"
+        case deviceId = "device_id"
+        case stepsToday = "steps_today"
+        case playerApiKey = "player_api_key"
+        case day
+        case source
+        case timestamp
+    }
+}
+
+struct IngestResponse: Codable {
+    let ok: Bool
+    let deviceId: String
+    let day: String
+    let stepsToday: Int
+
+    enum CodingKeys: String, CodingKey {
+        case ok
+        case deviceId = "device_id"
+        case day
+        case stepsToday = "steps_today"
+    }
+}
+
+struct ClaimStatusResponse: Codable {
+    let claimed: Bool
+    let claimedAt: String?
+    let stepsClaimed: Int?
+    let day: String?
+    let minSteps: Int?
+
+    enum CodingKeys: String, CodingKey {
+        case claimed
+        case claimedAt = "claimed_at"
+        case stepsClaimed = "steps_claimed"
+        case day
+        case minSteps = "min_steps"
+    }
+}
+
+struct StepsYesterdayResponse: Codable {
+    let minecraftUsername: String
+    let serverName: String
+    let stepsYesterday: Int
+    let day: String
+
+    enum CodingKeys: String, CodingKey {
+        case minecraftUsername = "minecraft_username"
+        case serverName = "server_name"
+        case stepsYesterday = "steps_yesterday"
+        case day
+    }
+}
+
 struct RewardTier: Codable, Hashable, Identifiable {
     var id: String { "\(minSteps)-\(label)" }
     let minSteps: Int
