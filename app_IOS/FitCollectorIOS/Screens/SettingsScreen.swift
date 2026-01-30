@@ -113,7 +113,10 @@ struct SettingsScreen: View {
                         }
                         .buttonStyle(PillSecondaryButton())
 
-                        Button(isSaving ? "Saving…" : "Save & Register All") {
+                        let changingUsername = usernameDraft.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+                            != appState.minecraftUsername.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+                        let saveTitle = isSaving ? "Saving…" : (changingUsername && !appState.canChangeUsernameToday() ? "Queue for Tomorrow" : "Save & Register All")
+                        Button(saveTitle) {
                             Task { await saveProfile() }
                         }
                         .buttonStyle(PillPrimaryButton())

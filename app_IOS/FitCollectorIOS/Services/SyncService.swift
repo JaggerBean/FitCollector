@@ -11,7 +11,8 @@ final class SyncService: ObservableObject {
         lastErrorMessage = nil
 
         guard appState.autoSyncEnabled || manual else { return }
-        guard appState.isConfigured() else {
+        guard !appState.minecraftUsername.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+              !appState.selectedServers.isEmpty else {
             lastErrorMessage = "Complete onboarding before syncing."
             return
         }
