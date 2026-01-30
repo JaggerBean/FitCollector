@@ -8,12 +8,10 @@
 
 /* Begin PBXBuildFile section */
 		A1000001 /* FitCollectorIOSApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000001 /* FitCollectorIOSApp.swift */; };
-		C0000002 /* logo.png in Resources */ = {isa = PBXBuildFile; fileRef = C0000001 /* logo.png */; };
 		A1000002 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000002 /* RootView.swift */; };
 		A1000003 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000003 /* Models.swift */; };
 		A1000004 /* ApiClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000004 /* ApiClient.swift */; };
 		A1000005 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000005 /* AppState.swift */; };
-		C0000004 /* KeychainHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0000003 /* KeychainHelper.swift */; };
 		A1000006 /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000006 /* NotificationManager.swift */; };
 		A1000007 /* HealthKitManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000007 /* HealthKitManager.swift */; };
 		A1000008 /* SyncService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000008 /* SyncService.swift */; };
@@ -23,16 +21,15 @@
 		B168A6A42F2C5D7B0024EBF4 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = B168A6A32F2C5D7B0024EBF4 /* Theme.swift */; };
 		B1941CD92F2C5843004E26F7 /* ActivityLogScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1941CD72F2C5843004E26F7 /* ActivityLogScreen.swift */; };
 		B1941CDA2F2C5843004E26F7 /* RawHealthDataScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1941CD82F2C5843004E26F7 /* RawHealthDataScreen.swift */; };
+		C0000004 /* KeychainHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0000003 /* KeychainHelper.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		A2000001 /* FitCollectorIOSApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FitCollectorIOSApp.swift; sourceTree = "<group>"; };
-		C0000001 /* logo.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Assets.xcassets/logo.png; sourceTree = "<group>"; };
 		A2000002 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		A2000003 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
 		A2000004 /* ApiClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApiClient.swift; sourceTree = "<group>"; };
 		A2000005 /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
-		C0000003 /* KeychainHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainHelper.swift; sourceTree = "<group>"; };
 		A2000006 /* NotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationManager.swift; sourceTree = "<group>"; };
 		A2000007 /* HealthKitManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthKitManager.swift; sourceTree = "<group>"; };
 		A2000008 /* SyncService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncService.swift; sourceTree = "<group>"; };
@@ -46,18 +43,19 @@
 		B1941CD72F2C5843004E26F7 /* ActivityLogScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityLogScreen.swift; sourceTree = "<group>"; };
 		B1941CD82F2C5843004E26F7 /* RawHealthDataScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RawHealthDataScreen.swift; sourceTree = "<group>"; };
 		B1941CDB2F2C5959004E26F7 /* FitCollectorIOS.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = FitCollectorIOS.entitlements; sourceTree = "<group>"; };
+		C0000003 /* KeychainHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainHelper.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
 		A3000000 = {
 			isa = PBXGroup;
 			children = (
-				A3000001 /* StepCraftIOS */,
+				A3000001 /* FitCollectorIOS */,
 				A3000005 /* Products */,
 			);
 			sourceTree = "<group>";
 		};
-		A3000001 /* StepCraftIOS */ = {
+		A3000001 /* FitCollectorIOS */ = {
 			isa = PBXGroup;
 			children = (
 				B168A6A32F2C5D7B0024EBF4 /* Theme.swift */,
@@ -68,7 +66,6 @@
 				A3000003 /* Services */,
 				A3000004 /* Screens */,
 				A200000D /* Assets.xcassets */,
-				C0000001 /* logo.png */,
 				A200000C /* Info.plist */,
 			);
 			path = FitCollectorIOS;
@@ -148,7 +145,7 @@
 					};
 				};
 			};
-			buildConfigurationList = A5000000 /* Build configuration list for PBXProject "StepCraftIOS" */;
+			buildConfigurationList = A5000000 /* Build configuration list for PBXProject "FitCollectorIOS" */;
 			compatibilityVersion = "Xcode 14.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -171,7 +168,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				C0000002 /* logo.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -315,6 +311,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = FXU7KBQF23;
+				MARKETING_VERSION = 0.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.Jagger.StepCraftIOS;
 				PRODUCT_NAME = StepCraftIOS;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
@@ -331,6 +328,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = FXU7KBQF23;
+				MARKETING_VERSION = 0.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.Jagger.StepCraftIOS;
 				PRODUCT_NAME = StepCraftIOS;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
@@ -342,7 +340,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		A5000000 /* Build configuration list for PBXProject "StepCraftIOS" */ = {
+		A5000000 /* Build configuration list for PBXProject "FitCollectorIOS" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				A7000001 /* Debug */,
