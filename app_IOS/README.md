@@ -1,6 +1,6 @@
-# FitCollector iOS (SwiftUI)
+# StepCraft iOS (SwiftUI)
 
-This is the SwiftUI port of the Android FitCollector app.
+This is the SwiftUI port of the Android StepCraft app.
 
 ## What’s included
 - Multi-step onboarding (HealthKit, notifications, username, server selection)
@@ -11,7 +11,7 @@ This is the SwiftUI port of the Android FitCollector app.
 - UserDefaults-backed preferences (device id, username, servers, keys, milestones)
 
 ## Next steps
-1. Open this folder in Xcode and ensure the app target includes the FitCollectorIOS folder.
+1. Open this folder in Xcode and ensure the app target includes the iOS source folder.
 2. In the target’s **Signing & Capabilities**, add **HealthKit**.
 3. Build and run on a real device (HealthKit data is limited on the simulator).
 4. Optionally enable Background Modes → Background fetch if you want periodic sync.

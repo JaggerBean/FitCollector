@@ -1,7 +1,7 @@
 import SwiftUI
 
 @main
-struct FitCollectorIOSApp: App {
+struct StepCraftApp: App {
     @StateObject private var appState = AppState()
 
     var body: some Scene {

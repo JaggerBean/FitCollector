@@ -37,7 +37,7 @@
 		A200000B /* SettingsScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsScreen.swift; sourceTree = "<group>"; };
 		A200000C /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		A200000D /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		A200000E /* FitCollectorIOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; path = FitCollectorIOS.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A200000E /* StepCraftIOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; path = StepCraftIOS.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		B168A6A32F2C5D7B0024EBF4 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		B1941CD72F2C5843004E26F7 /* ActivityLogScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityLogScreen.swift; sourceTree = "<group>"; };
 		B1941CD82F2C5843004E26F7 /* RawHealthDataScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RawHealthDataScreen.swift; sourceTree = "<group>"; };
@@ -48,12 +48,12 @@
 		A3000000 = {
 			isa = PBXGroup;
 			children = (
-				A3000001 /* FitCollectorIOS */,
+				A3000001 /* StepCraftIOS */,
 				A3000005 /* Products */,
 			);
 			sourceTree = "<group>";
 		};
-		A3000001 /* FitCollectorIOS */ = {
+		A3000001 /* StepCraftIOS */ = {
 			isa = PBXGroup;
 			children = (
 				B168A6A32F2C5D7B0024EBF4 /* Theme.swift */,
@@ -104,7 +104,7 @@
 		A3000005 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				A200000E /* FitCollectorIOS.app */,
+				A200000E /* StepCraftIOS.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -112,9 +112,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		A4000001 /* FitCollectorIOS */ = {
+		A4000001 /* StepCraftIOS */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = A5000001 /* Build configuration list for PBXNativeTarget "FitCollectorIOS" */;
+			buildConfigurationList = A5000001 /* Build configuration list for PBXNativeTarget "StepCraftIOS" */;
 			buildPhases = (
 				A6000001 /* Sources */,
 				A6000002 /* Resources */,
@@ -123,9 +123,9 @@
 			);
 			dependencies = (
 			);
-			name = FitCollectorIOS;
-			productName = FitCollectorIOS;
-			productReference = A200000E /* FitCollectorIOS.app */;
+			name = StepCraftIOS;
+			productName = StepCraftIOS;
+			productReference = A200000E /* StepCraftIOS.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -142,7 +142,7 @@
 					};
 				};
 			};
-			buildConfigurationList = A5000000 /* Build configuration list for PBXProject "FitCollectorIOS" */;
+			buildConfigurationList = A5000000 /* Build configuration list for PBXProject "StepCraftIOS" */;
 			compatibilityVersion = "Xcode 14.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -155,7 +155,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				A4000001 /* FitCollectorIOS */,
+				A4000001 /* StepCraftIOS */,
 			);
 		};
 /* End PBXProject section */
@@ -240,7 +240,7 @@
 					"@executable_path/Frameworks",
 				);
 				ONLY_ACTIVE_ARCH = YES;
-				PRODUCT_BUNDLE_IDENTIFIER = com.example.FitCollectorIOS;
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.StepCraftIOS;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_VERSION = 5.0;
@@ -290,7 +290,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.example.FitCollectorIOS;
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.StepCraftIOS;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
@@ -307,8 +307,8 @@
 				CODE_SIGN_STYLE = Automatic;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = FXU7KBQF23;
-				PRODUCT_BUNDLE_IDENTIFIER = com.Jagger.FitCollectorIOS;
-				PRODUCT_NAME = FitCollectorIOS;
+				PRODUCT_BUNDLE_IDENTIFIER = com.Jagger.StepCraftIOS;
+				PRODUCT_NAME = StepCraftIOS;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
 				SUPPORTS_MACCATALYST = NO;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -323,8 +323,8 @@
 				CODE_SIGN_STYLE = Automatic;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = FXU7KBQF23;
-				PRODUCT_BUNDLE_IDENTIFIER = com.Jagger.FitCollectorIOS;
-				PRODUCT_NAME = FitCollectorIOS;
+				PRODUCT_BUNDLE_IDENTIFIER = com.Jagger.StepCraftIOS;
+				PRODUCT_NAME = StepCraftIOS;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
 				SUPPORTS_MACCATALYST = NO;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -334,7 +334,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		A5000000 /* Build configuration list for PBXProject "FitCollectorIOS" */ = {
+		A5000000 /* Build configuration list for PBXProject "StepCraftIOS" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				A7000001 /* Debug */,
@@ -343,7 +343,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
 		};
-		A5000001 /* Build configuration list for PBXNativeTarget "FitCollectorIOS" */ = {
+		A5000001 /* Build configuration list for PBXNativeTarget "StepCraftIOS" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				A7000003 /* Debug */,
