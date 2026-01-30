@@ -540,7 +540,7 @@ private struct PrivateServerSheet: View {
             }
             .padding(20)
         }
-        .sheet(isPresented: $showScanner) {
+        .fullScreenCover(isPresented: $showScanner) {
             NavigationStack {
                 ZStack {
                     QRCodeScannerView(
@@ -585,40 +585,28 @@ private struct QRCodeScannerView: UIViewRepresentable {
         let view = UIView()
         let session = AVCaptureSession()
 
-        guard let device = AVCaptureDevice.default(for: .video) else {
-            DispatchQueue.main.async {
-                onError("Camera not available")
+        let status = AVCaptureDevice.authorizationStatus(for: .video)
+        if status == .notDetermined {
+            AVCaptureDevice.requestAccess(for: .video) { granted in
+                DispatchQueue.main.async {
+                    if granted {
+                        context.coordinator.configureSession(session, in: view)
+                    } else {
+                        onError("Camera permission denied")
+                    }
+                }
             }
             return view
         }
 
-        do {
-            let input = try AVCaptureDeviceInput(device: device)
-            if session.canAddInput(input) {
-                session.addInput(input)
-            }
-
-            let output = AVCaptureMetadataOutput()
-            if session.canAddOutput(output) {
-                session.addOutput(output)
-                output.setMetadataObjectsDelegate(context.coordinator, queue: .main)
-                output.metadataObjectTypes = [.qr]
-            }
-
-            let preview = AVCaptureVideoPreviewLayer(session: session)
-            preview.videoGravity = .resizeAspectFill
-            preview.frame = view.bounds
-            view.layer.addSublayer(preview)
-
-            context.coordinator.session = session
-            context.coordinator.previewLayer = preview
-            session.startRunning()
-        } catch {
+        if status == .denied || status == .restricted {
             DispatchQueue.main.async {
-                onError(error.localizedDescription)
+                onError("Camera permission denied")
             }
+            return view
         }
 
+        context.coordinator.configureSession(session, in: view)
         return view
     }
 
@@ -638,6 +626,42 @@ private struct QRCodeScannerView: UIViewRepresentable {
 
         init(_ parent: QRCodeScannerView) {
             self.parent = parent
+        }
+
+        func configureSession(_ session: AVCaptureSession, in view: UIView) {
+            guard let device = AVCaptureDevice.default(for: .video) else {
+                DispatchQueue.main.async {
+                    self.parent.onError("Camera not available")
+                }
+                return
+            }
+
+            do {
+                let input = try AVCaptureDeviceInput(device: device)
+                if session.canAddInput(input) {
+                    session.addInput(input)
+                }
+
+                let output = AVCaptureMetadataOutput()
+                if session.canAddOutput(output) {
+                    session.addOutput(output)
+                    output.setMetadataObjectsDelegate(self, queue: .main)
+                    output.metadataObjectTypes = [.qr]
+                }
+
+                let preview = AVCaptureVideoPreviewLayer(session: session)
+                preview.videoGravity = .resizeAspectFill
+                preview.frame = view.bounds
+                view.layer.addSublayer(preview)
+
+                self.session = session
+                self.previewLayer = preview
+                session.startRunning()
+            } catch {
+                DispatchQueue.main.async {
+                    self.parent.onError(error.localizedDescription)
+                }
+            }
         }
 
         func metadataOutput(
