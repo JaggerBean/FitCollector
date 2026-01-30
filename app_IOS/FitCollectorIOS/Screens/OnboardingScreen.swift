@@ -460,7 +460,7 @@ struct OnboardingScreen: View {
             return
         }
         await MainActor.run {
-            appState.onboardingComplete = appState.isConfigured()
+            appState.onboardingComplete = true
             isLoading = false
         }
     }
