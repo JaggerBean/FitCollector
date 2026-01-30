@@ -98,7 +98,7 @@ struct OnboardingScreen: View {
                 .foregroundColor(secondaryTextColor)
                 .multilineTextAlignment(.center)
 
-            Button(healthKitAuthorized ? "Authorized" : "Authorize HealthKit") {
+            Button(healthKitAuthorized ? "Authorized" : (isAuthorizingHealthKit ? "Authorizing…" : "Authorize HealthKit")) {
                 Task {
                     guard !isAuthorizingHealthKit else { return }
                     isAuthorizingHealthKit = true
@@ -114,6 +114,10 @@ struct OnboardingScreen: View {
             }
             .buttonStyle(PillPrimaryButton())
             .disabled(isAuthorizingHealthKit)
+
+            if isAuthorizingHealthKit {
+                ProgressView()
+            }
         }
     }
 
