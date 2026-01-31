@@ -1,13 +1,13 @@
-# StepCraft iOS (SwiftUI)
+# StepCraft Companion iOS (SwiftUI)
 
-This is the SwiftUI port of the Android StepCraft app.
+This is the SwiftUI port of the Android StepCraft Companion app.
 
 ## What’s included
 - Multi-step onboarding (HealthKit, notifications, username, server selection)
 - Dashboard with step count + manual sync
 - Settings with server management, milestones, and notifications
 - Activity log and HealthKit raw data viewer
-- URLSession-based API client with StepCraft backend endpoints
+- URLSession-based API client with StepCraft Companion backend endpoints
 - UserDefaults-backed preferences (device id, username, servers, keys, milestones)
 
 ## Next steps
