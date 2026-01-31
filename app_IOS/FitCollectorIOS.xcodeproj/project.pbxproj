@@ -38,7 +38,7 @@
 		A200000B /* SettingsScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsScreen.swift; sourceTree = "<group>"; };
 		A200000C /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		A200000D /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		A200000E /* StepCraftIOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; path = StepCraftIOS.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A200000E /* StepCraft Companion.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; path = "StepCraft Companion.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		B168A6A32F2C5D7B0024EBF4 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		B1941CD72F2C5843004E26F7 /* ActivityLogScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityLogScreen.swift; sourceTree = "<group>"; };
 		B1941CD82F2C5843004E26F7 /* RawHealthDataScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RawHealthDataScreen.swift; sourceTree = "<group>"; };
@@ -107,7 +107,7 @@
 		A3000005 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				A200000E /* StepCraftIOS.app */,
+				A200000E /* StepCraft Companion.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -128,7 +128,7 @@
 			);
 			name = "StepCraft Companion";
 			productName = StepCraftIOS;
-			productReference = A200000E /* StepCraftIOS.app */;
+			productReference = A200000E /* StepCraft Companion.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -320,7 +320,7 @@
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.healthcare-fitness";
 				MARKETING_VERSION = 0.11;
 				PRODUCT_BUNDLE_IDENTIFIER = com.Jagger.StepCraftCompanion;
-				PRODUCT_NAME = StepCraftIOS;
+				PRODUCT_NAME = "StepCraft Companion";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
 				TARGETED_DEVICE_FAMILY = 1;
@@ -344,7 +344,7 @@
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.healthcare-fitness";
 				MARKETING_VERSION = 0.11;
 				PRODUCT_BUNDLE_IDENTIFIER = com.Jagger.StepCraftCompanion;
-				PRODUCT_NAME = StepCraftIOS;
+				PRODUCT_NAME = "StepCraft Companion";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
 				TARGETED_DEVICE_FAMILY = 1;
