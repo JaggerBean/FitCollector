@@ -253,42 +253,30 @@ private struct StepCraftHeader: View {
     let username: String
 
     var body: some View {
-        HStack(spacing: 10) {
-            PlayerAvatar(username: username)
-
-            StepCraftLogo()
-                .frame(width: 38, height: 38)
-                .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
-
+        ZStack {
             Text("StepCraft")
-                .font(.system(size: 46, weight: .bold, design: .rounded))
-                .foregroundStyle(
-                    LinearGradient(
-                        colors: [Color(hex: 0xFFA5D6A7), AppColors.healthGreen],
-                        startPoint: .top,
-                        endPoint: .bottom
-                    )
-                )
-                .minimumScaleFactor(0.65)
+                .font(.custom("Roboto-Bold", size: 24))
+                .fontWeight(.bold)
+                .foregroundColor(Color(hex: 0xFF8BC98B))
+                .minimumScaleFactor(0.7)
                 .lineLimit(1)
 
-            Spacer(minLength: 0)
+            HStack {
+                StepCraftLogo()
+                    .frame(width: 34, height: 34)
 
-            Color.clear
-                .frame(width: 32, height: 32)
+                Spacer(minLength: 0)
+
+                PlayerAvatar(username: username)
+                    .frame(width: 34, height: 34)
+            }
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 14)
-        .frame(maxWidth: .infinity, minHeight: 80, alignment: .leading)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
+        .frame(maxWidth: .infinity, minHeight: 62)
         .background(
             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(
-                    LinearGradient(
-                        colors: [Color(hex: 0xFF24272E), Color(hex: 0xFF15171C)],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
+                .fill(Color(hex: 0xFF1E2128))
         )
         .overlay(
             RoundedRectangle(cornerRadius: 16, style: .continuous)
@@ -309,11 +297,11 @@ private struct PlayerAvatar: View {
             } placeholder: {
                 avatarFallback
             }
-            .frame(width: 32, height: 32)
+            .frame(width: 34, height: 34)
             .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
         } else {
             avatarFallback
-                .frame(width: 32, height: 32)
+                .frame(width: 34, height: 34)
                 .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
         }
     }
@@ -326,26 +314,25 @@ private struct PlayerAvatar: View {
 
 private struct StepCraftLogo: View {
     var body: some View {
-        if let uiImage = UIImage(named: "icon-ios-60x60@3x")
-            ?? UIImage(named: "icon-ios-60x60@2x")
-            ?? UIImage(named: "AppIcon60x60")
-            ?? UIImage(named: "AppIcon") {
-            Image(uiImage: uiImage)
+        if UIImage(named: "StepCraftLogo") != nil {
+            Image("StepCraftLogo")
                 .resizable()
                 .renderingMode(.original)
+                .scaledToFit()
         } else {
             fallbackLogo
         }
     }
 
     private var fallbackLogo: some View {
-        ZStack(alignment: .top) {
-            RoundedRectangle(cornerRadius: 7, style: .continuous)
+        ZStack(alignment: .topLeading) {
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
                 .fill(Color(hex: 0xFF6B4634))
-            RoundedRectangle(cornerRadius: 7, style: .continuous)
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
                 .fill(Color(hex: 0xFF3F8D45))
-                .frame(height: 12)
+                .frame(height: 11)
         }
+        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
     }
 }
 
