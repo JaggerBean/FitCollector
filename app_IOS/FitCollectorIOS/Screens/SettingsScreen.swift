@@ -12,7 +12,10 @@ struct SettingsScreen: View {
     @State private var isSaving = false
     @State private var usernameDraft = ""
     @State private var selectedServers: Set<String> = []
-    @State private var showServerSelector = false
+    @State private var showPrivateJoinOptions = false
+    @State private var showInviteCodeEntry = false
+    @State private var showPublicServerPicker = false
+    @State private var showManageJoinedServers = false
     @State private var showScanner = false
     @State private var showTrackDialog = false
     @State private var showNotifyDialog = false
@@ -101,31 +104,30 @@ struct SettingsScreen: View {
 
                     SectionHeader(title: "Servers")
                     SettingsCard {
-                        VStack(alignment: .leading, spacing: 6) {
-                            Text("Private Server Invite Code")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                            Text("Add a private server using its invite code.")
-                                .font(.caption2)
-                                .foregroundColor(.secondary)
-                            TextField("Invite Code", text: $inviteCode)
-                                .padding(12)
-                                .background(Color(.secondarySystemBackground))
-                                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
-                        }
+                        Text("Choose how you want to join or manage servers.")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
 
-                        HStack(spacing: 10) {
-                            Button("Add Private Server") { Task { await addInviteCode() } }
-                                .buttonStyle(PillPrimaryButton())
-                                .disabled(inviteCode.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                            Button("Scan QR") { showScanner = true }
-                                .buttonStyle(PillSecondaryButton())
+                        Button("Add Private Server") {
+                            showPrivateJoinOptions = true
                         }
+                        .buttonStyle(PillPrimaryButton())
 
-                        Button(selectedServers.isEmpty ? "Select Servers" : "Servers: \(selectedServers.count) selected") {
-                            showServerSelector = true
+                        Button("Add Public Server") {
+                            showPublicServerPicker = true
                         }
                         .buttonStyle(PillSecondaryButton())
+
+                        Button(selectedServers.isEmpty ? "Manage Joined Servers" : "Manage Joined Servers (\(selectedServers.count))") {
+                            showManageJoinedServers = true
+                        }
+                        .buttonStyle(PillSecondaryButton())
+
+                        if isRefreshingServers {
+                            ProgressView("Refreshing available servers...")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
 
                         if let serverStatusMessage {
                             StatusBanner(message: serverStatusMessage.0, isSuccess: serverStatusMessage.1)
@@ -228,10 +230,32 @@ struct SettingsScreen: View {
                 }
             }
         }
-        .sheet(isPresented: $showServerSelector) {
-            ServerSelectorSheet(
+        .confirmationDialog(
+            "Add Private Server",
+            isPresented: $showPrivateJoinOptions,
+            titleVisibility: .visible
+        ) {
+            Button("Enter Invite Code") { showInviteCodeEntry = true }
+            Button("Scan QR Code") { showScanner = true }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("Choose how to join a private server.")
+        }
+        .sheet(isPresented: $showInviteCodeEntry) {
+            PrivateInviteEntrySheet(
+                inviteCode: $inviteCode,
+                onAdd: { Task { await addInviteCode() } }
+            )
+        }
+        .sheet(isPresented: $showPublicServerPicker) {
+            PublicServerPickerSheet(
                 availableServers: availableServers,
                 privateServerNames: Set(appState.inviteCodesByServer.keys),
+                selectedServers: $selectedServers
+            )
+        }
+        .sheet(isPresented: $showManageJoinedServers) {
+            ManageJoinedServersSheet(
                 selectedServers: $selectedServers
             )
         }
@@ -257,8 +281,8 @@ struct SettingsScreen: View {
                     QRCodeScannerView(
                         onFound: { raw in
                             inviteCode = extractInviteCode(from: raw)
-                            serverStatusMessage = ("Invite code scanned.", true)
                             showScanner = false
+                            Task { await addInviteCode() }
                         },
                         onError: { message in
                             scannerError = message
@@ -592,6 +616,160 @@ private struct PillSecondaryButton: ButtonStyle {
             .background(Color.clear)
             .overlay(Capsule().stroke(Color.gray.opacity(0.4), lineWidth: 1))
             .foregroundColor(.primary)
+    }
+}
+
+private struct PrivateInviteEntrySheet: View {
+    @Binding var inviteCode: String
+    let onAdd: () -> Void
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            VStack(alignment: .leading, spacing: 14) {
+                Text("Enter a private server invite code.")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+
+                TextField("Invite Code", text: $inviteCode)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                    .padding(12)
+                    .background(Color(.secondarySystemBackground))
+                    .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+
+                Button("Add Private Server") {
+                    onAdd()
+                    dismiss()
+                }
+                .buttonStyle(PillPrimaryButton())
+                .disabled(inviteCode.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+
+                Spacer(minLength: 0)
+            }
+            .padding(20)
+            .navigationTitle("Private Server")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button("Close") { dismiss() }
+                }
+            }
+        }
+    }
+}
+
+private struct PublicServerPickerSheet: View {
+    let availableServers: [ServerInfo]
+    let privateServerNames: Set<String>
+    @Binding var selectedServers: Set<String>
+    @Environment(\.dismiss) private var dismiss
+    @State private var searchText = ""
+
+    var body: some View {
+        NavigationStack {
+            VStack(alignment: .leading, spacing: 14) {
+                Text("Select public servers to join.")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+
+                HStack(spacing: 8) {
+                    Image(systemName: "magnifyingglass")
+                        .foregroundColor(.secondary)
+                    TextField("Search Public Servers", text: $searchText)
+                }
+                .padding(12)
+                .background(Color(.secondarySystemBackground))
+                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 10) {
+                        if publicServers.isEmpty {
+                            Text("No public servers available.")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                                .padding(.vertical, 8)
+                        } else {
+                            ForEach(publicServers, id: \.serverName) { server in
+                                ServerRow(server: server.serverName, selected: selectedServers.contains(server.serverName)) {
+                                    toggleServer(server.serverName)
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Button("Done") { dismiss() }
+                    .buttonStyle(PillPrimaryButton())
+            }
+            .padding(20)
+            .navigationTitle("Add Public Server")
+            .navigationBarTitleDisplayMode(.inline)
+        }
+    }
+
+    private var filteredServers: [ServerInfo] {
+        if searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            return availableServers
+        }
+        return availableServers.filter { $0.serverName.lowercased().contains(searchText.lowercased()) }
+    }
+
+    private var publicServers: [ServerInfo] {
+        filteredServers
+            .filter { !privateServerNames.contains($0.serverName) }
+            .sorted { $0.serverName.lowercased() < $1.serverName.lowercased() }
+    }
+
+    private func toggleServer(_ server: String) {
+        if selectedServers.contains(server) {
+            selectedServers.remove(server)
+        } else {
+            selectedServers.insert(server)
+        }
+    }
+}
+
+private struct ManageJoinedServersSheet: View {
+    @Binding var selectedServers: Set<String>
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            VStack(alignment: .leading, spacing: 14) {
+                Text("Remove servers you no longer want to sync with.")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 10) {
+                        if selectedServers.isEmpty {
+                            Text("You have no joined servers.")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                                .padding(.vertical, 8)
+                        } else {
+                            ForEach(Array(selectedServers).sorted(), id: \.self) { server in
+                                HStack(spacing: 10) {
+                                    Text(server)
+                                    Spacer()
+                                    Button("Remove", role: .destructive) {
+                                        selectedServers.remove(server)
+                                    }
+                                    .font(.caption)
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Button("Done") { dismiss() }
+                    .buttonStyle(PillPrimaryButton())
+            }
+            .padding(20)
+            .navigationTitle("Manage Joined Servers")
+            .navigationBarTitleDisplayMode(.inline)
+        }
     }
 }
 
