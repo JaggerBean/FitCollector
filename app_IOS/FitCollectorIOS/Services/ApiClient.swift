@@ -27,20 +27,6 @@ final class ApiClient {
         return try JSONDecoder().decode(RewardsResponse.self, from: data)
     }
 
-    func getNextPush(minecraftUsername: String, deviceId: String, serverName: String, playerApiKey: String) async throws -> PushNotificationResponse {
-        var components = URLComponents(url: baseURL.appendingPathComponent("/v1/players/push/next"), resolvingAgainstBaseURL: false)!
-        components.queryItems = [
-            URLQueryItem(name: "minecraft_username", value: minecraftUsername),
-            URLQueryItem(name: "device_id", value: deviceId),
-            URLQueryItem(name: "server_name", value: serverName),
-            URLQueryItem(name: "player_api_key", value: playerApiKey)
-        ]
-        var request = URLRequest(url: components.url!)
-        request.setValue(globalApiKey, forHTTPHeaderField: "X-API-Key")
-        let (data, _) = try await URLSession.shared.data(for: request)
-        return try JSONDecoder().decode(PushNotificationResponse.self, from: data)
-    }
-
     func getClaimStatus(minecraftUsername: String, serverName: String, minSteps: Int, day: String?) async throws -> ClaimStatusResponse {
         var components = URLComponents(url: baseURL.appendingPathComponent("/v1/players/claim-status/\(minecraftUsername)"), resolvingAgainstBaseURL: false)!
         var items = [

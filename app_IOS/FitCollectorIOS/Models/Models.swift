@@ -151,20 +151,6 @@ struct PlayerApiKeyResponse: Codable {
     }
 }
 
-struct PushNotificationResponse: Codable {
-    let message: String?
-    let serverName: String?
-    let scheduledAt: String?
-    let id: Int?
-
-    enum CodingKeys: String, CodingKey {
-        case message
-        case serverName = "server_name"
-        case scheduledAt = "scheduled_at"
-        case id
-    }
-}
-
 struct ServerInfo: Codable, Hashable {
     let serverName: String
     let createdAt: String
