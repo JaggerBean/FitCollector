@@ -13,6 +13,8 @@ if not hasattr(collections, "Iterable"):
     collections.Iterable = collections.abc.Iterable  # type: ignore[attr-defined]
 if not hasattr(collections, "Mapping"):
     collections.Mapping = collections.abc.Mapping  # type: ignore[attr-defined]
+if not hasattr(collections, "MutableSet"):
+    collections.MutableSet = collections.abc.MutableSet  # type: ignore[attr-defined]
 
 from apns2.client import APNsClient
 from apns2.payload import Payload
