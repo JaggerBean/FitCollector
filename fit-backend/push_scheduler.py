@@ -5,7 +5,14 @@ from datetime import datetime, timezone
 from sqlalchemy import text
 
 from database import engine
-from apns_service import ApnsConfigError, APNsException, Unregistered, apns_use_sandbox, send_push
+from apns_service import (
+    ApnsConfigError,
+    APNsException,
+    Unregistered,
+    apns_use_sandbox,
+    format_apns_exception,
+    send_push,
+)
 
 logger = logging.getLogger("push_scheduler")
 
@@ -102,7 +109,13 @@ def run_push_once() -> None:
                 )
             continue
         except APNsException as e:
-            logger.warning("APNs error for %s/%s: %s", server_name, device_id, e)
+            logger.warning(
+                "APNs error for %s/%s: %s",
+                server_name,
+                device_id,
+                format_apns_exception(e),
+                exc_info=True,
+            )
             continue
         except Exception:
             logger.exception("Push send failed for %s/%s", server_name, device_id)

@@ -130,6 +130,27 @@ def apns_use_sandbox() -> bool:
     return bool(get_apns_config()["use_sandbox"])
 
 
+def format_apns_exception(exc: Exception) -> str:
+    parts: list[str] = [type(exc).__name__]
+    for attr in ("reason", "description", "status", "status_code", "timestamp", "apns_id"):
+        value = getattr(exc, attr, None)
+        if value not in (None, ""):
+            parts.append(f"{attr}={value}")
+
+    args = getattr(exc, "args", None)
+    if args:
+        parts.append(f"args={args}")
+
+    response = getattr(exc, "response", None)
+    if response is not None:
+        for attr in ("status", "status_code", "reason"):
+            value = getattr(response, attr, None)
+            if value not in (None, ""):
+                parts.append(f"response.{attr}={value}")
+
+    return ", ".join(parts)
+
+
 def send_push(token: str, title: str, body: str, data: dict | None = None) -> None:
     config = get_apns_config()
     payload = Payload(
@@ -157,5 +178,6 @@ __all__ = [
     "APNsException",
     "Unregistered",
     "apns_use_sandbox",
+    "format_apns_exception",
     "send_push",
 ]

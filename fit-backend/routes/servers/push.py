@@ -8,7 +8,14 @@ from datetime import datetime, timezone
 
 from database import engine
 from auth import require_server_access
-from apns_service import ApnsConfigError, APNsException, Unregistered, apns_use_sandbox, send_push
+from apns_service import (
+    ApnsConfigError,
+    APNsException,
+    Unregistered,
+    apns_use_sandbox,
+    format_apns_exception,
+    send_push,
+)
 
 router = APIRouter()
 
@@ -124,7 +131,7 @@ def send_push_now(payload: PushSendPayload, server_name: str = Depends(require_s
                     )
                 failures += 1
             except APNsException as e:
-                raise HTTPException(status_code=502, detail=f"APNs error: {str(e)}")
+                raise HTTPException(status_code=502, detail=f"APNs error: {format_apns_exception(e)}")
 
         return {"status": "sent", "tokens": len(eligible), "failed": failures}
 
