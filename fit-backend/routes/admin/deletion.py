@@ -259,3 +259,138 @@ def admin_delete_all_data(
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to delete all data: {str(e)}")
+
+
+@router.get("/v1/admin/push/pending")
+def admin_list_pending_push_notifications(
+    server_name: str | None = None,
+    due_only: bool = True,
+    limit: int = 500,
+    _: bool = Depends(require_master_admin),
+):
+    """
+    List pending push notifications (master admin only).
+
+    Pending is defined as notifications with no delivery rows yet.
+    By default, only already-due notifications are returned.
+    """
+    if limit < 1 or limit > 5000:
+        raise HTTPException(status_code=400, detail="limit must be between 1 and 5000")
+
+    try:
+        with engine.begin() as conn:
+            rows = conn.execute(
+                text(
+                    """
+                    SELECT
+                        pn.id,
+                        pn.server_name,
+                        pn.message,
+                        pn.scheduled_at,
+                        pn.created_at
+                    FROM push_notifications
+                    WHERE (:server_name IS NULL OR server_name = :server_name)
+                      AND (:due_only = FALSE OR scheduled_at <= CURRENT_TIMESTAMP)
+                      AND NOT EXISTS (
+                          SELECT 1
+                          FROM push_deliveries pd
+                          WHERE pd.notification_id = push_notifications.id
+                      )
+                    ORDER BY scheduled_at ASC
+                    LIMIT :limit
+                    """
+                ),
+                {"server_name": server_name, "due_only": due_only, "limit": limit},
+            ).mappings().all()
+
+            total = conn.execute(
+                text(
+                    """
+                    SELECT COUNT(*) AS count
+                    FROM push_notifications
+                    WHERE (:server_name IS NULL OR server_name = :server_name)
+                      AND (:due_only = FALSE OR scheduled_at <= CURRENT_TIMESTAMP)
+                      AND NOT EXISTS (
+                          SELECT 1
+                          FROM push_deliveries pd
+                          WHERE pd.notification_id = push_notifications.id
+                      )
+                    """
+                ),
+                {"server_name": server_name, "due_only": due_only},
+            ).scalar_one()
+
+        items = []
+        for row in rows:
+            item = dict(row)
+            if item.get("scheduled_at") is not None:
+                item["scheduled_at"] = item["scheduled_at"].isoformat()
+            if item.get("created_at") is not None:
+                item["created_at"] = item["created_at"].isoformat()
+            items.append(item)
+
+        return {
+            "ok": True,
+            "server_name": server_name,
+            "due_only": due_only,
+            "total_pending": total,
+            "returned": len(items),
+            "items": items,
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to list pending push notifications: {str(e)}")
+
+
+@router.delete("/v1/admin/push/pending")
+def admin_delete_pending_push_notifications(
+    confirm: str | None = None,
+    server_name: str | None = None,
+    due_only: bool = True,
+    _: bool = Depends(require_master_admin),
+):
+    """
+    Delete pending push notifications (master admin only).
+
+    Pending is defined as notifications with no delivery rows yet.
+    Requires confirm=yes.
+    """
+    if confirm != "yes":
+        raise HTTPException(
+            status_code=400,
+            detail="This operation deletes pending push notifications. Confirm by passing ?confirm=yes",
+        )
+
+    try:
+        with engine.begin() as conn:
+            deleted = conn.execute(
+                text(
+                    """
+                    DELETE FROM push_notifications
+                    WHERE (:server_name IS NULL OR server_name = :server_name)
+                      AND (:due_only = FALSE OR scheduled_at <= CURRENT_TIMESTAMP)
+                      AND NOT EXISTS (
+                          SELECT 1
+                          FROM push_deliveries pd
+                          WHERE pd.notification_id = push_notifications.id
+                      )
+                    """
+                ),
+                {"server_name": server_name, "due_only": due_only},
+            ).rowcount
+
+        return {
+            "ok": True,
+            "action": "admin_deleted_pending_push_notifications",
+            "server_name": server_name,
+            "due_only": due_only,
+            "rows_deleted": deleted,
+            "message": f"Deleted {deleted} pending push notification(s)",
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to delete pending push notifications: {str(e)}")
