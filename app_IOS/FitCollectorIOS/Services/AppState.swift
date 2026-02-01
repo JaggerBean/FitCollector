@@ -24,7 +24,10 @@ final class AppState: ObservableObject {
         didSet { AppState.saveSelectedServers(selectedServers) }
     }
     @Published var serverKeysByUserServer: [String: String] = AppState.loadServerKeys() {
-        didSet { AppState.saveServerKeys(serverKeysByUserServer) }
+        didSet {
+            AppState.saveServerKeys(serverKeysByUserServer)
+            AppState.registerPushTokenIfPossible()
+        }
     }
     @Published var inviteCodesByServer: [String: String] = AppState.loadInviteCodes() {
         didSet { AppState.saveInviteCodes(inviteCodesByServer) }
@@ -189,6 +192,50 @@ final class AppState: ObservableObject {
         return newId
     }
 
+    static func currentDeviceId() -> String {
+        loadDeviceId()
+    }
+
+    static func storePushToken(_ token: String) {
+        UserDefaults.standard.set(token, forKey: Keys.pushToken)
+    }
+
+    static func loadPushToken() -> String? {
+        UserDefaults.standard.string(forKey: Keys.pushToken)
+    }
+
+    static func anyPlayerApiKey() -> String? {
+        let keys = loadServerKeys()
+        return keys.values.first
+    }
+
+    static func registerPushTokenIfPossible() {
+        guard let token = loadPushToken(), !token.isEmpty else { return }
+        guard let apiKey = anyPlayerApiKey() else { return }
+
+        let deviceId = currentDeviceId()
+        let isSandbox: Bool = {
+#if DEBUG
+            return true
+#else
+            return false
+#endif
+        }()
+
+        Task {
+            do {
+                try await ApiClient.shared.registerPushToken(
+                    deviceId: deviceId,
+                    playerApiKey: apiKey,
+                    token: token,
+                    isSandbox: isSandbox
+                )
+            } catch {
+                print("Failed to register push token: \(error)")
+            }
+        }
+    }
+
     private enum Keys {
         static let deviceId = "device_id"
         static let minecraftUsername = "minecraft_username"
@@ -209,6 +256,7 @@ final class AppState: ObservableObject {
         static let adminPushEnabled = "admin_push_by_server"
         static let notifyTiers = "notify_tiers_by_server"
         static let milestoneNotified = "milestone_notified_by_key"
+        static let pushToken = "apns_push_token"
     }
     private static func loadSelectedServers() -> [String] {
         guard let data = UserDefaults.standard.data(forKey: Keys.selectedServers) else { return [] }
@@ -221,7 +269,7 @@ final class AppState: ObservableObject {
         }
     }
 
-    private static func loadServerKeys() -> [String: String] {
+    static func loadServerKeys() -> [String: String] {
         guard let data = UserDefaults.standard.data(forKey: Keys.serverKeys) else { return [:] }
         return (try? JSONDecoder().decode([String: String].self, from: data)) ?? [:]
     }

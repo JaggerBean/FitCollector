@@ -1,9 +1,10 @@
-import SwiftUI
 
 import BackgroundTasks
+import UIKit
 
 @main
 struct StepCraftApp: App {
+    @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @StateObject private var appState = AppState()
 
     init() {

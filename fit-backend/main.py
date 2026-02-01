@@ -3,7 +3,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from database import init_db
-from routes import health, players, ingest
+from routes import health, players, ingest, push
 from routes import auth as auth_routes
 from routes.servers import router as servers_router
 from routes.admin import router as admin_router
@@ -31,6 +31,7 @@ app.include_router(servers_router)
 app.include_router(ingest.router)
 app.include_router(admin_router)
 app.include_router(auth_routes.router)
+app.include_router(push.router)
 
 
 @app.on_event("startup")

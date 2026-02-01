@@ -68,3 +68,19 @@ class ApiKeyResponse(BaseModel):
     message: str = "Store this key securely. You won't be able to see it again!"
     is_private: Optional[bool] = None
     invite_code: Optional[str] = None
+
+
+class PushTokenRegistrationRequest(BaseModel):
+    device_id: str = Field(..., min_length=6, max_length=128)
+    player_api_key: str = Field(..., min_length=20)
+    apns_token: str = Field(..., min_length=32, max_length=256)
+    sandbox: bool = True
+    platform: str = Field("ios", min_length=2, max_length=16)
+
+
+class PushSendRequest(BaseModel):
+    device_id: str = Field(..., min_length=6, max_length=128)
+    player_api_key: str = Field(..., min_length=20)
+    title: str = Field(..., min_length=1, max_length=64)
+    body: str = Field(..., min_length=1, max_length=256)
+    data: Optional[dict] = None

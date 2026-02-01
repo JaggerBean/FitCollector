@@ -135,6 +135,30 @@ final class ApiClient {
         return try JSONDecoder().decode(PlayerApiKeyResponse.self, from: data)
     }
 
+    func registerPushToken(deviceId: String, playerApiKey: String, token: String, isSandbox: Bool) async throws {
+        let url = baseURL.appendingPathComponent("/v1/players/push/register-device")
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue(globalApiKey, forHTTPHeaderField: "X-API-Key")
+
+        let body: [String: Any] = [
+            "device_id": deviceId,
+            "player_api_key": playerApiKey,
+            "apns_token": token,
+            "sandbox": isSandbox,
+            "platform": "ios"
+        ]
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+        let http = response as? HTTPURLResponse
+        if let http, !(200...299).contains(http.statusCode) {
+            let detail = decodeErrorDetail(data) ?? "Server error (status \(http.statusCode))."
+            throw APIError(message: detail)
+        }
+    }
+
     private func decodeErrorDetail(_ data: Data) -> String? {
         guard !data.isEmpty else { return nil }
         if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {

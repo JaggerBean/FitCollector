@@ -7,3 +7,4 @@ email-validator
 google-auth
 requests
 psycopg2-binary
+apns2

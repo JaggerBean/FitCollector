@@ -371,3 +371,23 @@ def init_db() -> None:
         CREATE INDEX IF NOT EXISTS idx_push_deliveries_device
         ON push_deliveries(device_id, server_name);
         """))
+
+        # 13) Store device push tokens (APNs)
+        conn.execute(text("""
+        CREATE TABLE IF NOT EXISTS push_device_tokens (
+            id BIGSERIAL PRIMARY KEY,
+            device_id TEXT NOT NULL,
+            server_name TEXT NOT NULL,
+            platform TEXT NOT NULL,
+            token TEXT NOT NULL,
+            sandbox BOOLEAN NOT NULL DEFAULT TRUE,
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            updated_at TIMESTAMPTZ DEFAULT NOW(),
+            UNIQUE(device_id, server_name, platform, token, sandbox)
+        );
+        """))
+
+        conn.execute(text("""
+        CREATE INDEX IF NOT EXISTS idx_push_device_tokens_device
+        ON push_device_tokens(device_id, server_name);
+        """))
