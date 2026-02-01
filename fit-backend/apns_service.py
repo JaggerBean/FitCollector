@@ -11,10 +11,6 @@ import collections.abc
 from functools import lru_cache
 from typing import Any
 
-from apns2.client import APNsClient
-from apns2.payload import Payload
-from apns2.errors import APNsException, Unregistered
-
 # Compatibility shim for Python 3.12+ where collections.Iterable/Mapping were removed.
 if not hasattr(collections, "Iterable"):
     collections.Iterable = collections.abc.Iterable  # type: ignore[attr-defined]
@@ -81,6 +77,10 @@ if not hasattr(ssl, "match_hostname"):
 
     ssl.match_hostname = match_hostname  # type: ignore[attr-defined]
     ssl.verify_hostname = verify_hostname  # type: ignore[attr-defined]
+
+from apns2.client import APNsClient
+from apns2.payload import Payload
+from apns2.errors import APNsException, Unregistered
 
 
 
