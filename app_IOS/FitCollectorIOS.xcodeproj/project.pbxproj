@@ -18,6 +18,7 @@
 		A1000009 /* OnboardingScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000009 /* OnboardingScreen.swift */; };
 		A100000A /* DashboardScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = A200000A /* DashboardScreen.swift */; };
 		A100000B /* SettingsScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = A200000B /* SettingsScreen.swift */; };
+		D0000001 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0000002 /* AppDelegate.swift */; };
 		B1231E2E2F2F0F95002C46EC /* BackgroundSyncManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1231E2D2F2F0F95002C46EC /* BackgroundSyncManager.swift */; };
 		B168A6A42F2C5D7B0024EBF4 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = B168A6A32F2C5D7B0024EBF4 /* Theme.swift */; };
 		B1941CD92F2C5843004E26F7 /* ActivityLogScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1941CD72F2C5843004E26F7 /* ActivityLogScreen.swift */; };
@@ -40,6 +41,7 @@
 		A200000C /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		A200000D /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		A200000E /* StepCraft Companion.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; path = "StepCraft Companion.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		D0000002 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		B1231E2D2F2F0F95002C46EC /* BackgroundSyncManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackgroundSyncManager.swift; sourceTree = "<group>"; };
 		B168A6A32F2C5D7B0024EBF4 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		B1941CD72F2C5843004E26F7 /* ActivityLogScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityLogScreen.swift; sourceTree = "<group>"; };
@@ -63,6 +65,7 @@
 			children = (
 				B168A6A32F2C5D7B0024EBF4 /* Theme.swift */,
 				B1941CDB2F2C5959004E26F7 /* FitCollectorIOS.entitlements */,
+				D0000002 /* AppDelegate.swift */,
 				A2000001 /* FitCollectorIOSApp.swift */,
 				A2000002 /* RootView.swift */,
 				A3000002 /* Models */,
@@ -195,6 +198,7 @@
 				A1000009 /* OnboardingScreen.swift in Sources */,
 				A100000A /* DashboardScreen.swift in Sources */,
 				A100000B /* SettingsScreen.swift in Sources */,
+				D0000001 /* AppDelegate.swift in Sources */,
 				B1231E2E2F2F0F95002C46EC /* BackgroundSyncManager.swift in Sources */,
 				B168A6A42F2C5D7B0024EBF4 /* Theme.swift in Sources */,
 			);
