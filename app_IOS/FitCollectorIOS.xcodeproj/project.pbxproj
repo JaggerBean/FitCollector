@@ -18,12 +18,13 @@
 		A1000009 /* OnboardingScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000009 /* OnboardingScreen.swift */; };
 		A100000A /* DashboardScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = A200000A /* DashboardScreen.swift */; };
 		A100000B /* SettingsScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = A200000B /* SettingsScreen.swift */; };
-		D0000001 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0000002 /* AppDelegate.swift */; };
 		B1231E2E2F2F0F95002C46EC /* BackgroundSyncManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1231E2D2F2F0F95002C46EC /* BackgroundSyncManager.swift */; };
 		B168A6A42F2C5D7B0024EBF4 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = B168A6A32F2C5D7B0024EBF4 /* Theme.swift */; };
 		B1941CD92F2C5843004E26F7 /* ActivityLogScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1941CD72F2C5843004E26F7 /* ActivityLogScreen.swift */; };
 		B1941CDA2F2C5843004E26F7 /* RawHealthDataScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1941CD82F2C5843004E26F7 /* RawHealthDataScreen.swift */; };
+		B1CB9D862F2FF3EC009E1955 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A200000D /* Assets.xcassets */; };
 		C0000004 /* KeychainHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0000003 /* KeychainHelper.swift */; };
+		D0000001 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0000002 /* AppDelegate.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -41,13 +42,13 @@
 		A200000C /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		A200000D /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		A200000E /* StepCraft Companion.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; path = "StepCraft Companion.app"; sourceTree = BUILT_PRODUCTS_DIR; };
-		D0000002 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		B1231E2D2F2F0F95002C46EC /* BackgroundSyncManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackgroundSyncManager.swift; sourceTree = "<group>"; };
 		B168A6A32F2C5D7B0024EBF4 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		B1941CD72F2C5843004E26F7 /* ActivityLogScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityLogScreen.swift; sourceTree = "<group>"; };
 		B1941CD82F2C5843004E26F7 /* RawHealthDataScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RawHealthDataScreen.swift; sourceTree = "<group>"; };
 		B1941CDB2F2C5959004E26F7 /* FitCollectorIOS.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = FitCollectorIOS.entitlements; sourceTree = "<group>"; };
 		C0000003 /* KeychainHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainHelper.swift; sourceTree = "<group>"; };
+		D0000002 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -174,6 +175,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B1CB9D862F2FF3EC009E1955 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -320,19 +322,19 @@
 				CODE_SIGN_ALLOW_ENTITLEMENTS_MODIFICATION = YES;
 				CODE_SIGN_ENTITLEMENTS = FitCollectorIOS/FitCollectorIOS.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 3;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = FXU7KBQF23;
 				INFOPLIST_FILE = FitCollectorIOS/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "StepCraft Companion";
 				INFOPLIST_KEY_CFBundleIconName = AppIcon;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.healthcare-fitness";
-				MARKETING_VERSION = 0.11;
+				MARKETING_VERSION = 0.12;
 				PRODUCT_BUNDLE_IDENTIFIER = com.Jagger.StepCraftCompanion;
 				PRODUCT_NAME = "StepCraft Companion";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
-				TARGETED_DEVICE_FAMILY = 1;
+				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
 		};
@@ -344,20 +346,25 @@
 				CLANG_ENABLE_OBJC_WEAK = YES;
 				CODE_SIGN_ALLOW_ENTITLEMENTS_MODIFICATION = YES;
 				CODE_SIGN_ENTITLEMENTS = FitCollectorIOS/FitCollectorIOS.entitlements;
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution";
+				CODE_SIGN_STYLE = Manual;
+				CURRENT_PROJECT_VERSION = 3;
 				DEAD_CODE_STRIPPING = YES;
-				DEVELOPMENT_TEAM = FXU7KBQF23;
+				DEVELOPMENT_TEAM = "";
+				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = FXU7KBQF23;
 				INFOPLIST_FILE = FitCollectorIOS/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "StepCraft Companion";
 				INFOPLIST_KEY_CFBundleIconName = AppIcon;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.healthcare-fitness";
-				MARKETING_VERSION = 0.11;
+				MARKETING_VERSION = 0.12;
 				PRODUCT_BUNDLE_IDENTIFIER = com.Jagger.StepCraftCompanion;
 				PRODUCT_NAME = "StepCraft Companion";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = StepCraftRelease;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
-				TARGETED_DEVICE_FAMILY = 1;
+				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
 		};
