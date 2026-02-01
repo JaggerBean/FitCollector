@@ -1,6 +1,5 @@
-
 import BackgroundTasks
-import UIKit
+import SwiftUI
 
 @main
 struct StepCraftApp: App {
