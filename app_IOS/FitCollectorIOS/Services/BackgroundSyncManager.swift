@@ -3,10 +3,9 @@ import BackgroundTasks
 
 class BackgroundSyncManager {
     static let shared = BackgroundSyncManager()
-    private let taskIdentifier = "com.example.fitcollector.backgroundfetch"
+    private let taskIdentifier = "com.fitcollector.backgroundsync"
 
     private init() {
-        // Register background task
         BGTaskScheduler.shared.register(forTaskWithIdentifier: taskIdentifier, using: nil) { task in
             self.handleAppRefresh(task: task as! BGAppRefreshTask)
         }
@@ -24,13 +23,27 @@ class BackgroundSyncManager {
 
     private func handleAppRefresh(task: BGAppRefreshTask) {
         scheduleBackgroundSync() // Schedule next
-        // Perform your background sync here
-        if let appState = (UIApplication.shared.connectedScenes.first as? UIWindowScene)?.windows.first?.rootViewController?.view?.window?.rootViewController as? AppState {
-            if appState.backgroundSyncEnabled {
-                // Call your sync logic here, e.g., appState.performSync()
-                print("Background sync triggered.")
-            }
+
+        let queue = OperationQueue()
+        queue.maxConcurrentOperationCount = 1
+
+        let syncOperation = BlockOperation {
+            self.performSync()
         }
-        task.setTaskCompleted(success: true)
+
+        task.expirationHandler = {
+            queue.cancelAllOperations()
+        }
+
+        syncOperation.completionBlock = {
+            task.setTaskCompleted(success: !syncOperation.isCancelled)
+        }
+
+        queue.addOperation(syncOperation)
+    }
+
+    private func performSync() {
+        // TODO: Implement your sync logic here (e.g., network requests, data updates)
+        print("Background sync performed.")
     }
 }
