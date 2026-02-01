@@ -8,6 +8,7 @@ from datetime import datetime, timezone
 
 from database import engine
 from auth import require_server_access
+from apns_service import ApnsConfigError, APNsException, Unregistered, apns_use_sandbox, send_push
 
 router = APIRouter()
 
@@ -16,6 +17,12 @@ class PushPayload(BaseModel):
     message: str = Field(..., min_length=1, max_length=240)
     scheduled_at: str = Field(..., min_length=1)
     timezone: str = Field(..., min_length=1)
+
+
+class PushSendPayload(BaseModel):
+    title: str = Field(..., min_length=1, max_length=64)
+    body: str = Field(..., min_length=1, max_length=256)
+    data: dict | None = None
 
 
 @router.get("/v1/servers/push")
@@ -88,3 +95,54 @@ def schedule_push_notification(payload: PushPayload, server_name: str = Depends(
         ).mappings().first()
 
     return {"server_name": server_name, "item": dict(row)}
+
+
+@router.post("/v1/servers/push/send")
+def send_push_now(payload: PushSendPayload, server_name: str = Depends(require_server_access)):
+    target_sandbox = apns_use_sandbox()
+
+    try:
+        with engine.begin() as conn:
+            rows = conn.execute(
+                text(
+                    """
+                    SELECT token, sandbox
+                    FROM push_device_tokens
+                    WHERE server_name = :server
+                    ORDER BY updated_at DESC
+                    """
+                ),
+                {"server": server_name},
+            ).fetchall()
+
+        eligible = [r for r in rows if bool(r[1]) == target_sandbox]
+        if not eligible:
+            raise HTTPException(status_code=404, detail="No push tokens registered for this environment")
+
+        failures = 0
+        for token, _sandbox in eligible:
+            try:
+                send_push(token, payload.title, payload.body, payload.data)
+            except Unregistered:
+                with engine.begin() as conn:
+                    conn.execute(
+                        text(
+                            """
+                            DELETE FROM push_device_tokens
+                            WHERE server_name = :server AND token = :token
+                            """
+                        ),
+                        {"server": server_name, "token": token},
+                    )
+                failures += 1
+            except APNsException as e:
+                raise HTTPException(status_code=502, detail=f"APNs error: {str(e)}")
+
+        return {"status": "sent", "tokens": len(eligible), "failed": failures}
+
+    except ApnsConfigError as e:
+        raise HTTPException(status_code=500, detail=f"APNs config error: {str(e)}")
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to send push: {str(e)}")

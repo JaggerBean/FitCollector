@@ -85,6 +85,24 @@
         <div class="alert alert-danger">{{ error }}</div>
         {% endif %}
 
+        {% if success %}
+        <div class="alert alert-success">{{ success }}</div>
+        {% endif %}
+
+        <form method="post" action="/push/create?server={{ server_name }}" class="mb-4">
+            <div class="mb-3">
+                <label class="form-label">Title</label>
+                <input class="form-control" name="title" maxlength="64" value="{{ server_name }}" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Message</label>
+                <textarea class="form-control" name="body" rows="3" maxlength="256" required>{{ message or "" }}</textarea>
+                <div class="form-text">Real-time APNs push. Max 256 characters.</div>
+            </div>
+            <input type="hidden" name="mode" value="send_now">
+            <button class="btn btn-primary" type="submit">Send Now</button>
+        </form>
+
         <form method="post" action="/push/create?server={{ server_name }}" class="mb-4">
             <div class="mb-3">
                 <label class="form-label">Message</label>
@@ -113,6 +131,7 @@
                     {% endif %}
                 </select>
             </div>
+            <input type="hidden" name="mode" value="schedule">
             <button class="btn btn-primary" type="submit">Schedule Notification</button>
         </form>
 

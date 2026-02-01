@@ -548,13 +548,13 @@ async def server_manage_action(
 
 @app.get("/push", response_class=HTMLResponse)
 async def push_notifications_page(request: Request):
-    user_token = request.session.get("user_token")
-    if not user_token:
-        return RedirectResponse(url="/account/login", status_code=302)
-
     server_name = request.query_params.get("server")
     if not server_name:
         return RedirectResponse(url="/dashboard", status_code=302)
+
+    user_token = request.session.get("user_token")
+    if not user_token:
+        return RedirectResponse(url="/account/login", status_code=302)
 
     items = []
     error = None
@@ -626,6 +626,7 @@ async def push_notifications_page(request: Request):
     except Exception:
         tz_items = []
 
+    success = "Push sent." if request.query_params.get("sent") else None
     return templates.TemplateResponse(
         "push_notifications.html",
         {
@@ -633,6 +634,8 @@ async def push_notifications_page(request: Request):
             "server_name": server_name,
             "items": items,
             "error": error,
+            "message": None,
+            "success": success,
             "timezones": tz_items,
         },
     )
@@ -641,9 +644,12 @@ async def push_notifications_page(request: Request):
 @app.post("/push/create", response_class=HTMLResponse)
 async def push_notifications_create(
     request: Request,
-    message: str = Form(...),
-    scheduled_at: str = Form(...),
-    timezone: str = Form(...),
+    mode: str = Form("schedule"),
+    message: str = Form(""),
+    scheduled_at: str = Form(""),
+    timezone: str = Form(""),
+    title: str = Form(""),
+    body: str = Form(""),
 ):
     user_token = request.session.get("user_token")
     if not user_token:
@@ -657,13 +663,22 @@ async def push_notifications_create(
     async with httpx.AsyncClient() as client:
         try:
             headers = {"Authorization": f"Bearer {user_token}"}
-            resp = await client.post(
-                f"{BACKEND_URL}/v1/servers/push",
-                headers=headers,
-                json={"message": message, "scheduled_at": scheduled_at, "timezone": timezone},
-                params={"server": server_name},
-                timeout=10,
-            )
+            if mode == "send_now":
+                resp = await client.post(
+                    f"{BACKEND_URL}/v1/servers/push/send",
+                    headers=headers,
+                    json={"title": title, "body": body},
+                    params={"server": server_name},
+                    timeout=10,
+                )
+            else:
+                resp = await client.post(
+                    f"{BACKEND_URL}/v1/servers/push",
+                    headers=headers,
+                    json={"message": message, "scheduled_at": scheduled_at, "timezone": timezone},
+                    params={"server": server_name},
+                    timeout=10,
+                )
             if resp.status_code != 200:
                 error = resp.text
         except Exception as e:
@@ -672,8 +687,11 @@ async def push_notifications_create(
     if error:
         return templates.TemplateResponse(
             "push_notifications.html",
-            {"request": request, "server_name": server_name, "items": [], "error": error, "message": message},
+            {"request": request, "server_name": server_name, "items": [], "error": error, "message": message or body, "success": None, "timezones": []},
         )
+
+    if mode == "send_now":
+        return RedirectResponse(url=f"/push?server={server_name}&sent=1", status_code=302)
 
     return RedirectResponse(url=f"/push?server={server_name}", status_code=302)
 
