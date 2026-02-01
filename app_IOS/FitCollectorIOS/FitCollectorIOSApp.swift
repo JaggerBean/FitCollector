@@ -1,7 +1,6 @@
 import SwiftUI
 import BackgroundTasks
 // Import the BackgroundSyncManager from Services folder
-import Services.BackgroundSyncManager
 
 import BackgroundTasks
 
