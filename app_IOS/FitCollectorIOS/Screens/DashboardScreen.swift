@@ -253,48 +253,99 @@ private struct StepCraftHeader: View {
     let username: String
 
     var body: some View {
-        HStack(spacing: 12) {
-            if !username.isEmpty, let url = URL(string: "https://minotar.net/avatar/\(username)/48") {
-                AsyncImage(url: url) { image in
-                    image.resizable()
-                } placeholder: {
-                    Color.gray.opacity(0.2)
-                }
+        HStack(spacing: 10) {
+            PlayerAvatar(username: username)
+
+            StepCraftLogo()
+                .frame(width: 38, height: 38)
+                .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
+
+            Text("StepCraft")
+                .font(.system(size: 46, weight: .bold, design: .rounded))
+                .foregroundStyle(
+                    LinearGradient(
+                        colors: [Color(hex: 0xFFA5D6A7), AppColors.healthGreen],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
+                .minimumScaleFactor(0.65)
+                .lineLimit(1)
+
+            Spacer(minLength: 0)
+
+            Color.clear
                 .frame(width: 32, height: 32)
-                .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
-            } else {
-                RoundedRectangle(cornerRadius: 6, style: .continuous)
-                    .fill(Color.gray.opacity(0.2))
-                    .frame(width: 32, height: 32)
-            }
-
-            Spacer()
-
-            HStack(spacing: 8) {
-                Image(uiImage: loadLogo())
-                    .resizable()
-                    .renderingMode(.original)
-                    .frame(width: 34, height: 34)
-                    .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
-                Text("StepCraft")
-                    .font(.system(size: 26, weight: .bold, design: .rounded))
-                    .foregroundColor(AppColors.healthGreen)
-            }
-
-            Spacer()
         }
-        .frame(maxWidth: .infinity)
-        .padding(.top, 8)
-        .padding(.bottom, 4)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 14)
+        .frame(maxWidth: .infinity, minHeight: 80, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(
+                    LinearGradient(
+                        colors: [Color(hex: 0xFF24272E), Color(hex: 0xFF15171C)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+        )
+    }
+}
+
+private struct PlayerAvatar: View {
+    let username: String
+
+    var body: some View {
+        if !username.isEmpty, let url = URL(string: "https://minotar.net/avatar/\(username)/48") {
+            AsyncImage(url: url) { image in
+                image
+                    .resizable()
+                    .interpolation(.none)
+            } placeholder: {
+                avatarFallback
+            }
+            .frame(width: 32, height: 32)
+            .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
+        } else {
+            avatarFallback
+                .frame(width: 32, height: 32)
+                .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
+        }
     }
 
-    private func loadLogo() -> UIImage {
-        if let path = Bundle.main.path(forResource: "logo", ofType: "png"),
-           let image = UIImage(contentsOfFile: path) {
-            return image
+    private var avatarFallback: some View {
+        RoundedRectangle(cornerRadius: 7, style: .continuous)
+            .fill(Color(hex: 0xFF31343C))
+    }
+}
+
+private struct StepCraftLogo: View {
+    var body: some View {
+        if let uiImage = UIImage(named: "icon-ios-60x60@3x")
+            ?? UIImage(named: "icon-ios-60x60@2x")
+            ?? UIImage(named: "AppIcon60x60")
+            ?? UIImage(named: "AppIcon") {
+            Image(uiImage: uiImage)
+                .resizable()
+                .renderingMode(.original)
+        } else {
+            fallbackLogo
         }
-        assertionFailure("logo.png not found in bundle")
-        return UIImage()
+    }
+
+    private var fallbackLogo: some View {
+        ZStack(alignment: .top) {
+            RoundedRectangle(cornerRadius: 7, style: .continuous)
+                .fill(Color(hex: 0xFF6B4634))
+            RoundedRectangle(cornerRadius: 7, style: .continuous)
+                .fill(Color(hex: 0xFF3F8D45))
+                .frame(height: 12)
+        }
     }
 }
 
