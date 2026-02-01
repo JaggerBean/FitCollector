@@ -6,6 +6,7 @@ import os
 import ssl
 import ipaddress
 import re
+import logging
 import collections
 import collections.abc
 from functools import lru_cache
@@ -81,6 +82,9 @@ if not hasattr(ssl, "match_hostname"):
 from apns2.client import APNsClient
 from apns2.payload import Payload
 from apns2.errors import APNsException, Unregistered
+from hyper.http20.exceptions import StreamResetError
+
+logger = logging.getLogger(__name__)
 
 
 
@@ -128,14 +132,24 @@ def apns_use_sandbox() -> bool:
 
 def send_push(token: str, title: str, body: str, data: dict | None = None) -> None:
     config = get_apns_config()
-    client = get_apns_client()
     payload = Payload(
         alert={"title": title, "body": body},
         sound="default",
         badge=1,
         custom=data or {},
     )
-    client.send_notification(token, payload, config["topic"])
+    try:
+        client = get_apns_client()
+        client.send_notification(token, payload, config["topic"])
+    except StreamResetError as exc:
+        logger.warning(
+            "APNs stream reset; retrying once. topic=%s sandbox=%s",
+            config["topic"],
+            config["use_sandbox"],
+        )
+        get_apns_client.cache_clear()
+        client = get_apns_client()
+        client.send_notification(token, payload, config["topic"])
 
 
 __all__ = [
