@@ -283,11 +283,11 @@ def admin_list_pending_push_notifications(
                 text(
                     """
                     SELECT
-                        pn.id,
-                        pn.server_name,
-                        pn.message,
-                        pn.scheduled_at,
-                        pn.created_at
+                        id,
+                        server_name,
+                        message,
+                        scheduled_at,
+                        created_at
                     FROM push_notifications
                     WHERE (:server_name IS NULL OR server_name = :server_name)
                       AND (:due_only = FALSE OR scheduled_at <= CURRENT_TIMESTAMP)
