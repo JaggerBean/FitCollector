@@ -1,11 +1,23 @@
 import UIKit
 import UserNotifications
+import Security
 
 class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate {
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil) -> Bool {
         UNUserNotificationCenter.current().delegate = self
+        logApnsEnvironment()
         registerForPushNotifications()
         return true
+    }
+
+    private func logApnsEnvironment() {
+        let task = SecTaskCreateFromSelf(nil)
+        let entitlement = SecTaskCopyValueForEntitlement(task, "aps-environment" as CFString, nil)
+        if let env = entitlement as? String {
+            print("aps-environment: \(env)")
+        } else {
+            print("aps-environment: <not set>")
+        }
     }
 
     func registerForPushNotifications() {
