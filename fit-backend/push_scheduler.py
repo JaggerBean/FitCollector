@@ -13,6 +13,7 @@ from apns_service import (
     format_apns_exception,
     send_push,
 )
+from apns2.errors import BadDeviceToken
 
 logger = logging.getLogger("push_scheduler")
 
@@ -95,8 +96,8 @@ def run_push_once() -> None:
 
         try:
             send_push(token, default_title, row["message"], payload_data)
-        except Unregistered:
-            logger.info("Unregistered token for device %s on %s; removing", device_id, server_name)
+        except (Unregistered, BadDeviceToken):
+            logger.info("Invalid APNs token for device %s on %s; removing", device_id, server_name)
             with engine.begin() as conn:
                 conn.execute(
                     text(

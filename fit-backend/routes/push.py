@@ -14,6 +14,7 @@ from apns_service import (
     format_apns_exception,
     send_push,
 )
+from apns2.errors import BadDeviceToken
 
 router = APIRouter()
 
@@ -89,7 +90,7 @@ def send_push_notification(request: PushSendRequest):
         for token, _sandbox in eligible:
             try:
                 send_push(token, request.title, request.body, request.data)
-            except Unregistered:
+            except (Unregistered, BadDeviceToken):
                 with engine.begin() as conn:
                     conn.execute(
                         text(
