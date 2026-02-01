@@ -254,21 +254,22 @@ private struct StepCraftHeader: View {
 
     var body: some View {
         ZStack {
-            Text("StepCraft")
-                .font(.custom("Roboto-Bold", size: 24))
-                .fontWeight(.bold)
-                .foregroundColor(Color(hex: 0xFF8BC98B))
-                .minimumScaleFactor(0.7)
-                .lineLimit(1)
-
             HStack {
+                Color.clear
+                    .frame(width: 36, height: 36)
+                Spacer()
+                PlayerAvatar(username: username)
+                    .frame(width: 36, height: 36)
+            }
+
+            HStack(spacing: 10) {
                 StepCraftLogo()
                     .frame(width: 34, height: 34)
-
-                Spacer(minLength: 0)
-
-                PlayerAvatar(username: username)
-                    .frame(width: 34, height: 34)
+                Text("StepCraft")
+                    .font(titleFont)
+                    .foregroundColor(Color(hex: 0xFF8BC98B))
+                    .minimumScaleFactor(0.85)
+                    .lineLimit(1)
             }
         }
         .padding(.horizontal, 14)
@@ -282,6 +283,13 @@ private struct StepCraftHeader: View {
             RoundedRectangle(cornerRadius: 16, style: .continuous)
                 .stroke(Color.white.opacity(0.08), lineWidth: 1)
         )
+    }
+
+    private var titleFont: Font {
+        if UIFont(name: "Roboto-Bold", size: 33) != nil {
+            return .custom("Roboto-Bold", size: 33)
+        }
+        return .system(size: 33, weight: .black, design: .rounded)
     }
 }
 
