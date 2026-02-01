@@ -2,6 +2,8 @@ services:
   api:
     build: .
     container_name: fitcollector_api
+    volumes:
+      - ../app_IOS/apn.p12:/app/apn.p12:ro
     environment:
       # SQLAlchemy wants this format
       DATABASE_URL: postgresql+psycopg2://fit:fitpass@db:5432/fitcollector
