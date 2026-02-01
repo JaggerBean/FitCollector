@@ -116,7 +116,7 @@ struct SettingsScreen: View {
                         Button("Add Public Server") {
                             showPublicServerPicker = true
                         }
-                        .buttonStyle(PillSecondaryButton())
+                        .buttonStyle(PillPrimaryButton())
 
                         Button(selectedServers.isEmpty ? "Manage Joined Servers" : "Manage Joined Servers (\(selectedServers.count))") {
                             showManageJoinedServers = true
