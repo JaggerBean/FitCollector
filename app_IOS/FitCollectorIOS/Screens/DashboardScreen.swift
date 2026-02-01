@@ -253,24 +253,25 @@ private struct StepCraftHeader: View {
     let username: String
 
     var body: some View {
-        ZStack {
+        HStack(spacing: 10) {
             HStack {
-                Color.clear
-                    .frame(width: 36, height: 36)
-                Spacer()
+                StepCraftLogo()
+                    .frame(width: 34, height: 34)
+            }
+            .frame(width: 44, alignment: .center)
+
+            Text("StepCraft")
+                .font(titleFont)
+                .foregroundColor(Color(hex: 0xFF8BC98B))
+                .minimumScaleFactor(0.85)
+                .lineLimit(1)
+                .frame(maxWidth: .infinity, alignment: .center)
+
+            HStack {
                 PlayerAvatar(username: username)
                     .frame(width: 36, height: 36)
             }
-
-            HStack(spacing: 10) {
-                StepCraftLogo()
-                    .frame(width: 34, height: 34)
-                Text("StepCraft")
-                    .font(titleFont)
-                    .foregroundColor(Color(hex: 0xFF8BC98B))
-                    .minimumScaleFactor(0.85)
-                    .lineLimit(1)
-            }
+            .frame(width: 44, alignment: .center)
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 12)
