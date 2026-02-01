@@ -1,6 +1,5 @@
 import UIKit
 import UserNotifications
-import Security
 
 class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate {
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil) -> Bool {
@@ -11,9 +10,28 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
     }
 
     private func logApnsEnvironment() {
-        let task = SecTaskCreateFromSelf(nil)
-        let entitlement = SecTaskCopyValueForEntitlement(task, "aps-environment" as CFString, nil)
-        if let env = entitlement as? String {
+        guard let profilePath = Bundle.main.path(forResource: "embedded", ofType: "mobileprovision") else {
+            print("aps-environment: <embedded.mobileprovision not found>")
+            return
+        }
+        guard let profileData = try? Data(contentsOf: URL(fileURLWithPath: profilePath)),
+              let profileText = String(data: profileData, encoding: .isoLatin1) else {
+            print("aps-environment: <unable to read mobileprovision>")
+            return
+        }
+        guard let plistStart = profileText.range(of: "<plist"),
+              let plistEnd = profileText.range(of: "</plist>") else {
+            print("aps-environment: <plist not found>")
+            return
+        }
+        let plistString = String(profileText[plistStart.lowerBound..<plistEnd.upperBound])
+        guard let plistData = plistString.data(using: .utf8),
+              let plist = try? PropertyListSerialization.propertyList(from: plistData, options: [], format: nil) as? [String: Any],
+              let entitlements = plist["Entitlements"] as? [String: Any] else {
+            print("aps-environment: <unable to parse plist>")
+            return
+        }
+        if let env = entitlements["aps-environment"] as? String {
             print("aps-environment: \(env)")
         } else {
             print("aps-environment: <not set>")
