@@ -3,8 +3,16 @@
 from __future__ import annotations
 
 import os
+import collections
+import collections.abc
 from functools import lru_cache
 from typing import Any
+
+# Compatibility shim for Python 3.12+ where collections.Iterable/Mapping were removed.
+if not hasattr(collections, "Iterable"):
+    collections.Iterable = collections.abc.Iterable  # type: ignore[attr-defined]
+if not hasattr(collections, "Mapping"):
+    collections.Mapping = collections.abc.Mapping  # type: ignore[attr-defined]
 
 from apns2.client import APNsClient
 from apns2.payload import Payload
