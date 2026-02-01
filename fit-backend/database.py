@@ -345,8 +345,7 @@ def init_db() -> None:
         """))
 
         conn.execute(text("""
-        CREATE UNIQUE INDEX IF NOT EXISTS idx_push_notifications_server_day
-        ON push_notifications(server_name, scheduled_date);
+        DROP INDEX IF EXISTS idx_push_notifications_server_day;
         """))
 
         conn.execute(text("""

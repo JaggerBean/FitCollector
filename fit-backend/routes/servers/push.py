@@ -67,18 +67,6 @@ def schedule_push_notification(payload: PushPayload, server_name: str = Depends(
     scheduled_utc = scheduled.astimezone(timezone.utc)
 
     with engine.begin() as conn:
-        existing = conn.execute(
-            text("""
-                SELECT id FROM push_notifications
-                WHERE server_name = :server AND scheduled_date = :scheduled_date
-                LIMIT 1
-            """),
-            {"server": server_name, "scheduled_date": scheduled_date},
-        ).fetchone()
-
-        if existing:
-            raise HTTPException(status_code=409, detail="A notification is already scheduled for that day")
-
         row = conn.execute(
             text("""
                 INSERT INTO push_notifications (server_name, message, scheduled_at, scheduled_date, created_by)
