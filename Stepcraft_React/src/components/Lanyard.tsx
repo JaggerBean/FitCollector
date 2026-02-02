@@ -138,7 +138,7 @@ function Band({ maxSpeed = 50, minSpeed = 0, isMobile = false, cardContent }: Ba
   useRopeJoint(j2, j3, [[0, 0, 0], [0, 0, 0], 1]);
   useSphericalJoint(j3, card, [
     [0, 0, 0],
-    [0, 1.45, 0],
+    [0, 1.1, 0],
   ]);
 
   useEffect(() => {
@@ -199,15 +199,15 @@ function Band({ maxSpeed = 50, minSpeed = 0, isMobile = false, cardContent }: Ba
           <BallCollider args={[0.1]} />
         </RigidBody>
         <RigidBody
-          position={[2, 0, 0]}
+          position={[1.85, -0.1, 0]}
           ref={card}
           {...segmentProps}
           type={dragged ? ("kinematicPosition" as RigidBodyProps["type"]) : ("dynamic" as RigidBodyProps["type"])}
         >
           <CuboidCollider args={[0.8, 1.125, 0.01]} />
           <group
-            scale={3.1}
-            position={[0, -1.25, -0.05]}
+            scale={2.6}
+            position={[0, -1.1, -0.05]}
             onPointerOver={() => hover(true)}
             onPointerOut={() => hover(false)}
             onPointerUp={(e: any) => {
@@ -234,12 +234,12 @@ function Band({ maxSpeed = 50, minSpeed = 0, isMobile = false, cardContent }: Ba
             {cardContent && (
               <Html
                 transform
-                position={[0, -0.05, 0.08]}
+                position={[0, -0.1, 0.08]}
                 rotation={[0, 0, 0]}
-                distanceFactor={1.8}
+                distanceFactor={1.35}
                 style={{ pointerEvents: "none" }}
               >
-                <div className="w-72 rounded-2xl border border-white/20 bg-slate-950/85 p-4 text-sm text-slate-100 shadow-xl">
+                <div className="w-56 rounded-xl border border-white/15 bg-slate-950/80 p-3 text-[12px] text-slate-100 shadow-lg">
                   {cardContent}
                 </div>
               </Html>
@@ -256,7 +256,7 @@ function Band({ maxSpeed = 50, minSpeed = 0, isMobile = false, cardContent }: Ba
           useMap
           map={texture}
           repeat={[-4, 1]}
-          lineWidth={1}
+          lineWidth={0.6}
         />
       </mesh>
     </>
