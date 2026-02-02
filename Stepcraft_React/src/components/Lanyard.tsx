@@ -167,8 +167,8 @@ function Band({ maxSpeed = 50, minSpeed = 0, isMobile = false, cardData }: BandP
     ctx.clip();
 
     const logo = logoTexture.image as HTMLImageElement;
-    const maxLogoW = cardW * 0.5;
-    const maxLogoH = cardH * 0.28;
+    const maxLogoW = cardW * 0.42;
+    const maxLogoH = cardH * 0.24;
     const logoScale = Math.min(maxLogoW / logo.width, maxLogoH / logo.height);
     const logoW = logo.width * logoScale;
     const logoH = logo.height * logoScale;
@@ -177,17 +177,17 @@ function Band({ maxSpeed = 50, minSpeed = 0, isMobile = false, cardData }: BandP
     ctx.drawImage(logo, logoX, logoY, logoW, logoH);
 
     ctx.fillStyle = "#0b1220";
-    ctx.font = "bold 52px 'Segoe UI', Arial, sans-serif";
+    ctx.font = "bold 60px 'Segoe UI', Arial, sans-serif";
     ctx.textAlign = "center";
-    ctx.fillText("StepCraft", cardX + cardW / 2, cardY + cardH * 0.33);
+    ctx.fillText("StepCraft", cardX + cardW / 2, cardY + cardH * 0.28);
 
-    const left = cardX + cardW * 0.09;
-    const right = cardX + cardW * 0.91;
-    let y = cardY + cardH * 0.41;
+    const left = cardX + cardW * 0.1;
+    const right = cardX + cardW * 0.9;
+    let y = cardY + cardH * 0.36;
 
     const label = (text: string) => {
-      ctx.fillStyle = "#2f5b4a";
-      ctx.font = "700 26px 'Segoe UI', Arial, sans-serif";
+      ctx.fillStyle = "#204233";
+      ctx.font = "800 30px 'Segoe UI', Arial, sans-serif";
       ctx.textAlign = "left";
       ctx.fillText(text, left, y);
       y += 36;
@@ -195,7 +195,7 @@ function Band({ maxSpeed = 50, minSpeed = 0, isMobile = false, cardData }: BandP
 
     const value = (text: string) => {
       ctx.fillStyle = "#0f1b2b";
-      ctx.font = "500 28px 'Segoe UI', Arial, sans-serif";
+      ctx.font = "600 32px 'Segoe UI', Arial, sans-serif";
       ctx.textAlign = "left";
       const lines = wrapText(ctx, text, right - left);
       for (const line of lines) {
@@ -216,8 +216,8 @@ function Band({ maxSpeed = 50, minSpeed = 0, isMobile = false, cardData }: BandP
       value(cardData.inviteCode);
     }
 
-    ctx.fillStyle = "#2b3a4a";
-    ctx.font = "400 24px 'Segoe UI', Arial, sans-serif";
+    ctx.fillStyle = "#243241";
+    ctx.font = "500 26px 'Segoe UI', Arial, sans-serif";
     ctx.textAlign = "left";
     const msg1 = "Use this key in the StepCraft Minecraft mod configuration.";
     const msg2 = `Email sent to ${cardData.ownerEmail}. Check spam if needed.`;
@@ -302,7 +302,7 @@ function Band({ maxSpeed = 50, minSpeed = 0, isMobile = false, cardData }: BandP
   useRopeJoint(j2, j3, [[0, 0, 0], [0, 0, 0], 1]);
   useSphericalJoint(j3, card, [
     [0, 0, 0],
-    [0, 1.85, 0],
+    [0, 2.05, 0],
   ]);
 
   useEffect(() => {
@@ -363,7 +363,7 @@ function Band({ maxSpeed = 50, minSpeed = 0, isMobile = false, cardData }: BandP
           <BallCollider args={[0.1]} />
         </RigidBody>
         <RigidBody
-          position={[1.7, -0.6, 0]}
+          position={[1.7, -0.85, 0]}
           ref={card}
           {...segmentProps}
           type={dragged ? ("kinematicPosition" as RigidBodyProps["type"]) : ("dynamic" as RigidBodyProps["type"])}
@@ -371,7 +371,7 @@ function Band({ maxSpeed = 50, minSpeed = 0, isMobile = false, cardData }: BandP
           <CuboidCollider args={[0.8, 1.125, 0.01]} />
           <group
             scale={3.4}
-            position={[0, -1.45, -0.06]}
+            position={[0, -1.6, -0.06]}
             onPointerOver={() => hover(true)}
             onPointerOut={() => hover(false)}
             onPointerUp={(e: any) => {
