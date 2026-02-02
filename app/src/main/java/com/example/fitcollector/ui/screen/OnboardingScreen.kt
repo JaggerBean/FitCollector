@@ -76,6 +76,7 @@ fun OnboardingScreen(
     var mcUsername by remember { mutableStateOf("") }
     var selectedServers by remember { mutableStateOf<Set<String>>(emptySet()) }
     var servers by remember { mutableStateOf<List<ServerInfo>>(emptyList()) }
+    var publicServerNames by remember { mutableStateOf<Set<String>>(emptySet()) }
     var inviteCodeInput by remember { mutableStateOf("") }
     var inviteCodesByServer by remember { mutableStateOf(getInviteCodesByServer(context)) }
     var isLoading by remember { mutableStateOf(false) }
@@ -193,10 +194,16 @@ fun OnboardingScreen(
     LaunchedEffect(Unit) {
         try {
             val resp = globalApi.getAvailableServers()
+            val publicNames = resp.servers.map { it.server_name }.toSet()
+            publicServerNames = publicNames
             var merged = resp.servers.toMutableList()
             val storedInvites = getInviteCodesByServer(context)
-            inviteCodesByServer = storedInvites
-            storedInvites.values.distinct().forEach { code ->
+            val sanitizedInvites = storedInvites.filterKeys { it !in publicNames }
+            if (sanitizedInvites.size != storedInvites.size) {
+                setInviteCodesByServer(context, sanitizedInvites)
+            }
+            inviteCodesByServer = sanitizedInvites
+            sanitizedInvites.values.distinct().forEach { code ->
                 try {
                     val privateResp = globalApi.getAvailableServers(code)
                     val existing = merged.map { it.server_name }.toSet()
@@ -643,12 +650,15 @@ fun OnboardingScreen(
                         }
 
                         val responseNames = resp.servers.map { it.server_name }
-                        inviteCodesByServer = inviteCodesByServer + responseNames.associateWith { trimmed }
+                        val privateNames = responseNames.filter { it !in publicServerNames }
+                        val namesToJoin = if (privateNames.isNotEmpty()) privateNames else responseNames
+
+                        inviteCodesByServer = inviteCodesByServer + privateNames.associateWith { trimmed }
                         setInviteCodesByServer(context, inviteCodesByServer)
 
                         servers = (servers + resp.servers).distinctBy { it.server_name }
                             .sortedBy { it.server_name.lowercase() }
-                        responseNames.forEach { selectedServers = selectedServers + it }
+                        namesToJoin.forEach { selectedServers = selectedServers + it }
 
                         inviteCodeInput = ""
                         showPrivateServer = false
