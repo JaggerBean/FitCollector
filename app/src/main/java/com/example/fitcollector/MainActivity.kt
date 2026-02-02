@@ -57,11 +57,7 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
                     val shouldForceOnboarding = remember {
-                        val username = getMinecraftUsername(context)
-                        val servers = getSelectedServers(context)
-                        val hasKeys = username.isNotBlank() && servers.isNotEmpty() &&
-                            servers.all { getServerKey(context, username, it) != null }
-                        !isOnboardingComplete(context) || username.isBlank() || servers.isEmpty() || !hasKeys
+                        !isOnboardingComplete(context)
                     }
 
                     var currentScreen by remember {
