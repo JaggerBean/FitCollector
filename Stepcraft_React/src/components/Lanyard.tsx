@@ -167,8 +167,8 @@ function Band({ maxSpeed = 50, minSpeed = 0, isMobile = false, cardData }: BandP
     ctx.clip();
     const gradient = ctx.createLinearGradient(cardX, cardY, cardX, cardY + cardH);
     gradient.addColorStop(0, "#f6fff9");
-    gradient.addColorStop(0.5, "#e2f6ec");
-    gradient.addColorStop(1, "#d2efe1");
+    gradient.addColorStop(0.5, "#17201c");
+    gradient.addColorStop(1, "#00ff84");
     ctx.fillStyle = gradient;
     ctx.fillRect(cardX, cardY, cardW, cardH);
 
@@ -314,7 +314,7 @@ function Band({ maxSpeed = 50, minSpeed = 0, isMobile = false, cardData }: BandP
 
   return (
     <>
-      <group position={[0, 6.4, 0]}>
+      <group position={[0, 6.8, 0]}>
         <RigidBody ref={fixed} {...segmentProps} type={"fixed" as RigidBodyProps["type"]} />
         <RigidBody position={[0.5, 0, 0]} ref={j1} {...segmentProps} type={"dynamic" as RigidBodyProps["type"]}>
           <BallCollider args={[0.1]} />
@@ -326,7 +326,7 @@ function Band({ maxSpeed = 50, minSpeed = 0, isMobile = false, cardData }: BandP
           <BallCollider args={[0.1]} />
         </RigidBody>
         <RigidBody
-          position={[1.7, -1.1, 0]}
+          position={[1.7, -1.45, 0]}
           ref={card}
           {...segmentProps}
           type={dragged ? ("kinematicPosition" as RigidBodyProps["type"]) : ("dynamic" as RigidBodyProps["type"])}
@@ -334,7 +334,7 @@ function Band({ maxSpeed = 50, minSpeed = 0, isMobile = false, cardData }: BandP
           <CuboidCollider args={[0.8, 1.125, 0.01]} />
           <group
             scale={3.9}
-            position={[0, -1.8, -0.06]}
+            position={[0, -2.05, -0.06]}
             onPointerOver={() => hover(true)}
             onPointerOut={() => hover(false)}
             onPointerUp={(e: any) => {
