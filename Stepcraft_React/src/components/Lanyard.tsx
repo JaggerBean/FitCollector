@@ -29,9 +29,9 @@ type LanyardProps = {
 };
 
 export default function Lanyard({
-  position = [0, 0, 30],
+  position = [0, 0, 22],
   gravity = [0, -40, 0],
-  fov = 20,
+  fov = 24,
   transparent = true,
   cardContent,
 }: LanyardProps) {
@@ -44,7 +44,7 @@ export default function Lanyard({
   }, []);
 
   return (
-    <div className="relative h-[70vh] w-full">
+    <div className="relative h-screen w-full">
       <Canvas
         camera={{ position, fov }}
         dpr={[1, isMobile ? 1.5 : 2]}
@@ -187,7 +187,7 @@ function Band({ maxSpeed = 50, minSpeed = 0, isMobile = false, cardContent }: Ba
 
   return (
     <>
-      <group position={[0, 4, 0]}>
+      <group position={[0, 6, 0]}>
         <RigidBody ref={fixed} {...segmentProps} type={"fixed" as RigidBodyProps["type"]} />
         <RigidBody position={[0.5, 0, 0]} ref={j1} {...segmentProps} type={"dynamic" as RigidBodyProps["type"]}>
           <BallCollider args={[0.1]} />
@@ -206,8 +206,8 @@ function Band({ maxSpeed = 50, minSpeed = 0, isMobile = false, cardContent }: Ba
         >
           <CuboidCollider args={[0.8, 1.125, 0.01]} />
           <group
-            scale={2.25}
-            position={[0, -1.2, -0.05]}
+            scale={3.1}
+            position={[0, -1.25, -0.05]}
             onPointerOver={() => hover(true)}
             onPointerOut={() => hover(false)}
             onPointerUp={(e: any) => {
@@ -234,12 +234,12 @@ function Band({ maxSpeed = 50, minSpeed = 0, isMobile = false, cardContent }: Ba
             {cardContent && (
               <Html
                 transform
-                position={[0, 0.1, 0.06]}
+                position={[0, -0.05, 0.08]}
                 rotation={[0, 0, 0]}
-                distanceFactor={0.9}
+                distanceFactor={1.8}
                 style={{ pointerEvents: "none" }}
               >
-                <div className="w-56 rounded-xl border border-white/20 bg-slate-950/80 p-3 text-xs text-slate-100 shadow-lg">
+                <div className="w-72 rounded-2xl border border-white/20 bg-slate-950/85 p-4 text-sm text-slate-100 shadow-xl">
                   {cardContent}
                 </div>
               </Html>
