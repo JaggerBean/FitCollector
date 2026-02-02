@@ -1,10 +1,10 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { Layout } from "../components/Layout";
 import Lanyard from "../components/Lanyard";
 import { useAuthContext } from "../app/AuthContext";
-import { registerServer } from "../api/servers";
+import { getAuthMe, registerServer } from "../api/servers";
 import type { RegisterServerResponse } from "../api/types";
 
 export default function RegisterServerPage() {
@@ -24,8 +24,26 @@ export default function RegisterServerPage() {
   const [showApiKey, setShowApiKey] = useState(false);
 
   const canSubmit = useMemo(() => {
-    return Boolean(serverName.trim() && ownerName.trim() && ownerEmail.trim());
-  }, [serverName, ownerName, ownerEmail]);
+    return Boolean(
+      serverName.trim() &&
+        ownerName.trim() &&
+        ownerEmail.trim() &&
+        serverAddress.trim() &&
+        serverVersion.trim(),
+    );
+  }, [serverName, ownerName, ownerEmail, serverAddress, serverVersion]);
+
+  useEffect(() => {
+    if (!token) return;
+    getAuthMe(token)
+      .then((me) => {
+        setOwnerName((current) => current || me.name);
+        setOwnerEmail((current) => current || me.email);
+      })
+      .catch(() => {
+        // Ignore autofill failures.
+      });
+  }, [token]);
 
   const onSubmit = async (event: FormEvent) => {
     event.preventDefault();
@@ -118,6 +136,7 @@ export default function RegisterServerPage() {
                   value={serverAddress}
                   onChange={(event) => setServerAddress(event.target.value)}
                   placeholder="mc.example.com"
+                  required
                 />
               </div>
               <div>
@@ -127,6 +146,7 @@ export default function RegisterServerPage() {
                   value={serverVersion}
                   onChange={(event) => setServerVersion(event.target.value)}
                   placeholder="1.20.4"
+                  required
                 />
               </div>
             </div>

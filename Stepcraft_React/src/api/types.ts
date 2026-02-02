@@ -11,6 +11,12 @@ export interface GoogleLoginResponse {
   token: string;
 }
 
+export interface AuthMeResponse {
+  id: number;
+  email: string;
+  name: string;
+}
+
 export interface RegisterServerResponse {
   api_key: string;
   server_name: string;

@@ -19,6 +19,7 @@ import type {
   InactivePruneSettingsResponse,
   InactivePruneRunResponse,
   ClaimWindowResponse,
+  AuthMeResponse,
 } from "./types";
 
 export async function login(email: string, password: string): Promise<LoginResponse> {
@@ -40,6 +41,10 @@ export async function loginWithGoogle(idToken: string): Promise<GoogleLoginRespo
     method: "POST",
     body: JSON.stringify({ id_token: idToken }),
   });
+}
+
+export async function getAuthMe(token: string): Promise<AuthMeResponse> {
+  return apiRequest<AuthMeResponse>("/v1/auth/me", {}, token);
 }
 
 export async function getOwnedServers(token: string): Promise<OwnedServersResponse> {
