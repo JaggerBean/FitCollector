@@ -167,36 +167,36 @@ function Band({ maxSpeed = 50, minSpeed = 0, isMobile = false, cardData }: BandP
     ctx.clip();
 
     const logo = logoTexture.image as HTMLImageElement;
-    const maxLogoW = cardW * 0.36;
-    const maxLogoH = cardH * 0.22;
+    const maxLogoW = cardW * 0.38;
+    const maxLogoH = cardH * 0.24;
     const logoScale = Math.min(maxLogoW / logo.width, maxLogoH / logo.height);
     const logoW = logo.width * logoScale;
     const logoH = logo.height * logoScale;
     const logoX = cardX + (cardW - logoW) / 2;
-    const logoY = cardY + cardH * 0.08;
+    const logoY = cardY + cardH * 0.07;
     ctx.drawImage(logo, logoX, logoY, logoW, logoH);
 
     const centerX = cardX + cardW / 2;
-    let y = cardY + cardH * 0.38;
+    let y = cardY + cardH * 0.35;
 
     ctx.textAlign = "center";
     ctx.fillStyle = "#0b1220";
-    ctx.font = "800 78px 'Segoe UI', Arial, sans-serif";
-    const headline = "Server Registered!";
+    ctx.font = "800 84px 'Segoe UI', Arial, sans-serif";
+    const headline = cardData.serverName || "Server Registered!";
     ctx.fillText(headline, centerX, y);
 
-    y += 90;
+    y += 96;
     ctx.fillStyle = "#1f8a5b";
-    ctx.font = "700 56px 'Segoe UI', Arial, sans-serif";
+    ctx.font = "700 62px 'Segoe UI', Arial, sans-serif";
     ctx.fillText("Welcome to StepCraft", centerX, y);
 
-    y += 80;
+    y += 90;
     ctx.fillStyle = "#243241";
-    ctx.font = "500 34px 'Segoe UI', Arial, sans-serif";
+    ctx.font = "500 38px 'Segoe UI', Arial, sans-serif";
     const line1 = "Your server is ready to sync steps";
     const line2 = "and rewards with your players.";
     ctx.fillText(line1, centerX, y);
-    y += 46;
+    y += 52;
     ctx.fillText(line2, centerX, y);
 
     ctx.restore();
