@@ -64,7 +64,7 @@ export default function RegisterServerPage() {
 
   return (
     <Layout>
-      <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
+      <div className="max-w-3xl">
         <form
           onSubmit={onSubmit}
           className="rounded-3xl border border-emerald-100 bg-white p-8 shadow-xl dark:border-slate-800 dark:bg-slate-900"
@@ -165,13 +165,6 @@ export default function RegisterServerPage() {
             {loading ? "Registering..." : "Register server"}
           </button>
         </form>
-        <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-          <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Next steps</h2>
-          <p className="mt-3 text-sm text-slate-500 dark:text-slate-400">
-            After you register, a pop-up will show your one-time API key and invite code (if private). Keep it handy for your
-            StepCraft Minecraft mod configuration.
-          </p>
-        </div>
       </div>
       <ConfirmDialog
         open={showResult && !!result}
