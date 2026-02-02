@@ -202,7 +202,7 @@ function Band({ maxSpeed = 50, minSpeed = 0, isMobile = false, cardData }: BandP
     y += 72;
     ctx.fillStyle = "#2a3a4b";
     ctx.font = "600 40px 'Segoe UI', Arial, sans-serif";
-    const emailLine = `Email sent to ${cardData.ownerEmail}`;
+    const emailLine = "Check your email for your new credentials.";
     ctx.fillText(emailLine, centerX, y);
 
     ctx.restore();
@@ -259,7 +259,7 @@ function Band({ maxSpeed = 50, minSpeed = 0, isMobile = false, cardData }: BandP
   useRopeJoint(j2, j3, [[0, 0, 0], [0, 0, 0], 1]);
   useSphericalJoint(j3, card, [
     [0, 0, 0],
-    [0, 2.05, 0],
+    [0, 2.35, 0],
   ]);
 
   useEffect(() => {
