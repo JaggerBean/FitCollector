@@ -501,7 +501,7 @@ export default function ServerManagePage() {
               Run admin actions for this server.
             </p>
             <div className="mt-4 grid gap-4">
-              <div className="rounded-2xl border border-slate-200/70 bg-slate-50/70 p-5 dark:border-slate-800 dark:bg-slate-950">
+              <div className="rounded-2xl border border-slate-200/60 bg-slate-50/70 p-5 shadow-inner dark:border-slate-800/80 dark:bg-slate-950/60">
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Player actions</h3>
@@ -510,14 +510,14 @@ export default function ServerManagePage() {
                     </p>
                   </div>
                 </div>
-                <div className="mt-4 rounded-xl border border-slate-200/70 bg-white/70 p-4 dark:border-slate-800 dark:bg-slate-900/70">
+                <div className="mt-4 rounded-xl border border-slate-200/60 bg-white/80 p-4 shadow-sm dark:border-slate-800/70 dark:bg-slate-900/60">
                   <h4 className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                     Player context
                   </h4>
                   <div className="mt-3">
                     <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Minecraft username</label>
                     <input
-                      className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+                      className="mt-1 w-full rounded-lg border border-slate-200/70 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100 dark:border-slate-700/80 dark:bg-slate-950 dark:text-slate-100"
                       value={username}
                       onChange={(event) => setUsername(event.target.value)}
                       placeholder="Player name"
@@ -533,7 +533,7 @@ export default function ServerManagePage() {
                 </div>
 
                 <div className="mt-4 grid gap-4 lg:grid-cols-3">
-                  <div className="rounded-xl border border-slate-200/70 bg-white/70 p-4 dark:border-slate-800 dark:bg-slate-900/70">
+                  <div className="rounded-xl border border-slate-200/60 bg-white/80 p-4 shadow-sm dark:border-slate-800/70 dark:bg-slate-900/60">
                     <h4 className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                       Player lookup
                     </h4>
@@ -544,7 +544,7 @@ export default function ServerManagePage() {
                       <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Day</label>
                       <input
                         type="date"
-                        className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+                        className="mt-1 w-full rounded-lg border border-slate-200/70 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100 dark:border-slate-700/80 dark:bg-slate-950 dark:text-slate-100"
                         value={actionDay}
                         onChange={(event) => setActionDay(event.target.value)}
                       />
@@ -565,7 +565,7 @@ export default function ServerManagePage() {
                     </div>
                   </div>
 
-                  <div className="rounded-xl border border-slate-200/70 bg-white/70 p-4 dark:border-slate-800 dark:bg-slate-900/70">
+                  <div className="rounded-xl border border-slate-200/60 bg-white/80 p-4 shadow-sm dark:border-slate-800/70 dark:bg-slate-900/60">
                     <h4 className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                       Claim tools
                     </h4>
@@ -575,7 +575,7 @@ export default function ServerManagePage() {
                     <div className="mt-3">
                       <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Reward tier</label>
                       <select
-                        className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+                        className="mt-1 w-full rounded-lg border border-slate-200/70 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100 dark:border-slate-700/80 dark:bg-slate-950 dark:text-slate-100"
                         value={selectedTierMinSteps ?? ""}
                         onChange={(event) =>
                           setSelectedTierMinSteps(event.target.value ? Number(event.target.value) : null)
@@ -629,7 +629,7 @@ export default function ServerManagePage() {
                     </div>
                   </div>
 
-                  <div className="rounded-xl border border-slate-200/70 bg-white/70 p-4 dark:border-slate-800 dark:bg-slate-900/70">
+                  <div className="rounded-xl border border-slate-200/60 bg-white/80 p-4 shadow-sm dark:border-slate-800/70 dark:bg-slate-900/60">
                     <h4 className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                       Moderation
                     </h4>
@@ -639,7 +639,7 @@ export default function ServerManagePage() {
                     <div className="mt-3">
                       <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Ban reason</label>
                       <input
-                        className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+                        className="mt-1 w-full rounded-lg border border-slate-200/70 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100 dark:border-slate-700/80 dark:bg-slate-950 dark:text-slate-100"
                         value={reason}
                         onChange={(event) => setReason(event.target.value)}
                         placeholder="broke code of conduct"
@@ -698,7 +698,7 @@ export default function ServerManagePage() {
                 </div>
               </div>
 
-              <div className="rounded-xl border border-slate-200/70 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-950">
+              <div className="rounded-xl border border-slate-200/60 bg-slate-50/70 p-4 shadow-inner dark:border-slate-800/80 dark:bg-slate-950/60">
                 <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Player list query</h3>
                 <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                   Fetch player registrations for quick reference.
@@ -746,12 +746,17 @@ export default function ServerManagePage() {
                 </div>
               )}
               {actionOutput && (
-                <pre
-                  ref={actionOutputRef}
-                  className="max-h-64 overflow-auto rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200"
-                >
-                  {actionOutput}
-                </pre>
+                <div className="rounded-lg border border-slate-200/70 bg-slate-50/80 p-3 dark:border-slate-800/80 dark:bg-slate-950/70">
+                  <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                    Action output
+                  </div>
+                  <pre
+                    ref={actionOutputRef}
+                    className="max-h-64 overflow-auto rounded-md bg-slate-950 p-3 text-xs text-slate-100"
+                  >
+                    {actionOutput}
+                  </pre>
+                </div>
               )}
             </div>
           </div>
