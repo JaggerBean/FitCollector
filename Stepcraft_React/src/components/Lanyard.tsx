@@ -153,6 +153,8 @@ function Band({ maxSpeed = 50, minSpeed = 0, isMobile = false, cardData }: BandP
     if (!ctx) return;
 
     ctx.clearRect(0, 0, content.width, content.height);
+    ctx.fillStyle = "#f2f3f6";
+    ctx.fillRect(0, 0, content.width, content.height);
 
     const cardW = content.width * 0.84;
     const cardH = content.height * 0.86;
@@ -162,8 +164,6 @@ function Band({ maxSpeed = 50, minSpeed = 0, isMobile = false, cardData }: BandP
     ctx.save();
     ctx.beginPath();
     roundRect(ctx, cardX, cardY, cardW, cardH, 100);
-    ctx.fillStyle = "#f2f3f6";
-    ctx.fill();
     ctx.clip();
 
     const logo = logoTexture.image as HTMLImageElement;
@@ -247,6 +247,8 @@ function Band({ maxSpeed = 50, minSpeed = 0, isMobile = false, cardData }: BandP
     badgeTexture.needsUpdate = true;
     badgeTexture.flipY = false;
     badgeTexture.colorSpace = THREE.SRGBColorSpace;
+    badgeTexture.wrapS = THREE.ClampToEdgeWrapping;
+    badgeTexture.wrapT = THREE.ClampToEdgeWrapping;
 
     badgeBackTexture.image = canvas;
     badgeBackTexture.needsUpdate = true;
@@ -254,6 +256,8 @@ function Band({ maxSpeed = 50, minSpeed = 0, isMobile = false, cardData }: BandP
     badgeBackTexture.colorSpace = THREE.SRGBColorSpace;
     badgeBackTexture.repeat.set(-1, 1);
     badgeBackTexture.offset.set(1, 0);
+    badgeBackTexture.wrapS = THREE.ClampToEdgeWrapping;
+    badgeBackTexture.wrapT = THREE.ClampToEdgeWrapping;
   }, [cardData, logoTexture, badgeTexture, badgeBackTexture]);
 
   function wrapText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number) {
