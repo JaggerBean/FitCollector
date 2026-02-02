@@ -166,10 +166,10 @@ export default function RegisterServerPage() {
           </button>
         </form>
         <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-          <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">What happens next</h2>
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Next steps</h2>
           <p className="mt-3 text-sm text-slate-500 dark:text-slate-400">
-            After registration, you'll receive a one-time API key and optional invite code in a pop-up. The key belongs in
-            your StepCraft Minecraft mod configuration so your server can sync with StepCraft.
+            After you register, a pop-up will show your one-time API key and invite code (if private). Keep it handy for your
+            StepCraft Minecraft mod configuration.
           </p>
         </div>
       </div>
