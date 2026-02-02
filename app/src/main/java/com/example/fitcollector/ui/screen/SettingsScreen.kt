@@ -111,7 +111,7 @@ fun SettingsScreen(
         )
     }
 
-    val canChangeMc = remember { canChangeMinecraftUsername(context) }
+    var canChangeMc by remember { mutableStateOf(canChangeMinecraftUsername(context)) }
     
     val permissions = remember { 
         setOf(
@@ -167,6 +167,8 @@ fun SettingsScreen(
 
     // Logic to re-check all critical status whenever the app is foregrounded
     fun refreshSystemStatus() {
+        canChangeMc = canChangeMinecraftUsername(context)
+        queuedName = getQueuedUsername(context)
         val pm = context.getSystemService(Context.POWER_SERVICE) as PowerManager
         isIgnoringBatteryOptimizations = pm.isIgnoringBatteryOptimizations(context.packageName)
         
@@ -251,44 +253,43 @@ fun SettingsScreen(
                 return@launch
             }
             try {
-                val previousNames = availableServers.map { it.server_name }.toSet()
                 val resp = globalApi.getAvailableServers(code)
+                if (resp.servers.isEmpty()) {
+                    message = "Invite code not found." to false
+                    return@launch
+                }
                 val existing = availableServers.toMutableList()
                 val existingNames = existing.map { it.server_name }.toSet()
                 val merged = (existing + resp.servers.filter { it.server_name !in existingNames })
                     .sortedBy { it.server_name.lowercase() }
                 availableServers = merged
 
-                val added = resp.servers.filter { it.server_name !in previousNames }
-                if (added.isNotEmpty()) {
-                    inviteCodesByServer = inviteCodesByServer + added.associate { it.server_name to code }
-                    setInviteCodesByServer(context, inviteCodesByServer)
-                    val addedNames = added.map { it.server_name }
-                    selectedServers = selectedServers + addedNames
-                    setSelectedServers(context, selectedServers.toList())
-                    addedNames.forEach { serverName ->
-                        if (getServerKey(context, currentName, serverName) == null) {
-                            try {
-                                val respReg = globalApi.register(RegisterPayload(currentName, deviceId, serverName, code))
-                                saveServerKey(context, currentName, serverName, respReg.player_api_key)
-                            } catch (e: HttpException) {
-                                if (e.code() == 409) {
-                                    try {
-                                        val recoveryResp = globalApi.recoverKey(RegisterPayload(currentName, deviceId, serverName))
-                                        saveServerKey(context, currentName, serverName, recoveryResp.player_api_key)
-                                    } catch (_: Exception) {}
-                                } else {
-                                    throw e
-                                }
+                val responseNames = resp.servers.map { it.server_name }
+                inviteCodesByServer = inviteCodesByServer + responseNames.associateWith { code }
+                setInviteCodesByServer(context, inviteCodesByServer)
+                selectedServers = selectedServers + responseNames
+                setSelectedServers(context, selectedServers.toList())
+
+                responseNames.forEach { serverName ->
+                    if (getServerKey(context, currentName, serverName) == null) {
+                        try {
+                            val respReg = globalApi.register(RegisterPayload(currentName, deviceId, serverName, code))
+                            saveServerKey(context, currentName, serverName, respReg.player_api_key)
+                        } catch (e: HttpException) {
+                            if (e.code() == 409) {
+                                try {
+                                    val recoveryResp = globalApi.recoverKey(RegisterPayload(currentName, deviceId, serverName))
+                                    saveServerKey(context, currentName, serverName, recoveryResp.player_api_key)
+                                } catch (_: Exception) {}
+                            } else {
+                                throw e
                             }
                         }
                     }
-                    inviteCodeInput = ""
-                    val serverDisplayName = if (addedNames.size == 1) addedNames.first() else "multiple servers"
-                    message = "You Registered to $serverDisplayName" to true
-                } else {
-                    message = "Invite code not found." to false
                 }
+                inviteCodeInput = ""
+                val serverDisplayName = if (responseNames.size == 1) responseNames.first() else "multiple servers"
+                message = "You Registered to $serverDisplayName" to true
             } catch (e: Exception) {
                 message = "Could not add invite code: ${e.message}" to false
             }
@@ -411,6 +412,37 @@ fun SettingsScreen(
                                 color = MaterialTheme.colorScheme.error,
                                 style = MaterialTheme.typography.labelSmall
                             )
+
+                            Spacer(Modifier.height(8.dp))
+
+                            OutlinedButton(
+                                onClick = {
+                                    val cleaned = mcDraft.trim()
+                                    scope.launch {
+                                        isLoading = true
+                                        try {
+                                            val profile = fetchMinecraftProfile(cleaned)
+                                            if (profile == null || profile.id == null) {
+                                                val details = profile?.errorMessage ?: "no response"
+                                                message = "'$cleaned' is not a valid Minecraft username. API: $details" to false
+                                                return@launch
+                                            }
+                                            queueMinecraftUsername(context, cleaned)
+                                            queuedName = cleaned
+                                            setSelectedServers(context, selectedServers.toList())
+                                            message = "Username queued for tomorrow!" to true
+                                        } catch (e: Exception) {
+                                            message = (e.message ?: "Failed to queue username") to false
+                                        } finally {
+                                            isLoading = false
+                                        }
+                                    }
+                                },
+                                enabled = !isLoading,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text("Queue for Tomorrow")
+                            }
                         }
                         
                         Spacer(Modifier.height(16.dp))
@@ -479,7 +511,9 @@ fun SettingsScreen(
                                                             try {
                                                                 val recoveryResp = globalApi.recoverKey(RegisterPayload(cleaned, deviceId, serverName))
                                                                 saveServerKey(context, cleaned, serverName, recoveryResp.player_api_key)
-                                                            } catch (ex: Exception) {}
+                                                            } catch (ex: Exception) {
+                                                                throw ex
+                                                            }
                                                         } else throw e
                                                     }
                                                 }
@@ -867,7 +901,7 @@ fun SettingsScreen(
     if (showPublicServerSelector) {
         ServerSelectorDialog(
             availableServers = availableServers,
-            privateServerNames = emptySet(),
+            privateServerNames = inviteCodesByServer.keys,
             selectedServers = selectedServers,
             onSelectionChanged = { selectedServers = it },
             onDismiss = { showPublicServerSelector = false }
@@ -877,6 +911,7 @@ fun SettingsScreen(
     if (showManageJoinedServers) {
         ManageJoinedServersDialog(
             selectedServers = selectedServers,
+            privateServerNames = inviteCodesByServer.keys,
             onSelectionChanged = { selectedServers = it },
             onDismiss = { showManageJoinedServers = false }
         )
@@ -1146,9 +1181,17 @@ fun SettingsScreen(
 @Composable
 fun ManageJoinedServersDialog(
     selectedServers: Set<String>,
+    privateServerNames: Set<String>,
     onSelectionChanged: (Set<String>) -> Unit,
     onDismiss: () -> Unit
 ) {
+    val privateSelected = remember(selectedServers, privateServerNames) {
+        selectedServers.filter { privateServerNames.contains(it) }.sorted()
+    }
+    val publicSelected = remember(selectedServers, privateServerNames) {
+        selectedServers.filterNot { privateServerNames.contains(it) }.sorted()
+    }
+
     Dialog(onDismissRequest = onDismiss) {
         Surface(
             shape = RoundedCornerShape(16.dp),
@@ -1170,18 +1213,47 @@ fun ManageJoinedServersDialog(
                     Spacer(Modifier.weight(1f))
                 } else {
                     LazyColumn(modifier = Modifier.weight(1f)) {
-                        items(selectedServers.toList().sorted()) { server ->
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 8.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(server, modifier = Modifier.weight(1f))
-                                TextButton(
-                                    onClick = { onSelectionChanged(selectedServers - server) }
+                        if (privateSelected.isNotEmpty()) {
+                            item {
+                                Text("Private servers", style = MaterialTheme.typography.labelSmall, color = Color.Gray)
+                                Spacer(Modifier.height(4.dp))
+                            }
+                            items(privateSelected) { server ->
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 8.dp),
+                                    verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Text("Remove", color = MaterialTheme.colorScheme.error)
+                                    Text(server, modifier = Modifier.weight(1f))
+                                    TextButton(
+                                        onClick = { onSelectionChanged(selectedServers - server) }
+                                    ) {
+                                        Text("Remove", color = MaterialTheme.colorScheme.error)
+                                    }
+                                }
+                            }
+                        }
+
+                        if (publicSelected.isNotEmpty()) {
+                            item {
+                                if (privateSelected.isNotEmpty()) Spacer(Modifier.height(6.dp))
+                                Text("Public servers", style = MaterialTheme.typography.labelSmall, color = Color.Gray)
+                                Spacer(Modifier.height(4.dp))
+                            }
+                            items(publicSelected) { server ->
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 8.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(server, modifier = Modifier.weight(1f))
+                                    TextButton(
+                                        onClick = { onSelectionChanged(selectedServers - server) }
+                                    ) {
+                                        Text("Remove", color = MaterialTheme.colorScheme.error)
+                                    }
                                 }
                             }
                         }
