@@ -3,6 +3,7 @@ import type { FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { Layout } from "../components/Layout";
 import ConfirmDialog from "../components/ConfirmDialog";
+import Lanyard from "../components/Lanyard";
 import { useAuthContext } from "../app/AuthContext";
 import { registerServer } from "../api/servers";
 import type { RegisterServerResponse } from "../api/types";
@@ -169,34 +170,36 @@ export default function RegisterServerPage() {
       <ConfirmDialog
         open={showResult && !!result}
         title="Server registered"
+        panelClassName="w-[min(96vw,1100px)] max-w-none"
+        contentClassName="text-slate-100"
         content={
           result && (
-            <div className="space-y-3">
-              <div>
-                <div className="text-xs uppercase tracking-wide text-slate-400">Server</div>
-                <div className="mt-1 font-semibold text-slate-900 dark:text-slate-100">{result.server_name}</div>
-              </div>
-              <div>
-                <div className="text-xs uppercase tracking-wide text-slate-400">API key</div>
-                <div className="mt-1 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 font-mono text-xs text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-emerald-200">
-                  {result.api_key}
-                </div>
-                <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-                  Add this key to your StepCraft Minecraft mod configuration on the server so it can sync steps and rewards.
-                </div>
-                <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-                  An email has also been sent to {ownerEmail}. If you don’t see it, check your spam folder.
-                </div>
-              </div>
-              {result.invite_code && (
-                <div>
-                  <div className="text-xs uppercase tracking-wide text-slate-400">Invite code</div>
-                  <div className="mt-1 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 font-mono text-xs text-emerald-700 dark:border-emerald-700/40 dark:bg-emerald-900/20 dark:text-emerald-200">
-                    {result.invite_code}
+            <Lanyard
+              cardContent={
+                <div className="space-y-2">
+                  <div className="text-[11px] uppercase tracking-wide text-emerald-200/80">Server</div>
+                  <div className="text-sm font-semibold text-white">{result.server_name}</div>
+                  <div className="pt-1 text-[11px] uppercase tracking-wide text-emerald-200/80">API key</div>
+                  <div className="rounded-md border border-emerald-300/40 bg-emerald-950/60 px-2 py-1 font-mono text-[10px] text-emerald-100">
+                    {result.api_key}
+                  </div>
+                  {result.invite_code && (
+                    <>
+                      <div className="pt-1 text-[11px] uppercase tracking-wide text-emerald-200/80">Invite code</div>
+                      <div className="rounded-md border border-emerald-300/40 bg-emerald-950/60 px-2 py-1 font-mono text-[10px] text-emerald-100">
+                        {result.invite_code}
+                      </div>
+                    </>
+                  )}
+                  <div className="pt-2 text-[11px] leading-snug text-emerald-50/80">
+                    Add this key to your StepCraft Minecraft mod configuration on the server to sync steps and rewards.
+                  </div>
+                  <div className="text-[11px] leading-snug text-emerald-50/70">
+                    An email has been sent to {ownerEmail}. If you don’t see it, check spam.
                   </div>
                 </div>
-              )}
-            </div>
+              }
+            />
           )
         }
         confirmLabel="Take me to Dashboard"

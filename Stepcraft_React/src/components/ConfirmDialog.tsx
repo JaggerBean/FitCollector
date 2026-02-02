@@ -5,6 +5,8 @@ type ConfirmDialogProps = {
   title?: string;
   message?: string;
   content?: React.ReactNode;
+  panelClassName?: string;
+  contentClassName?: string;
   confirmLabel?: string;
   cancelLabel?: string;
   tone?: "danger" | "default";
@@ -17,6 +19,8 @@ export default function ConfirmDialog({
   title = "Confirm action",
   message,
   content,
+  panelClassName = "",
+  contentClassName = "",
   confirmLabel = "Confirm",
   cancelLabel = "Cancel",
   tone = "default",
@@ -36,14 +40,18 @@ export default function ConfirmDialog({
 
   return (
     <div className="confirm-overlay" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
-      <div className="confirm-panel">
+      <div className={`confirm-panel ${panelClassName}`.trim()}>
         <div className="text-sm font-semibold text-slate-900 dark:text-slate-100" id="confirm-title">
           {title}
         </div>
         {content ? (
-          <div className="mt-3 text-sm text-slate-600 dark:text-slate-300">{content}</div>
+          <div className={`mt-3 text-sm text-slate-600 dark:text-slate-300 ${contentClassName}`.trim()}>
+            {content}
+          </div>
         ) : (
-          <div className="mt-2 text-sm text-slate-600 dark:text-slate-300">{message}</div>
+          <div className={`mt-2 text-sm text-slate-600 dark:text-slate-300 ${contentClassName}`.trim()}>
+            {message}
+          </div>
         )}
         <div className="mt-4 flex justify-end gap-2">
           <button
