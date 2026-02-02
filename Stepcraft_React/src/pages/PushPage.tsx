@@ -16,6 +16,7 @@ function toLocalDateTime(date: Date) {
 type TimezoneOption = {
   value: string;
   label: string;
+  offsetMinutes: number;
 };
 
 const COMMON_TIMEZONES = [
@@ -70,6 +71,17 @@ function getTimezoneAbbr(tz: string): string {
   }
 }
 
+function getTimezoneOffsetMinutes(tz: string): number {
+  try {
+    const now = new Date();
+    const asText = now.toLocaleString("en-US", { timeZone: tz });
+    const asDate = new Date(asText);
+    return Math.round((asDate.getTime() - now.getTime()) / 60000);
+  } catch {
+    return 0;
+  }
+}
+
 function canonicalTimezone(tz: string): string {
   try {
     return new Intl.DateTimeFormat("en-US", { timeZone: tz }).resolvedOptions().timeZone;
@@ -112,12 +124,19 @@ function buildTimezoneOptions(): TimezoneOption[] {
     }
   });
 
-  const options: TimezoneOption[] = Array.from(bestByAbbr.entries()).map(([abbr, tz]) => ({
-    value: tz,
-    label: `${tz} (${abbr})`,
-  }));
+  const options: TimezoneOption[] = Array.from(bestByAbbr.entries()).map(([abbr, tz]) => {
+    const offsetMinutes = getTimezoneOffsetMinutes(tz);
+    return {
+      value: tz,
+      label: `${tz} (${abbr})`,
+      offsetMinutes,
+    };
+  });
 
-  return options.sort((a, b) => a.label.localeCompare(b.label));
+  return options.sort((a, b) => {
+    if (a.offsetMinutes !== b.offsetMinutes) return a.offsetMinutes - b.offsetMinutes;
+    return a.label.localeCompare(b.label);
+  });
 }
 
 export default function PushPage() {
