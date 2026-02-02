@@ -39,6 +39,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         ensureInstallState(this)
+        applyQueuedUsernameIfPossible(this)
 
         requestPermissions =
             registerForActivityResult(

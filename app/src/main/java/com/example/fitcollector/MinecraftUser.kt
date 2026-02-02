@@ -53,8 +53,13 @@ fun getMinecraftUsername(context: Context): String {
 
 fun setMinecraftUsername(context: Context, username: String) {
     val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    val previousUsername = prefs.getString(KEY_MC_USER, null) ?: ""
     val today = ZonedDateTime.now(CENTRAL_ZONE).toLocalDate().format(dateFormatter)
-    
+
+    if (previousUsername.isNotBlank() && previousUsername != username) {
+        migrateServerKeysForUsername(context, previousUsername, username)
+    }
+
     prefs.edit()
         .putString(KEY_MC_USER, username)
         .putString(KEY_LAST_CHANGE_DATE, today)
@@ -98,9 +103,9 @@ fun applyQueuedUsernameIfPossible(context: Context): String? {
     val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
     val queuedName = prefs.getString(KEY_QUEUED_USER, null) ?: return null
     val queuedDate = prefs.getString(KEY_QUEUED_DATE, null) ?: return null
-    
+
     val today = LocalDate.now(CENTRAL_ZONE).format(dateFormatter)
-    
+
     if (queuedDate != today && canChangeMinecraftUsername(context)) {
         setMinecraftUsername(context, queuedName)
         return queuedName
@@ -317,6 +322,32 @@ fun getServerKeysForUser(context: Context, username: String): Map<String, String
     val prefix = "$username:"
     return all.filterKeys { it.startsWith(prefix) }
               .mapKeys { it.key.substring(prefix.length) }
+}
+
+private fun migrateServerKeysForUsername(context: Context, fromUsername: String, toUsername: String) {
+    if (fromUsername == toUsername) return
+
+    val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    val allKeys = getAllServerKeys(context).toMutableMap()
+    val prefix = "$fromUsername:"
+
+    val keysToMove = allKeys
+        .filterKeys { it.startsWith(prefix) }
+        .map { (oldKey, value) ->
+            val server = oldKey.removePrefix(prefix)
+            val newKey = "$toUsername:$server"
+            oldKey to (newKey to value)
+        }
+
+    if (keysToMove.isEmpty()) return
+
+    keysToMove.forEach { (oldKey, pair) ->
+        val (newKey, value) = pair
+        allKeys.remove(oldKey)
+        allKeys[newKey] = value
+    }
+
+    prefs.edit().putString(KEY_SERVER_KEYS, Gson().toJson(allKeys)).apply()
 }
 
 fun getThemeMode(context: Context): String {

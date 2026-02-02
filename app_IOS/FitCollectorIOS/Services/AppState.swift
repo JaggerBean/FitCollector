@@ -98,6 +98,10 @@ final class AppState: ObservableObject {
         guard !queued.isEmpty, !queuedDay.isEmpty else { return false }
         let today = AppState.dayKey()
         guard queuedDay != today, canChangeUsernameToday() else { return false }
+        let previousUsername = minecraftUsername
+        if !previousUsername.isEmpty, previousUsername != queued {
+            migrateServerKeys(from: previousUsername, to: queued)
+        }
         minecraftUsername = queued
         clearQueuedUsername()
         markUsernameChangedToday()
@@ -327,6 +331,21 @@ final class AppState: ObservableObject {
 
     private func makeServerKey(username: String, server: String) -> String {
         "\(username)|\(server)"
+    }
+
+    private func migrateServerKeys(from oldUsername: String, to newUsername: String) {
+        guard oldUsername != newUsername else { return }
+        var migrated: [String: String] = serverKeysByUserServer
+        let prefix = "\(oldUsername)|"
+        let keysToMove = serverKeysByUserServer.keys.filter { $0.hasPrefix(prefix) }
+        for oldKey in keysToMove {
+            guard let value = serverKeysByUserServer[oldKey] else { continue }
+            let server = String(oldKey.dropFirst(prefix.count))
+            let newKey = makeServerKey(username: newUsername, server: server)
+            migrated.removeValue(forKey: oldKey)
+            migrated[newKey] = value
+        }
+        serverKeysByUserServer = migrated
     }
 
 
