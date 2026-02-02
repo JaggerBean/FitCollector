@@ -156,10 +156,10 @@ function Band({ maxSpeed = 50, minSpeed = 0, isMobile = false, cardData }: BandP
     ctx.fillStyle = "#f2f3f6";
     ctx.fillRect(0, 0, content.width, content.height);
 
-    const cardW = content.width * 0.84;
-    const cardH = content.height * 0.86;
+    const cardW = content.width * 0.96;
+    const cardH = content.height * 0.9;
     const cardX = (content.width - cardW) / 2;
-    const cardY = content.height * 0.08;
+    const cardY = content.height * 0.05;
 
     ctx.save();
     ctx.beginPath();
@@ -173,17 +173,17 @@ function Band({ maxSpeed = 50, minSpeed = 0, isMobile = false, cardData }: BandP
     const logoW = logo.width * logoScale;
     const logoH = logo.height * logoScale;
     const logoX = cardX + (cardW - logoW) / 2;
-    const logoY = cardY + cardH * 0.14;
+    const logoY = cardY + cardH * 0.08;
     ctx.drawImage(logo, logoX, logoY, logoW, logoH);
 
     ctx.fillStyle = "#0b1220";
     ctx.font = "bold 52px 'Segoe UI', Arial, sans-serif";
     ctx.textAlign = "center";
-    ctx.fillText("StepCraft", cardX + cardW / 2, cardY + cardH * 0.42);
+    ctx.fillText("StepCraft", cardX + cardW / 2, cardY + cardH * 0.33);
 
-    const left = cardX + cardW * 0.08;
-    const right = cardX + cardW * 0.92;
-    let y = cardY + cardH * 0.52;
+    const left = cardX + cardW * 0.09;
+    const right = cardX + cardW * 0.91;
+    let y = cardY + cardH * 0.41;
 
     const label = (text: string) => {
       ctx.fillStyle = "#2f5b4a";
@@ -302,7 +302,7 @@ function Band({ maxSpeed = 50, minSpeed = 0, isMobile = false, cardData }: BandP
   useRopeJoint(j2, j3, [[0, 0, 0], [0, 0, 0], 1]);
   useSphericalJoint(j3, card, [
     [0, 0, 0],
-    [0, 1.6, 0],
+    [0, 1.85, 0],
   ]);
 
   useEffect(() => {
@@ -363,7 +363,7 @@ function Band({ maxSpeed = 50, minSpeed = 0, isMobile = false, cardData }: BandP
           <BallCollider args={[0.1]} />
         </RigidBody>
         <RigidBody
-          position={[1.7, -0.45, 0]}
+          position={[1.7, -0.6, 0]}
           ref={card}
           {...segmentProps}
           type={dragged ? ("kinematicPosition" as RigidBodyProps["type"]) : ("dynamic" as RigidBodyProps["type"])}
@@ -371,7 +371,7 @@ function Band({ maxSpeed = 50, minSpeed = 0, isMobile = false, cardData }: BandP
           <CuboidCollider args={[0.8, 1.125, 0.01]} />
           <group
             scale={3.4}
-            position={[0, -1.35, -0.06]}
+            position={[0, -1.45, -0.06]}
             onPointerOver={() => hover(true)}
             onPointerOut={() => hover(false)}
             onPointerUp={(e: any) => {
