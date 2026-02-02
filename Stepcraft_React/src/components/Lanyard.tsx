@@ -261,9 +261,9 @@ function Band({ maxSpeed = 50, minSpeed = 0, isMobile = false, cardData }: BandP
     ctx.quadraticCurveTo(x, y, x + r, y);
   }
 
-  useRopeJoint(fixed, j1, [[0, 0, 0], [0, 0, 0], 1]);
-  useRopeJoint(j1, j2, [[0, 0, 0], [0, 0, 0], 1]);
-  useRopeJoint(j2, j3, [[0, 0, 0], [0, 0, 0], 1]);
+  useRopeJoint(fixed, j1, [[0, 0, 0], [0, 0, 0], 1.8]);
+  useRopeJoint(j1, j2, [[0, 0, 0], [0, 0, 0], 1.8]);
+  useRopeJoint(j2, j3, [[0, 0, 0], [0, 0, 0], 1.8]);
   useSphericalJoint(j3, card, [
     [0, 0, 0],
     [0, 1.98, 0],
