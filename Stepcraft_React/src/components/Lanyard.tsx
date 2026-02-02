@@ -166,9 +166,10 @@ function Band({ maxSpeed = 50, minSpeed = 0, isMobile = false, cardData }: BandP
     roundRect(ctx, cardX, cardY, cardW, cardH, 100);
     ctx.clip();
     const gradient = ctx.createLinearGradient(cardX, cardY, cardX, cardY + cardH);
-    gradient.addColorStop(0, "#f6fff9");
-    gradient.addColorStop(0.55, "#e2f6ec");
-    gradient.addColorStop(1, "#c9ebdb");
+    gradient.addColorStop(0, "#dff3ff");
+    gradient.addColorStop(0.4, "#cfe9ff");
+    gradient.addColorStop(0.7, "#e6f7d4");
+    gradient.addColorStop(1, "#ffd7e8");
     ctx.fillStyle = gradient;
     ctx.fillRect(cardX - 2, cardY - 2, cardW + 4, cardH + 4);
 
@@ -186,18 +187,18 @@ function Band({ maxSpeed = 50, minSpeed = 0, isMobile = false, cardData }: BandP
     let y = cardY + cardH * 0.38;
 
     ctx.textAlign = "center";
-    ctx.fillStyle = "#0b1220";
+    ctx.fillStyle = "#0a1424";
     ctx.font = "800 96px 'Segoe UI', Arial, sans-serif";
     const headline = cardData.serverName || "Server Registered!";
     ctx.fillText(headline, centerX, y);
 
     y += 110;
-    ctx.fillStyle = "#1f8a5b";
+    ctx.fillStyle = "#1c6fd1";
     ctx.font = "700 70px 'Segoe UI', Arial, sans-serif";
     ctx.fillText("Welcome to StepCraft", centerX, y);
 
     y += 100;
-    ctx.fillStyle = "#243241";
+    ctx.fillStyle = "#20304a";
     ctx.font = "600 44px 'Segoe UI', Arial, sans-serif";
     const line1 = "Your server is ready to sync steps";
     const line2 = "and rewards with your players.";
@@ -206,7 +207,7 @@ function Band({ maxSpeed = 50, minSpeed = 0, isMobile = false, cardData }: BandP
     ctx.fillText(line2, centerX, y);
 
     y += 72;
-    ctx.fillStyle = "#2a3a4b";
+    ctx.fillStyle = "#1d2d44";
     ctx.font = "600 40px 'Segoe UI', Arial, sans-serif";
     const emailLine = "Check your email for your new credentials.";
     ctx.fillText(emailLine, centerX, y);
@@ -265,7 +266,7 @@ function Band({ maxSpeed = 50, minSpeed = 0, isMobile = false, cardData }: BandP
   useRopeJoint(j2, j3, [[0, 0, 0], [0, 0, 0], 1]);
   useSphericalJoint(j3, card, [
     [0, 0, 0],
-    [0, 2.45, 0],
+    [0, 2.7, 0],
   ]);
 
   useEffect(() => {
@@ -314,7 +315,7 @@ function Band({ maxSpeed = 50, minSpeed = 0, isMobile = false, cardData }: BandP
 
   return (
     <>
-      <group position={[0, 5.2, 0]}>
+      <group position={[0, 5.6, 0]}>
         <RigidBody ref={fixed} {...segmentProps} type={"fixed" as RigidBodyProps["type"]} />
         <RigidBody position={[0.5, 0, 0]} ref={j1} {...segmentProps} type={"dynamic" as RigidBodyProps["type"]}>
           <BallCollider args={[0.1]} />
