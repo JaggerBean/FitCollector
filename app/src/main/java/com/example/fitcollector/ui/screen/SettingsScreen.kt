@@ -85,7 +85,6 @@ fun SettingsScreen(
     var queuedName by remember { mutableStateOf(getQueuedUsername(context)) }
     var inviteCodeInput by remember { mutableStateOf("") }
     var inviteCodesByServer by remember { mutableStateOf(getInviteCodesByServer(context)) }
-    var publicServerNames by remember { mutableStateOf<Set<String>>(emptySet()) }
     
     var showPrivateJoinOptions by remember { mutableStateOf(false) }
     var showInviteEntryDialog by remember { mutableStateOf(false) }
@@ -243,17 +242,11 @@ fun SettingsScreen(
         refreshSystemStatus()
         try { 
             val resp = globalApi.getAvailableServers()
-            val publicNames = resp.servers.map { it.server_name }.toSet()
-            publicServerNames = publicNames
             var merged = resp.servers.toMutableList()
 
             val storedInvites = getInviteCodesByServer(context)
-            val sanitizedInvites = storedInvites.filterKeys { it !in publicNames }
-            if (sanitizedInvites.size != storedInvites.size) {
-                setInviteCodesByServer(context, sanitizedInvites)
-            }
-            inviteCodesByServer = sanitizedInvites
-            val uniqueCodes = sanitizedInvites.values.distinct()
+            inviteCodesByServer = storedInvites
+            val uniqueCodes = storedInvites.values.distinct()
             uniqueCodes.forEach { code ->
                 try {
                     val privateResp = globalApi.getAvailableServers(code)
@@ -304,15 +297,12 @@ fun SettingsScreen(
                 availableServers = merged
 
                 val responseNames = resp.servers.map { it.server_name }
-                val privateNames = responseNames.filter { it !in publicServerNames }
-                val namesToJoin = if (privateNames.isNotEmpty()) privateNames else responseNames
-
-                inviteCodesByServer = inviteCodesByServer + privateNames.associateWith { code }
+                inviteCodesByServer = inviteCodesByServer + responseNames.associateWith { code }
                 setInviteCodesByServer(context, inviteCodesByServer)
-                selectedServers = selectedServers + namesToJoin
+                selectedServers = selectedServers + responseNames
                 setSelectedServers(context, selectedServers.toList())
 
-                namesToJoin.forEach { serverName ->
+                responseNames.forEach { serverName ->
                     if (getServerKey(context, currentName, serverName) == null) {
                         try {
                             val respReg = globalApi.register(RegisterPayload(currentName, deviceId, serverName, code))
@@ -330,7 +320,7 @@ fun SettingsScreen(
                     }
                 }
                 inviteCodeInput = ""
-                val serverDisplayName = if (namesToJoin.size == 1) namesToJoin.first() else "multiple servers"
+                val serverDisplayName = if (responseNames.size == 1) responseNames.first() else "multiple servers"
                 message = "You Registered to $serverDisplayName" to true
             } catch (e: Exception) {
                 message = "Could not add invite code: ${e.message}" to false
