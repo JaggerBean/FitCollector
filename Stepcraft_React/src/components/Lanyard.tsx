@@ -177,7 +177,7 @@ function Band({ maxSpeed = 50, minSpeed = 0, isMobile = false, cardData }: BandP
     ctx.drawImage(logo, logoX, logoY, logoW, logoH);
 
     const centerX = cardX + cardW / 2;
-    let y = cardY + cardH * 0.33;
+    let y = cardY + cardH * 0.38;
 
     ctx.textAlign = "center";
     ctx.fillStyle = "#0b1220";
