@@ -357,7 +357,7 @@ private struct ResetTimerCard: View {
             Text(timeRemaining)
                 .font(.headline)
                 .fontWeight(.bold)
-                .fontDesign(.monospaced)
+                .monospacedDigit()
                 .foregroundColor(timerColor())
         }
         .frame(maxWidth: .infinity, alignment: .center)
