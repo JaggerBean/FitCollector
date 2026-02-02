@@ -115,7 +115,7 @@ struct SettingsScreen: View {
                         }
                         .buttonStyle(PillPrimaryButton())
 
-                        Button("Add Public Server") {
+                        Button("All Available Servers") {
                             showPublicServerPicker = true
                         }
                         .buttonStyle(PillPrimaryButton())
@@ -746,7 +746,7 @@ private struct PublicServerPickerSheet: View {
                     .buttonStyle(PillPrimaryButton())
             }
             .padding(20)
-            .navigationTitle("Add Public Server")
+            .navigationTitle("All Available Servers")
             .navigationBarTitleDisplayMode(.inline)
         }
     }

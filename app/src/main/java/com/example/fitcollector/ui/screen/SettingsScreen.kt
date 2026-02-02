@@ -76,8 +76,6 @@ fun SettingsScreen(
     var autoSyncEnabled by remember { mutableStateOf(isAutoSyncEnabled(context)) }
     var backgroundSyncEnabled by remember { mutableStateOf(isBackgroundSyncEnabled(context)) }
     var backgroundSyncInterval by remember { mutableStateOf(getBackgroundSyncIntervalMinutes(context)) }
-    var currentTheme by remember { mutableStateOf(getThemeMode(context)) }
-    
     var mcDraft by remember { mutableStateOf(mcUsername) }
     var availableServers by remember { mutableStateOf<List<ServerInfo>>(emptyList()) }
     var selectedServers by remember { mutableStateOf(getSelectedServers(context).toSet()) }
@@ -331,32 +329,6 @@ fun SettingsScreen(
             }
 
             item {
-                Text("Appearance", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-            }
-
-            item {
-                Card(modifier = Modifier.fillMaxWidth()) {
-                    Column(Modifier.padding(16.dp)) {
-                        Text("Theme Mode", style = MaterialTheme.typography.labelLarge)
-                        Spacer(Modifier.height(8.dp))
-                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            listOf("System", "Light", "Dark").forEach { mode ->
-                                FilterChip(
-                                    selected = currentTheme == mode,
-                                    onClick = { 
-                                        currentTheme = mode
-                                        setThemeMode(context, mode)
-                                    },
-                                    label = { Text(mode) },
-                                    modifier = Modifier.weight(1f)
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-
-            item {
                 Text("Account Settings", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             }
 
@@ -430,7 +402,7 @@ fun SettingsScreen(
                                             queueMinecraftUsername(context, cleaned)
                                             queuedName = cleaned
                                             setSelectedServers(context, selectedServers.toList())
-                                            message = "Username queued for tomorrow!" to true
+                                            message = null
                                         } catch (e: Exception) {
                                             message = (e.message ?: "Failed to queue username") to false
                                         } finally {
@@ -469,7 +441,7 @@ fun SettingsScreen(
                             onClick = { showPublicServerSelector = true },
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            Text("Add Public Server")
+                            Text("All Available Servers")
                         }
 
                         Spacer(Modifier.height(8.dp))
@@ -544,7 +516,7 @@ fun SettingsScreen(
                                             queueMinecraftUsername(context, cleaned)
                                             queuedName = cleaned
                                             setSelectedServers(context, selectedServers.toList())
-                                            message = "Username queued for tomorrow!" to true
+                                            message = null
                                         } catch (e: Exception) {
                                             message = (e.message ?: "Failed to queue username") to false
                                         } finally {

@@ -51,19 +51,7 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             val context = LocalContext.current
-            val themeMode = remember { mutableStateOf(getThemeMode(context)) }
-
-            LaunchedEffect(Unit) {
-                while(true) {
-                    val current = getThemeMode(context)
-                    if (themeMode.value != current) {
-                        themeMode.value = current
-                    }
-                    kotlinx.coroutines.delay(500)
-                }
-            }
-
-            FitCollectorTheme(themeMode = themeMode.value) {
+            FitCollectorTheme(themeMode = "System") {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
