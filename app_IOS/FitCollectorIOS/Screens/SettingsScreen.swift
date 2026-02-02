@@ -105,7 +105,7 @@ struct SettingsScreen: View {
 
                     SectionHeader(title: "Servers")
                     SettingsCard {
-                        Text("Choose how you want to join or manage servers.")
+                        Text("Join or manage your server connections.")
                             .font(.caption)
                             .foregroundColor(.secondary)
 

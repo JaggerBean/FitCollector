@@ -87,7 +87,10 @@ fun SettingsScreen(
     var inviteCodeInput by remember { mutableStateOf("") }
     var inviteCodesByServer by remember { mutableStateOf(getInviteCodesByServer(context)) }
     
-    var showServerSelector by remember { mutableStateOf(false) }
+    var showPrivateJoinOptions by remember { mutableStateOf(false) }
+    var showInviteEntryDialog by remember { mutableStateOf(false) }
+    var showPublicServerSelector by remember { mutableStateOf(false) }
+    var showManageJoinedServers by remember { mutableStateOf(false) }
     var showHealthConnectErrorDialog by remember { mutableStateOf(false) }
     var showBatteryOffDialog by remember { mutableStateOf(false) }
     var showQrScanner by remember { mutableStateOf(false) }
@@ -235,6 +238,63 @@ fun SettingsScreen(
         }
     }
 
+    val addPrivateInviteCode: (String) -> Unit = { rawCode ->
+        scope.launch {
+            val code = rawCode.trim()
+            if (code.isBlank()) {
+                message = "Enter an invite code." to false
+                return@launch
+            }
+            val currentName = mcUsername.trim()
+            if (currentName.isBlank()) {
+                message = "Set your Minecraft username before adding private servers." to false
+                return@launch
+            }
+            try {
+                val previousNames = availableServers.map { it.server_name }.toSet()
+                val resp = globalApi.getAvailableServers(code)
+                val existing = availableServers.toMutableList()
+                val existingNames = existing.map { it.server_name }.toSet()
+                val merged = (existing + resp.servers.filter { it.server_name !in existingNames })
+                    .sortedBy { it.server_name.lowercase() }
+                availableServers = merged
+
+                val added = resp.servers.filter { it.server_name !in previousNames }
+                if (added.isNotEmpty()) {
+                    inviteCodesByServer = inviteCodesByServer + added.associate { it.server_name to code }
+                    setInviteCodesByServer(context, inviteCodesByServer)
+                    val addedNames = added.map { it.server_name }
+                    selectedServers = selectedServers + addedNames
+                    setSelectedServers(context, selectedServers.toList())
+                    addedNames.forEach { serverName ->
+                        if (getServerKey(context, currentName, serverName) == null) {
+                            try {
+                                val respReg = globalApi.register(RegisterPayload(currentName, deviceId, serverName, code))
+                                saveServerKey(context, currentName, serverName, respReg.player_api_key)
+                            } catch (e: HttpException) {
+                                if (e.code() == 409) {
+                                    try {
+                                        val recoveryResp = globalApi.recoverKey(RegisterPayload(currentName, deviceId, serverName))
+                                        saveServerKey(context, currentName, serverName, recoveryResp.player_api_key)
+                                    } catch (_: Exception) {}
+                                } else {
+                                    throw e
+                                }
+                            }
+                        }
+                    }
+                    inviteCodeInput = ""
+                    val serverDisplayName = if (addedNames.size == 1) addedNames.first() else "multiple servers"
+                    message = "You Registered to $serverDisplayName" to true
+                } else {
+                    message = "Invite code not found." to false
+                }
+            } catch (e: Exception) {
+                message = "Could not add invite code: ${e.message}" to false
+            }
+        }
+    }
+
     BackHandler(onBack = onBack)
 
     Scaffold(
@@ -354,93 +414,39 @@ fun SettingsScreen(
                         }
                         
                         Spacer(Modifier.height(16.dp))
-                        
-                        Text("Private Server Invite Code", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
-                        Text("Add a private server using its invite code.", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+
+                        Text("Servers", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                         Spacer(Modifier.height(8.dp))
-                        OutlinedTextField(
-                            value = inviteCodeInput,
-                            onValueChange = { inviteCodeInput = it },
-                            label = { Text("Invite Code") },
-                            modifier = Modifier.fillMaxWidth(),
-                            singleLine = true
+                        Text(
+                            "Join or manage your server connections.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color.Gray
                         )
-                        Spacer(Modifier.height(8.dp))
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            Button(
-                                onClick = {
-                                    scope.launch {
-                                        val code = inviteCodeInput.trim()
-                                        if (code.isBlank()) {
-                                            message = "Enter an invite code." to false
-                                            return@launch
-                                        }
-                                        val currentName = mcUsername.trim()
-                                        if (currentName.isBlank()) {
-                                            message = "Set your Minecraft username before adding private servers." to false
-                                            return@launch
-                                        }
-                                        try {
-                                            val previousNames = availableServers.map { it.server_name }.toSet()
-                                            val resp = globalApi.getAvailableServers(code)
-                                            availableServers = resp.servers.sortedBy { it.server_name.lowercase() }
-                                            val added = resp.servers.filter { it.server_name !in previousNames }
-                                            if (added.isNotEmpty()) {
-                                                inviteCodesByServer = inviteCodesByServer + added.associate { it.server_name to code }
-                                                setInviteCodesByServer(context, inviteCodesByServer)
-                                                val addedNames = added.map { it.server_name }
-                                                selectedServers = selectedServers + addedNames
-                                                setSelectedServers(context, selectedServers.toList())
-                                                addedNames.forEach { serverName ->
-                                                    if (getServerKey(context, currentName, serverName) == null) {
-                                                        try {
-                                                            val respReg = globalApi.register(RegisterPayload(currentName, deviceId, serverName, code))
-                                                            saveServerKey(context, currentName, serverName, respReg.player_api_key)
-                                                        } catch (e: HttpException) {
-                                                            if (e.code() == 409) {
-                                                                try {
-                                                                    val recoveryResp = globalApi.recoverKey(RegisterPayload(currentName, deviceId, serverName))
-                                                                    saveServerKey(context, currentName, serverName, recoveryResp.player_api_key)
-                                                                } catch (_: Exception) {}
-                                                            } else {
-                                                                throw e
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                                val serverDisplayName = if (addedNames.size == 1) addedNames.first() else "multiple servers"
-                                                inviteCodeInput = ""
-                                                message = "You Registered to $serverDisplayName" to true
-                                            } else {
-                                                message = "Invite code not found." to false
-                                            }
-                                        } catch (e: Exception) {
-                                            message = "Could not add invite code: ${e.message}" to false
-                                        }
-                                    }
-                                },
-                                modifier = Modifier.weight(1f)
-                            ) {
-                                Text("Add Private Server")
-                            }
-                            OutlinedButton(
-                                onClick = { cameraPermissionLauncher.launch(Manifest.permission.CAMERA) },
-                                modifier = Modifier.weight(1f)
-                            ) {
-                                Text("Scan QR")
-                            }
-                        }
+                        Spacer(Modifier.height(10.dp))
 
-                        Spacer(Modifier.height(16.dp))
-
-                        OutlinedButton(
-                            onClick = { showServerSelector = true },
+                        Button(
+                            onClick = { showPrivateJoinOptions = true },
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            Text(if (selectedServers.isEmpty()) "Select Servers" else "Servers: ${selectedServers.size} selected")
+                            Text("Add Private Server")
+                        }
+
+                        Spacer(Modifier.height(8.dp))
+
+                        Button(
+                            onClick = { showPublicServerSelector = true },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("Add Public Server")
+                        }
+
+                        Spacer(Modifier.height(8.dp))
+
+                        OutlinedButton(
+                            onClick = { showManageJoinedServers = true },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("Manage Joined Servers (${selectedServers.size})")
                         }
 
                         Spacer(Modifier.height(16.dp))
@@ -807,13 +813,72 @@ fun SettingsScreen(
         }
     }
 
-    if (showServerSelector) {
+    if (showPrivateJoinOptions) {
+        AlertDialog(
+            onDismissRequest = { showPrivateJoinOptions = false },
+            title = { Text("Add Private Server") },
+            text = { Text("Choose how to join a private server.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showPrivateJoinOptions = false
+                        showInviteEntryDialog = true
+                    }
+                ) { Text("Enter Invite Code") }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        showPrivateJoinOptions = false
+                        cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+                    }
+                ) { Text("Scan QR") }
+            }
+        )
+    }
+
+    if (showInviteEntryDialog) {
+        AlertDialog(
+            onDismissRequest = { showInviteEntryDialog = false },
+            title = { Text("Private Server Invite Code") },
+            text = {
+                OutlinedTextField(
+                    value = inviteCodeInput,
+                    onValueChange = { inviteCodeInput = it },
+                    label = { Text("Invite Code") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showInviteEntryDialog = false
+                        addPrivateInviteCode(inviteCodeInput)
+                    }
+                ) { Text("Add") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showInviteEntryDialog = false }) { Text("Cancel") }
+            }
+        )
+    }
+
+    if (showPublicServerSelector) {
         ServerSelectorDialog(
             availableServers = availableServers,
-            privateServerNames = inviteCodesByServer.keys,
+            privateServerNames = emptySet(),
             selectedServers = selectedServers,
             onSelectionChanged = { selectedServers = it },
-            onDismiss = { showServerSelector = false }
+            onDismiss = { showPublicServerSelector = false }
+        )
+    }
+
+    if (showManageJoinedServers) {
+        ManageJoinedServersDialog(
+            selectedServers = selectedServers,
+            onSelectionChanged = { selectedServers = it },
+            onDismiss = { showManageJoinedServers = false }
         )
     }
 
@@ -822,7 +887,7 @@ fun SettingsScreen(
             onCodeScanned = { raw ->
                 inviteCodeInput = extractInviteCode(raw)
                 showQrScanner = false
-                message = "Invite code scanned." to true
+                addPrivateInviteCode(inviteCodeInput)
             },
             onDismiss = { showQrScanner = false }
         )
@@ -1074,6 +1139,63 @@ fun SettingsScreen(
                 }
             }
         )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ManageJoinedServersDialog(
+    selectedServers: Set<String>,
+    onSelectionChanged: (Set<String>) -> Unit,
+    onDismiss: () -> Unit
+) {
+    Dialog(onDismissRequest = onDismiss) {
+        Surface(
+            shape = RoundedCornerShape(16.dp),
+            color = MaterialTheme.colorScheme.surface,
+            modifier = Modifier.fillMaxWidth().fillMaxHeight(0.7f)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text("Manage Joined Servers", style = MaterialTheme.typography.headlineSmall)
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    "Remove servers you no longer want to sync with.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color.Gray
+                )
+                Spacer(Modifier.height(10.dp))
+
+                if (selectedServers.isEmpty()) {
+                    Text("You have no joined servers.", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                    Spacer(Modifier.weight(1f))
+                } else {
+                    LazyColumn(modifier = Modifier.weight(1f)) {
+                        items(selectedServers.toList().sorted()) { server ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(server, modifier = Modifier.weight(1f))
+                                TextButton(
+                                    onClick = { onSelectionChanged(selectedServers - server) }
+                                ) {
+                                    Text("Remove", color = MaterialTheme.colorScheme.error)
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Button(
+                    onClick = onDismiss,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Done")
+                }
+            }
+        }
     }
 }
 
