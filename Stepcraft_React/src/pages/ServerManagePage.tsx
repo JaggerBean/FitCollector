@@ -441,12 +441,12 @@ export default function ServerManagePage() {
               </div>
             </div>
           </div>
-          <div className="rounded-2xl border border-emerald-100 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+          <div className="flex h-full flex-col rounded-2xl border border-emerald-100 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
             <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Players</h2>
             <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
               {players?.total_players ?? 0} registered players
             </p>
-            <div className="mt-4 max-h-72 space-y-2 overflow-y-auto text-sm text-slate-700 dark:text-slate-200">
+            <div className="mt-4 min-h-[16rem] flex-1 space-y-2 overflow-y-auto pr-1 text-sm text-slate-700 dark:text-slate-200">
               {players?.players?.length ? (
                 players.players.map((player) => (
                   <div
