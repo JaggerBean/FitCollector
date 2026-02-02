@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { QRCodeCanvas } from "qrcode.react";
 import { Layout } from "../components/Layout";
+import ConfirmDialog from "../components/ConfirmDialog";
 import { useAuthContext } from "../app/AuthContext";
 import {
   banPlayer,
@@ -33,6 +34,15 @@ import type {
 } from "../api/types";
 
 export default function ServerManagePage() {
+  type ConfirmState = {
+    message: string;
+    title?: string;
+    confirmLabel?: string;
+    cancelLabel?: string;
+    tone?: "danger" | "default";
+    resolve: (value: boolean) => void;
+  };
+
   const todayLocal = useMemo(() => {
     const now = new Date();
     const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
@@ -64,6 +74,7 @@ export default function ServerManagePage() {
   const [pruneRunning, setPruneRunning] = useState(false);
   const [pruneError, setPruneError] = useState<string | null>(null);
   const [pruneOutput, setPruneOutput] = useState<InactivePruneRunResponse | null>(null);
+  const [confirmState, setConfirmState] = useState<ConfirmState | null>(null);
 
   const usernameSuggestions = useMemo(
     () => players?.players?.map((player) => player.minecraft_username) ?? [],
@@ -167,11 +178,23 @@ export default function ServerManagePage() {
     }
   };
 
+  const requestConfirm = (message: string, options: Omit<ConfirmState, "message" | "resolve"> = {}) =>
+    new Promise<boolean>((resolve) => {
+      setConfirmState({ message, resolve, ...options });
+    });
+
+  const closeConfirm = (result: boolean) => {
+    if (!confirmState) return;
+    confirmState.resolve(result);
+    setConfirmState(null);
+  };
+
   const runPrune = async (dryRun: boolean) => {
     if (!token || !decodedName) return;
     if (!dryRun) {
-      const shouldContinue = window.confirm(
+      const shouldContinue = await requestConfirm(
         `Run inactive cleanup on ${decodedName}? This will ${pruneSettings?.mode === "wipe" ? "permanently delete" : "deactivate"} players.`,
+        { title: "Run cleanup", confirmLabel: "Run now", tone: "danger" },
       );
       if (!shouldContinue) return;
     }
@@ -190,8 +213,9 @@ export default function ServerManagePage() {
   const onTogglePrivacy = async () => {
     if (!token || !decodedName || !info) return;
     const nextLabel = info.is_private ? "public" : "private";
-    const shouldContinue = window.confirm(
+    const shouldContinue = await requestConfirm(
       `Switch ${decodedName} to ${nextLabel}? This changes who can join the server.`,
+      { title: "Change privacy", confirmLabel: "Confirm" },
     );
     if (!shouldContinue) return;
     setPrivacyLoading(true);
@@ -220,7 +244,7 @@ export default function ServerManagePage() {
   };
 
   const confirmAndRunAction = async (message: string, action: () => Promise<unknown>) => {
-    const shouldContinue = window.confirm(message);
+    const shouldContinue = await requestConfirm(message, { title: "Confirm action", confirmLabel: "Continue" });
     if (!shouldContinue) return;
     await runAction(action);
   };
@@ -731,6 +755,16 @@ export default function ServerManagePage() {
           </div>
         </div>
       )}
+      <ConfirmDialog
+        open={!!confirmState}
+        title={confirmState?.title}
+        message={confirmState?.message ?? ""}
+        confirmLabel={confirmState?.confirmLabel}
+        cancelLabel={confirmState?.cancelLabel}
+        tone={confirmState?.tone}
+        onConfirm={() => closeConfirm(true)}
+        onCancel={() => closeConfirm(false)}
+      />
     </Layout>
   );
 }

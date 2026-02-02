@@ -2,9 +2,19 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { QRCodeCanvas } from "qrcode.react";
 import { Layout } from "../components/Layout";
+import ConfirmDialog from "../components/ConfirmDialog";
 import { useAuthContext } from "../app/AuthContext";
 import { getOwnedServers, reopenServer } from "../api/servers";
 import type { ServerSummary } from "../api/types";
+
+type ConfirmState = {
+  message: string;
+  title?: string;
+  confirmLabel?: string;
+  cancelLabel?: string;
+  tone?: "danger" | "default";
+  resolve: (value: boolean) => void;
+};
 
 export default function DashboardPage() {
   const { token } = useAuthContext();
@@ -12,6 +22,7 @@ export default function DashboardPage() {
   const [error, setError] = useState<string | null>(null);
   const [reopenKey, setReopenKey] = useState<{ server: string; key: string } | null>(null);
   const [reopenLoading, setReopenLoading] = useState<string | null>(null);
+  const [confirmState, setConfirmState] = useState<ConfirmState | null>(null);
 
   useEffect(() => {
     if (!token) return;
@@ -23,10 +34,22 @@ export default function DashboardPage() {
   const activeServers = servers.filter((server) => server.is_active !== false && server.is_deleted !== true);
   const deletedServers = servers.filter((server) => server.is_active === false || server.is_deleted === true);
 
+  const requestConfirm = (message: string, options: Omit<ConfirmState, "message" | "resolve"> = {}) =>
+    new Promise<boolean>((resolve) => {
+      setConfirmState({ message, resolve, ...options });
+    });
+
+  const closeConfirm = (result: boolean) => {
+    if (!confirmState) return;
+    confirmState.resolve(result);
+    setConfirmState(null);
+  };
+
   const onReopenServer = async (serverName: string) => {
     if (!token) return;
-    const shouldContinue = window.confirm(
+    const shouldContinue = await requestConfirm(
       `Re-open ${serverName}? A new API key will be generated and must be updated in your server config.`,
+      { title: "Re-open server", confirmLabel: "Re-open", tone: "danger" },
     );
     if (!shouldContinue) return;
     setReopenLoading(serverName);
@@ -148,6 +171,16 @@ export default function DashboardPage() {
           </div>
         </div>
       )}
+      <ConfirmDialog
+        open={!!confirmState}
+        title={confirmState?.title}
+        message={confirmState?.message ?? ""}
+        confirmLabel={confirmState?.confirmLabel}
+        cancelLabel={confirmState?.cancelLabel}
+        tone={confirmState?.tone}
+        onConfirm={() => closeConfirm(true)}
+        onCancel={() => closeConfirm(false)}
+      />
     </Layout>
   );
 }
