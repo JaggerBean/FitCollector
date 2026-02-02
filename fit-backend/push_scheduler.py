@@ -70,6 +70,7 @@ def run_push_once() -> None:
                   ON pd.notification_id = pn.id
                  AND pd.device_id = pdt.device_id
                 WHERE pn.scheduled_at <= :now
+                  AND pn.scheduled_at >= pdt.created_at
                   AND pd.id IS NULL
                   AND pdt.sandbox = :sandbox
                 ORDER BY pn.scheduled_at ASC
