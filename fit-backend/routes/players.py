@@ -422,32 +422,29 @@ def register_player(request: PlayerRegistrationRequest) -> PlayerApiKeyResponse:
                     detail="Invalid invite code for this private server."
                 )
             
-            # Check if this device already has a key for this server
-            existing_key = conn.execute(
+            # Check if this device already has a row for this server (active or inactive).
+            existing_row = conn.execute(
                 text("""
-                    SELECT key FROM player_keys 
-                    WHERE device_id = :device_id AND server_name = :server_name AND active = TRUE
+                    SELECT id, minecraft_username, active
+                    FROM player_keys
+                    WHERE device_id = :device_id AND server_name = :server_name
+                    ORDER BY active DESC, id DESC
+                    LIMIT 1
                 """),
                 {"device_id": request.device_id, "server_name": request.server_name}
             ).fetchone()
             
-            if existing_key:
-                raise HTTPException(
-                    status_code=409, 
-                    detail=f"Device already registered for '{request.server_name}'. Use existing key or contact admin to reset."
-                )
-            
-            # Check if server has reached player limit
-            if max_players is not None:
+            # Check if server has reached player limit when creating a brand new device/server row.
+            if max_players is not None and not existing_row:
                 current_player_count = conn.execute(
                     text("""
-                        SELECT COUNT(DISTINCT minecraft_username) 
-                        FROM player_keys 
+                        SELECT COUNT(DISTINCT minecraft_username)
+                        FROM player_keys
                         WHERE server_name = :server_name AND active = TRUE
                     """),
                     {"server_name": request.server_name}
                 ).scalar()
-                
+
                 if current_player_count >= max_players:
                     raise HTTPException(
                         status_code=403,
@@ -458,19 +455,36 @@ def register_player(request: PlayerRegistrationRequest) -> PlayerApiKeyResponse:
             plaintext_token = generate_opaque_token()
             token_hash = hash_token(plaintext_token)
             
-            # Insert new player token (hashed)
-            conn.execute(
-                text("""
-                    INSERT INTO player_keys (key, device_id, minecraft_username, server_name, active)
-                    VALUES (:key_hash, :device_id, :username, :server, TRUE)
-                """),
-                {
-                    "key_hash": token_hash,
-                    "device_id": request.device_id,
-                    "username": request.minecraft_username,
-                    "server": request.server_name
-                }
-            )
+            if existing_row:
+                # Rebind existing device/server row to the requested username and rotate key.
+                conn.execute(
+                    text("""
+                        UPDATE player_keys
+                        SET key = :key_hash,
+                            minecraft_username = :username,
+                            active = TRUE
+                        WHERE id = :id
+                    """),
+                    {
+                        "key_hash": token_hash,
+                        "username": request.minecraft_username,
+                        "id": existing_row[0],
+                    },
+                )
+            else:
+                # Insert new player token (hashed)
+                conn.execute(
+                    text("""
+                        INSERT INTO player_keys (key, device_id, minecraft_username, server_name, active)
+                        VALUES (:key_hash, :device_id, :username, :server, TRUE)
+                    """),
+                    {
+                        "key_hash": token_hash,
+                        "device_id": request.device_id,
+                        "username": request.minecraft_username,
+                        "server": request.server_name
+                    }
+                )
         
         # Return the plaintext token ONLY on creation (never again)
         return PlayerApiKeyResponse(
@@ -478,7 +492,10 @@ def register_player(request: PlayerRegistrationRequest) -> PlayerApiKeyResponse:
             minecraft_username=request.minecraft_username,
             device_id=request.device_id,
             server_name=request.server_name,
-            message="Save this token securely in your app. You'll need it for all future step submissions. You cannot retrieve it if lost."
+            message=(
+                "Device registration updated. Save this token securely in your app. "
+                "You'll need it for all future step submissions. You cannot retrieve it if lost."
+            )
         )
     
     except HTTPException:
@@ -497,46 +514,45 @@ def recover_key(request: KeyRecoveryRequest) -> PlayerApiKeyResponse:
     """
     try:
         with engine.begin() as conn:
-            # Check if this player is registered for this server
+            # Check if this device is registered for this server (allow username changes).
             existing_key = conn.execute(
                 text("""
-                    SELECT id FROM player_keys 
-                    WHERE device_id = :device_id 
-                      AND minecraft_username = :minecraft_username
-                      AND server_name = :server_name 
-                      AND active = TRUE
+                    SELECT id
+                    FROM player_keys
+                    WHERE device_id = :device_id
+                      AND server_name = :server_name
+                    ORDER BY active DESC, id DESC
+                    LIMIT 1
                 """),
                 {
                     "device_id": request.device_id,
-                    "minecraft_username": request.minecraft_username,
                     "server_name": request.server_name
                 }
             ).fetchone()
-            
+
             if not existing_key:
                 raise HTTPException(
                     status_code=404,
-                    detail=f"No active registration found for this device/username on '{request.server_name}'"
+                    detail=f"No registration found for this device on '{request.server_name}'"
                 )
             
             # Generate new plaintext token and hash it
             plaintext_token = generate_opaque_token()
             token_hash = hash_token(plaintext_token)
             
-            # Update the existing key with the new hashed token
+            # Update the existing key with the new hashed token (and bind latest username)
             conn.execute(
                 text("""
                     UPDATE player_keys 
-                    SET key = :new_key_hash
-                    WHERE device_id = :device_id 
-                      AND minecraft_username = :minecraft_username
-                      AND server_name = :server_name
+                    SET key = :new_key_hash,
+                        minecraft_username = :minecraft_username,
+                        active = TRUE
+                    WHERE id = :id
                 """),
                 {
                     "new_key_hash": token_hash,
-                    "device_id": request.device_id,
                     "minecraft_username": request.minecraft_username,
-                    "server_name": request.server_name
+                    "id": existing_key[0],
                 }
             )
             
