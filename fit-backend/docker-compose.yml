@@ -4,6 +4,7 @@ services:
     container_name: fitcollector_api
     volumes:
       - ../app_IOS/apn_dist.pem:/app/apn_dist.pem:ro
+      - ./fcm-service-account.json:/app/fcm-service-account.json:ro
     environment:
       # SQLAlchemy wants this format
       DATABASE_URL: postgresql+psycopg2://fit:fitpass@db:5432/fitcollector

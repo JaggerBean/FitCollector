@@ -14,4 +14,6 @@
 .cxx
 local.properties
 .env
+fit-backend/fcm-service-account.json
+fit-backend/*firebase-adminsdk*.json
 app_IOS/FitCollectorIOS.xcodeproj/project.xcworkspace/xcuserdata/jaggerbean.xcuserdatad/UserInterfaceState.xcuserstate
