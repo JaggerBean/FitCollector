@@ -5,7 +5,7 @@ from sqlalchemy import text
 
 from auth import validate_and_get_server
 from database import engine
-from models import PushSendRequest, PushTokenRegistrationRequest
+from models import PushSendRequest, PushTokenRegistrationRequest, PushTokenUnregisterRequest
 from apns_service import (
     ApnsConfigError,
     APNsException,
@@ -44,6 +44,50 @@ def register_push_device(request: PushTokenRegistrationRequest):
         return {"status": "ok"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to register push token: {str(e)}")
+
+
+@router.post("/v1/players/push/unregister-device")
+def unregister_push_device(request: PushTokenUnregisterRequest):
+    server_name, _ = validate_and_get_server(request.device_id, request.player_api_key)
+    try:
+        with engine.begin() as conn:
+            if request.apns_token:
+                result = conn.execute(
+                    text(
+                        """
+                        DELETE FROM push_device_tokens
+                        WHERE device_id = :device_id
+                          AND server_name = :server_name
+                          AND platform = :platform
+                          AND token = :token
+                        """
+                    ),
+                    {
+                        "device_id": request.device_id,
+                        "server_name": server_name,
+                        "platform": request.platform,
+                        "token": request.apns_token,
+                    },
+                )
+            else:
+                result = conn.execute(
+                    text(
+                        """
+                        DELETE FROM push_device_tokens
+                        WHERE device_id = :device_id
+                          AND server_name = :server_name
+                          AND platform = :platform
+                        """
+                    ),
+                    {
+                        "device_id": request.device_id,
+                        "server_name": server_name,
+                        "platform": request.platform,
+                    },
+                )
+        return {"status": "ok", "deleted": result.rowcount}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to unregister push token: {str(e)}")
 
 
 @router.post("/v1/players/push/send")

@@ -145,6 +145,31 @@ final class ApiClient {
         }
     }
 
+    func unregisterPushToken(deviceId: String, playerApiKey: String, token: String? = nil) async throws {
+        let url = baseURL.appendingPathComponent("/v1/players/push/unregister-device")
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue(globalApiKey, forHTTPHeaderField: "X-API-Key")
+
+        var body: [String: Any] = [
+            "device_id": deviceId,
+            "player_api_key": playerApiKey,
+            "platform": "ios"
+        ]
+        if let token, !token.isEmpty {
+            body["apns_token"] = token
+        }
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+        let http = response as? HTTPURLResponse
+        if let http, !(200...299).contains(http.statusCode) {
+            let detail = decodeErrorDetail(data) ?? "Server error (status \(http.statusCode))."
+            throw APIError(message: detail)
+        }
+    }
+
     private func decodeErrorDetail(_ data: Data) -> String? {
         guard !data.isEmpty else { return nil }
         if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {

@@ -78,6 +78,13 @@ class PushTokenRegistrationRequest(BaseModel):
     platform: str = Field("ios", min_length=2, max_length=16)
 
 
+class PushTokenUnregisterRequest(BaseModel):
+    device_id: str = Field(..., min_length=6, max_length=128)
+    player_api_key: str = Field(..., min_length=20)
+    platform: str = Field("ios", min_length=2, max_length=16)
+    apns_token: Optional[str] = Field(None, min_length=32, max_length=256)
+
+
 class PushSendRequest(BaseModel):
     device_id: str = Field(..., min_length=6, max_length=128)
     player_api_key: str = Field(..., min_length=20)

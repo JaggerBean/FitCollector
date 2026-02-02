@@ -28,6 +28,7 @@ struct SettingsScreen: View {
     @State private var scannerError: String?
     @State private var timeUntilReset: String = ""
     @State private var isAutoSavingServers = false
+    @State private var knownSelectedServers: Set<String> = []
 
     var body: some View {
         NavigationStack {
@@ -216,6 +217,7 @@ struct SettingsScreen: View {
             .task {
                 usernameDraft = appState.minecraftUsername
                 selectedServers = Set(appState.selectedServers)
+                knownSelectedServers = selectedServers
                 timeUntilReset = timeUntilNextReset()
                 await loadServers()
                 await loadRewards()
@@ -223,7 +225,12 @@ struct SettingsScreen: View {
                 updateServerSelectionStatus()
             }
             .onChange(of: selectedServers) { _ in
+                let removedServers = knownSelectedServers.subtracting(selectedServers)
+                knownSelectedServers = selectedServers
                 Task {
+                    if !removedServers.isEmpty {
+                        await unregisterRemovedServers(removedServers)
+                    }
                     await loadRewards()
                     await autoSaveServers()
                     updateServerSelectionStatus()
@@ -504,6 +511,31 @@ struct SettingsScreen: View {
             }
         }
         isAutoSavingServers = false
+    }
+
+    private func unregisterRemovedServers(_ removedServers: Set<String>) async {
+        let pushToken = AppState.loadPushToken()
+        for server in removedServers.sorted() {
+            let key = appState.serverKey(for: server)
+            if let key {
+                do {
+                    try await ApiClient.shared.unregisterPushToken(
+                        deviceId: appState.deviceId,
+                        playerApiKey: key,
+                        token: pushToken
+                    )
+                } catch {
+                    serverStatusMessage = ("Removed \(server), but push unregister failed: \(error.localizedDescription)", false)
+                }
+            }
+
+            // Prevent removed servers from being re-used for push registration later.
+            appState.removeServerKey(server: server)
+            appState.setInviteCode(server: server, code: nil)
+            appState.setTrackedMilestone(server: server, minSteps: nil)
+            appState.adminPushEnabledByServer.removeValue(forKey: server)
+            appState.notifyTiersByServer.removeValue(forKey: server)
+        }
     }
 
     private func updateServerSelectionStatus() {
