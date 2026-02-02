@@ -168,7 +168,7 @@ export default function RegisterServerPage() {
         </form>
       </div>
       {showResult && result && (
-        <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur">
+        <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur touch-none overscroll-contain">
           <div className="relative h-full w-full">
             <div className="absolute inset-0 flex items-start justify-center overflow-visible">
               <Lanyard
