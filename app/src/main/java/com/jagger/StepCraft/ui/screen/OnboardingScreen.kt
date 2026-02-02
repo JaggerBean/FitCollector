@@ -1,4 +1,4 @@
-package com.example.fitcollector.ui.screen
+package com.jagger.StepCraft.ui.screen
 
 import android.Manifest
 import android.content.Intent
@@ -48,7 +48,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
 import coil.compose.AsyncImage
-import com.example.fitcollector.*
+import com.jagger.StepCraft.*
 import com.google.mlkit.vision.barcode.BarcodeScannerOptions
 import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.barcode.common.Barcode

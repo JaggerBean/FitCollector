@@ -1,4 +1,4 @@
-package com.example.fitcollector.ui.theme
+package com.jagger.StepCraft.ui.theme
 
 import android.app.Activity
 import android.os.Build
@@ -45,7 +45,7 @@ private val LightColorScheme = lightColorScheme(
 )
 
 @Composable
-fun FitCollectorTheme(
+fun StepCraftTheme(
     themeMode: String = "System",
     // Dynamic color is available on Android 12+
     dynamicColor: Boolean = false,

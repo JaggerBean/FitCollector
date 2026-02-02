@@ -1,4 +1,4 @@
-package com.example.fitcollector.ui.theme
+package com.jagger.StepCraft.ui.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle

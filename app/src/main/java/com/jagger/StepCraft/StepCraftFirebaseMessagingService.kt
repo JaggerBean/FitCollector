@@ -1,4 +1,4 @@
-package com.example.fitcollector
+package com.jagger.StepCraft
 
 import android.app.NotificationChannel
 import android.app.NotificationManager

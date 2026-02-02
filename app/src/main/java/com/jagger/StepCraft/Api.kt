@@ -1,4 +1,4 @@
-package com.example.fitcollector
+package com.jagger.StepCraft
 
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor

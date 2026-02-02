@@ -1,4 +1,4 @@
-package com.example.fitcollector
+package com.jagger.StepCraft
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -17,12 +17,12 @@ import androidx.activity.compose.setContent
 import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalContext
 import androidx.health.connect.client.PermissionController
-import com.example.fitcollector.ui.screen.OnboardingScreen
-import com.example.fitcollector.ui.screen.DashboardScreen
-import com.example.fitcollector.ui.screen.SettingsScreen
-import com.example.fitcollector.ui.screen.ActivityLogScreen
-import com.example.fitcollector.ui.screen.RawHealthDataScreen
-import com.example.fitcollector.ui.theme.FitCollectorTheme
+import com.jagger.StepCraft.ui.screen.OnboardingScreen
+import com.jagger.StepCraft.ui.screen.DashboardScreen
+import com.jagger.StepCraft.ui.screen.SettingsScreen
+import com.jagger.StepCraft.ui.screen.ActivityLogScreen
+import com.jagger.StepCraft.ui.screen.RawHealthDataScreen
+import com.jagger.StepCraft.ui.theme.StepCraftTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.Modifier
@@ -54,7 +54,7 @@ class MainActivity : ComponentActivity() {
             LaunchedEffect(Unit) {
                 runCatching { syncAndroidPushRegistrations(context) }
             }
-            FitCollectorTheme(themeMode = "System") {
+            StepCraftTheme(themeMode = "System") {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background

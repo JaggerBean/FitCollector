@@ -1,4 +1,4 @@
-package com.example.fitcollector.ui.screen
+package com.jagger.StepCraft.ui.screen
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
@@ -29,14 +29,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.fitcollector.*
-import com.example.fitcollector.GLOBAL_API_KEY
-import com.example.fitcollector.BASE_URL
-import com.example.fitcollector.ui.screen.components.ActivityCard
-import com.example.fitcollector.ui.screen.components.ResetTimer
-import com.example.fitcollector.ui.screen.components.SyncStatusBanner
-import com.example.fitcollector.ui.theme.MinecraftDirt
-import com.example.fitcollector.ui.theme.MinecraftGrass
+import com.jagger.StepCraft.*
+import com.jagger.StepCraft.GLOBAL_API_KEY
+import com.jagger.StepCraft.BASE_URL
+import com.jagger.StepCraft.ui.screen.components.ActivityCard
+import com.jagger.StepCraft.ui.screen.components.ResetTimer
+import com.jagger.StepCraft.ui.screen.components.SyncStatusBanner
+import com.jagger.StepCraft.ui.theme.MinecraftDirt
+import com.jagger.StepCraft.ui.theme.MinecraftGrass
 import kotlinx.coroutines.launch
 import java.time.Instant
 import coil.compose.AsyncImage
@@ -54,7 +54,7 @@ import com.google.gson.JsonParser
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashboardScreen(
-    onNavigate: (com.example.fitcollector.AppScreen) -> Unit
+    onNavigate: (com.jagger.StepCraft.AppScreen) -> Unit
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -378,7 +378,7 @@ fun DashboardScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = { onNavigate(com.example.fitcollector.AppScreen.Settings) }) {
+                    IconButton(onClick = { onNavigate(com.jagger.StepCraft.AppScreen.Settings) }) {
                         Icon(Icons.Default.Settings, "Settings")
                     }
                 },
@@ -463,7 +463,7 @@ fun DashboardScreen(
                     Surface(
                         color = MaterialTheme.colorScheme.errorContainer,
                         shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
-                        modifier = Modifier.fillMaxWidth().clickable { onNavigate(com.example.fitcollector.AppScreen.Settings) }
+                        modifier = Modifier.fillMaxWidth().clickable { onNavigate(com.jagger.StepCraft.AppScreen.Settings) }
                     ) {
                         Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
                             Icon(Icons.Default.Warning, null, tint = MaterialTheme.colorScheme.error)
@@ -594,7 +594,7 @@ fun DashboardScreen(
                         getSelectedServers(context).isEmpty() -> "Please select at least one server in Settings."
                         else -> ""
                     }
-                    Surface(color = MaterialTheme.colorScheme.errorContainer, shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth().clickable { if (!autoTimeDisabled) onNavigate(com.example.fitcollector.AppScreen.Settings) }) {
+                    Surface(color = MaterialTheme.colorScheme.errorContainer, shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp), modifier = Modifier.fillMaxWidth().clickable { if (!autoTimeDisabled) onNavigate(com.jagger.StepCraft.AppScreen.Settings) }) {
                         Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
                             Icon(Icons.Default.Warning, null, tint = MaterialTheme.colorScheme.error)
                             Spacer(Modifier.width(12.dp))

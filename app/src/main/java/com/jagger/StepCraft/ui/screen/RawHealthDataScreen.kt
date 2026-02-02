@@ -1,4 +1,4 @@
-package com.example.fitcollector.ui.screen
+package com.jagger.StepCraft.ui.screen
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.*

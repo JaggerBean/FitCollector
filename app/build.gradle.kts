@@ -3,14 +3,16 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.google.services)
+    id("com.android.application")
+    id("com.google.gms.google-services")
 }
 
 android {
-    namespace = "com.example.fitcollector"
+    namespace = "com.jagger.StepCraft"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.example.fitcollector"
+        applicationId = "com.jagger.StepCraft"
         minSdk = 26
         targetSdk = 36
         versionCode = 1
@@ -41,6 +43,8 @@ android {
 }
 
 dependencies {
+    implementation(platform("com.google.firebase:firebase-bom:34.8.0"))
+    implementation("com.google.firebase:firebase-analytics")
     implementation(libs.retrofit)
     implementation(libs.retrofit.gson)
     implementation(libs.okhttp)

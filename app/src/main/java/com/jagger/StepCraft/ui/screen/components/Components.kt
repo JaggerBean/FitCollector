@@ -1,4 +1,4 @@
-package com.example.fitcollector.ui.screen.components
+package com.jagger.StepCraft.ui.screen.components
 
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.foundation.background
@@ -20,8 +20,8 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.fitcollector.SyncLogEntry
-import com.example.fitcollector.ui.theme.*
+import com.jagger.StepCraft.SyncLogEntry
+import com.jagger.StepCraft.ui.theme.*
 import kotlinx.coroutines.delay
 import java.time.Duration
 import java.time.Instant

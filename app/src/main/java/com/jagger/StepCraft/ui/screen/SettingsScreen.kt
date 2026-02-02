@@ -1,4 +1,4 @@
-package com.example.fitcollector.ui.screen
+package com.jagger.StepCraft.ui.screen
 
 import android.Manifest
 import android.content.Context
@@ -39,7 +39,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import com.example.fitcollector.*
+import com.jagger.StepCraft.*
 import com.google.mlkit.vision.barcode.common.Barcode
 import com.google.mlkit.vision.barcode.BarcodeScannerOptions
 import com.google.mlkit.vision.barcode.BarcodeScanning

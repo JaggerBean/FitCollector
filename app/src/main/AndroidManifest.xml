@@ -24,13 +24,13 @@
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.FitCollector">
+        android:theme="@style/Theme.StepCraft">
 
         <activity
             android:name=".MainActivity"
             android:exported="true"
             android:label="@string/app_name"
-            android:theme="@style/Theme.FitCollector">
+            android:theme="@style/Theme.StepCraft">
 
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

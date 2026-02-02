@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "912779814274",
+    "project_id": "stepcraft-companion",
+    "storage_bucket": "stepcraft-companion.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:912779814274:android:a2dca205fd57c1ba929b9b",
+        "android_client_info": {
+          "package_name": "com.jagger.StepCraft"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyANR42xjqn5u1_UgQR6Os60iKE_Znetsmw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

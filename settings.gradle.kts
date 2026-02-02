@@ -19,5 +19,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "FitCollector"
+rootProject.name = "StepCraft"
 include(":app")

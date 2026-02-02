@@ -1,4 +1,4 @@
-package com.example.fitcollector
+package com.jagger.StepCraft
 
 import org.junit.Test
 
