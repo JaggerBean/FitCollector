@@ -459,7 +459,12 @@ export default function ServerManagePage() {
                     key={player.minecraft_username}
                     className="rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700"
                   >
-                    {player.minecraft_username}
+                    <div className="flex items-center justify-between gap-3">
+                      <span>{player.minecraft_username}</span>
+                      <span className="text-xs text-slate-500 dark:text-slate-400">
+                        {player.device_count} device{player.device_count === 1 ? "" : "s"}
+                      </span>
+                    </div>
                   </div>
                 ))
               ) : (

@@ -95,7 +95,7 @@ export interface PlayersListResponse {
   total_players: number;
   players: Array<{
     minecraft_username: string;
-    device_id: string;
+    device_count: number;
     created_at?: string;
     last_used?: string | null;
     active?: boolean;

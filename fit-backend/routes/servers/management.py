@@ -269,58 +269,39 @@ def list_server_players(
     """
     try:
         with engine.begin() as conn:
+            query_params = {"server_name": server_name, "limit": limit, "offset": offset}
+            query_filter = ""
             if q:
-                players = conn.execute(
-                    text("""
-                        SELECT 
-                            minecraft_username,
-                            device_id,
-                            created_at,
-                            last_used,
-                            active
-                        FROM player_keys
-                        WHERE server_name = :server_name
-                          AND minecraft_username ILIKE :q
-                        ORDER BY created_at DESC
-                        LIMIT :limit OFFSET :offset
-                    """),
-                    {"server_name": server_name, "limit": limit, "offset": offset, "q": f"%{q}%"}
-                ).mappings().all()
+                query_filter = "AND minecraft_username ILIKE :q"
+                query_params["q"] = f"%{q}%"
 
-                total = conn.execute(
-                    text("""
-                        SELECT COUNT(*) 
-                        FROM player_keys 
-                        WHERE server_name = :server_name
-                          AND minecraft_username ILIKE :q
-                    """),
-                    {"server_name": server_name, "q": f"%{q}%"}
-                ).scalar()
-            else:
-                players = conn.execute(
-                    text("""
-                        SELECT 
-                            minecraft_username,
-                            device_id,
-                            created_at,
-                            last_used,
-                            active
-                        FROM player_keys
-                        WHERE server_name = :server_name
-                        ORDER BY created_at DESC
-                        LIMIT :limit OFFSET :offset
-                    """),
-                    {"server_name": server_name, "limit": limit, "offset": offset}
-                ).mappings().all()
+            players = conn.execute(
+                text(f"""
+                    SELECT
+                        minecraft_username,
+                        COUNT(DISTINCT device_id) AS device_count,
+                        MAX(created_at) AS created_at,
+                        MAX(last_used) AS last_used,
+                        BOOL_OR(active) AS active
+                    FROM player_keys
+                    WHERE server_name = :server_name
+                      {query_filter}
+                    GROUP BY minecraft_username
+                    ORDER BY MAX(created_at) DESC
+                    LIMIT :limit OFFSET :offset
+                """),
+                query_params,
+            ).mappings().all()
 
-                total = conn.execute(
-                    text("""
-                        SELECT COUNT(*) 
-                        FROM player_keys 
-                        WHERE server_name = :server_name
-                    """),
-                    {"server_name": server_name}
-                ).scalar()
+            total = conn.execute(
+                text(f"""
+                    SELECT COUNT(DISTINCT minecraft_username)
+                    FROM player_keys
+                    WHERE server_name = :server_name
+                      {query_filter}
+                """),
+                query_params,
+            ).scalar()
             
             return {
                 "server_name": server_name,
