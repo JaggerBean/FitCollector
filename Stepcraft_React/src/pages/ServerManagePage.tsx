@@ -276,23 +276,6 @@ export default function ServerManagePage() {
         <div className="mt-6 grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
           <div className="space-y-4">
             <div className="rounded-2xl border border-emerald-100 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-              <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Quick actions</h2>
-              <div className="mt-3 flex flex-wrap gap-2">
-                <Link
-                  to={`/servers/${encodeURIComponent(decodedName)}/rewards`}
-                  className="rounded-lg bg-emerald-600 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-700"
-                >
-                  Rewards
-                </Link>
-                <Link
-                  to={`/servers/${encodeURIComponent(decodedName)}/push`}
-                  className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 hover:border-slate-300 dark:border-slate-700 dark:text-slate-200"
-                >
-                  Push notifications
-                </Link>
-              </div>
-            </div>
-            <div className="rounded-2xl border border-emerald-100 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
               <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Server info</h2>
               <div className="mt-3 grid gap-2 text-sm text-slate-600 dark:text-slate-300">
                 <div className="flex items-center justify-between">

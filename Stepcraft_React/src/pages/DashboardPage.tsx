@@ -118,10 +118,10 @@ export default function DashboardPage() {
                 </div>
               </div>
             )}
-            <div className="mt-4 flex gap-2">
+            <div className="mt-4 flex flex-wrap gap-2">
               <Link
                 to={`/servers/${encodeURIComponent(server.server_name)}`}
-                className="rounded-lg bg-emerald-600 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-700"
+                className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 hover:border-slate-300 dark:border-slate-700 dark:text-slate-200"
               >
                 Manage
               </Link>
@@ -130,6 +130,12 @@ export default function DashboardPage() {
                 className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 hover:border-slate-300 dark:border-slate-700 dark:text-slate-200"
               >
                 Rewards
+              </Link>
+              <Link
+                to={`/servers/${encodeURIComponent(server.server_name)}/push`}
+                className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 hover:border-slate-300 dark:border-slate-700 dark:text-slate-200"
+              >
+                Push notifications
               </Link>
             </div>
           </div>
