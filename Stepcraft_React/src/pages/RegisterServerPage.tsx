@@ -131,6 +131,7 @@ export default function RegisterServerPage() {
       <div className="mx-auto w-full max-w-4xl">
         <form
           onSubmit={onSubmit}
+          noValidate
           className="rounded-3xl border border-emerald-100 bg-white p-8 shadow-xl dark:border-slate-800 dark:bg-slate-900"
         >
           <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">Register a server</h1>
@@ -222,8 +223,6 @@ export default function RegisterServerPage() {
                   placeholder="mc.example.com"
                   onBlur={() => setTouched((prev) => ({ ...prev, serverAddress: true }))}
                   aria-invalid={showError("serverAddress", serverAddress) && !!errors.serverAddress}
-                  pattern="\\S+"
-                  title="Server address cannot contain spaces."
                   required
                 />
                 {showError("serverAddress", serverAddress) && errors.serverAddress && (
