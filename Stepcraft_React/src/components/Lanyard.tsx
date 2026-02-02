@@ -33,7 +33,7 @@ type LanyardProps = {
 };
 
 export default function Lanyard({
-  position = [0, 0, 22],
+  position = [0, -1.2, 22],
   gravity = [0, -40, 0],
   fov = 24,
   transparent = true,
@@ -167,10 +167,10 @@ function Band({ maxSpeed = 50, minSpeed = 0, isMobile = false, cardData }: BandP
     ctx.clip();
     const gradient = ctx.createLinearGradient(cardX, cardY, cardX, cardY + cardH);
     gradient.addColorStop(0, "#f6fff9");
-    gradient.addColorStop(0.5, "#17201c");
-    gradient.addColorStop(1, "#00ff84");
+    gradient.addColorStop(0.55, "#e2f6ec");
+    gradient.addColorStop(1, "#c9ebdb");
     ctx.fillStyle = gradient;
-    ctx.fillRect(cardX, cardY, cardW, cardH);
+    ctx.fillRect(cardX - 2, cardY - 2, cardW + 4, cardH + 4);
 
     const logo = logoTexture.image as HTMLImageElement;
     const maxLogoW = cardW * 0.38;
@@ -314,7 +314,7 @@ function Band({ maxSpeed = 50, minSpeed = 0, isMobile = false, cardData }: BandP
 
   return (
     <>
-      <group position={[0, 6.8, 0]}>
+      <group position={[0, 6.2, 0]}>
         <RigidBody ref={fixed} {...segmentProps} type={"fixed" as RigidBodyProps["type"]} />
         <RigidBody position={[0.5, 0, 0]} ref={j1} {...segmentProps} type={"dynamic" as RigidBodyProps["type"]}>
           <BallCollider args={[0.1]} />
