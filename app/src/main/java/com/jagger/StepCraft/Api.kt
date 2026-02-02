@@ -94,10 +94,10 @@ data class ClaimStatusListResponse(
     val items: List<ClaimStatusListItem> = emptyList()
 )
 
-data class StepsYesterdayResponse(
+data class StepsTodayResponse(
     val minecraft_username: String,
     val server_name: String,
-    val steps_yesterday: Long,
+    val steps_today: Long,
     val day: String
 )
 
@@ -172,11 +172,11 @@ interface FitApi {
         @Query("player_api_key") apiKey: String
     ): ClaimStatusListResponse
 
-    @GET("v1/players/steps-yesterday")
-    suspend fun getStepsYesterday(
+    @GET("v1/players/steps-today")
+    suspend fun getStepsToday(
         @Query("minecraft_username") username: String,
         @Query("player_api_key") apiKey: String
-    ): StepsYesterdayResponse
+    ): StepsTodayResponse
 
     @POST("v1/players/push/register-device")
     suspend fun registerPushDevice(@Body payload: PushTokenRegisterPayload): PushTokenResponse

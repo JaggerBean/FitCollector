@@ -288,6 +288,9 @@ public class StepCraftChestScreenHandler extends GenericContainerScreenHandler {
         }
         JsonObject obj = GSON.fromJson(stepsJson, JsonObject.class);
         if (obj == null) return -1;
+        if (obj.has("steps_today") && obj.get("steps_today").isJsonPrimitive()) {
+            return obj.get("steps_today").getAsLong();
+        }
         if (obj.has("steps_yesterday") && obj.get("steps_yesterday").isJsonPrimitive()) {
             return obj.get("steps_yesterday").getAsLong();
         }
@@ -440,7 +443,7 @@ public class StepCraftChestScreenHandler extends GenericContainerScreenHandler {
     }
 
     static RewardTier getTierForYesterday(String username) throws Exception {
-        String stepsJson = BackendClient.getYesterdayStepsForPlayer(username);
+        String stepsJson = BackendClient.getTodayStepsForPlayer(username);
         long steps = extractSteps(stepsJson);
         if (steps < 0) {
             return null;

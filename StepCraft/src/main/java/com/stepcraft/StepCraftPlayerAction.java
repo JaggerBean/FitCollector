@@ -7,7 +7,7 @@ public enum StepCraftPlayerAction {
     DELETE("Delete"),
     CLAIM_REWARD("Claim Reward"),
     CLAIM_STATUS("Claim Status"),
-    YESTERDAY_STEPS("Yesterday's Steps");
+    YESTERDAY_STEPS("Day Steps");
 
     private final String label;
 

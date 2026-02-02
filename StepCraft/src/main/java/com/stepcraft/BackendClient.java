@@ -224,13 +224,17 @@ public class BackendClient {
                                 .build();
                         return executeRequest(request, true);
                     }
-                // Server endpoint: get yesterday's step count for a player
-                public static String getYesterdayStepsForPlayer(String username) throws IOException {
+                // Server endpoint: get day step count for a player (defaults to prior server day)
+                public static String getTodayStepsForPlayer(String username) throws IOException {
                     Request request = new Request.Builder()
-                            .url(BASE_URL + "/v1/servers/players/" + username + "/yesterday-steps")
+                            .url(BASE_URL + "/v1/servers/players/" + username + "/today-steps")
                             .header("X-API-Key", StepCraftConfig.getApiKey())
                             .build();
                     return executeRequest(request, true);
+                }
+                // Backward-compatible method name for existing call sites.
+                public static String getYesterdayStepsForPlayer(String username) throws IOException {
+                    return getTodayStepsForPlayer(username);
                 }
             // Server endpoint: get claim status for a player
             public static String getClaimStatusForPlayer(String username, long minSteps, String day) throws IOException {

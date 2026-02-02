@@ -12,7 +12,7 @@ import {
   getInactivePruneSettings,
   getRewards,
   getServerInfo,
-  getYesterdaySteps,
+  getDaySteps,
   listBans,
   listPlayers,
   runInactivePrune,
@@ -527,7 +527,7 @@ export default function ServerManagePage() {
                         disabled={actionLoading || !username.trim()}
                         onClick={() =>
                           runAction(() =>
-                            getYesterdaySteps(token!, decodedName, username.trim(), actionDay.trim() || undefined),
+                            getDaySteps(token!, decodedName, username.trim(), actionDay.trim() || undefined),
                           )
                         }
                         className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 hover:border-slate-300 dark:border-slate-700 dark:text-slate-200"

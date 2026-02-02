@@ -466,9 +466,9 @@ async def server_manage_action(
                     params=params,
                     timeout=10,
                 )
-            elif action == "yesterday_steps":
+            elif action in {"today_steps", "yesterday_steps"}:
                 resp = await client.get(
-                    f"{BACKEND_URL}/v1/servers/players/{username.strip()}/yesterday-steps",
+                    f"{BACKEND_URL}/v1/servers/players/{username.strip()}/today-steps",
                     headers=headers,
                     params={"server": server_name},
                     timeout=10,

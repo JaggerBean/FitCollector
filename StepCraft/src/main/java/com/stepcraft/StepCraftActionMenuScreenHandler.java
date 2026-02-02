@@ -36,7 +36,7 @@ public class StepCraftActionMenuScreenHandler extends GenericContainerScreenHand
 
         inventory.setStack(29, makeActionItem(new ItemStack(Items.EMERALD), "Claim Reward", 0x55FF55));
         inventory.setStack(31, makeActionItem(new ItemStack(Items.MAP), "Claim Status", 0xFFAA00));
-        inventory.setStack(33, makeActionItem(new ItemStack(Items.FEATHER), "Yesterday's Steps", 0x55FFFF));
+        inventory.setStack(33, makeActionItem(new ItemStack(Items.FEATHER), "Day Steps", 0x55FFFF));
         inventory.setStack(49, makeActionItem(new ItemStack(Items.BOOK), "Back", 0xFFFFFF));
     }
 
@@ -86,8 +86,8 @@ public class StepCraftActionMenuScreenHandler extends GenericContainerScreenHand
                 return;
             }
             case 33 -> {
-                StepCraftChestScreenHandler.sendBackendToLectern(serverPlayer, "Yesterday's Steps",
-                        () -> BackendClient.getYesterdayStepsForPlayer(targetPlayer));
+                StepCraftChestScreenHandler.sendBackendToLectern(serverPlayer, "Day Steps",
+                        () -> BackendClient.getTodayStepsForPlayer(targetPlayer));
                 return;
             }
             case 49 -> {

@@ -12,7 +12,7 @@ import type {
   PushResponse,
   PushCreateResponse,
   ClaimStatusResponse,
-  YesterdayStepsResponse,
+  DayStepsResponse,
   BansResponse,
   ActionResponse,
   InactivePruneSettingsResponse,
@@ -191,20 +191,22 @@ export async function claimReward(
   );
 }
 
-export async function getYesterdaySteps(
+export async function getDaySteps(
   token: string,
   server: string,
   username: string,
   day?: string,
-): Promise<YesterdayStepsResponse> {
+): Promise<DayStepsResponse> {
   const params = new URLSearchParams({ server: server });
   if (day) params.set("day", day);
-  return apiRequest<YesterdayStepsResponse>(
-    `/v1/servers/players/${encodeURIComponent(username)}/yesterday-steps?${params.toString()}`,
+  return apiRequest<DayStepsResponse>(
+    `/v1/servers/players/${encodeURIComponent(username)}/today-steps?${params.toString()}`,
     {},
     token,
   );
 }
+
+export const getYesterdaySteps = getDaySteps;
 
 export async function listBans(token: string, server: string, limit = 1000): Promise<BansResponse> {
   return apiRequest<BansResponse>(

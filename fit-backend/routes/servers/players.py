@@ -157,17 +157,11 @@ def get_server_players(
     }
 
 
-@router.get("/v1/servers/players/{minecraft_username}/yesterday-steps")
-def get_yesterday_steps_server(
+def _load_player_day_steps(
     minecraft_username: str,
-    day: str | None = Query(default=None),
-    server_name: str = Depends(require_server_access),
-):
-    """
-    Get yesterday's step count for a player on this server.
-    If day is provided, uses that day instead.
-    Requires server API key.
-    """
+    server_name: str,
+    day: str | None,
+) -> tuple[str, int]:
     yesterday = (datetime.now(CENTRAL_TZ) - timedelta(days=1)).date()
     target_day = _resolve_claim_day(day, server_name) if day else yesterday
     with engine.begin() as conn:
@@ -179,18 +173,48 @@ def get_yesterday_steps_server(
             """),
             {"username": minecraft_username, "server": server_name, "day": target_day}
         ).fetchone()
-    if row:
-        steps_value = row[0]
-        # Keep legacy key for existing clients, but prefer steps_today for new callers.
-        return {
-            "minecraft_username": minecraft_username,
-            "server_name": server_name,
-            "day": str(target_day),
-            "steps_today": steps_value,
-            "steps_yesterday": steps_value,
-        }
-    else:
+    if not row:
         raise HTTPException(status_code=404, detail=f"No step record found for {minecraft_username} on {str(target_day)}.")
+    return str(target_day), int(row[0])
+
+
+@router.get("/v1/servers/players/{minecraft_username}/today-steps")
+def get_today_steps_server(
+    minecraft_username: str,
+    day: str | None = Query(default=None),
+    server_name: str = Depends(require_server_access),
+):
+    """
+    Get step count for a player on a server day.
+    Defaults to yesterday in server timezone when day is not provided.
+    Requires server API key.
+    """
+    target_day, steps_value = _load_player_day_steps(minecraft_username, server_name, day)
+    return {
+        "minecraft_username": minecraft_username,
+        "server_name": server_name,
+        "day": target_day,
+        "steps_today": steps_value,
+    }
+
+
+@router.get("/v1/servers/players/{minecraft_username}/yesterday-steps")
+def get_yesterday_steps_server_legacy(
+    minecraft_username: str,
+    day: str | None = Query(default=None),
+    server_name: str = Depends(require_server_access),
+):
+    """
+    Legacy alias for older clients.
+    """
+    target_day, steps_value = _load_player_day_steps(minecraft_username, server_name, day)
+    return {
+        "minecraft_username": minecraft_username,
+        "server_name": server_name,
+        "day": target_day,
+        "steps_today": steps_value,
+        "steps_yesterday": steps_value,
+    }
 
 
 @router.get("/v1/servers/players/{minecraft_username}/day-steps")

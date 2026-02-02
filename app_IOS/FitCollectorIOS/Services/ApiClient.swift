@@ -44,8 +44,8 @@ final class ApiClient {
         return try JSONDecoder().decode(ClaimStatusResponse.self, from: data)
     }
 
-    func getStepsYesterday(minecraftUsername: String, playerApiKey: String) async throws -> StepsYesterdayResponse {
-        var components = URLComponents(url: baseURL.appendingPathComponent("/v1/players/steps-yesterday"), resolvingAgainstBaseURL: false)!
+    func getStepsToday(minecraftUsername: String, playerApiKey: String) async throws -> StepsTodayResponse {
+        var components = URLComponents(url: baseURL.appendingPathComponent("/v1/players/steps-today"), resolvingAgainstBaseURL: false)!
         components.queryItems = [
             URLQueryItem(name: "minecraft_username", value: minecraftUsername),
             URLQueryItem(name: "player_api_key", value: playerApiKey)
@@ -53,7 +53,12 @@ final class ApiClient {
         var request = URLRequest(url: components.url!)
         request.setValue(globalApiKey, forHTTPHeaderField: "X-API-Key")
         let (data, _) = try await URLSession.shared.data(for: request)
-        return try JSONDecoder().decode(StepsYesterdayResponse.self, from: data)
+        return try JSONDecoder().decode(StepsTodayResponse.self, from: data)
+    }
+
+    // Backward-compatible wrapper for older call sites.
+    func getStepsYesterday(minecraftUsername: String, playerApiKey: String) async throws -> StepsTodayResponse {
+        try await getStepsToday(minecraftUsername: minecraftUsername, playerApiKey: playerApiKey)
     }
 
     func getClaimStatusList(deviceId: String, playerApiKey: String) async throws -> ClaimStatusListResponse {

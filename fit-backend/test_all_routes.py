@@ -16,7 +16,7 @@ ROUTES = [
     ("GET", "/v1/servers/players/nonexistent_user/claim-status", {"headers": {"X-API-Key": API_KEY}}),
     ("POST", "/v1/servers/players/nonexistent_user/claim-reward", {"headers": {"X-API-Key": API_KEY}}),
     ("GET", "/v1/servers/players", {"headers": {"X-API-Key": API_KEY}}),
-    ("GET", "/v1/servers/players/nonexistent_user/yesterday-steps", {"headers": {"X-API-Key": API_KEY}}),
+    ("GET", "/v1/servers/players/nonexistent_user/today-steps", {"headers": {"X-API-Key": API_KEY}}),
     ("DELETE", "/v1/servers/players/nonexistent_user", {"headers": {"X-API-Key": API_KEY}}),
     ("POST", "/v1/ingest", {"json": {"minecraft_username": "testuser", "device_id": "testdevice", "steps_today": 1000, "player_api_key": "testplayerkey"}}),
     ("GET", "/health", {}),

@@ -27,13 +27,15 @@ export interface ClaimStatusResponse {
   already_claimed?: boolean;
 }
 
-export interface YesterdayStepsResponse {
+export interface DayStepsResponse {
   minecraft_username: string;
   server_name: string;
   day: string;
   steps_today: number;
   steps_yesterday?: number;
 }
+
+export type YesterdayStepsResponse = DayStepsResponse;
 
 export interface BanEntry {
   ban_group_id: string;

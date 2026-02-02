@@ -168,8 +168,8 @@ public class StepCraftPlayerListScreenHandler extends GenericContainerScreenHand
                 if (action == StepCraftPlayerAction.CLAIM_STATUS) {
                     StepCraftScreens.openClaimStatus(serverPlayer, target);
                 } else if (action == StepCraftPlayerAction.YESTERDAY_STEPS) {
-                    StepCraftChestScreenHandler.sendBackendToLectern(serverPlayer, "Yesterday's Steps",
-                            () -> BackendClient.getYesterdayStepsForPlayer(target));
+                    StepCraftChestScreenHandler.sendBackendToLectern(serverPlayer, "Day Steps",
+                            () -> BackendClient.getTodayStepsForPlayer(target));
                 } else if (action == StepCraftPlayerAction.CLAIM_REWARD) {
                     StepCraftScreens.openClaimRewards(serverPlayer, target);
                 } else {
@@ -317,7 +317,7 @@ public class StepCraftPlayerListScreenHandler extends GenericContainerScreenHand
         ClaimStatusSummary claimSummary = null;
 
         try {
-            String stepsJson = BackendClient.getYesterdayStepsForPlayer(username);
+            String stepsJson = BackendClient.getTodayStepsForPlayer(username);
             steps = extractSteps(stepsJson);
         } catch (Exception e) {
             stepsError = true;
@@ -340,6 +340,9 @@ public class StepCraftPlayerListScreenHandler extends GenericContainerScreenHand
         }
         JsonObject obj = JsonParser.parseString(stepsJson).getAsJsonObject();
         if (obj == null) return -1;
+        if (obj.has("steps_today") && obj.get("steps_today").isJsonPrimitive()) {
+            return obj.get("steps_today").getAsLong();
+        }
         if (obj.has("steps_yesterday") && obj.get("steps_yesterday").isJsonPrimitive()) {
             return obj.get("steps_yesterday").getAsLong();
         }

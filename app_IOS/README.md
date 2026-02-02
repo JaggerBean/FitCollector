@@ -28,6 +28,6 @@ The API client expects these endpoints (already in backend):
 - POST /v1/ingest
 - GET /v1/servers/available
 - GET /v1/players/claim-status/{minecraft_username}
-- GET /v1/players/steps-yesterday
+- GET /v1/players/steps-today
 
 The base URL is set to https://api.stepcraft.org/ in the API client.

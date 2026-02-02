@@ -251,14 +251,18 @@ public class StepCraftResultScreenHandler extends GenericContainerScreenHandler 
             return lines;
         }
 
-        if (key.contains("yesterday's steps")) {
+        if (key.contains("day steps") || key.contains("yesterday's steps")) {
             List<String> lines = new ArrayList<>();
-            lines.add("Yesterday's Steps");
-            lines.add("──────────");
+            lines.add("Day Steps");
+            lines.add("----------");
             addLine(lines, "Minecraft Username", getAsString(obj, "minecraft_username"));
             addLine(lines, "Server Name", getAsString(obj, "server_name"));
             addLine(lines, "Day", getAsString(obj, "day"));
-            addLine(lines, "Steps Yesterday", getAsString(obj, "steps_yesterday"));
+            String steps = getAsString(obj, "steps_today");
+            if (steps == null || steps.isBlank()) {
+                steps = getAsString(obj, "steps_yesterday");
+            }
+            addLine(lines, "Steps Today", steps);
             return lines;
         }
 

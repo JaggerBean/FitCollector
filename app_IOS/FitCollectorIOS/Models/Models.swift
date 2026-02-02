@@ -68,19 +68,32 @@ struct ClaimStatusResponse: Codable {
     }
 }
 
-struct StepsYesterdayResponse: Codable {
+struct StepsTodayResponse: Codable {
     let minecraftUsername: String
     let serverName: String
-    let stepsYesterday: Int
+    let stepsToday: Int
     let day: String
 
     enum CodingKeys: String, CodingKey {
         case minecraftUsername = "minecraft_username"
         case serverName = "server_name"
+        case stepsToday = "steps_today"
         case stepsYesterday = "steps_yesterday"
         case day
     }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        minecraftUsername = try container.decode(String.self, forKey: .minecraftUsername)
+        serverName = try container.decode(String.self, forKey: .serverName)
+        day = try container.decode(String.self, forKey: .day)
+        stepsToday =
+            (try? container.decode(Int.self, forKey: .stepsToday))
+            ?? (try container.decode(Int.self, forKey: .stepsYesterday))
+    }
 }
+
+typealias StepsYesterdayResponse = StepsTodayResponse
 
 struct ClaimStatusListItem: Codable, Hashable {
     let day: String

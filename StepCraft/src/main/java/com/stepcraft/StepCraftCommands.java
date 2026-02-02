@@ -113,14 +113,14 @@ public class StepCraftCommands {
                     return Command.SINGLE_SUCCESS;
                 })
             )
-            // /stepcraft yesterday_steps [username]
-            .then(CommandManager.literal("yesterday_steps")
+            // /stepcraft today_steps [username]
+            .then(CommandManager.literal("today_steps")
                 .executes(context -> {
                     ServerCommandSource source = context.getSource();
                     String username = source.getPlayer().getName().getString();
                     try {
-                        String result = BackendClient.getYesterdayStepsForPlayer(username);
-                        source.sendFeedback(() -> Text.literal("Yesterday's steps for " + username + ": " + result), false);
+                        String result = BackendClient.getTodayStepsForPlayer(username);
+                        source.sendFeedback(() -> Text.literal("Day steps for " + username + ": " + result), false);
                     } catch (Exception e) {
                         source.sendError(Text.literal("Error: " + e.getMessage()));
                     }
@@ -140,8 +140,8 @@ public class StepCraftCommands {
                             return 0;
                         }
                         try {
-                            String result = BackendClient.getYesterdayStepsForPlayer(username);
-                            source.sendFeedback(() -> Text.literal("Yesterday's steps for " + username + ": " + result), false);
+                            String result = BackendClient.getTodayStepsForPlayer(username);
+                            source.sendFeedback(() -> Text.literal("Day steps for " + username + ": " + result), false);
                         } catch (Exception e) {
                             source.sendError(Text.literal("Error: " + e.getMessage()));
                         }

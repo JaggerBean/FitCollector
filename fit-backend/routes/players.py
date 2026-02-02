@@ -607,11 +607,10 @@ def get_device_username(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to lookup device username: {str(e)}")
 
-@router.get("/v1/players/steps-yesterday")
-def get_steps_yesterday(minecraft_username: str = Query(...), player_api_key: str = Query(...)):
+def _get_player_steps_default_day(minecraft_username: str, player_api_key: str) -> tuple[str, str, int]:
     """
-    Get the number of steps the player had yesterday.
-    Requires minecraft_username and player_api_key (plaintext).
+    Resolve the authenticated player's default query day (yesterday in server timezone)
+    and return (server_name, day_iso, steps_today).
     """
     from auth import hash_token
     from datetime import datetime, timedelta
@@ -653,15 +652,38 @@ def get_steps_yesterday(minecraft_username: str = Query(...), player_api_key: st
                 }
             ).fetchone()
         steps = steps_row[0] if steps_row else 0
-        # Keep legacy key for existing clients, but prefer steps_today for new callers.
-        return {
-            "minecraft_username": minecraft_username,
-            "server_name": server_name,
-            "steps_today": steps,
-            "steps_yesterday": steps,
-            "day": str(yesterday),
-        }
+        return server_name, str(yesterday), int(steps)
     except HTTPException:
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to fetch steps: {str(e)}")
+
+
+@router.get("/v1/players/steps-today")
+def get_steps_today(minecraft_username: str = Query(...), player_api_key: str = Query(...)):
+    """
+    Get the player's steps for the default server day (yesterday in server timezone).
+    Requires minecraft_username and player_api_key (plaintext).
+    """
+    server_name, day_iso, steps = _get_player_steps_default_day(minecraft_username, player_api_key)
+    return {
+        "minecraft_username": minecraft_username,
+        "server_name": server_name,
+        "steps_today": steps,
+        "day": day_iso,
+    }
+
+
+@router.get("/v1/players/steps-yesterday")
+def get_steps_yesterday_legacy(minecraft_username: str = Query(...), player_api_key: str = Query(...)):
+    """
+    Legacy alias for older clients.
+    """
+    server_name, day_iso, steps = _get_player_steps_default_day(minecraft_username, player_api_key)
+    return {
+        "minecraft_username": minecraft_username,
+        "server_name": server_name,
+        "steps_today": steps,
+        "steps_yesterday": steps,
+        "day": day_iso,
+    }

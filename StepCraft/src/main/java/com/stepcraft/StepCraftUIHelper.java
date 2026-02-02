@@ -42,7 +42,7 @@ public class StepCraftUIHelper {
                     {Items.WRITABLE_BOOK, "All Players", "Dump all player data", Formatting.GOLD},
 
                     // Stats / rewards
-                    {Items.FEATHER, "Yesterday's Steps", "Fetch yesterday's step count for a player", Formatting.AQUA},
+                    {Items.FEATHER, "Day Steps", "Fetch step count for the selected server day", Formatting.AQUA},
                     {Items.POTION, "Claim Status", "Check claim status", Formatting.GOLD},
                     {Items.EMERALD, "Claim Reward", "Grant today's reward", Formatting.GREEN},
                     {Items.NAME_TAG, "All Server Bans", "List banned players", Formatting.GOLD},
