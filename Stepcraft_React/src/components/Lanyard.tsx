@@ -90,6 +90,7 @@ export default function Lanyard({
           />
         </Environment>
       </Canvas>
+      <div className="pointer-events-none absolute inset-0 rounded-[28px] bg-gradient-to-b from-emerald-900/30 via-slate-950/10 to-slate-950/80" />
     </div>
   );
 }
