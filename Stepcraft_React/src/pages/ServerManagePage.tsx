@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { QRCodeCanvas } from "qrcode.react";
 import { Layout } from "../components/Layout";
 import ConfirmDialog from "../components/ConfirmDialog";
+import AnimatedList from "../components/AnimatedList";
 import { useAuthContext } from "../app/AuthContext";
 import {
   banPlayer,
@@ -459,13 +460,13 @@ export default function ServerManagePage() {
             <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
               {players?.total_players ?? 0} registered players
             </p>
-            <div className="mt-4 min-h-[16rem] flex-1 space-y-2 overflow-y-auto pr-1 text-sm text-slate-700 dark:text-slate-200">
-              {players?.players?.length ? (
-                players.players.map((player) => (
-                  <div
-                    key={player.minecraft_username}
-                    className="rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700"
-                  >
+            {players?.players?.length ? (
+              <AnimatedList
+                items={players.players}
+                className="mt-4 min-h-[16rem] flex-1 text-sm text-slate-700 dark:text-slate-200"
+                maxHeightClassName="max-h-[420px]"
+                renderItem={(player) => (
+                  <div className="rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700">
                     <div className="flex items-center justify-between gap-3">
                       <span>{player.minecraft_username}</span>
                       <span className="text-xs text-slate-500 dark:text-slate-400">
@@ -473,11 +474,11 @@ export default function ServerManagePage() {
                       </span>
                     </div>
                   </div>
-                ))
-              ) : (
-                <div className="text-sm text-slate-500 dark:text-slate-400">No players yet.</div>
-              )}
-            </div>
+                )}
+              />
+            ) : (
+              <div className="mt-4 text-sm text-slate-500 dark:text-slate-400">No players yet.</div>
+            )}
           </div>
           <div className="rounded-2xl border border-emerald-100 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 lg:col-span-2">
             <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Server tools</h2>
