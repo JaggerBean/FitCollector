@@ -636,20 +636,22 @@ fun OnboardingScreen(
                         return@launch
                     }
                     try {
-                        val previousNames = servers.map { it.server_name }.toSet()
                         val resp = globalApi.getAvailableServers(trimmed)
-                        val added = resp.servers.filter { it.server_name !in previousNames }
-                        if (added.isNotEmpty()) {
-                            inviteCodesByServer = inviteCodesByServer + added.associate { it.server_name to trimmed }
-                            setInviteCodesByServer(context, inviteCodesByServer)
-                            servers = (servers + added).distinctBy { it.server_name }
-                                .sortedBy { it.server_name.lowercase() }
-                            added.forEach { selectedServers = selectedServers + it.server_name }
-                            inviteCodeInput = ""
-                            showPrivateServer = false
-                        } else {
+                        if (resp.servers.isEmpty()) {
                             error = "Invite code not found."
+                            return@launch
                         }
+
+                        val responseNames = resp.servers.map { it.server_name }
+                        inviteCodesByServer = inviteCodesByServer + responseNames.associateWith { trimmed }
+                        setInviteCodesByServer(context, inviteCodesByServer)
+
+                        servers = (servers + resp.servers).distinctBy { it.server_name }
+                            .sortedBy { it.server_name.lowercase() }
+                        responseNames.forEach { selectedServers = selectedServers + it }
+
+                        inviteCodeInput = ""
+                        showPrivateServer = false
                     } catch (e: Exception) {
                         error = "Could not add invite code: ${e.message}"
                     }

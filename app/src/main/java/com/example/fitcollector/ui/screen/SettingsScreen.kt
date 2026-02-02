@@ -1278,8 +1278,14 @@ fun ServerSelectorDialog(
             modifier = Modifier.fillMaxWidth().fillMaxHeight(0.8f)
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
-                Text("Select From Available Servers", style = MaterialTheme.typography.headlineSmall)
+                Text("All Available Servers", style = MaterialTheme.typography.headlineSmall)
                 Spacer(Modifier.height(16.dp))
+                Text(
+                    "Private servers were added with invite codes. Public servers are open listings.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color.Gray
+                )
+                Spacer(Modifier.height(10.dp))
                 
                 OutlinedTextField(
                     value = searchQuery,
