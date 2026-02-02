@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { QRCodeCanvas } from "qrcode.react";
 import { Layout } from "../components/Layout";
@@ -76,6 +76,8 @@ export default function ServerManagePage() {
   const [pruneError, setPruneError] = useState<string | null>(null);
   const [pruneOutput, setPruneOutput] = useState<InactivePruneRunResponse | null>(null);
   const [confirmState, setConfirmState] = useState<ConfirmState | null>(null);
+  const serverToolsRef = useRef<HTMLDivElement | null>(null);
+  const actionOutputRef = useRef<HTMLPreElement | null>(null);
 
   const usernameSuggestions = useMemo(
     () => players?.players?.map((player) => player.minecraft_username) ?? [],
@@ -237,8 +239,14 @@ export default function ServerManagePage() {
     try {
       const result = await action();
       setActionOutput(JSON.stringify(result, null, 2));
+      setTimeout(() => {
+        actionOutputRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 50);
     } catch (err) {
       setActionError((err as Error).message);
+      setTimeout(() => {
+        actionOutputRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 50);
     } finally {
       setActionLoading(false);
     }
@@ -465,6 +473,10 @@ export default function ServerManagePage() {
                 items={players.players}
                 className="mt-4 min-h-[16rem] flex-1 text-sm text-slate-700 dark:text-slate-200"
                 maxHeightClassName="max-h-[420px]"
+                onItemSelect={(player) => {
+                  setUsername(player.minecraft_username);
+                  serverToolsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+                }}
                 renderItem={(player) => (
                   <div className="rounded-lg border border-slate-200 px-3 py-2 dark:border-slate-700">
                     <div className="flex items-center justify-between gap-3">
@@ -480,7 +492,10 @@ export default function ServerManagePage() {
               <div className="mt-4 text-sm text-slate-500 dark:text-slate-400">No players yet.</div>
             )}
           </div>
-          <div className="rounded-2xl border border-emerald-100 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 lg:col-span-2">
+          <div
+            ref={serverToolsRef}
+            className="rounded-2xl border border-emerald-100 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 lg:col-span-2"
+          >
             <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Server tools</h2>
             <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
               Run admin actions for this server.
@@ -731,7 +746,10 @@ export default function ServerManagePage() {
                 </div>
               )}
               {actionOutput && (
-                <pre className="max-h-64 overflow-auto rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200">
+                <pre
+                  ref={actionOutputRef}
+                  className="max-h-64 overflow-auto rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200"
+                >
                   {actionOutput}
                 </pre>
               )}

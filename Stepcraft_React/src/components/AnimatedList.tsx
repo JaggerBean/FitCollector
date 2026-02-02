@@ -8,6 +8,7 @@ type AnimatedListProps<T> = {
   showGradients?: boolean;
   displayScrollbar?: boolean;
   maxHeightClassName?: string;
+  onItemSelect?: (item: T, index: number) => void;
 };
 
 type AnimatedItemProps = {
@@ -64,6 +65,7 @@ export default function AnimatedList<T>({
   showGradients = true,
   displayScrollbar = true,
   maxHeightClassName = "max-h-[420px]",
+  onItemSelect,
 }: AnimatedListProps<T>) {
   const listRef = useRef<HTMLDivElement>(null);
   const [topOpacity, setTopOpacity] = useState(0);
@@ -100,7 +102,12 @@ export default function AnimatedList<T>({
         <div className="space-y-2">
           {items.map((item, index) => (
             <AnimatedItem key={index} index={index} rootRef={listRef} itemClassName={itemClassName}>
-              {renderItem(item, index)}
+              <div
+                role={onItemSelect ? "button" : undefined}
+                onClick={onItemSelect ? () => onItemSelect(item, index) : undefined}
+              >
+                {renderItem(item, index)}
+              </div>
             </AnimatedItem>
           ))}
         </div>
