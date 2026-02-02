@@ -167,8 +167,8 @@ function Band({ maxSpeed = 50, minSpeed = 0, isMobile = false, cardData }: BandP
     ctx.clip();
 
     const logo = logoTexture.image as HTMLImageElement;
-    const maxLogoW = cardW * 0.42;
-    const maxLogoH = cardH * 0.24;
+    const maxLogoW = cardW * 0.36;
+    const maxLogoH = cardH * 0.22;
     const logoScale = Math.min(maxLogoW / logo.width, maxLogoH / logo.height);
     const logoW = logo.width * logoScale;
     const logoH = logo.height * logoScale;
@@ -176,60 +176,28 @@ function Band({ maxSpeed = 50, minSpeed = 0, isMobile = false, cardData }: BandP
     const logoY = cardY + cardH * 0.08;
     ctx.drawImage(logo, logoX, logoY, logoW, logoH);
 
-    ctx.fillStyle = "#0b1220";
-    ctx.font = "bold 60px 'Segoe UI', Arial, sans-serif";
+    const centerX = cardX + cardW / 2;
+    let y = cardY + cardH * 0.38;
+
     ctx.textAlign = "center";
-    ctx.fillText("StepCraft", cardX + cardW / 2, cardY + cardH * 0.28);
+    ctx.fillStyle = "#0b1220";
+    ctx.font = "800 78px 'Segoe UI', Arial, sans-serif";
+    const headline = "Server Registered!";
+    ctx.fillText(headline, centerX, y);
 
-    const left = cardX + cardW * 0.1;
-    const right = cardX + cardW * 0.9;
-    let y = cardY + cardH * 0.36;
+    y += 90;
+    ctx.fillStyle = "#1f8a5b";
+    ctx.font = "700 56px 'Segoe UI', Arial, sans-serif";
+    ctx.fillText("Welcome to StepCraft", centerX, y);
 
-    const label = (text: string) => {
-      ctx.fillStyle = "#204233";
-      ctx.font = "800 30px 'Segoe UI', Arial, sans-serif";
-      ctx.textAlign = "left";
-      ctx.fillText(text, left, y);
-      y += 36;
-    };
-
-    const value = (text: string) => {
-      ctx.fillStyle = "#0f1b2b";
-      ctx.font = "600 32px 'Segoe UI', Arial, sans-serif";
-      ctx.textAlign = "left";
-      const lines = wrapText(ctx, text, right - left);
-      for (const line of lines) {
-        ctx.fillText(line, left, y);
-        y += 36;
-      }
-      y += 14;
-    };
-
-    label("SERVER");
-    value(cardData.serverName);
-
-    label("API KEY");
-    value(cardData.apiKey);
-
-    if (cardData.inviteCode) {
-      label("INVITE CODE");
-      value(cardData.inviteCode);
-    }
-
+    y += 80;
     ctx.fillStyle = "#243241";
-    ctx.font = "500 26px 'Segoe UI', Arial, sans-serif";
-    ctx.textAlign = "left";
-    const msg1 = "Use this key in the StepCraft Minecraft mod configuration.";
-    const msg2 = `Email sent to ${cardData.ownerEmail}. Check spam if needed.`;
-    for (const line of wrapText(ctx, msg1, right - left)) {
-      ctx.fillText(line, left, y);
-      y += 30;
-    }
-    y += 8;
-    for (const line of wrapText(ctx, msg2, right - left)) {
-      ctx.fillText(line, left, y);
-      y += 30;
-    }
+    ctx.font = "500 34px 'Segoe UI', Arial, sans-serif";
+    const line1 = "Your server is ready to sync steps";
+    const line2 = "and rewards with your players.";
+    ctx.fillText(line1, centerX, y);
+    y += 46;
+    ctx.fillText(line2, centerX, y);
 
     ctx.restore();
 
