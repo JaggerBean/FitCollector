@@ -100,6 +100,9 @@ def run_push_once() -> None:
         server_name = row["server_name"]
         platform = str(row["platform"] or "").lower()
         username = row["minecraft_username"]
+        title = default_title
+        if server_name and server_name.lower() not in default_title.lower():
+            title = f"{default_title} • {server_name}"
 
         payload_data = {
             "server_name": server_name,
@@ -109,9 +112,9 @@ def run_push_once() -> None:
 
         try:
             if platform == "android":
-                send_fcm_push(token, default_title, row["message"], payload_data)
+                send_fcm_push(token, title, row["message"], payload_data)
             else:
-                send_push(token, default_title, row["message"], payload_data)
+                send_push(token, title, row["message"], payload_data)
         except (Unregistered, BadDeviceToken):
             logger.info("Invalid APNs token for device %s on %s; removing", device_id, server_name)
             with engine.begin() as conn:

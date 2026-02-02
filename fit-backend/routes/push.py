@@ -150,12 +150,17 @@ def send_push_notification(request: PushSendRequest):
             raise HTTPException(status_code=404, detail="No push tokens registered for this environment")
 
         failures = 0
+        title = request.title
+        if server_name and server_name.lower() not in title.lower():
+            title = f"{title} • {server_name}"
+        data = dict(request.data or {})
+        data.setdefault("server_name", server_name)
         for token, _sandbox, platform in eligible:
             try:
                 if str(platform or "").lower() == "android":
-                    send_fcm_push(token, request.title, request.body, request.data)
+                    send_fcm_push(token, title, request.body, data)
                 else:
-                    send_push(token, request.title, request.body, request.data)
+                    send_push(token, title, request.body, data)
             except (Unregistered, BadDeviceToken):
                 with engine.begin() as conn:
                     conn.execute(
