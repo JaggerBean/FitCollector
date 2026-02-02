@@ -166,10 +166,10 @@ function Band({ maxSpeed = 50, minSpeed = 0, isMobile = false, cardData }: BandP
     roundRect(ctx, cardX, cardY, cardW, cardH, 100);
     ctx.clip();
     const gradient = ctx.createLinearGradient(cardX, cardY, cardX, cardY + cardH);
-    gradient.addColorStop(0, "#dff3ff");
-    gradient.addColorStop(0.4, "#cfe9ff");
-    gradient.addColorStop(0.7, "#e6f7d4");
-    gradient.addColorStop(1, "#ffd7e8");
+    gradient.addColorStop(0, "#62c3ff");
+    gradient.addColorStop(0.4, "#add9ff");
+    gradient.addColorStop(0.7, "#e0ffbf");
+    gradient.addColorStop(1, "rgb(144, 255, 136)");
     ctx.fillStyle = gradient;
     ctx.fillRect(cardX - 2, cardY - 2, cardW + 4, cardH + 4);
 
