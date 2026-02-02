@@ -154,43 +154,53 @@ function Band({ maxSpeed = 50, minSpeed = 0, isMobile = false, cardData }: BandP
     ctx.fillStyle = "#f2f3f6";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+    const cardW = canvas.width * 0.84;
+    const cardH = canvas.height * 0.86;
+    const cardX = (canvas.width - cardW) / 2;
+    const cardY = canvas.height * 0.08;
+
+    ctx.save();
+    ctx.beginPath();
+    roundRect(ctx, cardX, cardY, cardW, cardH, 80);
+    ctx.clip();
+
     const logo = logoTexture.image as HTMLImageElement;
-    const maxLogoW = canvas.width * 0.5;
-    const maxLogoH = canvas.height * 0.28;
+    const maxLogoW = cardW * 0.5;
+    const maxLogoH = cardH * 0.28;
     const logoScale = Math.min(maxLogoW / logo.width, maxLogoH / logo.height);
     const logoW = logo.width * logoScale;
     const logoH = logo.height * logoScale;
-    const logoX = (canvas.width - logoW) / 2;
-    const logoY = canvas.height * 0.18;
+    const logoX = cardX + (cardW - logoW) / 2;
+    const logoY = cardY + cardH * 0.14;
     ctx.drawImage(logo, logoX, logoY, logoW, logoH);
 
     ctx.fillStyle = "#0b1220";
-    ctx.font = "bold 44px 'Segoe UI', Arial, sans-serif";
+    ctx.font = "bold 52px 'Segoe UI', Arial, sans-serif";
     ctx.textAlign = "center";
-    ctx.fillText("StepCraft", canvas.width / 2, canvas.height * 0.52);
+    ctx.fillText("StepCraft", cardX + cardW / 2, cardY + cardH * 0.42);
 
-    const left = canvas.width * 0.12;
-    const right = canvas.width * 0.88;
-    let y = canvas.height * 0.6;
+    const left = cardX + cardW * 0.08;
+    const right = cardX + cardW * 0.92;
+    let y = cardY + cardH * 0.52;
 
     const label = (text: string) => {
-      ctx.fillStyle = "#335f4c";
-      ctx.font = "600 24px 'Segoe UI', Arial, sans-serif";
+      ctx.fillStyle = "#2f5b4a";
+      ctx.font = "700 26px 'Segoe UI', Arial, sans-serif";
       ctx.textAlign = "left";
       ctx.fillText(text, left, y);
-      y += 32;
+      y += 36;
     };
 
     const value = (text: string) => {
       ctx.fillStyle = "#0f1b2b";
-      ctx.font = "500 26px 'Segoe UI', Arial, sans-serif";
+      ctx.font = "500 28px 'Segoe UI', Arial, sans-serif";
       ctx.textAlign = "left";
       const lines = wrapText(ctx, text, right - left);
       for (const line of lines) {
         ctx.fillText(line, left, y);
-        y += 34;
+        y += 36;
       }
-      y += 12;
+      y += 14;
     };
 
     label("SERVER");
@@ -205,7 +215,7 @@ function Band({ maxSpeed = 50, minSpeed = 0, isMobile = false, cardData }: BandP
     }
 
     ctx.fillStyle = "#2b3a4a";
-    ctx.font = "400 22px 'Segoe UI', Arial, sans-serif";
+    ctx.font = "400 24px 'Segoe UI', Arial, sans-serif";
     ctx.textAlign = "left";
     const msg1 = "Use this key in the StepCraft Minecraft mod configuration.";
     const msg2 = `Email sent to ${cardData.ownerEmail}. Check spam if needed.`;
@@ -218,6 +228,8 @@ function Band({ maxSpeed = 50, minSpeed = 0, isMobile = false, cardData }: BandP
       ctx.fillText(line, left, y);
       y += 30;
     }
+
+    ctx.restore();
 
     badgeTexture.image = canvas;
     badgeTexture.needsUpdate = true;
@@ -242,12 +254,32 @@ function Band({ maxSpeed = 50, minSpeed = 0, isMobile = false, cardData }: BandP
     return lines;
   }
 
+  function roundRect(
+    ctx: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+    radius: number
+  ) {
+    const r = Math.min(radius, width / 2, height / 2);
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + width - r, y);
+    ctx.quadraticCurveTo(x + width, y, x + width, y + r);
+    ctx.lineTo(x + width, y + height - r);
+    ctx.quadraticCurveTo(x + width, y + height, x + width - r, y + height);
+    ctx.lineTo(x + r, y + height);
+    ctx.quadraticCurveTo(x, y + height, x, y + height - r);
+    ctx.lineTo(x, y + r);
+    ctx.quadraticCurveTo(x, y, x + r, y);
+  }
+
   useRopeJoint(fixed, j1, [[0, 0, 0], [0, 0, 0], 1]);
   useRopeJoint(j1, j2, [[0, 0, 0], [0, 0, 0], 1]);
   useRopeJoint(j2, j3, [[0, 0, 0], [0, 0, 0], 1]);
   useSphericalJoint(j3, card, [
     [0, 0, 0],
-    [0, 1.35, 0],
+    [0, 1.6, 0],
   ]);
 
   useEffect(() => {
@@ -308,15 +340,15 @@ function Band({ maxSpeed = 50, minSpeed = 0, isMobile = false, cardData }: BandP
           <BallCollider args={[0.1]} />
         </RigidBody>
         <RigidBody
-          position={[1.8, -0.2, 0]}
+          position={[1.7, -0.45, 0]}
           ref={card}
           {...segmentProps}
           type={dragged ? ("kinematicPosition" as RigidBodyProps["type"]) : ("dynamic" as RigidBodyProps["type"])}
         >
           <CuboidCollider args={[0.8, 1.125, 0.01]} />
           <group
-            scale={2.8}
-            position={[0, -1.2, -0.05]}
+            scale={3.4}
+            position={[0, -1.35, -0.06]}
             onPointerOver={() => hover(true)}
             onPointerOut={() => hover(false)}
             onPointerUp={(e: any) => {
@@ -331,6 +363,7 @@ function Band({ maxSpeed = 50, minSpeed = 0, isMobile = false, cardData }: BandP
             <mesh geometry={nodes.card.geometry}>
               <meshPhysicalMaterial
                 map={badgeTexture}
+                side={THREE.DoubleSide}
                 map-anisotropy={16}
                 clearcoat={isMobile ? 0 : 1}
                 clearcoatRoughness={0.15}
