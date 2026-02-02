@@ -441,7 +441,7 @@ export default function ServerManagePage() {
               </div>
             </div>
           </div>
-          <div className="rounded-2xl border border-emerald-100 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 lg:col-span-2">
+          <div className="rounded-2xl border border-emerald-100 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
             <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Players</h2>
             <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
               {players?.total_players ?? 0} registered players
@@ -461,7 +461,7 @@ export default function ServerManagePage() {
               )}
             </div>
           </div>
-          <div className="rounded-2xl border border-emerald-100 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+          <div className="rounded-2xl border border-emerald-100 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 lg:col-span-2">
             <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Server tools</h2>
             <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
               Run admin actions for this server.
