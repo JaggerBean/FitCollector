@@ -153,7 +153,7 @@ function Band({ maxSpeed = 50, minSpeed = 0, isMobile = false, cardData }: BandP
     if (!ctx) return;
 
     ctx.clearRect(0, 0, content.width, content.height);
-    ctx.fillStyle = "#f2f3f6";
+    ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, content.width, content.height);
 
     const cardW = content.width * 0.96;
@@ -166,12 +166,12 @@ function Band({ maxSpeed = 50, minSpeed = 0, isMobile = false, cardData }: BandP
     roundRect(ctx, cardX, cardY, cardW, cardH, 100);
     ctx.clip();
     const gradient = ctx.createLinearGradient(cardX, cardY, cardX, cardY + cardH);
-    gradient.addColorStop(0, "#62c3ff");
-    gradient.addColorStop(0.4, "#add9ff");
-    gradient.addColorStop(0.7, "#e0ffbf");
-    gradient.addColorStop(1, "rgb(144, 255, 136)");
+    gradient.addColorStop(0, "#6ed1ff");
+    gradient.addColorStop(0.35, "#a7e1ff");
+    gradient.addColorStop(0.65, "#d9ffd0");
+    gradient.addColorStop(1, "#ffd8f0");
     ctx.fillStyle = gradient;
-    ctx.fillRect(cardX - 2, cardY - 2, cardW + 4, cardH + 4);
+    ctx.fillRect(cardX - 12, cardY - 12, cardW + 24, cardH + 24);
 
     const logo = logoTexture.image as HTMLImageElement;
     const maxLogoW = cardW * 0.38;

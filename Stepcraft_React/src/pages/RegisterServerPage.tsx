@@ -21,6 +21,7 @@ export default function RegisterServerPage() {
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<RegisterServerResponse | null>(null);
   const [showResult, setShowResult] = useState(false);
+  const [showApiKey, setShowApiKey] = useState(false);
 
   const canSubmit = useMemo(() => {
     return Boolean(serverName.trim() && ownerName.trim() && ownerEmail.trim());
@@ -182,6 +183,13 @@ export default function RegisterServerPage() {
             <div className="absolute bottom-8 left-1/2 flex -translate-x-1/2 flex-wrap items-center justify-center gap-3">
               <button
                 type="button"
+                className="rounded-lg border border-emerald-500/60 bg-emerald-900/30 px-4 py-2 text-sm font-semibold text-emerald-100 hover:border-emerald-300"
+                onClick={() => setShowApiKey(true)}
+              >
+                Reveal API key
+              </button>
+              <button
+                type="button"
                 className="rounded-lg border border-slate-700 bg-slate-900/80 px-4 py-2 text-sm font-semibold text-slate-100 hover:border-slate-500"
                 onClick={() => {
                   setShowResult(false);
@@ -198,6 +206,28 @@ export default function RegisterServerPage() {
                 Take me to Dashboard
               </button>
             </div>
+            {showApiKey && (
+              <div className="absolute inset-0 z-10 flex items-center justify-center bg-slate-950/60 backdrop-blur-sm">
+                <div className="w-[min(92vw,520px)] rounded-2xl border border-emerald-500/40 bg-slate-950/90 p-6 text-slate-100 shadow-2xl">
+                  <div className="text-lg font-semibold">Your API key</div>
+                  <p className="mt-2 text-sm text-slate-300">
+                    This is the only time you will be able to view this key in the app. We also emailed it to you.
+                  </p>
+                  <div className="mt-4 rounded-lg border border-emerald-500/40 bg-slate-900 px-3 py-2 font-mono text-xs text-emerald-100">
+                    {result.api_key}
+                  </div>
+                  <div className="mt-5 flex justify-end gap-2">
+                    <button
+                      type="button"
+                      className="rounded-lg border border-slate-600 px-3 py-2 text-sm font-semibold text-slate-100 hover:border-slate-400"
+                      onClick={() => setShowApiKey(false)}
+                    >
+                      Close
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
