@@ -3,7 +3,8 @@ import { useEffect } from "react";
 type ConfirmDialogProps = {
   open: boolean;
   title?: string;
-  message: string;
+  message?: string;
+  content?: React.ReactNode;
   confirmLabel?: string;
   cancelLabel?: string;
   tone?: "danger" | "default";
@@ -15,6 +16,7 @@ export default function ConfirmDialog({
   open,
   title = "Confirm action",
   message,
+  content,
   confirmLabel = "Confirm",
   cancelLabel = "Cancel",
   tone = "default",
@@ -38,7 +40,11 @@ export default function ConfirmDialog({
         <div className="text-sm font-semibold text-slate-900 dark:text-slate-100" id="confirm-title">
           {title}
         </div>
-        <div className="mt-2 text-sm text-slate-600 dark:text-slate-300">{message}</div>
+        {content ? (
+          <div className="mt-3 text-sm text-slate-600 dark:text-slate-300">{content}</div>
+        ) : (
+          <div className="mt-2 text-sm text-slate-600 dark:text-slate-300">{message}</div>
+        )}
         <div className="mt-4 flex justify-end gap-2">
           <button
             type="button"

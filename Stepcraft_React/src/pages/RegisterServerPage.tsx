@@ -1,12 +1,15 @@
 import { useMemo, useState } from "react";
 import type { FormEvent } from "react";
+import { useNavigate } from "react-router-dom";
 import { Layout } from "../components/Layout";
+import ConfirmDialog from "../components/ConfirmDialog";
 import { useAuthContext } from "../app/AuthContext";
 import { registerServer } from "../api/servers";
 import type { RegisterServerResponse } from "../api/types";
 
 export default function RegisterServerPage() {
   const { token } = useAuthContext();
+  const navigate = useNavigate();
   const [serverName, setServerName] = useState("");
   const [ownerName, setOwnerName] = useState("");
   const [ownerEmail, setOwnerEmail] = useState("");
@@ -17,6 +20,7 @@ export default function RegisterServerPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<RegisterServerResponse | null>(null);
+  const [showResult, setShowResult] = useState(false);
 
   const canSubmit = useMemo(() => {
     return Boolean(serverName.trim() && ownerName.trim() && ownerEmail.trim());
@@ -39,11 +43,23 @@ export default function RegisterServerPage() {
       };
       const response = await registerServer(token, payload);
       setResult(response);
+      setShowResult(true);
     } catch (err) {
       setError((err as Error).message);
     } finally {
       setLoading(false);
     }
+  };
+
+  const clearForm = () => {
+    setServerName("");
+    setOwnerName("");
+    setOwnerEmail("");
+    setServerAddress("");
+    setServerVersion("");
+    setIsPrivate(false);
+    setInviteCode("");
+    setResult(null);
   };
 
   return (
@@ -150,37 +166,54 @@ export default function RegisterServerPage() {
           </button>
         </form>
         <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-          <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Registration result</h2>
-          {result ? (
-            <div className="mt-4 space-y-3 text-sm text-slate-700 dark:text-slate-200">
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">What happens next</h2>
+          <p className="mt-3 text-sm text-slate-500 dark:text-slate-400">
+            After registration, you'll receive a one-time API key and optional invite code in a pop-up. The key belongs in
+            your StepCraft Minecraft mod configuration so your server can sync with StepCraft.
+          </p>
+        </div>
+      </div>
+      <ConfirmDialog
+        open={showResult && !!result}
+        title="Server registered"
+        content={
+          result && (
+            <div className="space-y-3">
               <div>
-                <div className="text-xs uppercase text-slate-400">Server</div>
-                <div className="font-semibold text-slate-900 dark:text-slate-100">{result.server_name}</div>
+                <div className="text-xs uppercase tracking-wide text-slate-400">Server</div>
+                <div className="mt-1 font-semibold text-slate-900 dark:text-slate-100">{result.server_name}</div>
               </div>
               <div>
-                <div className="text-xs uppercase text-slate-400">API key</div>
-                <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 font-mono text-xs text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-emerald-200">
+                <div className="text-xs uppercase tracking-wide text-slate-400">API key</div>
+                <div className="mt-1 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 font-mono text-xs text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-emerald-200">
                   {result.api_key}
                 </div>
-                <div className="mt-1 text-xs text-slate-400">Save this key securely. You will not see it again.</div>
-                <div className="mt-1 text-xs text-slate-400">If SMTP is configured on the backend, an email is also sent automatically.</div>
+                <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                  Add this key to your StepCraft Minecraft mod configuration on the server so it can sync steps and rewards.
+                </div>
+                <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                  An email has also been sent to {ownerEmail}. If you don’t see it, check your spam folder.
+                </div>
               </div>
               {result.invite_code && (
                 <div>
-                  <div className="text-xs uppercase text-slate-400">Invite code</div>
-                  <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 font-mono text-xs text-emerald-700 dark:border-emerald-700/40 dark:bg-emerald-900/20 dark:text-emerald-200">
+                  <div className="text-xs uppercase tracking-wide text-slate-400">Invite code</div>
+                  <div className="mt-1 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 font-mono text-xs text-emerald-700 dark:border-emerald-700/40 dark:bg-emerald-900/20 dark:text-emerald-200">
                     {result.invite_code}
                   </div>
                 </div>
               )}
             </div>
-          ) : (
-            <p className="mt-3 text-sm text-slate-500 dark:text-slate-400">
-              Submit the form to generate your server API key.
-            </p>
-          )}
-        </div>
-      </div>
+          )
+        }
+        confirmLabel="Take me to Dashboard"
+        cancelLabel="Register another server"
+        onConfirm={() => navigate("/dashboard")}
+        onCancel={() => {
+          setShowResult(false);
+          clearForm();
+        }}
+      />
     </Layout>
   );
 }
