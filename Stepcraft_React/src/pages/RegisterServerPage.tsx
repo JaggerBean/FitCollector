@@ -168,16 +168,18 @@ export default function RegisterServerPage() {
       </div>
       {showResult && result && (
         <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur">
-          <div className="relative flex h-full w-full flex-col items-center justify-center px-6 py-10">
-            <Lanyard
-              cardData={{
-                serverName: result.server_name,
-                apiKey: result.api_key,
-                inviteCode: result.invite_code,
-                ownerEmail,
-              }}
-            />
-            <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+          <div className="relative h-full w-full">
+            <div className="absolute inset-0 flex items-start justify-center overflow-visible">
+              <Lanyard
+                cardData={{
+                  serverName: result.server_name,
+                  apiKey: result.api_key,
+                  inviteCode: result.invite_code,
+                  ownerEmail,
+                }}
+              />
+            </div>
+            <div className="absolute bottom-8 left-1/2 flex -translate-x-1/2 flex-wrap items-center justify-center gap-3">
               <button
                 type="button"
                 className="rounded-lg border border-slate-700 bg-slate-900/80 px-4 py-2 text-sm font-semibold text-slate-100 hover:border-slate-500"
