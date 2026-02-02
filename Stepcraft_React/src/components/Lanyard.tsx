@@ -315,7 +315,7 @@ function Band({ maxSpeed = 50, minSpeed = 0, isMobile = false, cardData }: BandP
 
   return (
     <>
-      <group position={[0, 6.2, 0]}>
+      <group position={[0, 7, 0]}>
         <RigidBody ref={fixed} {...segmentProps} type={"fixed" as RigidBodyProps["type"]} />
         <RigidBody position={[0.5, 0, 0]} ref={j1} {...segmentProps} type={"dynamic" as RigidBodyProps["type"]}>
           <BallCollider args={[0.1]} />
