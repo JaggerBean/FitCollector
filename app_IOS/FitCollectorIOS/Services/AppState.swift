@@ -2,6 +2,9 @@ import Foundation
 import SwiftUI
 
 final class AppState: ObservableObject {
+    init() {
+        AppState.registerPushTokenIfPossible()
+    }
     @Published var deviceId: String = AppState.loadDeviceId() {
         didSet {
             UserDefaults.standard.set(deviceId, forKey: Keys.deviceId)

@@ -357,6 +357,9 @@ struct SettingsScreen: View {
     private func requestNotificationPermissions() async {
         do {
             notificationsAuthorized = try await NotificationManager.shared.requestAuthorization()
+            if notificationsAuthorized {
+                AppState.registerPushTokenIfPossible()
+            }
         } catch {
             notificationsAuthorized = false
         }
