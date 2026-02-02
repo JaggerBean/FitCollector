@@ -200,6 +200,71 @@ final class AppState: ObservableObject {
         loadDeviceId()
     }
 
+    static func currentMinecraftUsername() -> String {
+        UserDefaults.standard.string(forKey: Keys.minecraftUsername) ?? ""
+    }
+
+    static func selectedServersSnapshot() -> [String] {
+        loadSelectedServers()
+    }
+
+    static func inviteCodesSnapshot() -> [String: String] {
+        loadInviteCodes()
+    }
+
+    static func isBackgroundSyncEnabled() -> Bool {
+        UserDefaults.standard.object(forKey: Keys.backgroundSyncEnabled) as? Bool ?? false
+    }
+
+    static func serverKeyFor(username: String, server: String) -> String? {
+        let key = "\(username)|\(server)"
+        return loadServerKeys()[key]
+    }
+
+    static func saveServerKey(username: String, server: String, apiKey: String) {
+        var all = loadServerKeys()
+        all["\(username)|\(server)"] = apiKey
+        saveServerKeys(all)
+    }
+
+    static func appendSyncLogEntry(_ entry: SyncLogEntry) {
+        var updated = loadSyncLog()
+        updated.insert(entry, at: 0)
+        if updated.count > 25 { updated.removeLast(updated.count - 25) }
+        saveSyncLog(updated)
+    }
+
+    @discardableResult
+    static func applyQueuedUsernameIfReadyFromStorage() -> Bool {
+        let queued = (UserDefaults.standard.string(forKey: Keys.queuedUsername) ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        let queuedDay = (UserDefaults.standard.string(forKey: Keys.queuedUsernameDay) ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !queued.isEmpty, !queuedDay.isEmpty else { return false }
+
+        let today = dayKey()
+        let lastChange = UserDefaults.standard.string(forKey: Keys.lastUsernameChangeDay) ?? ""
+        guard queuedDay != today, lastChange != today else { return false }
+
+        let previousUsername = currentMinecraftUsername().trimmingCharacters(in: .whitespacesAndNewlines)
+        if !previousUsername.isEmpty, previousUsername != queued {
+            var all = loadServerKeys()
+            let oldPrefix = "\(previousUsername)|"
+            let keysToMove = all.keys.filter { $0.hasPrefix(oldPrefix) }
+            for oldKey in keysToMove {
+                guard let value = all[oldKey] else { continue }
+                let server = String(oldKey.dropFirst(oldPrefix.count))
+                all.removeValue(forKey: oldKey)
+                all["\(queued)|\(server)"] = value
+            }
+            saveServerKeys(all)
+        }
+
+        UserDefaults.standard.set(queued, forKey: Keys.minecraftUsername)
+        UserDefaults.standard.removeObject(forKey: Keys.queuedUsername)
+        UserDefaults.standard.removeObject(forKey: Keys.queuedUsernameDay)
+        UserDefaults.standard.set(today, forKey: Keys.lastUsernameChangeDay)
+        return true
+    }
+
     static func storePushToken(_ token: String) {
         UserDefaults.standard.set(token, forKey: Keys.pushToken)
     }
