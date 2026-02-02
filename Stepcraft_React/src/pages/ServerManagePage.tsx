@@ -33,6 +33,12 @@ import type {
 } from "../api/types";
 
 export default function ServerManagePage() {
+  const todayLocal = useMemo(() => {
+    const now = new Date();
+    const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
+    return local.toISOString().slice(0, 10);
+  }, []);
+
   const { serverName } = useParams();
   const { token } = useAuthContext();
   const [info, setInfo] = useState<ServerInfo | null>(null);
@@ -48,7 +54,7 @@ export default function ServerManagePage() {
   const [reason, setReason] = useState("");
   const [query, setQuery] = useState("");
   const [limit, setLimit] = useState(100);
-  const [actionDay, setActionDay] = useState("");
+  const [actionDay, setActionDay] = useState(todayLocal);
   const [selectedTierMinSteps, setSelectedTierMinSteps] = useState<number | null>(null);
   const [rewardTiers, setRewardTiers] = useState<RewardsResponse["tiers"]>([]);
   const [claimWindow, setClaimWindow] = useState<ClaimWindowResponse | null>(null);
@@ -507,12 +513,12 @@ export default function ServerManagePage() {
                       Optional day for step checks.
                     </p>
                     <div className="mt-3">
-                      <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Day (YYYY-MM-DD)</label>
+                      <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Day</label>
                       <input
+                        type="date"
                         className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
                         value={actionDay}
                         onChange={(event) => setActionDay(event.target.value)}
-                        placeholder="Optional"
                       />
                     </div>
                     <div className="mt-3 flex flex-wrap gap-2">
