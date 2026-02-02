@@ -363,13 +363,16 @@ function Band({ maxSpeed = 50, minSpeed = 0, isMobile = false, cardData }: BandP
             <mesh geometry={nodes.card.geometry}>
               <meshPhysicalMaterial
                 map={badgeTexture}
-                side={THREE.DoubleSide}
+                side={THREE.FrontSide}
                 map-anisotropy={16}
                 clearcoat={isMobile ? 0 : 1}
                 clearcoatRoughness={0.15}
                 roughness={0.9}
                 metalness={0.8}
               />
+            </mesh>
+            <mesh geometry={nodes.card.geometry} position={[0, 0, -0.02]}>
+              <meshStandardMaterial color="#f2f3f6" side={THREE.BackSide} />
             </mesh>
             <mesh geometry={nodes.clip.geometry} material={materials.metal} material-roughness={0.3} />
             <mesh geometry={nodes.clamp.geometry} material={materials.metal} />
