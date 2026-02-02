@@ -14,6 +14,13 @@ from apns_service import (
     send_push,
 )
 from apns2.errors import BadDeviceToken
+from fcm_service import (
+    FcmConfigError,
+    FirebaseError,
+    format_fcm_exception,
+    is_unregistered_fcm_error,
+    send_fcm_push,
+)
 
 logger = logging.getLogger("push_scheduler")
 
@@ -36,11 +43,11 @@ def run_push_scheduler() -> None:
 
 
 def run_push_once() -> None:
+    target_sandbox: bool | None = None
     try:
         target_sandbox = apns_use_sandbox()
     except ApnsConfigError as e:
-        logger.error("APNs config error: %s", e)
-        return
+        logger.warning("APNs config error (iOS pushes disabled): %s", e)
 
     now = datetime.now(timezone.utc)
     limit = int(os.getenv("PUSH_SCHEDULER_BATCH", "200"))
@@ -56,6 +63,7 @@ def run_push_once() -> None:
                     pn.message,
                     pn.scheduled_at,
                     pdt.device_id,
+                    pdt.platform,
                     pdt.token,
                     pdt.sandbox,
                     COALESCE(pk.minecraft_username, 'unknown') AS minecraft_username
@@ -72,7 +80,10 @@ def run_push_once() -> None:
                 WHERE pn.scheduled_at <= :now
                   AND pn.scheduled_at >= pdt.created_at
                   AND pd.id IS NULL
-                  AND pdt.sandbox = :sandbox
+                  AND (
+                        (pdt.platform = 'ios' AND :sandbox IS NOT NULL AND pdt.sandbox = :sandbox)
+                     OR (pdt.platform = 'android')
+                  )
                 ORDER BY pn.scheduled_at ASC
                 LIMIT :limit
                 """
@@ -87,6 +98,7 @@ def run_push_once() -> None:
         token = row["token"]
         device_id = row["device_id"]
         server_name = row["server_name"]
+        platform = str(row["platform"] or "").lower()
         username = row["minecraft_username"]
 
         payload_data = {
@@ -96,7 +108,10 @@ def run_push_once() -> None:
         }
 
         try:
-            send_push(token, default_title, row["message"], payload_data)
+            if platform == "android":
+                send_fcm_push(token, default_title, row["message"], payload_data)
+            else:
+                send_push(token, default_title, row["message"], payload_data)
         except (Unregistered, BadDeviceToken):
             logger.info("Invalid APNs token for device %s on %s; removing", device_id, server_name)
             with engine.begin() as conn:
@@ -109,6 +124,31 @@ def run_push_once() -> None:
                     ),
                     {"device_id": device_id, "token": token},
                 )
+            continue
+        except FirebaseError as e:
+            if is_unregistered_fcm_error(e):
+                logger.info("Invalid FCM token for device %s on %s; removing", device_id, server_name)
+                with engine.begin() as conn:
+                    conn.execute(
+                        text(
+                            """
+                            DELETE FROM push_device_tokens
+                            WHERE device_id = :device_id AND token = :token
+                            """
+                        ),
+                        {"device_id": device_id, "token": token},
+                    )
+                continue
+            logger.warning(
+                "FCM error for %s/%s: %s",
+                server_name,
+                device_id,
+                format_fcm_exception(e),
+                exc_info=True,
+            )
+            continue
+        except FcmConfigError as e:
+            logger.warning("FCM config error: %s", e)
             continue
         except APNsException as e:
             logger.warning(

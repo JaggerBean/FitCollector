@@ -116,6 +116,7 @@ fun OnboardingScreen(
     ) { _ ->
         if (pendingComplete) {
             pendingComplete = false
+            scope.launch { syncAndroidPushRegistrations(context) }
             onComplete()
         }
     }
@@ -691,6 +692,7 @@ fun OnboardingScreen(
                         } else {
                             if (pendingComplete) {
                                 pendingComplete = false
+                                scope.launch { syncAndroidPushRegistrations(context) }
                                 onComplete()
                             }
                         }
@@ -705,6 +707,7 @@ fun OnboardingScreen(
                         showNotificationsPrompt = false
                         if (pendingComplete) {
                             pendingComplete = false
+                            scope.launch { syncAndroidPushRegistrations(context) }
                             onComplete()
                         }
                     }

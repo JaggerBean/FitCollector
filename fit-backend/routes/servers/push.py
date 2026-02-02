@@ -17,6 +17,13 @@ from apns_service import (
     send_push,
 )
 from apns2.errors import BadDeviceToken
+from fcm_service import (
+    FcmConfigError,
+    FirebaseError,
+    format_fcm_exception,
+    is_unregistered_fcm_error,
+    send_fcm_push,
+)
 
 router = APIRouter()
 
@@ -95,14 +102,18 @@ def schedule_push_notification(payload: PushPayload, server_name: str = Depends(
 
 @router.post("/v1/servers/push/send")
 def send_push_now(payload: PushSendPayload, server_name: str = Depends(require_server_access)):
-    target_sandbox = apns_use_sandbox()
+    target_sandbox: bool | None = None
+    try:
+        target_sandbox = apns_use_sandbox()
+    except ApnsConfigError:
+        target_sandbox = None
 
     try:
         with engine.begin() as conn:
             rows = conn.execute(
                 text(
                     """
-                    SELECT token, sandbox
+                    SELECT token, sandbox, platform
                     FROM push_device_tokens
                     WHERE server_name = :server
                     ORDER BY updated_at DESC
@@ -111,14 +122,25 @@ def send_push_now(payload: PushSendPayload, server_name: str = Depends(require_s
                 {"server": server_name},
             ).fetchall()
 
-        eligible = [r for r in rows if bool(r[1]) == target_sandbox]
+        eligible = [
+            r for r in rows
+            if (str(r[2] or "").lower() == "android")
+            or (
+                str(r[2] or "").lower() == "ios"
+                and target_sandbox is not None
+                and bool(r[1]) == target_sandbox
+            )
+        ]
         if not eligible:
             raise HTTPException(status_code=404, detail="No push tokens registered for this environment")
 
         failures = 0
-        for token, _sandbox in eligible:
+        for token, _sandbox, platform in eligible:
             try:
-                send_push(token, payload.title, payload.body, payload.data)
+                if str(platform or "").lower() == "android":
+                    send_fcm_push(token, payload.title, payload.body, payload.data)
+                else:
+                    send_push(token, payload.title, payload.body, payload.data)
             except (Unregistered, BadDeviceToken):
                 with engine.begin() as conn:
                     conn.execute(
@@ -131,13 +153,28 @@ def send_push_now(payload: PushSendPayload, server_name: str = Depends(require_s
                         {"server": server_name, "token": token},
                     )
                 failures += 1
+            except FirebaseError as e:
+                if is_unregistered_fcm_error(e):
+                    with engine.begin() as conn:
+                        conn.execute(
+                            text(
+                                """
+                                DELETE FROM push_device_tokens
+                                WHERE server_name = :server AND token = :token
+                                """
+                            ),
+                            {"server": server_name, "token": token},
+                        )
+                    failures += 1
+                    continue
+                raise HTTPException(status_code=502, detail=f"FCM error: {format_fcm_exception(e)}")
             except APNsException as e:
                 raise HTTPException(status_code=502, detail=f"APNs error: {format_apns_exception(e)}")
 
         return {"status": "sent", "tokens": len(eligible), "failed": failures}
 
-    except ApnsConfigError as e:
-        raise HTTPException(status_code=500, detail=f"APNs config error: {str(e)}")
+    except FcmConfigError as e:
+        raise HTTPException(status_code=500, detail=f"FCM config error: {str(e)}")
     except HTTPException:
         raise
     except Exception as e:

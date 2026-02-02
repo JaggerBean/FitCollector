@@ -51,6 +51,9 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             val context = LocalContext.current
+            LaunchedEffect(Unit) {
+                runCatching { syncAndroidPushRegistrations(context) }
+            }
             FitCollectorTheme(themeMode = "System") {
                 Surface(
                     modifier = Modifier.fillMaxSize(),

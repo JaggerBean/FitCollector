@@ -34,6 +34,7 @@ private const val KEY_TRACKED_TIERS = "tracked_tiers_by_server"
 private const val KEY_NOTIFY_TIERS = "notify_tiers"
 private const val KEY_MILESTONE_NOTIFIED = "milestone_notified"
 private const val KEY_ADMIN_PUSH_BY_SERVER = "admin_push_by_server"
+private const val KEY_FCM_TOKEN = "fcm_token"
 
 private val dateFormatter = DateTimeFormatter.ISO_LOCAL_DATE
 private val CENTRAL_ZONE = ZoneId.of("America/Chicago")
@@ -284,6 +285,16 @@ fun removeInviteCodeForServer(context: Context, server: String) {
     val codes = getInviteCodesByServer(context).toMutableMap()
     codes.remove(server)
     prefs.edit().putString(KEY_INVITE_CODES, Gson().toJson(codes)).apply()
+}
+
+fun getFcmToken(context: Context): String? {
+    val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    return prefs.getString(KEY_FCM_TOKEN, null)
+}
+
+fun setFcmToken(context: Context, token: String?) {
+    val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    prefs.edit().putString(KEY_FCM_TOKEN, token).apply()
 }
 
 fun getServerKey(context: Context, username: String, server: String): String? {

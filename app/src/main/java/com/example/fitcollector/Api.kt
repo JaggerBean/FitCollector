@@ -101,11 +101,24 @@ data class StepsYesterdayResponse(
     val day: String
 )
 
-data class PushNextResponse(
-    val id: Long? = null,
-    val server_name: String? = null,
-    val message: String? = null,
-    val scheduled_at: String? = null
+data class PushTokenRegisterPayload(
+    val device_id: String,
+    val player_api_key: String,
+    val apns_token: String,
+    val sandbox: Boolean = false,
+    val platform: String = "android"
+)
+
+data class PushTokenUnregisterPayload(
+    val device_id: String,
+    val player_api_key: String,
+    val platform: String = "android",
+    val apns_token: String? = null
+)
+
+data class PushTokenResponse(
+    val status: String,
+    val deleted: Int? = null
 )
 
 data class RewardTier(
@@ -165,13 +178,11 @@ interface FitApi {
         @Query("player_api_key") apiKey: String
     ): StepsYesterdayResponse
 
-    @GET("v1/players/push/next")
-    suspend fun getNextPush(
-        @Query("minecraft_username") username: String,
-        @Query("device_id") deviceId: String,
-        @Query("server_name") serverName: String,
-        @Query("player_api_key") apiKey: String
-    ): PushNextResponse
+    @POST("v1/players/push/register-device")
+    suspend fun registerPushDevice(@Body payload: PushTokenRegisterPayload): PushTokenResponse
+
+    @POST("v1/players/push/unregister-device")
+    suspend fun unregisterPushDevice(@Body payload: PushTokenUnregisterPayload): PushTokenResponse
 
     @GET("v1/players/rewards")
     suspend fun getPlayerRewards(

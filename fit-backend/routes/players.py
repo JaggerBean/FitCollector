@@ -275,71 +275,10 @@ def get_next_push_notification(
     server_name: str = Query(...),
     player_api_key: str = Query(...),
 ):
-    """
-    Fetch the next scheduled push message for a server and mark it delivered for this device.
-    Requires the player_api_key for authorization.
-    """
-    token_hash = hash_token(player_api_key)
-    with engine.begin() as conn:
-        valid = conn.execute(
-            text("""
-                SELECT id FROM player_keys
-                WHERE device_id = :device_id
-                  AND minecraft_username = :username
-                  AND server_name = :server
-                  AND active = TRUE
-                  AND key = :key_hash
-                LIMIT 1
-            """),
-            {
-                "device_id": device_id,
-                "username": minecraft_username,
-                "server": server_name,
-                "key_hash": token_hash,
-            },
-        ).fetchone()
-
-        if not valid:
-            raise HTTPException(status_code=403, detail="Invalid player API key")
-
-        row = conn.execute(
-            text("""
-                SELECT pn.id, pn.message, pn.scheduled_at
-                FROM push_notifications pn
-                LEFT JOIN push_deliveries pd
-                  ON pd.notification_id = pn.id
-                 AND pd.device_id = :device_id
-                WHERE pn.server_name = :server
-                  AND pn.scheduled_at <= :now
-                  AND pd.id IS NULL
-                ORDER BY pn.scheduled_at ASC
-                LIMIT 1
-            """),
-            {"server": server_name, "device_id": device_id, "now": datetime.now(timezone.utc)},
-        ).mappings().first()
-
-        if not row:
-            return {"message": None}
-
-        conn.execute(
-            text("""
-                INSERT INTO push_deliveries (notification_id, device_id, minecraft_username, server_name)
-                VALUES (:notification_id, :device_id, :username, :server)
-            """),
-            {
-                "notification_id": row["id"],
-                "device_id": device_id,
-                "username": minecraft_username,
-                "server": server_name,
-            },
-        )
-
-    return {
-        "message": row["message"],
-        "server_name": server_name,
-        "scheduled_at": row["scheduled_at"],
-        "id": row["id"],
-    }
+    raise HTTPException(
+        status_code=410,
+        detail="Deprecated: push polling is disabled. Use APNs/FCM device registration.",
+    )
 
 
 @router.get("/v1/players/rewards")

@@ -246,10 +246,10 @@ class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
 
             try {
                 val currentServers = getSelectedServers(context)
-                checkPushNotifications(context, mcUsername, deviceId, currentServers)
+                syncAndroidPushRegistrations(context)
                 checkMilestoneNotifications(context, mcUsername, deviceId, currentServers, totalSteps, dayStr)
             } catch (e: Exception) {
-                Log.e("SyncWorker", "Push check failed: ${e.message}")
+                Log.e("SyncWorker", "Notification sync failed: ${e.message}")
             }
 
             if (successCount == 0 && errorGroups.isNotEmpty()) {
@@ -311,37 +311,6 @@ class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
         fun cancel(context: Context) {
             WorkManager.getInstance(context).cancelUniqueWork(WORK_NAME)
             Log.d("SyncWorker", "Worker canceled.")
-        }
-    }
-
-    private suspend fun checkPushNotifications(
-        context: Context,
-        mcUsername: String,
-        deviceId: String,
-        servers: List<String>
-    ) {
-        val api = buildApi(BASE_URL, GLOBAL_API_KEY)
-        createPushChannel(context)
-
-        servers.forEach { server ->
-            if (!isAdminPushEnabledForServer(context, server)) return@forEach
-            val key = getServerKey(context, mcUsername, server)
-            if (key.isNullOrBlank()) return@forEach
-
-            try {
-                val resp = api.getNextPush(
-                    username = mcUsername,
-                    deviceId = deviceId,
-                    serverName = server,
-                    apiKey = key
-                )
-                val message = resp.message
-                if (!message.isNullOrBlank()) {
-                    showPushNotification(context, server, message)
-                }
-            } catch (e: Exception) {
-                Log.e("SyncWorker", "Push poll failed for $server: ${e.message}")
-            }
         }
     }
 

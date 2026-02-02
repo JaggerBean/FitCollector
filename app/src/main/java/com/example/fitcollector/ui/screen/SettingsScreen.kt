@@ -191,6 +191,8 @@ fun SettingsScreen(
                 } catch (_: Exception) {}
             }
         }
+
+        runCatching { syncAndroidPushRegistrations(context) }
     }
 
     var allPermissionsGranted by remember { mutableStateOf(false) }
@@ -1057,6 +1059,9 @@ fun SettingsScreen(
                                             onCheckedChange = { enabled ->
                                                 setAdminPushEnabledForServer(context, server, enabled)
                                                 adminPushByServer = getAdminPushByServer(context)
+                                                scope.launch {
+                                                    syncAndroidPushRegistrations(context)
+                                                }
                                             }
                                         )
                                     }

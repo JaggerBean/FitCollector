@@ -8,3 +8,4 @@ google-auth
 requests
 psycopg2-binary
 apns2
+firebase-admin

@@ -1,4 +1,4 @@
-"""Player push notification endpoints (APNs)."""
+"""Player push notification endpoints."""
 
 from fastapi import APIRouter, HTTPException
 from sqlalchemy import text
@@ -15,6 +15,13 @@ from apns_service import (
     send_push,
 )
 from apns2.errors import BadDeviceToken
+from fcm_service import (
+    FcmConfigError,
+    FirebaseError,
+    format_fcm_exception,
+    is_unregistered_fcm_error,
+    send_fcm_push,
+)
 
 router = APIRouter()
 
@@ -93,14 +100,18 @@ def unregister_push_device(request: PushTokenUnregisterRequest):
 @router.post("/v1/players/push/send")
 def send_push_notification(request: PushSendRequest):
     server_name, _ = validate_and_get_server(request.device_id, request.player_api_key)
-    target_sandbox = apns_use_sandbox()
+    target_sandbox: bool | None = None
+    try:
+        target_sandbox = apns_use_sandbox()
+    except ApnsConfigError:
+        target_sandbox = None
 
     try:
         with engine.begin() as conn:
             rows = conn.execute(
                 text(
                     """
-                    SELECT token, sandbox
+                    SELECT token, sandbox, platform
                     FROM push_device_tokens
                     WHERE device_id = :device_id
                       AND server_name = :server_name
@@ -117,7 +128,7 @@ def send_push_notification(request: PushSendRequest):
                 rows = conn.execute(
                     text(
                         """
-                        SELECT token, sandbox
+                        SELECT token, sandbox, platform
                         FROM push_device_tokens
                         WHERE device_id = :device_id
                         ORDER BY updated_at DESC
@@ -126,14 +137,25 @@ def send_push_notification(request: PushSendRequest):
                     {"device_id": request.device_id},
                 ).fetchall()
 
-        eligible = [r for r in rows if bool(r[1]) == target_sandbox]
+        eligible = [
+            r for r in rows
+            if (str(r[2] or "").lower() == "android")
+            or (
+                str(r[2] or "").lower() == "ios"
+                and target_sandbox is not None
+                and bool(r[1]) == target_sandbox
+            )
+        ]
         if not eligible:
             raise HTTPException(status_code=404, detail="No push tokens registered for this environment")
 
         failures = 0
-        for token, _sandbox in eligible:
+        for token, _sandbox, platform in eligible:
             try:
-                send_push(token, request.title, request.body, request.data)
+                if str(platform or "").lower() == "android":
+                    send_fcm_push(token, request.title, request.body, request.data)
+                else:
+                    send_push(token, request.title, request.body, request.data)
             except (Unregistered, BadDeviceToken):
                 with engine.begin() as conn:
                     conn.execute(
@@ -146,6 +168,21 @@ def send_push_notification(request: PushSendRequest):
                         {"device_id": request.device_id, "token": token},
                     )
                 failures += 1
+            except FirebaseError as e:
+                if is_unregistered_fcm_error(e):
+                    with engine.begin() as conn:
+                        conn.execute(
+                            text(
+                                """
+                                DELETE FROM push_device_tokens
+                                WHERE device_id = :device_id AND token = :token
+                                """
+                            ),
+                            {"device_id": request.device_id, "token": token},
+                        )
+                    failures += 1
+                    continue
+                raise HTTPException(status_code=502, detail=f"FCM error: {format_fcm_exception(e)}")
             except APNsException as e:
                 raise HTTPException(status_code=502, detail=f"APNs error: {format_apns_exception(e)}")
 
@@ -155,8 +192,8 @@ def send_push_notification(request: PushSendRequest):
             "failed": failures,
         }
 
-    except ApnsConfigError as e:
-        raise HTTPException(status_code=500, detail=f"APNs config error: {str(e)}")
+    except FcmConfigError as e:
+        raise HTTPException(status_code=500, detail=f"FCM config error: {str(e)}")
     except HTTPException:
         raise
     except Exception as e:
