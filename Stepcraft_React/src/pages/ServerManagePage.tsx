@@ -15,6 +15,7 @@ import {
   getRewards,
   getServerInfo,
   getDaySteps,
+  getAllSteps,
   listBans,
   listPlayers,
   runInactivePrune,
@@ -561,6 +562,14 @@ export default function ServerManagePage() {
                         className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 hover:border-slate-300 dark:border-slate-700 dark:text-slate-200"
                       >
                         Day steps
+                      </button>
+                      <button
+                        type="button"
+                        disabled={actionLoading || !username.trim()}
+                        onClick={() => runAction(() => getAllSteps(token!, decodedName, username.trim()))}
+                        className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 hover:border-slate-300 dark:border-slate-700 dark:text-slate-200"
+                      >
+                        All steps
                       </button>
                     </div>
                   </div>

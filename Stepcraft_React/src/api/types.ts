@@ -37,6 +37,19 @@ export interface DayStepsResponse {
 
 export type YesterdayStepsResponse = DayStepsResponse;
 
+export interface AllStepsResponse {
+  minecraft_username: string;
+  server_name: string;
+  count: number;
+  items: Array<{
+    day: string;
+    steps_today: number;
+    source?: string | null;
+    created_at?: string | null;
+    device_id?: string | null;
+  }>;
+}
+
 export interface BanEntry {
   ban_group_id: string;
   username: string | null;

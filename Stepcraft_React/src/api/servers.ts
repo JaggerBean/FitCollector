@@ -13,6 +13,7 @@ import type {
   PushCreateResponse,
   ClaimStatusResponse,
   DayStepsResponse,
+  AllStepsResponse,
   BansResponse,
   ActionResponse,
   InactivePruneSettingsResponse,
@@ -207,6 +208,20 @@ export async function getDaySteps(
 }
 
 export const getYesterdaySteps = getDaySteps;
+
+export async function getAllSteps(
+  token: string,
+  server: string,
+  username: string,
+  limit = 500,
+): Promise<AllStepsResponse> {
+  const params = new URLSearchParams({ server: server, limit: String(limit) });
+  return apiRequest<AllStepsResponse>(
+    `/v1/servers/players/${encodeURIComponent(username)}/all-steps?${params.toString()}`,
+    {},
+    token,
+  );
+}
 
 export async function listBans(token: string, server: string, limit = 1000): Promise<BansResponse> {
   return apiRequest<BansResponse>(

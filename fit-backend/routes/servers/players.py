@@ -242,6 +242,44 @@ def get_day_steps_server(
     raise HTTPException(status_code=404, detail=f"No step record found for {minecraft_username} on {str(target_day)}.")
 
 
+@router.get("/v1/servers/players/{minecraft_username}/all-steps")
+def get_all_steps_server(
+    minecraft_username: str,
+    server_name: str = Depends(require_server_access),
+    limit: int = Query(default=500, ge=1, le=5000),
+):
+    """
+    List all step ingests for a player on this server.
+    Returns most recent first.
+    """
+    with engine.begin() as conn:
+        rows = conn.execute(
+            text("""
+                SELECT day, steps_today, source, created_at, device_id
+                FROM step_ingest
+                WHERE minecraft_username = :username
+                  AND server_name = :server
+                ORDER BY day DESC, created_at DESC
+                LIMIT :limit
+            """),
+            {"username": minecraft_username, "server": server_name, "limit": limit},
+        ).mappings().all()
+
+    out = []
+    for r in rows:
+        d = dict(r)
+        if d.get("created_at"):
+            d["created_at"] = d["created_at"].astimezone(CENTRAL_TZ).isoformat()
+        out.append(d)
+
+    return {
+        "minecraft_username": minecraft_username,
+        "server_name": server_name,
+        "count": len(out),
+        "items": out,
+    }
+
+
 @router.get("/v1/servers/players/{minecraft_username}/claim-available")
 def get_claim_available(
     minecraft_username: str,
