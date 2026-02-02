@@ -47,8 +47,10 @@ export default function RegisterServerPage() {
     }
 
     if (!serverAddress.trim()) next.serverAddress = "Server address is required.";
-    else if (serverAddress.trim().length < 3 || /\s/.test(serverAddress)) {
-      next.serverAddress = "Enter a valid server address (no spaces).";
+    else if (serverAddress.trim().length < 5) {
+      next.serverAddress = "Server address must be at least 5 characters.";
+    } else if (/\s/.test(serverAddress)) {
+      next.serverAddress = "Server address cannot contain spaces.";
     }
 
     if (!serverVersion.trim()) next.serverVersion = "Server version is required.";
