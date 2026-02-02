@@ -79,6 +79,7 @@ fun SettingsScreen(
     var mcDraft by remember { mutableStateOf(mcUsername) }
     var availableServers by remember { mutableStateOf<List<ServerInfo>>(emptyList()) }
     var selectedServers by remember { mutableStateOf(getSelectedServers(context).toSet()) }
+    var knownSelectedServers by remember { mutableStateOf(selectedServers) }
     var isLoading by remember { mutableStateOf(false) }
     var message by remember { mutableStateOf<Pair<String, Boolean>?>(null) }
     var queuedName by remember { mutableStateOf(getQueuedUsername(context)) }
@@ -157,6 +158,39 @@ fun SettingsScreen(
         notificationTiers = getNotificationTierKeys(context)
         adminPushByServer = getAdminPushByServer(context)
         rewardsLoading = false
+    }
+
+    // Persist server selection immediately and auto-register newly added servers.
+    LaunchedEffect(selectedServers) {
+        if (selectedServers == knownSelectedServers) return@LaunchedEffect
+
+        val previous = knownSelectedServers
+        knownSelectedServers = selectedServers
+        setSelectedServers(context, selectedServers.toList())
+
+        val removed = previous - selectedServers
+        removed.forEach { server ->
+            removeServerKey(context, mcUsername, server)
+        }
+
+        if (mcUsername.isBlank()) return@LaunchedEffect
+        val added = selectedServers - previous
+        added.forEach { serverName ->
+            if (getServerKey(context, mcUsername, serverName) == null) {
+                try {
+                    val invite = inviteCodesByServer[serverName]
+                    val resp = globalApi.register(RegisterPayload(mcUsername, deviceId, serverName, invite))
+                    saveServerKey(context, mcUsername, serverName, resp.player_api_key)
+                } catch (e: HttpException) {
+                    if (e.code() == 409) {
+                        try {
+                            val recoveryResp = globalApi.recoverKey(RegisterPayload(mcUsername, deviceId, serverName))
+                            saveServerKey(context, mcUsername, serverName, recoveryResp.player_api_key)
+                        } catch (_: Exception) {}
+                    }
+                } catch (_: Exception) {}
+            }
+        }
     }
 
     var allPermissionsGranted by remember { mutableStateOf(false) }
@@ -415,6 +449,61 @@ fun SettingsScreen(
                             ) {
                                 Text("Queue for Tomorrow")
                             }
+                        } else if (isChanging && canChangeMc) {
+                            Spacer(Modifier.height(8.dp))
+                            Button(
+                                onClick = {
+                                    val cleaned = mcDraft.trim()
+                                    scope.launch {
+                                        isLoading = true
+                                        try {
+                                            val profile = fetchMinecraftProfile(cleaned)
+                                            if (profile == null || profile.id == null) {
+                                                val details = profile?.errorMessage ?: "no response"
+                                                message = "'$cleaned' is not a valid Minecraft username. API: $details" to false
+                                                return@launch
+                                            }
+
+                                            selectedServers.forEach { serverName ->
+                                                if (getServerKey(context, cleaned, serverName) == null) {
+                                                    try {
+                                                        val invite = inviteCodesByServer[serverName]
+                                                        val resp = globalApi.register(RegisterPayload(cleaned, deviceId, serverName, invite))
+                                                        saveServerKey(context, cleaned, serverName, resp.player_api_key)
+                                                    } catch (e: HttpException) {
+                                                        if (e.code() == 409) {
+                                                            val recoveryResp = globalApi.recoverKey(RegisterPayload(cleaned, deviceId, serverName))
+                                                            saveServerKey(context, cleaned, serverName, recoveryResp.player_api_key)
+                                                        } else {
+                                                            throw e
+                                                        }
+                                                    }
+                                                }
+                                            }
+
+                                            setMinecraftUsername(context, cleaned)
+                                            mcUsername = cleaned
+                                            canChangeMc = canChangeMinecraftUsername(context)
+                                            message = "Username saved." to true
+                                        } catch (e: Exception) {
+                                            message = (e.message ?: "Failed to save username") to false
+                                        } finally {
+                                            isLoading = false
+                                        }
+                                    }
+                                },
+                                enabled = !isLoading,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                if (isLoading) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(20.dp),
+                                        color = MaterialTheme.colorScheme.onPrimary
+                                    )
+                                } else {
+                                    Text("Save Username")
+                                }
+                            }
                         }
                         
                         Spacer(Modifier.height(16.dp))
@@ -454,86 +543,6 @@ fun SettingsScreen(
                         }
 
                         Spacer(Modifier.height(16.dp))
-
-                        val hasChanges = mcDraft != mcUsername || selectedServers != getSelectedServers(context).toSet()
-                        Button(
-                            onClick = {
-                                val cleaned = mcDraft.trim()
-                                if (canChangeMc || cleaned == mcUsername) {
-                                    scope.launch {
-                                        isLoading = true
-                                        try {
-                                                if (cleaned != mcUsername) {
-                                                    val profile = fetchMinecraftProfile(cleaned)
-                                                    if (profile == null || profile.id == null) {
-                                                        val details = profile?.errorMessage ?: "no response"
-                                                        message = "'$cleaned' is not a valid Minecraft username. API: $details" to false
-                                                        isLoading = false
-                                                        return@launch
-                                                    }
-                                                }
-                                            selectedServers.forEach { serverName ->
-                                                if (getServerKey(context, cleaned, serverName) == null) {
-                                                    try {
-                                                        val invite = inviteCodesByServer[serverName]
-                                                        val resp = globalApi.register(RegisterPayload(cleaned, deviceId, serverName, invite))
-                                                        saveServerKey(context, cleaned, serverName, resp.player_api_key)
-                                                    } catch (e: HttpException) {
-                                                        if (e.code() == 409) {
-                                                            try {
-                                                                val recoveryResp = globalApi.recoverKey(RegisterPayload(cleaned, deviceId, serverName))
-                                                                saveServerKey(context, cleaned, serverName, recoveryResp.player_api_key)
-                                                            } catch (ex: Exception) {
-                                                                throw ex
-                                                            }
-                                                        } else throw e
-                                                    }
-                                                }
-                                            }
-
-                                            setMinecraftUsername(context, cleaned)
-                                            setSelectedServers(context, selectedServers.toList())
-                                            mcUsername = cleaned
-                                            queuedName = null
-                                            message = "Settings saved & registered!" to true
-                                        } catch (e: Exception) {
-                                            message = (e.message ?: "Registration failed") to false
-                                        } finally {
-                                            isLoading = false
-                                        }
-                                    }
-                                } else {
-                                    scope.launch {
-                                        isLoading = true
-                                        try {
-                                            val profile = fetchMinecraftProfile(cleaned)
-                                            if (profile == null || profile.id == null) {
-                                                val details = profile?.errorMessage ?: "no response"
-                                                message = "'$cleaned' is not a valid Minecraft username. API: $details" to false
-                                                isLoading = false
-                                                return@launch
-                                            }
-                                            queueMinecraftUsername(context, cleaned)
-                                            queuedName = cleaned
-                                            setSelectedServers(context, selectedServers.toList())
-                                            message = null
-                                        } catch (e: Exception) {
-                                            message = (e.message ?: "Failed to queue username") to false
-                                        } finally {
-                                            isLoading = false
-                                        }
-                                    }
-                                }
-                            },
-                            enabled = hasChanges && !isLoading,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            if (isLoading) CircularProgressIndicator(modifier = Modifier.size(20.dp), color = MaterialTheme.colorScheme.onPrimary)
-                            else {
-                                val text = if (!canChangeMc && mcDraft.trim() != mcUsername) "Queue for Tomorrow" else "Save & Register All"
-                                Text(text)
-                            }
-                        }
 
                         message?.let { (msg, success) ->
                             if (success) {
