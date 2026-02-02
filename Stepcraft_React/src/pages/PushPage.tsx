@@ -32,7 +32,29 @@ const COMMON_TIMEZONES = [
   "Australia/Sydney",
 ];
 
-function formatTimezoneLabel(tz: string): string {
+const PREFERRED_BY_ABBR: Record<string, string> = {
+  UTC: "UTC",
+  EST: "America/New_York",
+  EDT: "America/New_York",
+  CST: "America/Chicago",
+  CDT: "America/Chicago",
+  MST: "America/Denver",
+  MDT: "America/Denver",
+  PST: "America/Los_Angeles",
+  PDT: "America/Los_Angeles",
+  AKST: "America/Anchorage",
+  AKDT: "America/Anchorage",
+  HST: "Pacific/Honolulu",
+  GMT: "Europe/London",
+  BST: "Europe/London",
+  CET: "Europe/Paris",
+  CEST: "Europe/Paris",
+  JST: "Asia/Tokyo",
+  AEST: "Australia/Sydney",
+  AEDT: "Australia/Sydney",
+};
+
+function getTimezoneAbbr(tz: string): string {
   const now = new Date();
   try {
     const parts = new Intl.DateTimeFormat("en-US", {
@@ -42,10 +64,9 @@ function formatTimezoneLabel(tz: string): string {
       minute: "2-digit",
       hour12: false,
     }).formatToParts(now);
-    const abbr = parts.find((part) => part.type === "timeZoneName")?.value ?? "UTC";
-    return `${tz} (${abbr})`;
+    return parts.find((part) => part.type === "timeZoneName")?.value ?? "UTC";
   } catch {
-    return tz;
+    return "UTC";
   }
 }
 
@@ -57,18 +78,44 @@ function canonicalTimezone(tz: string): string {
   }
 }
 
+function scoreTimezoneCandidate(tz: string, abbr: string): number {
+  if (PREFERRED_BY_ABBR[abbr] === tz) return 1000;
+  const commonRank = COMMON_TIMEZONES.indexOf(tz);
+  if (commonRank >= 0) return 500 - commonRank;
+  const depth = tz.split("/").length;
+  return 100 - depth;
+}
+
 function buildTimezoneOptions(): TimezoneOption[] {
   const supported = typeof Intl.supportedValuesOf === "function" ? Intl.supportedValuesOf("timeZone") : [];
-  const seen = new Set<string>();
-  const options: TimezoneOption[] = [];
+  const canonicalCandidates: string[] = [];
+  const seenCanonical = new Set<string>();
 
-  // Add common names first so these win if aliases/canonical collisions exist.
   [...COMMON_TIMEZONES, ...supported].forEach((tz) => {
     const canonical = canonicalTimezone(tz);
-    if (seen.has(canonical)) return;
-    seen.add(canonical);
-    options.push({ value: canonical, label: formatTimezoneLabel(canonical) });
+    if (seenCanonical.has(canonical)) return;
+    seenCanonical.add(canonical);
+    canonicalCandidates.push(canonical);
   });
+
+  // Deduplicate by abbreviation (EST/CST/etc.) and keep only the best-known zone for each.
+  const bestByAbbr = new Map<string, string>();
+  canonicalCandidates.forEach((tz) => {
+    const abbr = getTimezoneAbbr(tz);
+    const current = bestByAbbr.get(abbr);
+    if (!current) {
+      bestByAbbr.set(abbr, tz);
+      return;
+    }
+    if (scoreTimezoneCandidate(tz, abbr) > scoreTimezoneCandidate(current, abbr)) {
+      bestByAbbr.set(abbr, tz);
+    }
+  });
+
+  const options: TimezoneOption[] = Array.from(bestByAbbr.entries()).map(([abbr, tz]) => ({
+    value: tz,
+    label: `${tz} (${abbr})`,
+  }));
 
   return options.sort((a, b) => a.label.localeCompare(b.label));
 }
