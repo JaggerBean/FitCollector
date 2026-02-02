@@ -349,18 +349,15 @@ private struct ResetTimerCard: View {
     let timeRemaining: String
 
     var body: some View {
-        HStack(spacing: 8) {
-            Text("Time Until Daily Step Reset:")
-                .font(.caption)
-                .foregroundColor(AppColors.healthBlue)
-            Text(timeRemaining)
-                .font(.caption)
-                .foregroundColor(AppColors.healthBlue)
-                .fontWeight(.semibold)
-            Spacer()
-        }
-        .padding(10)
-        .background(Color(hex: 0xFFE6F0FF))
+        Text("Time Until Daily Step Reset: \(timeRemaining)")
+            .font(.headline)
+            .foregroundColor(AppColors.healthBlue)
+            .fontWeight(.semibold)
+            .frame(maxWidth: .infinity, alignment: .center)
+            .multilineTextAlignment(.center)
+            .padding(.vertical, 10)
+            .padding(.horizontal, 12)
+        .background(Color(hex: 0xFF2A2938))
         .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
     }
 }
