@@ -177,27 +177,33 @@ function Band({ maxSpeed = 50, minSpeed = 0, isMobile = false, cardData }: BandP
     ctx.drawImage(logo, logoX, logoY, logoW, logoH);
 
     const centerX = cardX + cardW / 2;
-    let y = cardY + cardH * 0.35;
+    let y = cardY + cardH * 0.33;
 
     ctx.textAlign = "center";
     ctx.fillStyle = "#0b1220";
-    ctx.font = "800 84px 'Segoe UI', Arial, sans-serif";
+    ctx.font = "800 96px 'Segoe UI', Arial, sans-serif";
     const headline = cardData.serverName || "Server Registered!";
     ctx.fillText(headline, centerX, y);
 
-    y += 96;
+    y += 110;
     ctx.fillStyle = "#1f8a5b";
-    ctx.font = "700 62px 'Segoe UI', Arial, sans-serif";
+    ctx.font = "700 70px 'Segoe UI', Arial, sans-serif";
     ctx.fillText("Welcome to StepCraft", centerX, y);
 
-    y += 90;
+    y += 100;
     ctx.fillStyle = "#243241";
-    ctx.font = "500 38px 'Segoe UI', Arial, sans-serif";
+    ctx.font = "600 44px 'Segoe UI', Arial, sans-serif";
     const line1 = "Your server is ready to sync steps";
     const line2 = "and rewards with your players.";
     ctx.fillText(line1, centerX, y);
-    y += 52;
+    y += 58;
     ctx.fillText(line2, centerX, y);
+
+    y += 72;
+    ctx.fillStyle = "#2a3a4b";
+    ctx.font = "600 40px 'Segoe UI', Arial, sans-serif";
+    const emailLine = `Email sent to ${cardData.ownerEmail}`;
+    ctx.fillText(emailLine, centerX, y);
 
     ctx.restore();
 
