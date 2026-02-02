@@ -2,7 +2,6 @@ import { useMemo, useState } from "react";
 import type { FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { Layout } from "../components/Layout";
-import ConfirmDialog from "../components/ConfirmDialog";
 import Lanyard from "../components/Lanyard";
 import { useAuthContext } from "../app/AuthContext";
 import { registerServer } from "../api/servers";
@@ -167,13 +166,9 @@ export default function RegisterServerPage() {
           </button>
         </form>
       </div>
-      <ConfirmDialog
-        open={showResult && !!result}
-        title="Server registered"
-        panelClassName="w-[min(96vw,1100px)] max-w-none"
-        contentClassName="text-slate-100"
-        content={
-          result && (
+      {showResult && result && (
+        <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur">
+          <div className="relative flex h-full w-full flex-col items-center justify-center px-6 py-10">
             <Lanyard
               cardContent={
                 <div className="space-y-2">
@@ -200,16 +195,28 @@ export default function RegisterServerPage() {
                 </div>
               }
             />
-          )
-        }
-        confirmLabel="Take me to Dashboard"
-        cancelLabel="Register another server"
-        onConfirm={() => navigate("/dashboard")}
-        onCancel={() => {
-          setShowResult(false);
-          clearForm();
-        }}
-      />
+            <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+              <button
+                type="button"
+                className="rounded-lg border border-slate-700 bg-slate-900/80 px-4 py-2 text-sm font-semibold text-slate-100 hover:border-slate-500"
+                onClick={() => {
+                  setShowResult(false);
+                  clearForm();
+                }}
+              >
+                Register another server
+              </button>
+              <button
+                type="button"
+                className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-emerald-700"
+                onClick={() => navigate("/dashboard")}
+              >
+                Take me to Dashboard
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </Layout>
   );
 }
