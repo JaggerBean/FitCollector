@@ -131,6 +131,7 @@ function Band({ maxSpeed = 50, minSpeed = 0, isMobile = false, cardData }: BandP
   const texture = useTexture(lanyardTexture);
   const logoTexture = useTexture("/logo.png");
   const badgeTexture = useState(() => new THREE.CanvasTexture(document.createElement("canvas")))[0];
+  const badgeBackTexture = useState(() => new THREE.CanvasTexture(document.createElement("canvas")))[0];
   const [curve] = useState(
     () =>
       new THREE.CatmullRomCurve3([
@@ -145,18 +146,18 @@ function Band({ maxSpeed = 50, minSpeed = 0, isMobile = false, cardData }: BandP
 
   useEffect(() => {
     if (!cardData || !logoTexture.image) return;
-    const canvas = document.createElement("canvas");
-    canvas.width = 1024;
-    canvas.height = 1536;
-    const ctx = canvas.getContext("2d");
+    const content = document.createElement("canvas");
+    content.width = 1024;
+    content.height = 1536;
+    const ctx = content.getContext("2d");
     if (!ctx) return;
 
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.clearRect(0, 0, content.width, content.height);
 
-    const cardW = canvas.width * 0.84;
-    const cardH = canvas.height * 0.86;
-    const cardX = (canvas.width - cardW) / 2;
-    const cardY = canvas.height * 0.08;
+    const cardW = content.width * 0.84;
+    const cardH = content.height * 0.86;
+    const cardX = (content.width - cardW) / 2;
+    const cardY = content.height * 0.08;
 
     ctx.save();
     ctx.beginPath();
@@ -232,11 +233,28 @@ function Band({ maxSpeed = 50, minSpeed = 0, isMobile = false, cardData }: BandP
 
     ctx.restore();
 
+    const canvas = document.createElement("canvas");
+    canvas.width = 1024;
+    canvas.height = 1536;
+    const ctx2 = canvas.getContext("2d");
+    if (!ctx2) return;
+
+    // Duplicate horizontally to match split UVs (front/back)
+    ctx2.drawImage(content, 0, 0, canvas.width / 2, canvas.height);
+    ctx2.drawImage(content, canvas.width / 2, 0, canvas.width / 2, canvas.height);
+
     badgeTexture.image = canvas;
     badgeTexture.needsUpdate = true;
-    badgeTexture.flipY = true;
+    badgeTexture.flipY = false;
     badgeTexture.colorSpace = THREE.SRGBColorSpace;
-  }, [cardData, logoTexture, badgeTexture]);
+
+    badgeBackTexture.image = canvas;
+    badgeBackTexture.needsUpdate = true;
+    badgeBackTexture.flipY = false;
+    badgeBackTexture.colorSpace = THREE.SRGBColorSpace;
+    badgeBackTexture.repeat.set(-1, 1);
+    badgeBackTexture.offset.set(1, 0);
+  }, [cardData, logoTexture, badgeTexture, badgeBackTexture]);
 
   function wrapText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number) {
     const words = text.split(" ");
@@ -362,11 +380,26 @@ function Band({ maxSpeed = 50, minSpeed = 0, isMobile = false, cardData }: BandP
             }}
           >
             <mesh geometry={nodes.card.geometry}>
-              <meshStandardMaterial color="#f2f3f6" side={THREE.DoubleSide} />
+              <meshPhysicalMaterial
+                map={badgeTexture}
+                side={THREE.FrontSide}
+                map-anisotropy={16}
+                clearcoat={isMobile ? 0 : 1}
+                clearcoatRoughness={0.15}
+                roughness={0.9}
+                metalness={0.8}
+              />
             </mesh>
-            <mesh position={[0, 0, 0.035]}>
-              <planeGeometry args={[1.05, 1.55]} />
-              <meshBasicMaterial map={badgeTexture} toneMapped={false} transparent alphaTest={0.1} />
+            <mesh geometry={nodes.card.geometry} position={[0, 0, -0.02]}>
+              <meshPhysicalMaterial
+                map={badgeBackTexture}
+                side={THREE.BackSide}
+                map-anisotropy={16}
+                clearcoat={isMobile ? 0 : 1}
+                clearcoatRoughness={0.15}
+                roughness={0.9}
+                metalness={0.8}
+              />
             </mesh>
             <mesh geometry={nodes.clip.geometry} material={materials.metal} material-roughness={0.3} />
             <mesh geometry={nodes.clamp.geometry} material={materials.metal} />
