@@ -170,30 +170,12 @@ export default function RegisterServerPage() {
         <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur">
           <div className="relative flex h-full w-full flex-col items-center justify-center px-6 py-10">
             <Lanyard
-              cardContent={
-                <div className="space-y-2">
-                  <div className="text-[11px] uppercase tracking-wide text-emerald-200/80">Server</div>
-                  <div className="text-sm font-semibold text-white">{result.server_name}</div>
-                  <div className="pt-1 text-[11px] uppercase tracking-wide text-emerald-200/80">API key</div>
-                  <div className="rounded-md border border-emerald-300/40 bg-emerald-950/60 px-2 py-1 font-mono text-[10px] text-emerald-100">
-                    {result.api_key}
-                  </div>
-                  {result.invite_code && (
-                    <>
-                      <div className="pt-1 text-[11px] uppercase tracking-wide text-emerald-200/80">Invite code</div>
-                      <div className="rounded-md border border-emerald-300/40 bg-emerald-950/60 px-2 py-1 font-mono text-[10px] text-emerald-100">
-                        {result.invite_code}
-                      </div>
-                    </>
-                  )}
-                  <div className="pt-2 text-[11px] leading-snug text-emerald-50/80">
-                    Add this key to your StepCraft Minecraft mod configuration on the server to sync steps and rewards.
-                  </div>
-                  <div className="text-[11px] leading-snug text-emerald-50/70">
-                    An email has been sent to {ownerEmail}. If you don’t see it, check spam.
-                  </div>
-                </div>
-              }
+              cardData={{
+                serverName: result.server_name,
+                apiKey: result.api_key,
+                inviteCode: result.invite_code,
+                ownerEmail,
+              }}
             />
             <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
               <button

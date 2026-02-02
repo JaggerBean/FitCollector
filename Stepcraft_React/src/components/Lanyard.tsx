@@ -1,7 +1,7 @@
 /* eslint-disable react/no-unknown-property */
 import { useEffect, useRef, useState } from "react";
 import { Canvas, extend, useFrame } from "@react-three/fiber";
-import { Environment, Html, Lightformer, useGLTF, useTexture } from "@react-three/drei";
+import { Environment, Lightformer, useGLTF, useTexture } from "@react-three/drei";
 import {
   BallCollider,
   CuboidCollider,
@@ -15,7 +15,6 @@ import { MeshLineGeometry, MeshLineMaterial } from "meshline";
 import * as THREE from "three";
 
 import cardGLB from "../assets/lanyard/card.glb";
-import cardTexture from "../assets/lanyard/stepcraft-card.png";
 import lanyardTexture from "../assets/lanyard/stepcraft-lanyard.png";
 
 extend({ MeshLineGeometry, MeshLineMaterial });
@@ -25,7 +24,12 @@ type LanyardProps = {
   gravity?: [number, number, number];
   fov?: number;
   transparent?: boolean;
-  cardContent?: React.ReactNode;
+  cardData?: {
+    serverName: string;
+    apiKey: string;
+    inviteCode?: string | null;
+    ownerEmail: string;
+  };
 };
 
 export default function Lanyard({
@@ -33,7 +37,7 @@ export default function Lanyard({
   gravity = [0, -40, 0],
   fov = 24,
   transparent = true,
-  cardContent,
+  cardData,
 }: LanyardProps) {
   const [isMobile, setIsMobile] = useState<boolean>(() => window.innerWidth < 768);
 
@@ -53,7 +57,7 @@ export default function Lanyard({
       >
         <ambientLight intensity={Math.PI} />
         <Physics gravity={gravity} timeStep={isMobile ? 1 / 30 : 1 / 60}>
-          <Band isMobile={isMobile} cardContent={cardContent} />
+          <Band isMobile={isMobile} cardData={cardData} />
         </Physics>
         <Environment blur={0.75}>
           <Lightformer
@@ -94,10 +98,15 @@ type BandProps = {
   maxSpeed?: number;
   minSpeed?: number;
   isMobile?: boolean;
-  cardContent?: React.ReactNode;
+  cardData?: {
+    serverName: string;
+    apiKey: string;
+    inviteCode?: string | null;
+    ownerEmail: string;
+  };
 };
 
-function Band({ maxSpeed = 50, minSpeed = 0, isMobile = false, cardContent }: BandProps) {
+function Band({ maxSpeed = 50, minSpeed = 0, isMobile = false, cardData }: BandProps) {
   const band = useRef<any>(null);
   const fixed = useRef<any>(null);
   const j1 = useRef<any>(null);
@@ -120,7 +129,8 @@ function Band({ maxSpeed = 50, minSpeed = 0, isMobile = false, cardContent }: Ba
 
   const { nodes, materials } = useGLTF(cardGLB) as any;
   const texture = useTexture(lanyardTexture);
-  const badgeTexture = useTexture(cardTexture);
+  const logoTexture = useTexture("/logo.png");
+  const badgeTexture = useState(() => new THREE.CanvasTexture(document.createElement("canvas")))[0];
   const [curve] = useState(
     () =>
       new THREE.CatmullRomCurve3([
@@ -133,12 +143,111 @@ function Band({ maxSpeed = 50, minSpeed = 0, isMobile = false, cardContent }: Ba
   const [dragged, drag] = useState<false | THREE.Vector3>(false);
   const [hovered, hover] = useState(false);
 
+  useEffect(() => {
+    if (!cardData || !logoTexture.image) return;
+    const canvas = document.createElement("canvas");
+    canvas.width = 1024;
+    canvas.height = 1536;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    ctx.fillStyle = "#f2f3f6";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    const logo = logoTexture.image as HTMLImageElement;
+    const maxLogoW = canvas.width * 0.5;
+    const maxLogoH = canvas.height * 0.28;
+    const logoScale = Math.min(maxLogoW / logo.width, maxLogoH / logo.height);
+    const logoW = logo.width * logoScale;
+    const logoH = logo.height * logoScale;
+    const logoX = (canvas.width - logoW) / 2;
+    const logoY = canvas.height * 0.18;
+    ctx.drawImage(logo, logoX, logoY, logoW, logoH);
+
+    ctx.fillStyle = "#0b1220";
+    ctx.font = "bold 44px 'Segoe UI', Arial, sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("StepCraft", canvas.width / 2, canvas.height * 0.52);
+
+    const left = canvas.width * 0.12;
+    const right = canvas.width * 0.88;
+    let y = canvas.height * 0.6;
+
+    const label = (text: string) => {
+      ctx.fillStyle = "#335f4c";
+      ctx.font = "600 24px 'Segoe UI', Arial, sans-serif";
+      ctx.textAlign = "left";
+      ctx.fillText(text, left, y);
+      y += 32;
+    };
+
+    const value = (text: string) => {
+      ctx.fillStyle = "#0f1b2b";
+      ctx.font = "500 26px 'Segoe UI', Arial, sans-serif";
+      ctx.textAlign = "left";
+      const lines = wrapText(ctx, text, right - left);
+      for (const line of lines) {
+        ctx.fillText(line, left, y);
+        y += 34;
+      }
+      y += 12;
+    };
+
+    label("SERVER");
+    value(cardData.serverName);
+
+    label("API KEY");
+    value(cardData.apiKey);
+
+    if (cardData.inviteCode) {
+      label("INVITE CODE");
+      value(cardData.inviteCode);
+    }
+
+    ctx.fillStyle = "#2b3a4a";
+    ctx.font = "400 22px 'Segoe UI', Arial, sans-serif";
+    ctx.textAlign = "left";
+    const msg1 = "Use this key in the StepCraft Minecraft mod configuration.";
+    const msg2 = `Email sent to ${cardData.ownerEmail}. Check spam if needed.`;
+    for (const line of wrapText(ctx, msg1, right - left)) {
+      ctx.fillText(line, left, y);
+      y += 30;
+    }
+    y += 8;
+    for (const line of wrapText(ctx, msg2, right - left)) {
+      ctx.fillText(line, left, y);
+      y += 30;
+    }
+
+    badgeTexture.image = canvas;
+    badgeTexture.needsUpdate = true;
+    badgeTexture.flipY = false;
+    badgeTexture.colorSpace = THREE.SRGBColorSpace;
+  }, [cardData, logoTexture, badgeTexture]);
+
+  function wrapText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number) {
+    const words = text.split(" ");
+    const lines: string[] = [];
+    let line = "";
+    for (const word of words) {
+      const test = line ? `${line} ${word}` : word;
+      if (ctx.measureText(test).width > maxWidth && line) {
+        lines.push(line);
+        line = word;
+      } else {
+        line = test;
+      }
+    }
+    if (line) lines.push(line);
+    return lines;
+  }
+
   useRopeJoint(fixed, j1, [[0, 0, 0], [0, 0, 0], 1]);
   useRopeJoint(j1, j2, [[0, 0, 0], [0, 0, 0], 1]);
   useRopeJoint(j2, j3, [[0, 0, 0], [0, 0, 0], 1]);
   useSphericalJoint(j3, card, [
     [0, 0, 0],
-    [0, 1.1, 0],
+    [0, 1.35, 0],
   ]);
 
   useEffect(() => {
@@ -199,15 +308,15 @@ function Band({ maxSpeed = 50, minSpeed = 0, isMobile = false, cardContent }: Ba
           <BallCollider args={[0.1]} />
         </RigidBody>
         <RigidBody
-          position={[1.85, -0.1, 0]}
+          position={[1.8, -0.2, 0]}
           ref={card}
           {...segmentProps}
           type={dragged ? ("kinematicPosition" as RigidBodyProps["type"]) : ("dynamic" as RigidBodyProps["type"])}
         >
           <CuboidCollider args={[0.8, 1.125, 0.01]} />
           <group
-            scale={2.6}
-            position={[0, -1.1, -0.05]}
+            scale={2.8}
+            position={[0, -1.2, -0.05]}
             onPointerOver={() => hover(true)}
             onPointerOut={() => hover(false)}
             onPointerUp={(e: any) => {
@@ -231,19 +340,6 @@ function Band({ maxSpeed = 50, minSpeed = 0, isMobile = false, cardContent }: Ba
             </mesh>
             <mesh geometry={nodes.clip.geometry} material={materials.metal} material-roughness={0.3} />
             <mesh geometry={nodes.clamp.geometry} material={materials.metal} />
-            {cardContent && (
-              <Html
-                transform
-                position={[0, -0.1, 0.08]}
-                rotation={[0, 0, 0]}
-                distanceFactor={1.35}
-                style={{ pointerEvents: "none" }}
-              >
-                <div className="w-56 rounded-xl border border-white/15 bg-slate-950/80 p-3 text-[12px] text-slate-100 shadow-lg">
-                  {cardContent}
-                </div>
-              </Html>
-            )}
           </group>
         </RigidBody>
       </group>
