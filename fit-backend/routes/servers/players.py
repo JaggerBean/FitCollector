@@ -180,7 +180,15 @@ def get_yesterday_steps_server(
             {"username": minecraft_username, "server": server_name, "day": target_day}
         ).fetchone()
     if row:
-        return {"minecraft_username": minecraft_username, "server_name": server_name, "day": str(target_day), "steps_yesterday": row[0]}
+        steps_value = row[0]
+        # Keep legacy key for existing clients, but prefer steps_today for new callers.
+        return {
+            "minecraft_username": minecraft_username,
+            "server_name": server_name,
+            "day": str(target_day),
+            "steps_today": steps_value,
+            "steps_yesterday": steps_value,
+        }
     else:
         raise HTTPException(status_code=404, detail=f"No step record found for {minecraft_username} on {str(target_day)}.")
 

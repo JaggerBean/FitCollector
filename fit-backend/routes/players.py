@@ -653,7 +653,14 @@ def get_steps_yesterday(minecraft_username: str = Query(...), player_api_key: st
                 }
             ).fetchone()
         steps = steps_row[0] if steps_row else 0
-        return {"minecraft_username": minecraft_username, "server_name": server_name, "steps_yesterday": steps, "day": str(yesterday)}
+        # Keep legacy key for existing clients, but prefer steps_today for new callers.
+        return {
+            "minecraft_username": minecraft_username,
+            "server_name": server_name,
+            "steps_today": steps,
+            "steps_yesterday": steps,
+            "day": str(yesterday),
+        }
     except HTTPException:
         raise
     except Exception as e:

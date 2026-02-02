@@ -31,7 +31,8 @@ export interface YesterdayStepsResponse {
   minecraft_username: string;
   server_name: string;
   day: string;
-  steps_yesterday: number;
+  steps_today: number;
+  steps_yesterday?: number;
 }
 
 export interface BanEntry {
