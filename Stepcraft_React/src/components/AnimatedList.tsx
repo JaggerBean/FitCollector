@@ -13,7 +13,7 @@ type AnimatedListProps<T> = {
 type AnimatedItemProps = {
   children: React.ReactNode;
   index: number;
-  rootRef: React.RefObject<HTMLDivElement>;
+  rootRef: React.RefObject<HTMLDivElement | null>;
   itemClassName?: string;
 };
 
