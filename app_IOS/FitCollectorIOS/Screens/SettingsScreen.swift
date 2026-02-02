@@ -712,14 +712,14 @@ private struct PublicServerPickerSheet: View {
     var body: some View {
         NavigationStack {
             VStack(alignment: .leading, spacing: 14) {
-                Text("Select public servers to join.")
+                Text("Select servers to join.")
                     .font(.caption)
                     .foregroundColor(.secondary)
 
                 HStack(spacing: 8) {
                     Image(systemName: "magnifyingglass")
                         .foregroundColor(.secondary)
-                    TextField("Search Public Servers", text: $searchText)
+                    TextField("Search Servers", text: $searchText)
                 }
                 .padding(12)
                 .background(Color(.secondarySystemBackground))
@@ -727,15 +727,33 @@ private struct PublicServerPickerSheet: View {
 
                 ScrollView {
                     VStack(alignment: .leading, spacing: 10) {
-                        if publicServers.isEmpty {
-                            Text("No public servers available.")
+                        if privateServers.isEmpty && publicServers.isEmpty {
+                            Text("No servers available.")
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                                 .padding(.vertical, 8)
                         } else {
-                            ForEach(publicServers, id: \.serverName) { server in
-                                ServerRow(server: server.serverName, selected: selectedServers.contains(server.serverName)) {
-                                    toggleServer(server.serverName)
+                            if !privateServers.isEmpty {
+                                Text("Private servers")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                                    .padding(.top, 2)
+                                ForEach(privateServers, id: \.serverName) { server in
+                                    ServerRow(server: server.serverName, selected: selectedServers.contains(server.serverName)) {
+                                        toggleServer(server.serverName)
+                                    }
+                                }
+                            }
+
+                            if !publicServers.isEmpty {
+                                Text("Public servers")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                                    .padding(.top, privateServers.isEmpty ? 2 : 8)
+                                ForEach(publicServers, id: \.serverName) { server in
+                                    ServerRow(server: server.serverName, selected: selectedServers.contains(server.serverName)) {
+                                        toggleServer(server.serverName)
+                                    }
                                 }
                             }
                         }
@@ -761,6 +779,12 @@ private struct PublicServerPickerSheet: View {
     private var publicServers: [ServerInfo] {
         filteredServers
             .filter { !privateServerNames.contains($0.serverName) }
+            .sorted { $0.serverName.lowercased() < $1.serverName.lowercased() }
+    }
+
+    private var privateServers: [ServerInfo] {
+        filteredServers
+            .filter { privateServerNames.contains($0.serverName) }
             .sorted { $0.serverName.lowercased() < $1.serverName.lowercased() }
     }
 
