@@ -17,6 +17,7 @@ struct SettingsScreen: View {
     @State private var showPublicServerPicker = false
     @State private var showManageJoinedServers = false
     @State private var showScanner = false
+    @State private var scannerSheetID = UUID()
     @State private var showTrackDialog = false
     @State private var showNotifyDialog = false
     @State private var selectedTrackServer: String?
@@ -243,7 +244,10 @@ struct SettingsScreen: View {
             titleVisibility: .visible
         ) {
             Button("Enter Invite Code") { showInviteCodeEntry = true }
-            Button("Scan QR Code") { showScanner = true }
+            Button("Scan QR Code") {
+                scannerSheetID = UUID()
+                showScanner = true
+            }
             Button("Cancel", role: .cancel) {}
         } message: {
             Text("Choose how to join a private server.")
@@ -263,7 +267,8 @@ struct SettingsScreen: View {
         }
         .sheet(isPresented: $showManageJoinedServers) {
             ManageJoinedServersSheet(
-                selectedServers: $selectedServers
+                selectedServers: $selectedServers,
+                privateServerNames: Set(appState.inviteCodesByServer.keys)
             )
         }
         .sheet(isPresented: $showNotifyDialog) {
@@ -296,6 +301,7 @@ struct SettingsScreen: View {
                             showScanner = false
                         }
                     )
+                    .id(scannerSheetID)
                     .ignoresSafeArea()
 
                     VStack {
@@ -398,17 +404,22 @@ struct SettingsScreen: View {
         }
         do {
             let response = try await ApiClient.shared.getAvailableServers(inviteCode: code)
-            let existing = Set(availableServers.map { $0.serverName })
-            let newServers = response.servers.filter { !existing.contains($0.serverName) }
-            if newServers.isEmpty {
+            if response.servers.isEmpty {
                 serverStatusMessage = ("Invite code not found.", false)
                 return
             }
-            availableServers.append(contentsOf: newServers)
-            newServers.forEach { appState.setInviteCode(server: $0.serverName, code: code) }
-            newServers.forEach { selectedServers.insert($0.serverName) }
+
+            let existing = Set(availableServers.map { $0.serverName })
+            let uniqueNew = response.servers.filter { !existing.contains($0.serverName) }
+            availableServers.append(contentsOf: uniqueNew)
+
+            response.servers.forEach { server in
+                appState.setInviteCode(server: server.serverName, code: code)
+                selectedServers.insert(server.serverName)
+            }
+
             inviteCode = ""
-            let serverDisplayName = newServers.count == 1 ? newServers[0].serverName : "multiple servers"
+            let serverDisplayName = response.servers.count == 1 ? response.servers[0].serverName : "multiple servers"
             serverStatusMessage = ("You registered to \(serverDisplayName)", true)
             await autoSaveServers()
         } catch {
@@ -764,7 +775,16 @@ private struct PublicServerPickerSheet: View {
 
 private struct ManageJoinedServersSheet: View {
     @Binding var selectedServers: Set<String>
+    let privateServerNames: Set<String>
     @Environment(\.dismiss) private var dismiss
+
+    private var privateSelected: [String] {
+        selectedServers.filter { privateServerNames.contains($0) }.sorted()
+    }
+
+    private var publicSelected: [String] {
+        selectedServers.filter { !privateServerNames.contains($0) }.sorted()
+    }
 
     var body: some View {
         NavigationStack {
@@ -781,14 +801,37 @@ private struct ManageJoinedServersSheet: View {
                                 .foregroundColor(.secondary)
                                 .padding(.vertical, 8)
                         } else {
-                            ForEach(Array(selectedServers).sorted(), id: \.self) { server in
-                                HStack(spacing: 10) {
-                                    Text(server)
-                                    Spacer()
-                                    Button("Remove", role: .destructive) {
-                                        selectedServers.remove(server)
-                                    }
+                            if !privateSelected.isEmpty {
+                                Text("Private servers")
                                     .font(.caption)
+                                    .foregroundColor(.secondary)
+                                    .padding(.top, 2)
+                                ForEach(privateSelected, id: \.self) { server in
+                                    HStack(spacing: 10) {
+                                        Text(server)
+                                        Spacer()
+                                        Button("Remove", role: .destructive) {
+                                            selectedServers.remove(server)
+                                        }
+                                        .font(.caption)
+                                    }
+                                }
+                            }
+
+                            if !publicSelected.isEmpty {
+                                Text("Public servers")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                                    .padding(.top, 6)
+                                ForEach(publicSelected, id: \.self) { server in
+                                    HStack(spacing: 10) {
+                                        Text(server)
+                                        Spacer()
+                                        Button("Remove", role: .destructive) {
+                                            selectedServers.remove(server)
+                                        }
+                                        .font(.caption)
+                                    }
                                 }
                             }
                         }
