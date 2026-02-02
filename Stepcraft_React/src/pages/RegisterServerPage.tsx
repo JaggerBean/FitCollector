@@ -64,7 +64,7 @@ export default function RegisterServerPage() {
 
   return (
     <Layout>
-      <div className="max-w-3xl">
+      <div className="mx-auto w-full max-w-4xl">
         <form
           onSubmit={onSubmit}
           className="rounded-3xl border border-emerald-100 bg-white p-8 shadow-xl dark:border-slate-800 dark:bg-slate-900"
