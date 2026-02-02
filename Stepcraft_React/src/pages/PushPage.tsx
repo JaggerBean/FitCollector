@@ -13,6 +13,66 @@ function toLocalDateTime(date: Date) {
   )}`;
 }
 
+type TimezoneOption = {
+  value: string;
+  label: string;
+};
+
+const COMMON_TIMEZONES = [
+  "UTC",
+  "America/New_York",
+  "America/Chicago",
+  "America/Denver",
+  "America/Los_Angeles",
+  "Europe/London",
+  "Europe/Paris",
+  "Europe/Berlin",
+  "Europe/Warsaw",
+  "Asia/Tokyo",
+  "Australia/Sydney",
+];
+
+function formatTimezoneLabel(tz: string): string {
+  const now = new Date();
+  try {
+    const parts = new Intl.DateTimeFormat("en-US", {
+      timeZone: tz,
+      timeZoneName: "short",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    }).formatToParts(now);
+    const abbr = parts.find((part) => part.type === "timeZoneName")?.value ?? "UTC";
+    return `${tz} (${abbr})`;
+  } catch {
+    return tz;
+  }
+}
+
+function canonicalTimezone(tz: string): string {
+  try {
+    return new Intl.DateTimeFormat("en-US", { timeZone: tz }).resolvedOptions().timeZone;
+  } catch {
+    return tz;
+  }
+}
+
+function buildTimezoneOptions(): TimezoneOption[] {
+  const supported = typeof Intl.supportedValuesOf === "function" ? Intl.supportedValuesOf("timeZone") : [];
+  const seen = new Set<string>();
+  const options: TimezoneOption[] = [];
+
+  // Add common names first so these win if aliases/canonical collisions exist.
+  [...COMMON_TIMEZONES, ...supported].forEach((tz) => {
+    const canonical = canonicalTimezone(tz);
+    if (seen.has(canonical)) return;
+    seen.add(canonical);
+    options.push({ value: canonical, label: formatTimezoneLabel(canonical) });
+  });
+
+  return options.sort((a, b) => a.label.localeCompare(b.label));
+}
+
 export default function PushPage() {
   const { serverName } = useParams();
   const { token } = useAuthContext();
@@ -26,6 +86,14 @@ export default function PushPage() {
   const [loading, setLoading] = useState(false);
 
   const decodedName = useMemo(() => (serverName ? decodeURIComponent(serverName) : ""), [serverName]);
+  const timezoneOptions = useMemo(() => buildTimezoneOptions(), []);
+
+  useEffect(() => {
+    if (!timezoneOptions.length) return;
+    if (!timezoneOptions.some((option) => option.value === timezone)) {
+      setTimezone(timezoneOptions[0].value);
+    }
+  }, [timezone, timezoneOptions]);
 
   useEffect(() => {
     if (!token || !decodedName) return;
@@ -111,12 +179,18 @@ export default function PushPage() {
           </div>
           <div>
             <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Timezone</label>
-            <input
+            <select
               className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
               value={timezone}
               onChange={(event) => setTimezone(event.target.value)}
               required
-            />
+            >
+              {timezoneOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
         <button
