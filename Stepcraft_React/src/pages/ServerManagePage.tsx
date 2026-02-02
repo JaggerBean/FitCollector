@@ -193,7 +193,7 @@ export default function ServerManagePage() {
     if (!token || !decodedName) return;
     if (!dryRun) {
       const shouldContinue = await requestConfirm(
-        `Run inactive cleanup on ${decodedName}? This will ${pruneSettings?.mode === "wipe" ? "permanently delete" : "deactivate"} players.`,
+        `Run inactive cleanup on ${decodedName}? ${pruneSettings?.mode === "wipe" ? "This permanently deletes player keys, step records, claims, and ban records for inactive players." : "This deactivates inactive players (they can re-register later), but does not delete their data."}`,
         { title: "Run cleanup", confirmLabel: "Run now", tone: "danger" },
       );
       if (!shouldContinue) return;
@@ -214,7 +214,7 @@ export default function ServerManagePage() {
     if (!token || !decodedName || !info) return;
     const nextLabel = info.is_private ? "public" : "private";
     const shouldContinue = await requestConfirm(
-      `Switch ${decodedName} to ${nextLabel}? This changes who can join the server.`,
+      `Switch ${decodedName} to ${nextLabel}? ${nextLabel === "private" ? "New users will need an invite code to join." : "Anyone will be able to find and join this server."}`,
       { title: "Change privacy", confirmLabel: "Confirm" },
     );
     if (!shouldContinue) return;
@@ -660,7 +660,7 @@ export default function ServerManagePage() {
                         disabled={actionLoading || !username.trim()}
                         onClick={() =>
                           confirmAndRunAction(
-                            `Ban ${username.trim()} on ${decodedName}? This removes access until unbanned.`,
+                            `Ban ${username.trim()} on ${decodedName}? This bans the username AND all associated devices for this server until unbanned.`,
                             () => banPlayer(token!, decodedName, username.trim(), reason.trim() || "broke code of conduct"),
                           )
                         }
@@ -673,7 +673,7 @@ export default function ServerManagePage() {
                         disabled={actionLoading || !username.trim()}
                         onClick={() =>
                           confirmAndRunAction(
-                            `Unban ${username.trim()} on ${decodedName}?`,
+                            `Unban ${username.trim()} on ${decodedName}? This removes the username ban and all associated device bans for this server.`,
                             () => unbanPlayer(token!, decodedName, username.trim()),
                           )
                         }
@@ -686,7 +686,7 @@ export default function ServerManagePage() {
                         disabled={actionLoading || !username.trim()}
                         onClick={() =>
                           confirmAndRunAction(
-                            `Wipe ${username.trim()} on ${decodedName}? This is irreversible.`,
+                            `Wipe ${username.trim()} on ${decodedName}? This permanently deletes player keys, step records, claims, and bans for this username on this server.`,
                             () => wipePlayer(token!, decodedName, username.trim()),
                           )
                         }

@@ -48,7 +48,7 @@ export default function DashboardPage() {
   const onReopenServer = async (serverName: string) => {
     if (!token) return;
     const shouldContinue = await requestConfirm(
-      `Re-open ${serverName}? A new API key will be generated and must be updated in your server config.`,
+      `Re-open ${serverName}? This issues a NEW server API key and invalidates the old one. You must update your server config immediately or services will fail.`,
       { title: "Re-open server", confirmLabel: "Re-open", tone: "danger" },
     );
     if (!shouldContinue) return;
