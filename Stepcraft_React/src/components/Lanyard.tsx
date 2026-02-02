@@ -48,7 +48,7 @@ export default function Lanyard({
   }, []);
 
   return (
-    <div className="relative h-screen w-full">
+    <div className="relative h-[80vh] w-[min(90vw,720px)] overflow-hidden rounded-[32px] bg-gradient-to-b from-emerald-900/40 via-slate-950/10 to-slate-950/80 shadow-2xl">
       <Canvas
         camera={{ position, fov }}
         dpr={[1, isMobile ? 1.5 : 2]}
@@ -90,7 +90,6 @@ export default function Lanyard({
           />
         </Environment>
       </Canvas>
-      <div className="pointer-events-none absolute inset-0 rounded-[28px] bg-gradient-to-b from-emerald-900/30 via-slate-950/10 to-slate-950/80" />
     </div>
   );
 }
