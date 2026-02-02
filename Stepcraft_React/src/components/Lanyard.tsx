@@ -151,8 +151,7 @@ function Band({ maxSpeed = 50, minSpeed = 0, isMobile = false, cardData }: BandP
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    ctx.fillStyle = "#f2f3f6";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     const cardW = canvas.width * 0.84;
     const cardH = canvas.height * 0.86;
@@ -161,7 +160,9 @@ function Band({ maxSpeed = 50, minSpeed = 0, isMobile = false, cardData }: BandP
 
     ctx.save();
     ctx.beginPath();
-    roundRect(ctx, cardX, cardY, cardW, cardH, 80);
+    roundRect(ctx, cardX, cardY, cardW, cardH, 100);
+    ctx.fillStyle = "#f2f3f6";
+    ctx.fill();
     ctx.clip();
 
     const logo = logoTexture.image as HTMLImageElement;
@@ -233,7 +234,7 @@ function Band({ maxSpeed = 50, minSpeed = 0, isMobile = false, cardData }: BandP
 
     badgeTexture.image = canvas;
     badgeTexture.needsUpdate = true;
-    badgeTexture.flipY = false;
+    badgeTexture.flipY = true;
     badgeTexture.colorSpace = THREE.SRGBColorSpace;
   }, [cardData, logoTexture, badgeTexture]);
 
@@ -364,8 +365,8 @@ function Band({ maxSpeed = 50, minSpeed = 0, isMobile = false, cardData }: BandP
               <meshStandardMaterial color="#f2f3f6" side={THREE.DoubleSide} />
             </mesh>
             <mesh position={[0, 0, 0.035]}>
-              <planeGeometry args={[1.6, 2.25]} />
-              <meshBasicMaterial map={badgeTexture} toneMapped={false} />
+              <planeGeometry args={[1.05, 1.55]} />
+              <meshBasicMaterial map={badgeTexture} toneMapped={false} transparent alphaTest={0.1} />
             </mesh>
             <mesh geometry={nodes.clip.geometry} material={materials.metal} material-roughness={0.3} />
             <mesh geometry={nodes.clamp.geometry} material={materials.metal} />
