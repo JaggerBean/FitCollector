@@ -349,16 +349,59 @@ private struct ResetTimerCard: View {
     let timeRemaining: String
 
     var body: some View {
-        Text("Time Until Daily Step Reset: \(timeRemaining)")
-            .font(.headline)
-            .foregroundColor(AppColors.healthBlue)
-            .fontWeight(.semibold)
-            .frame(maxWidth: .infinity, alignment: .center)
-            .multilineTextAlignment(.center)
-            .padding(.vertical, 10)
-            .padding(.horizontal, 12)
+        HStack(spacing: 6) {
+            Text("Time Until Daily Step Reset:")
+                .font(.headline)
+                .foregroundColor(AppColors.healthBlue)
+                .fontWeight(.semibold)
+            Text(timeRemaining)
+                .font(.headline)
+                .fontWeight(.bold)
+                .fontDesign(.monospaced)
+                .foregroundColor(timerColor())
+        }
+        .frame(maxWidth: .infinity, alignment: .center)
+        .multilineTextAlignment(.center)
+        .padding(.vertical, 10)
+        .padding(.horizontal, 12)
         .background(Color(hex: 0xFF2A2938))
         .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+    }
+
+    private func timerColor() -> Color {
+        let totalSeconds = max(0, parseSeconds(timeRemaining))
+        let maxSeconds = 6 * 60 * 60
+        let progress = CGFloat(maxSeconds - min(totalSeconds, maxSeconds)) / CGFloat(maxSeconds)
+
+        let blue = (r: CGFloat(33.0 / 255.0), g: CGFloat(150.0 / 255.0), b: CGFloat(243.0 / 255.0))
+        let orange = (r: CGFloat(1.0), g: CGFloat(152.0 / 255.0), b: CGFloat(0.0))
+        let red = (r: CGFloat(244.0 / 255.0), g: CGFloat(67.0 / 255.0), b: CGFloat(54.0 / 255.0))
+
+        if progress < 0.5 {
+            let t = progress * 2.0
+            return Color(
+                red: lerp(blue.r, orange.r, t),
+                green: lerp(blue.g, orange.g, t),
+                blue: lerp(blue.b, orange.b, t)
+            )
+        } else {
+            let t = (progress - 0.5) * 2.0
+            return Color(
+                red: lerp(orange.r, red.r, t),
+                green: lerp(orange.g, red.g, t),
+                blue: lerp(orange.b, red.b, t)
+            )
+        }
+    }
+
+    private func parseSeconds(_ text: String) -> Int {
+        let parts = text.split(separator: ":").compactMap { Int($0) }
+        guard parts.count == 3 else { return 0 }
+        return parts[0] * 3600 + parts[1] * 60 + parts[2]
+    }
+
+    private func lerp(_ a: CGFloat, _ b: CGFloat, _ t: CGFloat) -> CGFloat {
+        a + (b - a) * t
     }
 }
 
