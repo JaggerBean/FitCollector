@@ -68,7 +68,7 @@ struct ClaimStatusResponse: Codable {
     }
 }
 
-struct StepsTodayResponse: Codable {
+struct StepsTodayResponse: Decodable {
     let minecraftUsername: String
     let serverName: String
     let stepsToday: Int
@@ -87,9 +87,11 @@ struct StepsTodayResponse: Codable {
         minecraftUsername = try container.decode(String.self, forKey: .minecraftUsername)
         serverName = try container.decode(String.self, forKey: .serverName)
         day = try container.decode(String.self, forKey: .day)
-        stepsToday =
-            (try? container.decode(Int.self, forKey: .stepsToday))
-            ?? (try container.decode(Int.self, forKey: .stepsYesterday))
+        if let today = try? container.decode(Int.self, forKey: .stepsToday) {
+            stepsToday = today
+        } else {
+            stepsToday = try container.decode(Int.self, forKey: .stepsYesterday)
+        }
     }
 }
 
