@@ -73,10 +73,20 @@ function getTimezoneAbbr(tz: string): string {
 
 function getTimezoneOffsetMinutes(tz: string): number {
   try {
-    const now = new Date();
-    const asText = now.toLocaleString("en-US", { timeZone: tz });
-    const asDate = new Date(asText);
-    return Math.round((asDate.getTime() - now.getTime()) / 60000);
+    const parts = new Intl.DateTimeFormat("en-US", {
+      timeZone: tz,
+      timeZoneName: "shortOffset",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    }).formatToParts(new Date());
+    const raw = parts.find((part) => part.type === "timeZoneName")?.value ?? "GMT+0";
+    const match = raw.match(/^GMT([+-])(\d{1,2})(?::?(\d{2}))?$/);
+    if (!match) return 0;
+    const sign = match[1] === "-" ? -1 : 1;
+    const hours = Number(match[2] || "0");
+    const minutes = Number(match[3] || "0");
+    return sign * (hours * 60 + minutes);
   } catch {
     return 0;
   }
