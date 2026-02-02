@@ -261,9 +261,9 @@ function Band({ maxSpeed = 50, minSpeed = 0, isMobile = false, cardData }: BandP
     ctx.quadraticCurveTo(x, y, x + r, y);
   }
 
-  useRopeJoint(fixed, j1, [[0, 0, 0], [0, 0, 0], 1]);
-  useRopeJoint(j1, j2, [[0, 0, 0], [0, 0, 0], 1]);
-  useRopeJoint(j2, j3, [[0, 0, 0], [0, 0, 0], 1]);
+  useRopeJoint(fixed, j1, [[0, 0, 0], [0, 0, 0], 1.8]);
+  useRopeJoint(j1, j2, [[0, 0, 0], [0, 0, 0], 1.8]);
+  useRopeJoint(j2, j3, [[0, 0, 0], [0, 0, 0], 1.8]);
   useSphericalJoint(j3, card, [
     [0, 0, 0],
     [0, 1.98, 0],
@@ -315,7 +315,7 @@ function Band({ maxSpeed = 50, minSpeed = 0, isMobile = false, cardData }: BandP
 
   return (
     <>
-      <group position={[0, 7.6, 0]}>
+      <group position={[0, 9.6, 0]}>
         <RigidBody ref={fixed} position={[0, 0.6, 0]} {...segmentProps} type={"fixed" as RigidBodyProps["type"]} />
         <RigidBody position={[0.5, 0, 0]} ref={j1} {...segmentProps} type={"dynamic" as RigidBodyProps["type"]}>
           <BallCollider args={[0.1]} />
@@ -327,7 +327,7 @@ function Band({ maxSpeed = 50, minSpeed = 0, isMobile = false, cardData }: BandP
           <BallCollider args={[0.1]} />
         </RigidBody>
         <RigidBody
-          position={[1.7, -3.2, 0]}
+          position={[1.7, -4.2, 0]}
           ref={card}
           {...segmentProps}
           type={dragged ? ("kinematicPosition" as RigidBodyProps["type"]) : ("dynamic" as RigidBodyProps["type"])}
@@ -335,7 +335,7 @@ function Band({ maxSpeed = 50, minSpeed = 0, isMobile = false, cardData }: BandP
           <CuboidCollider args={[0.8, 1.125, 0.01]} />
           <group
             scale={3.9}
-            position={[0, -3.6, -0.06]}
+            position={[0, -4.6, -0.06]}
             onPointerOver={() => hover(true)}
             onPointerOut={() => hover(false)}
             onPointerUp={(e: any) => {
