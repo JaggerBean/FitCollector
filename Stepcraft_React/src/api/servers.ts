@@ -79,6 +79,30 @@ export async function reopenServer(token: string, server: string): Promise<Regis
   );
 }
 
+export async function pauseServer(token: string, server: string): Promise<ActionResponse> {
+  return apiRequest<ActionResponse>(
+    `/v1/servers/${encodeURIComponent(server)}/pause`,
+    { method: "POST" },
+    token,
+  );
+}
+
+export async function resumeServer(token: string, server: string): Promise<ActionResponse> {
+  return apiRequest<ActionResponse>(
+    `/v1/servers/${encodeURIComponent(server)}/resume`,
+    { method: "POST" },
+    token,
+  );
+}
+
+export async function deleteServer(token: string, server: string): Promise<ActionResponse> {
+  return apiRequest<ActionResponse>(
+    `/v1/servers/${encodeURIComponent(server)}`,
+    { method: "DELETE" },
+    token,
+  );
+}
+
 export async function getServerInfo(token: string, server: string): Promise<ServerInfo> {
   return apiRequest<ServerInfo>(`/v1/servers/info?server=${encodeURIComponent(server)}`, {}, token);
 }

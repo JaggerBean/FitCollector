@@ -1,6 +1,6 @@
 """User-owned servers list endpoint (Bearer token required)."""
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import text
 
 from database import engine
@@ -68,3 +68,147 @@ def list_owned_servers(user=Depends(require_user)):
         servers.append(item)
 
     return {"servers": servers}
+
+
+@router.post("/v1/servers/{server_name}/pause")
+def pause_server(server_name: str, user=Depends(require_user)):
+    _ensure_owner(server_name, user["id"])
+    with engine.begin() as conn:
+        _backfill_api_owner(conn, server_name, user["id"])
+        result = conn.execute(
+            text("""
+                UPDATE api_keys
+                SET active = FALSE
+                WHERE server_name = :server
+                  AND owner_user_id = :user_id
+            """),
+            {"server": server_name, "user_id": user["id"]},
+        )
+    return {
+        "ok": True,
+        "server_name": server_name,
+        "keys_deactivated": result.rowcount,
+        "message": f"Server '{server_name}' paused.",
+    }
+
+
+@router.post("/v1/servers/{server_name}/resume")
+def resume_server(server_name: str, user=Depends(require_user)):
+    _ensure_owner(server_name, user["id"])
+    with engine.begin() as conn:
+        _backfill_api_owner(conn, server_name, user["id"])
+        key_row = conn.execute(
+            text("""
+                SELECT id
+                FROM api_keys
+                WHERE server_name = :server
+                  AND owner_user_id = :user_id
+                ORDER BY created_at DESC
+                LIMIT 1
+            """),
+            {"server": server_name, "user_id": user["id"]},
+        ).fetchone()
+        if not key_row:
+            raise HTTPException(status_code=404, detail="No API key found for this server")
+
+        conn.execute(
+            text("""
+                UPDATE api_keys
+                SET active = FALSE
+                WHERE server_name = :server
+                  AND owner_user_id = :user_id
+            """),
+            {"server": server_name, "user_id": user["id"]},
+        )
+        conn.execute(
+            text("UPDATE api_keys SET active = TRUE WHERE id = :id"),
+            {"id": key_row[0]},
+        )
+
+    return {
+        "ok": True,
+        "server_name": server_name,
+        "message": f"Server '{server_name}' resumed.",
+    }
+
+
+@router.delete("/v1/servers/{server_name}")
+def delete_server(server_name: str, user=Depends(require_user)):
+    _ensure_owner(server_name, user["id"])
+    try:
+        with engine.begin() as conn:
+            _backfill_api_owner(conn, server_name, user["id"])
+            conn.execute(
+                text("DELETE FROM push_deliveries WHERE server_name = :server"),
+                {"server": server_name},
+            )
+            conn.execute(
+                text("DELETE FROM push_notifications WHERE server_name = :server"),
+                {"server": server_name},
+            )
+            conn.execute(
+                text("DELETE FROM push_device_tokens WHERE server_name = :server"),
+                {"server": server_name},
+            )
+            conn.execute(
+                text("DELETE FROM step_claims WHERE server_name = :server"),
+                {"server": server_name},
+            )
+            conn.execute(
+                text("DELETE FROM step_ingest WHERE server_name = :server"),
+                {"server": server_name},
+            )
+            conn.execute(
+                text("DELETE FROM player_keys WHERE server_name = :server"),
+                {"server": server_name},
+            )
+            conn.execute(
+                text("DELETE FROM bans WHERE server_name = :server"),
+                {"server": server_name},
+            )
+            conn.execute(
+                text("DELETE FROM key_recovery_audit WHERE server_name = :server"),
+                {"server": server_name},
+            )
+            conn.execute(
+                text("DELETE FROM server_rewards WHERE server_name = :server"),
+                {"server": server_name},
+            )
+            conn.execute(
+                text("DELETE FROM api_keys WHERE server_name = :server"),
+                {"server": server_name},
+            )
+            result = conn.execute(
+                text("DELETE FROM servers WHERE server_name = :server AND owner_user_id = :user_id"),
+                {"server": server_name, "user_id": user["id"]},
+            )
+            if result.rowcount == 0:
+                raise HTTPException(status_code=404, detail=f"Server '{server_name}' not found")
+
+        return {"ok": True, "message": f"Server '{server_name}' deleted."}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to delete server: {str(e)}")
+
+
+def _ensure_owner(server_name: str, user_id: int) -> None:
+    with engine.begin() as conn:
+        row = conn.execute(
+            text("SELECT id FROM servers WHERE server_name = :server AND owner_user_id = :user_id"),
+            {"server": server_name, "user_id": user_id},
+        ).fetchone()
+        if not row:
+            raise HTTPException(status_code=403, detail="Not authorized for this server")
+
+
+def _backfill_api_owner(conn, server_name: str, user_id: int) -> None:
+    conn.execute(
+        text("""
+            UPDATE api_keys
+            SET owner_user_id = :user_id
+            WHERE owner_user_id IS NULL
+              AND server_name = :server
+        """),
+        {"user_id": user_id, "server": server_name},
+    )

@@ -4,7 +4,7 @@ import { QRCodeCanvas } from "qrcode.react";
 import { Layout } from "../components/Layout";
 import ConfirmDialog from "../components/ConfirmDialog";
 import { useAuthContext } from "../app/AuthContext";
-import { getOwnedServers, reopenServer } from "../api/servers";
+import { deleteServer, getOwnedServers, pauseServer, reopenServer, resumeServer } from "../api/servers";
 import type { ServerSummary } from "../api/types";
 
 type ConfirmState = {
@@ -22,6 +22,9 @@ export default function DashboardPage() {
   const [error, setError] = useState<string | null>(null);
   const [reopenKey, setReopenKey] = useState<{ server: string; key: string } | null>(null);
   const [reopenLoading, setReopenLoading] = useState<string | null>(null);
+  const [pauseLoading, setPauseLoading] = useState<string | null>(null);
+  const [resumeLoading, setResumeLoading] = useState<string | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState<string | null>(null);
   const [confirmState, setConfirmState] = useState<ConfirmState | null>(null);
 
   useEffect(() => {
@@ -63,6 +66,66 @@ export default function DashboardPage() {
       setError((err as Error).message);
     } finally {
       setReopenLoading(null);
+    }
+  };
+
+  const onPauseServer = async (serverName: string) => {
+    if (!token) return;
+    const shouldContinue = await requestConfirm(
+      `Pause ${serverName}? This disables the API key so players cannot sync until you resume.`,
+      { title: "Pause server", confirmLabel: "Pause server" },
+    );
+    if (!shouldContinue) return;
+    setPauseLoading(serverName);
+    setError(null);
+    try {
+      await pauseServer(token, serverName);
+      const refreshed = await getOwnedServers(token);
+      setServers(refreshed.servers);
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setPauseLoading(null);
+    }
+  };
+
+  const onResumeServer = async (serverName: string) => {
+    if (!token) return;
+    const shouldContinue = await requestConfirm(
+      `Resume ${serverName}? This re-activates the last API key so players can sync again.`,
+      { title: "Resume server", confirmLabel: "Resume server" },
+    );
+    if (!shouldContinue) return;
+    setResumeLoading(serverName);
+    setError(null);
+    try {
+      await resumeServer(token, serverName);
+      const refreshed = await getOwnedServers(token);
+      setServers(refreshed.servers);
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setResumeLoading(null);
+    }
+  };
+
+  const onDeleteServer = async (serverName: string) => {
+    if (!token) return;
+    const shouldContinue = await requestConfirm(
+      `Permanently delete ${serverName}? This removes ALL data (players, steps, rewards, push history, and API keys). This cannot be undone.`,
+      { title: "Delete server", confirmLabel: "Delete permanently", tone: "danger" },
+    );
+    if (!shouldContinue) return;
+    setDeleteLoading(serverName);
+    setError(null);
+    try {
+      await deleteServer(token, serverName);
+      const refreshed = await getOwnedServers(token);
+      setServers(refreshed.servers);
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setDeleteLoading(null);
     }
   };
 
@@ -137,15 +200,31 @@ export default function DashboardPage() {
               >
                 Push notifications
               </Link>
+              <button
+                type="button"
+                onClick={() => onPauseServer(server.server_name)}
+                disabled={pauseLoading === server.server_name}
+                className="rounded-lg border border-amber-200 px-3 py-2 text-sm font-medium text-amber-700 hover:border-amber-300 disabled:opacity-70 dark:border-amber-500/40 dark:text-amber-200"
+              >
+                {pauseLoading === server.server_name ? "Pausing..." : "Pause server"}
+              </button>
+              <button
+                type="button"
+                onClick={() => onDeleteServer(server.server_name)}
+                disabled={deleteLoading === server.server_name}
+                className="rounded-lg border border-red-200 px-3 py-2 text-sm font-medium text-red-700 hover:border-red-300 disabled:opacity-70 dark:border-red-500/40 dark:text-red-200"
+              >
+                {deleteLoading === server.server_name ? "Deleting..." : "Delete server"}
+              </button>
             </div>
           </div>
         ))}
       </div>
       {deletedServers.length > 0 && (
         <div className="mt-10">
-          <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Deleted servers</h2>
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Inactive servers</h2>
           <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-            These servers no longer have an active API key.
+            These servers are paused. You can resume them or issue a new API key.
           </p>
           <div className="mt-4 grid gap-4 md:grid-cols-2">
             {deletedServers.map((server) => (
@@ -160,9 +239,17 @@ export default function DashboardPage() {
                   {server.server_address || "No address"} · {server.server_version || "Unknown"}
                 </div>
                 <div className="mt-2 inline-flex items-center rounded-full bg-red-50 px-3 py-1 text-xs font-semibold text-red-700 dark:bg-red-900/30 dark:text-red-200">
-                  Deleted
+                  Inactive
                 </div>
-                <div className="mt-4">
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => onResumeServer(server.server_name)}
+                    disabled={resumeLoading === server.server_name}
+                    className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-700 hover:border-emerald-300 hover:bg-emerald-100 disabled:opacity-70 dark:border-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-200"
+                  >
+                    {resumeLoading === server.server_name ? "Resuming..." : "Resume server"}
+                  </button>
                   <button
                     type="button"
                     onClick={() => onReopenServer(server.server_name)}
@@ -170,6 +257,14 @@ export default function DashboardPage() {
                     className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-700 hover:border-emerald-300 hover:bg-emerald-100 disabled:opacity-70 dark:border-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-200"
                   >
                     {reopenLoading === server.server_name ? "Re-opening..." : "Re-open server"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onDeleteServer(server.server_name)}
+                    disabled={deleteLoading === server.server_name}
+                    className="rounded-lg border border-red-200 px-3 py-2 text-sm font-medium text-red-700 hover:border-red-300 disabled:opacity-70 dark:border-red-500/40 dark:text-red-200"
+                  >
+                    {deleteLoading === server.server_name ? "Deleting..." : "Delete server"}
                   </button>
                 </div>
               </div>
