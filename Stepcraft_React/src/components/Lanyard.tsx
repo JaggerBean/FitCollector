@@ -228,23 +228,6 @@ function Band({ maxSpeed = 50, minSpeed = 0, isMobile = false, cardData }: BandP
     badgeBackTexture.wrapT = THREE.ClampToEdgeWrapping;
   }, [cardData, logoTexture, badgeTexture, badgeBackTexture]);
 
-  function wrapText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number) {
-    const words = text.split(" ");
-    const lines: string[] = [];
-    let line = "";
-    for (const word of words) {
-      const test = line ? `${line} ${word}` : word;
-      if (ctx.measureText(test).width > maxWidth && line) {
-        lines.push(line);
-        line = word;
-      } else {
-        line = test;
-      }
-    }
-    if (line) lines.push(line);
-    return lines;
-  }
-
   function roundRect(
     ctx: CanvasRenderingContext2D,
     x: number,
