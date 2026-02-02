@@ -23,6 +23,7 @@ struct SettingsScreen: View {
     @State private var selectedTrackServer: String?
     @State private var selectedNotifyServer: String?
     @State private var notificationsAuthorized = false
+    @State private var pushRegisteredAt: String? = nil
     @State private var usernameStatusMessage: (String, Bool)?
     @State private var serverStatusMessage: (String, Bool)?
     private let noServersSelectedMessage = "No servers selected. Sync is disabled until you add one."
@@ -199,6 +200,11 @@ struct SettingsScreen: View {
                             showNotifyDialog = true
                         }
                         .buttonStyle(PillPrimaryButton())
+
+                        Text(pushStatusText)
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                            .padding(.top, 4)
                     }
 
                     SectionHeader(title: "Milestones")
@@ -359,6 +365,7 @@ struct SettingsScreen: View {
             notificationsAuthorized = try await NotificationManager.shared.requestAuthorization()
             if notificationsAuthorized {
                 AppState.registerPushTokenIfPossible()
+                await refreshPushRegistrationStatus()
             }
         } catch {
             notificationsAuthorized = false
@@ -369,6 +376,27 @@ struct SettingsScreen: View {
         let center = UNUserNotificationCenter.current()
         let settings = await center.notificationSettings()
         notificationsAuthorized = settings.authorizationStatus == .authorized || settings.authorizationStatus == .provisional
+        await refreshPushRegistrationStatus()
+    }
+
+    private func refreshPushRegistrationStatus() async {
+        pushRegisteredAt = AppState.loadPushRegisteredAt()
+    }
+
+    private var pushStatusText: String {
+        if !notificationsAuthorized {
+            return "Push status: Notifications disabled."
+        }
+        if AppState.loadPushToken() == nil {
+            return "Push status: Waiting for device token."
+        }
+        if AppState.anyPlayerApiKey() == nil {
+            return "Push status: Register to a server to enable push."
+        }
+        if let stamp = pushRegisteredAt, !stamp.isEmpty {
+            return "Push status: Registered (\(stamp))."
+        }
+        return "Push status: Pending registration."
     }
 
     private func loadServers() async {

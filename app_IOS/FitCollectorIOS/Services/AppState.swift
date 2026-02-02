@@ -276,6 +276,14 @@ final class AppState: ObservableObject {
         UserDefaults.standard.string(forKey: Keys.pushToken)
     }
 
+    static func storePushRegisteredAt(_ timestamp: String) {
+        UserDefaults.standard.set(timestamp, forKey: Keys.pushRegisteredAt)
+    }
+
+    static func loadPushRegisteredAt() -> String? {
+        UserDefaults.standard.string(forKey: Keys.pushRegisteredAt)
+    }
+
     static func anyPlayerApiKey() -> String? {
         let keys = loadServerKeys()
         return keys.values.first
@@ -302,6 +310,8 @@ final class AppState: ObservableObject {
                     token: token,
                     isSandbox: isSandbox
                 )
+                let stamp = ISO8601DateFormatter().string(from: Date())
+                storePushRegisteredAt(stamp)
             } catch {
                 print("Failed to register push token: \(error)")
             }
@@ -329,6 +339,7 @@ final class AppState: ObservableObject {
         static let notifyTiers = "notify_tiers_by_server"
         static let milestoneNotified = "milestone_notified_by_key"
         static let pushToken = "apns_push_token"
+        static let pushRegisteredAt = "push_registered_at"
     }
     private static func loadSelectedServers() -> [String] {
         guard let data = UserDefaults.standard.data(forKey: Keys.selectedServers) else { return [] }
