@@ -22,6 +22,42 @@ export default function RegisterServerPage() {
   const [result, setResult] = useState<RegisterServerResponse | null>(null);
   const [showResult, setShowResult] = useState(false);
   const [showApiKey, setShowApiKey] = useState(false);
+  const [touched, setTouched] = useState({
+    serverName: false,
+    ownerName: false,
+    ownerEmail: false,
+    serverAddress: false,
+    serverVersion: false,
+  });
+  const showError = (key: keyof typeof touched, value: string) => {
+    return touched[key] || value.trim().length > 0;
+  };
+
+  const errors = useMemo(() => {
+    const next: Record<string, string> = {};
+    if (!serverName.trim()) next.serverName = "Server name is required.";
+    else if (serverName.trim().length < 3) next.serverName = "Server name must be at least 3 characters.";
+
+    if (!ownerName.trim()) next.ownerName = "Owner name is required.";
+    else if (ownerName.trim().length < 2) next.ownerName = "Owner name must be at least 2 characters.";
+
+    if (!ownerEmail.trim()) next.ownerEmail = "Owner email is required.";
+    else if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(ownerEmail.trim())) {
+      next.ownerEmail = "Enter a valid email address.";
+    }
+
+    if (!serverAddress.trim()) next.serverAddress = "Server address is required.";
+    else if (serverAddress.trim().length < 3 || /\s/.test(serverAddress)) {
+      next.serverAddress = "Enter a valid server address (no spaces).";
+    }
+
+    if (!serverVersion.trim()) next.serverVersion = "Server version is required.";
+    else if (!/^\d+(\.\d+){1,3}$/.test(serverVersion.trim())) {
+      next.serverVersion = "Use a version like 1.20.4.";
+    }
+
+    return next;
+  }, [serverName, ownerName, ownerEmail, serverAddress, serverVersion]);
 
   const canSubmit = useMemo(() => {
     return Boolean(
@@ -29,9 +65,10 @@ export default function RegisterServerPage() {
         ownerName.trim() &&
         ownerEmail.trim() &&
         serverAddress.trim() &&
-        serverVersion.trim(),
+        serverVersion.trim() &&
+        Object.keys(errors).length === 0,
     );
-  }, [serverName, ownerName, ownerEmail, serverAddress, serverVersion]);
+  }, [serverName, ownerName, ownerEmail, serverAddress, serverVersion, errors]);
 
   useEffect(() => {
     if (!token) return;
@@ -48,6 +85,14 @@ export default function RegisterServerPage() {
   const onSubmit = async (event: FormEvent) => {
     event.preventDefault();
     if (!token) return;
+    setTouched({
+      serverName: true,
+      ownerName: true,
+      ownerEmail: true,
+      serverAddress: true,
+      serverVersion: true,
+    });
+    if (Object.keys(errors).length > 0) return;
     setError(null);
     setLoading(true);
     try {
@@ -103,9 +148,21 @@ export default function RegisterServerPage() {
               <input
                 className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
                 value={serverName}
-                onChange={(event) => setServerName(event.target.value)}
+                onChange={(event) => {
+                  setServerName(event.target.value);
+                  if (!touched.serverName) {
+                    setTouched((prev) => ({ ...prev, serverName: true }));
+                  }
+                }}
+                onBlur={() => setTouched((prev) => ({ ...prev, serverName: true }))}
+                aria-invalid={showError("serverName", serverName) && !!errors.serverName}
+                minLength={3}
+                title="Server name must be at least 3 characters."
                 required
               />
+              {showError("serverName", serverName) && errors.serverName && (
+                <div className="mt-1 text-xs text-red-600 dark:text-red-300">{errors.serverName}</div>
+              )}
             </div>
             <div className="grid gap-4 md:grid-cols-2">
               <div>
@@ -113,9 +170,21 @@ export default function RegisterServerPage() {
                 <input
                   className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
                   value={ownerName}
-                  onChange={(event) => setOwnerName(event.target.value)}
+                  onChange={(event) => {
+                    setOwnerName(event.target.value);
+                    if (!touched.ownerName) {
+                      setTouched((prev) => ({ ...prev, ownerName: true }));
+                    }
+                  }}
+                  onBlur={() => setTouched((prev) => ({ ...prev, ownerName: true }))}
+                  aria-invalid={showError("ownerName", ownerName) && !!errors.ownerName}
+                  minLength={2}
+                  title="Owner name must be at least 2 characters."
                   required
                 />
+                {showError("ownerName", ownerName) && errors.ownerName && (
+                  <div className="mt-1 text-xs text-red-600 dark:text-red-300">{errors.ownerName}</div>
+                )}
               </div>
               <div>
                 <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Owner email</label>
@@ -123,9 +192,19 @@ export default function RegisterServerPage() {
                   className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
                   type="email"
                   value={ownerEmail}
-                  onChange={(event) => setOwnerEmail(event.target.value)}
+                  onChange={(event) => {
+                    setOwnerEmail(event.target.value);
+                    if (!touched.ownerEmail) {
+                      setTouched((prev) => ({ ...prev, ownerEmail: true }));
+                    }
+                  }}
+                  onBlur={() => setTouched((prev) => ({ ...prev, ownerEmail: true }))}
+                  aria-invalid={showError("ownerEmail", ownerEmail) && !!errors.ownerEmail}
                   required
                 />
+                {showError("ownerEmail", ownerEmail) && errors.ownerEmail && (
+                  <div className="mt-1 text-xs text-red-600 dark:text-red-300">{errors.ownerEmail}</div>
+                )}
               </div>
             </div>
             <div className="grid gap-4 md:grid-cols-2">
@@ -134,20 +213,44 @@ export default function RegisterServerPage() {
                 <input
                   className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
                   value={serverAddress}
-                  onChange={(event) => setServerAddress(event.target.value)}
+                  onChange={(event) => {
+                    setServerAddress(event.target.value);
+                    if (!touched.serverAddress) {
+                      setTouched((prev) => ({ ...prev, serverAddress: true }));
+                    }
+                  }}
                   placeholder="mc.example.com"
+                  onBlur={() => setTouched((prev) => ({ ...prev, serverAddress: true }))}
+                  aria-invalid={showError("serverAddress", serverAddress) && !!errors.serverAddress}
+                  pattern="\\S+"
+                  title="Server address cannot contain spaces."
                   required
                 />
+                {showError("serverAddress", serverAddress) && errors.serverAddress && (
+                  <div className="mt-1 text-xs text-red-600 dark:text-red-300">{errors.serverAddress}</div>
+                )}
               </div>
               <div>
                 <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Server version</label>
                 <input
                   className="mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
                   value={serverVersion}
-                  onChange={(event) => setServerVersion(event.target.value)}
+                  onChange={(event) => {
+                    setServerVersion(event.target.value);
+                    if (!touched.serverVersion) {
+                      setTouched((prev) => ({ ...prev, serverVersion: true }));
+                    }
+                  }}
                   placeholder="1.20.4"
+                  onBlur={() => setTouched((prev) => ({ ...prev, serverVersion: true }))}
+                  aria-invalid={showError("serverVersion", serverVersion) && !!errors.serverVersion}
+                  pattern="\\d+(\\.\\d+){1,3}"
+                  title="Use a version like 1.20.4."
                   required
                 />
+                {showError("serverVersion", serverVersion) && errors.serverVersion && (
+                  <div className="mt-1 text-xs text-red-600 dark:text-red-300">{errors.serverVersion}</div>
+                )}
               </div>
             </div>
             <div className="rounded-xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm text-emerald-700 dark:border-emerald-700/40 dark:bg-emerald-900/20 dark:text-emerald-200">
