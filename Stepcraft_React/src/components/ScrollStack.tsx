@@ -65,6 +65,7 @@ const ScrollStack: React.FC<ScrollStackProps> = ({
   const maxVirtualScrollRef = useRef(0);
   const lastScrollYRef = useRef(0);
   const isInViewRef = useRef(false);
+  const rootRef = useRef<HTMLDivElement | null>(null);
   const wheelHandlerRef = useRef<((event: WheelEvent) => void) | null>(null);
   const inViewHandlerRef = useRef<(() => void) | null>(null);
   const resizeHandlerRef = useRef<(() => void) | null>(null);
@@ -325,10 +326,13 @@ const ScrollStack: React.FC<ScrollStackProps> = ({
       };
 
       updateInView();
+      rootRef.current = root;
       inViewHandlerRef.current = updateInView;
       wheelHandlerRef.current = wheelHandler;
       window.addEventListener("scroll", updateInView, { passive: true });
-      window.addEventListener("wheel", wheelHandler, { passive: false });
+      if (root) {
+        root.addEventListener("wheel", wheelHandler, { passive: false });
+      }
       const updateCache = () => {
         const rootTop = scrollerRef.current
           ? scrollerRef.current.getBoundingClientRect().top + window.scrollY
@@ -363,7 +367,7 @@ const ScrollStack: React.FC<ScrollStackProps> = ({
           window.removeEventListener("scroll", inViewHandler);
         }
         if (wheelHandler) {
-          window.removeEventListener("wheel", wheelHandler);
+          rootRef.current?.removeEventListener("wheel", wheelHandler);
         }
         window.removeEventListener("scroll", handleScroll);
         const resizeHandler = resizeHandlerRef.current;
