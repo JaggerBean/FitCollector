@@ -260,7 +260,7 @@ const scenes = useMemo(
               <div className="flex flex-wrap items-end justify-between gap-6">
                 <div>
                   <div className="text-xs uppercase tracking-[0.28em] text-emerald-300/80">What players experience</div>
-                  <h2 className="mt-3 text-2xl font-semibold text-white">A simple loop: steps → rewards → login.</h2>
+                  <h2 className="mt-3 text-2xl font-semibold text-white">A simple loop: steps → login → rewards.</h2>
                   <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-300">
                     Players don’t need a tutorial. They hit a goal, claim a reward, and feel progress. That loop is what
                     keeps communities alive—especially between big updates.
@@ -275,7 +275,7 @@ const scenes = useMemo(
               <div className="mt-8">
                 <DragGallery
                   items={[
-                    { label: "Daily goals & streaks" },
+                    { label: "Daily goals" },
                     { label: "Reward claim flow" },
                     { label: "Progress tiers" },
                     { label: "Server offers (ranks/boosts)" },

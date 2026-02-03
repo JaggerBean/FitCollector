@@ -76,6 +76,23 @@ export function PitchScrollScene({ scenes }: { scenes: Scene[] }) {
   const baseIndex = Math.min(sceneCount - 1, Math.floor(scaled));
   const t = clamp01(scaled - baseIndex); // 0..1 within current step
 
+  const onScrollHintClick = () => {
+    const wrap = wrapRef.current;
+    if (!wrap) return;
+
+    const rect = wrap.getBoundingClientRect();
+    const vh = window.innerHeight || 1;
+    const total = rect.height - vh;
+    if (total <= 0) return;
+
+    const nextIndex = active >= sceneCount - 1 ? sceneCount : active + 1;
+    const targetP = clamp01((nextIndex + 0.02) / sceneCount);
+    const targetTop = window.scrollY + rect.top;
+    const targetY = targetTop + targetP * total;
+
+    window.scrollTo({ top: targetY, behavior: "smooth" });
+  };
+
   return (
     <div ref={wrapRef} className="relative min-h-[320vh]">
       <div className="sticky top-0 h-screen w-full overflow-hidden rounded-3xl border border-slate-800/60 bg-slate-950/95">
@@ -163,30 +180,35 @@ export function PitchScrollScene({ scenes }: { scenes: Scene[] }) {
           </div>
         </div>
 
-        <div
-          aria-hidden="true"
+        <button
+          type="button"
+          aria-label="Keep scrolling"
+          onClick={onScrollHintClick}
           className={[
-            "pointer-events-none absolute bottom-6 left-1/2 -translate-x-1/2 transition-all duration-300",
+            "absolute bottom-6 left-1/2 z-20 -translate-x-1/2 transition-all duration-300",
             isPinned && p < 0.985 ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3",
           ].join(" ")}
         >
-          <div className="grid h-11 w-11 place-items-center rounded-full border border-slate-700/60 bg-slate-950/35 text-slate-300/80 shadow-[0_10px_30px_rgba(0,0,0,0.35)] backdrop-blur">
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              className="h-5 w-5 motion-safe:animate-bounce"
-              style={{ animationDuration: "1.9s" }}
-            >
-              <path
-                d="M12 5v11m0 0 6-6m-6 6-6-6"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
+          <div className="flex flex-col items-center gap-2">
+            <div className="grid h-11 w-11 place-items-center rounded-full border border-slate-700/60 bg-slate-950/35 text-slate-300/80 shadow-[0_10px_30px_rgba(0,0,0,0.35)] backdrop-blur">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                className="h-5 w-5 motion-safe:animate-bounce"
+                style={{ animationDuration: "1.9s" }}
+              >
+                <path
+                  d="M12 5v11m0 0 6-6m-6 6-6-6"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </div>
+            <div className="text-[11px] uppercase tracking-[0.3em] text-slate-400">Keep scrolling</div>
           </div>
-        </div>
+        </button>
       </div>
     </div>
   );
