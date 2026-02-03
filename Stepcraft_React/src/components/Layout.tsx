@@ -7,6 +7,9 @@ export function Layout({ children }: { children: ReactNode }) {
   const location = useLocation();
   const showDashboard =
     isAuthenticated && location.pathname !== "/dashboard" && location.pathname !== "/";
+  const serverMatch = location.pathname.match(/^\/servers\/([^/]+)/);
+  const currentServer = serverMatch ? decodeURIComponent(serverMatch[1]) : null;
+  const showAudit = Boolean(isAuthenticated && currentServer);
 
   return (
     <div className="flex min-h-screen flex-col bg-gradient-to-br from-slate-950 to-slate-900">
@@ -26,6 +29,14 @@ export function Layout({ children }: { children: ReactNode }) {
                 className="rounded-full border border-slate-600 bg-slate-900/70 px-4 py-2 text-sm font-medium text-slate-100 shadow-sm transition hover:border-emerald-500/70 hover:bg-emerald-600 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
               >
                 Dashboard
+              </Link>
+            )}
+            {showAudit && (
+              <Link
+                to={`/servers/${encodeURIComponent(currentServer as string)}#audit`}
+                className="rounded-full border border-slate-600 bg-slate-900/70 px-4 py-2 text-sm font-medium text-slate-100 shadow-sm transition hover:border-emerald-500/70 hover:bg-emerald-600 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
+              >
+                Audit log
               </Link>
             )}
             <button
