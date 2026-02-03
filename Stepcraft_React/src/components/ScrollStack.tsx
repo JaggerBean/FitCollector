@@ -59,6 +59,7 @@ const ScrollStack: React.FC<ScrollStackProps> = ({
   const isUpdatingRef = useRef(false);
   const scrollRafRef = useRef<number | null>(null);
   const scrollRootTopRef = useRef(0);
+  const cardTopCacheRef = useRef<number[]>([]);
 
   const calculateProgress = useCallback((scrollTop: number, start: number, end: number) => {
     if (scrollTop < start) return 0;
@@ -98,9 +99,8 @@ const ScrollStack: React.FC<ScrollStackProps> = ({
       if (useWindowScroll) {
         const rect = element.getBoundingClientRect();
         return rect.top + window.scrollY - scrollRootTopRef.current;
-      } else {
-        return element.offsetTop;
       }
+      return element.offsetTop;
     },
     [useWindowScroll],
   );
@@ -123,7 +123,7 @@ const ScrollStack: React.FC<ScrollStackProps> = ({
     cardsRef.current.forEach((card, i) => {
       if (!card) return;
 
-      const cardTop = getElementOffset(card);
+      const cardTop = cardTopCacheRef.current[i] ?? getElementOffset(card);
       const triggerStart = cardTop - stackPositionPx - itemStackDistance * i;
       const triggerEnd = cardTop - scaleEndPositionPx;
       const pinStart = cardTop - stackPositionPx - itemStackDistance * i;
@@ -138,7 +138,7 @@ const ScrollStack: React.FC<ScrollStackProps> = ({
       if (blurAmount) {
         let topCardIndex = 0;
         for (let j = 0; j < cardsRef.current.length; j++) {
-          const jCardTop = getElementOffset(cardsRef.current[j]);
+          const jCardTop = cardTopCacheRef.current[j] ?? getElementOffset(cardsRef.current[j]);
           const jTriggerStart = jCardTop - stackPositionPx - itemStackDistance * j;
           if (scrollTop >= jTriggerStart) {
             topCardIndex = j;
@@ -262,6 +262,7 @@ const ScrollStack: React.FC<ScrollStackProps> = ({
         : (scrollerRef.current?.querySelectorAll(".scroll-stack-card") ?? []),
     ) as HTMLElement[];
     cardsRef.current = cards;
+    cardTopCacheRef.current = cards.map((card) => getElementOffset(card));
     const transformsCache = lastTransformsRef.current;
 
     cards.forEach((card, i) => {
@@ -278,8 +279,12 @@ const ScrollStack: React.FC<ScrollStackProps> = ({
     });
 
     if (useWindowScroll) {
+      const updateCache = () => {
+        cardTopCacheRef.current = cardsRef.current.map((card) => getElementOffset(card));
+        handleScroll();
+      };
       window.addEventListener("scroll", handleScroll, { passive: true });
-      window.addEventListener("resize", handleScroll);
+      window.addEventListener("resize", updateCache);
     } else {
       setupLenis();
     }
