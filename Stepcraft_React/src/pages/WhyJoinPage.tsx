@@ -1,12 +1,17 @@
 import { Link } from "react-router-dom";
 import { Layout } from "../components/Layout";
+import AnimatedList from "../components/AnimatedList";
+import { DragGallery } from "../components/DraggableGallery";
 import { useAuthContext } from "../app/AuthContext";
 
-// Adjust these two imports to match whatever you exported in those files.
-import { PitchScrollScene } from "../components/AnimatedList";
-import { DraggableGallery } from "../components/DraggableGallery";
-
 type Card = { title: string; body: string; href: string };
+
+type PitchItem = {
+  eyebrow: string;
+  title: string;
+  body: string;
+  placeholder: string;
+};
 
 function SectionHeader({
   kicker,
@@ -74,6 +79,27 @@ export default function WhyJoinPage() {
     "Playtime lift",
     "Community",
     "Server growth",
+  ];
+
+  const pitchItems: PitchItem[] = [
+    {
+      eyebrow: "Habit formation",
+      title: "Daily logins feel rewarding.",
+      body: "Players build streaks by hitting step goals, which increases the chance they return day after day.",
+      placeholder: "Image placeholder: streak reward UI or daily notification.",
+    },
+    {
+      eyebrow: "Monetization",
+      title: "More playtime, more purchases.",
+      body: "Reward loops increase engagement, which leads to higher conversion on ranks, keys, and limited drops.",
+      placeholder: "Image placeholder: store items, rank tiers, or marketplace UI.",
+    },
+    {
+      eyebrow: "Direct contact",
+      title: "A connection beyond Discord.",
+      body: "Push notifications and app visibility give you a rare touchpoint, even when the player is not online.",
+      placeholder: "Image placeholder: push notification preview or app badge.",
+    },
   ];
 
   return (
@@ -166,12 +192,12 @@ export default function WhyJoinPage() {
           </div>
         </section>
 
-        {/* MOTION / SCROLL STORY (replaces old ScrollStack section) */}
+        {/* MOTION FEEL SECTION (AnimatedList + visual panel) */}
         <section className="mx-auto max-w-6xl px-6 py-14">
           <SectionHeader
             kicker="Key ideas to pitch"
-            title="A fluid scroll story you can present in 30 seconds"
-            body="This is the interactive section: as you scroll, the talking points and visuals progress like a mini narrative."
+            title="Scroll through the talking points"
+            body="This section adds motion: items animate as they enter view while you scroll the list."
             right={
               <div className="rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-xs uppercase tracking-[0.3em] text-slate-500">
                 Scroll
@@ -179,38 +205,49 @@ export default function WhyJoinPage() {
             }
           />
 
-          <div className="mt-8">
-            <PitchScrollScene
-              scenes={[
-                {
-                  eyebrow: "Habit formation",
-                  title: "Daily logins feel rewarding.",
-                  body: "Players build streaks by hitting step goals, which increases the chance they return day after day.",
-                  imageAlt: "Streak reward UI",
-                },
-                {
-                  eyebrow: "Monetization",
-                  title: "More playtime, more purchases.",
-                  body: "Reward loops increase engagement, which leads to higher conversion on ranks, keys, and limited drops.",
-                  imageAlt: "Store items / rank tiers",
-                },
-                {
-                  eyebrow: "Direct contact",
-                  title: "A connection beyond Discord.",
-                  body: "Push notifications and app visibility give you a rare touchpoint, even when the player is not online.",
-                  imageAlt: "Push notification preview",
-                },
-              ]}
-            />
+          <div className="mt-8 grid gap-6 lg:grid-cols-[1.1fr_0.9fr] lg:items-start">
+            <div className="rounded-3xl border border-slate-200 bg-slate-950/95 p-6 shadow-[0_10px_30px_rgba(15,23,42,0.25)]">
+              <AnimatedList<PitchItem>
+                items={pitchItems}
+                maxHeightClassName="max-h-[520px]"
+                className=""
+                itemClassName="rounded-2xl border border-slate-800/60 bg-slate-950/70 p-6"
+                renderItem={(item) => (
+                  <div>
+                    <div className="text-xs uppercase tracking-[0.2em] text-emerald-300/70">{item.eyebrow}</div>
+                    <h3 className="mt-3 text-2xl font-semibold text-white">{item.title}</h3>
+                    <p className="mt-3 text-sm leading-relaxed text-slate-300">{item.body}</p>
+                    <div className="mt-6 rounded-xl border border-slate-800/70 bg-slate-900/30 p-4 text-xs text-slate-400">
+                      {item.placeholder}
+                    </div>
+                  </div>
+                )}
+              />
+            </div>
+
+            <div className="rounded-3xl border border-slate-200 bg-white p-7 shadow-[0_8px_30px_rgba(15,23,42,0.08)]">
+              <div className="text-xs font-medium uppercase tracking-[0.22em] text-slate-500">Visual impact</div>
+              <p className="mt-3 text-sm text-slate-600">
+                Place screenshots of the mobile app, server dashboard, reward tiers, or player streaks here.
+              </p>
+              <div className="mt-6 grid gap-3 sm:grid-cols-2">
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-6 text-xs text-slate-500">
+                  Image placeholder
+                </div>
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-6 text-xs text-slate-500">
+                  Image placeholder
+                </div>
+              </div>
+            </div>
           </div>
         </section>
 
-        {/* COMMITTED + “WHAT’S DIFFERENT” */}
+        {/* WHAT MAKES DIFFERENT */}
         <section className="mx-auto max-w-6xl px-6 pb-14">
           <SectionHeader
             kicker="Committed"
-            title="Committed to retention, always reinforcing the habit."
-            body="These blocks explain what makes StepCraft different at a glance—then you back it up with visuals."
+            title="What makes StepCraft different?"
+            body="Short, pitchable bullets. Easy to scan."
             right={
               <Link
                 to={primaryCtaTo}
@@ -221,10 +258,10 @@ export default function WhyJoinPage() {
             }
           />
 
-          <div className="mt-8 grid gap-6 lg:grid-cols-[1.1fr_0.9fr] lg:items-start">
+          <div className="mt-8 grid gap-6 lg:grid-cols-2">
             <ShellCard>
               <div className="p-7">
-                <h3 className="text-xl font-semibold text-slate-900">What makes StepCraft different?</h3>
+                <h3 className="text-xl font-semibold text-slate-900">Differentiators</h3>
                 <ul className="mt-4 space-y-3 text-sm text-slate-600">
                   <li>• Real-world movement mapped directly to rewards and server stats.</li>
                   <li>• Daily step tiers create an always-on reason to return.</li>
@@ -236,33 +273,28 @@ export default function WhyJoinPage() {
 
             <ShellCard>
               <div className="p-7">
-                <div className="text-xs font-medium uppercase tracking-[0.22em] text-slate-500">Visual impact</div>
+                <div className="text-xs font-medium uppercase tracking-[0.22em] text-slate-500">Notes</div>
                 <p className="mt-3 text-sm text-slate-600">
-                  Place screenshots of the mobile app, server dashboard, reward tiers, or player streaks here.
+                  This is a good spot for a single screenshot collage or a short “what you get” summary.
                 </p>
-                <div className="mt-6 grid gap-3 sm:grid-cols-2">
-                  <div className="rounded-2xl border border-slate-200 bg-slate-50 p-6 text-xs text-slate-500">
-                    Image placeholder
-                  </div>
-                  <div className="rounded-2xl border border-slate-200 bg-slate-50 p-6 text-xs text-slate-500">
-                    Image placeholder
-                  </div>
+                <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-6 text-xs text-slate-500">
+                  Image placeholder
                 </div>
               </div>
             </ShellCard>
           </div>
         </section>
 
-        {/* DRAGGABLE GALLERY (interactive) */}
+        {/* DRAGGABLE GALLERY */}
         <section className="mx-auto max-w-6xl px-6 pb-14">
           <SectionHeader
             kicker="Get inspired"
             title="Screens & moments"
-            body="This adds that “interactive” feel: users can drag through examples instead of just reading."
+            body="Drag through examples (this is the interactive part)."
           />
 
           <div className="mt-8">
-            <DraggableGallery
+            <DragGallery
               items={[
                 { label: "App home (steps + goal)" },
                 { label: "Reward claim screen" },
