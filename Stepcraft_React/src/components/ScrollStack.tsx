@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef } from "react";
+import { useRef, useEffect, useMemo } from "react";
 
 type Scene = {
   eyebrow: string;

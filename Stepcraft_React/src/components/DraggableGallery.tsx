@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import { useRef } from "react";
 
 export function DragGallery({ items }: { items: { label: string }[] }) {
   const scrollerRef = useRef<HTMLDivElement>(null);
