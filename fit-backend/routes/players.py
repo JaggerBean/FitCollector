@@ -18,7 +18,7 @@ DEFAULT_REWARDS = [
     {"min_steps": 5000, "label": "Walker", "item_id": "minecraft:iron_ingot", "rewards": ["give {player} minecraft:iron_ingot 3"]},
     {"min_steps": 10000, "label": "Legend", "item_id": "minecraft:diamond", "rewards": ["give {player} minecraft:diamond 1"]},
 ]
-
+ 
 
 def _get_claim_buffer_days(server_name: str) -> int:
     with engine.begin() as conn:
