@@ -76,6 +76,7 @@ fun OnboardingScreen(
     var mcUsername by remember { mutableStateOf("") }
     var selectedServers by remember { mutableStateOf<Set<String>>(emptySet()) }
     var servers by remember { mutableStateOf<List<ServerInfo>>(emptyList()) }
+    var publicServerNames by remember { mutableStateOf<Set<String>>(emptySet()) }
     var inviteCodeInput by remember { mutableStateOf("") }
     var inviteCodesByServer by remember { mutableStateOf(getInviteCodesByServer(context)) }
     var isLoading by remember { mutableStateOf(false) }
@@ -194,14 +195,20 @@ fun OnboardingScreen(
     LaunchedEffect(Unit) {
         try {
             val resp = globalApi.getAvailableServers()
+            publicServerNames = resp.servers.map { it.server_name }.toSet()
             var merged = resp.servers.toMutableList()
             val storedInvites = getInviteCodesByServer(context)
-            inviteCodesByServer = storedInvites
-            storedInvites.values.distinct().forEach { code ->
+            val prunedInvites = storedInvites.filterKeys { it !in publicServerNames }
+            if (prunedInvites.size != storedInvites.size) {
+                setInviteCodesByServer(context, prunedInvites)
+            }
+            inviteCodesByServer = prunedInvites
+            prunedInvites.values.distinct().forEach { code ->
                 try {
                     val privateResp = globalApi.getAvailableServers(code)
                     val existing = merged.map { it.server_name }.toSet()
-                    val newOnes = privateResp.servers.filter { it.server_name !in existing }
+                    val privateOnly = privateResp.servers.filter { it.server_name !in publicServerNames }
+                    val newOnes = privateOnly.filter { it.server_name !in existing }
                     merged.addAll(newOnes)
                 } catch (_: Exception) {}
             }
@@ -637,19 +644,28 @@ fun OnboardingScreen(
                         return@launch
                     }
                     try {
+                        val currentPublicNames = if (publicServerNames.isNotEmpty()) {
+                            publicServerNames
+                        } else {
+                            val publicResp = globalApi.getAvailableServers()
+                            val names = publicResp.servers.map { it.server_name }.toSet()
+                            publicServerNames = names
+                            names
+                        }
                         val resp = globalApi.getAvailableServers(trimmed)
-                        if (resp.servers.isEmpty()) {
+                        val privateServers = resp.servers.filter { it.server_name !in currentPublicNames }
+                        if (privateServers.isEmpty()) {
                             error = "Invite code not found."
                             return@launch
                         }
 
-                        val responseNames = resp.servers.map { it.server_name }
-                        inviteCodesByServer = inviteCodesByServer + responseNames.associateWith { trimmed }
+                        val privateNames = privateServers.map { it.server_name }
+                        inviteCodesByServer = inviteCodesByServer + privateNames.associateWith { trimmed }
                         setInviteCodesByServer(context, inviteCodesByServer)
 
-                        servers = (servers + resp.servers).distinctBy { it.server_name }
+                        servers = (servers + privateServers).distinctBy { it.server_name }
                             .sortedBy { it.server_name.lowercase() }
-                        responseNames.forEach { selectedServers = selectedServers + it }
+                        privateNames.forEach { selectedServers = selectedServers + it }
 
                         inviteCodeInput = ""
                         showPrivateServer = false
