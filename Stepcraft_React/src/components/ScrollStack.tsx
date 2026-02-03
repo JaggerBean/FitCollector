@@ -60,6 +60,14 @@ const ScrollStack: React.FC<ScrollStackProps> = ({
   const scrollRafRef = useRef<number | null>(null);
   const scrollRootTopRef = useRef(0);
   const cardTopCacheRef = useRef<number[]>([]);
+  const virtualScrollRef = useRef(0);
+  const useVirtualScrollRef = useRef(false);
+  const maxVirtualScrollRef = useRef(0);
+  const lastScrollYRef = useRef(0);
+  const isInViewRef = useRef(false);
+  const wheelHandlerRef = useRef<(event: WheelEvent) => void>();
+  const inViewHandlerRef = useRef<() => void>();
+  const resizeHandlerRef = useRef<() => void>();
 
   const calculateProgress = useCallback((scrollTop: number, start: number, end: number) => {
     if (scrollTop < start) return 0;
@@ -79,8 +87,9 @@ const ScrollStack: React.FC<ScrollStackProps> = ({
       const root = scrollerRef.current;
       const rootTop = root ? root.getBoundingClientRect().top + window.scrollY : 0;
       scrollRootTopRef.current = rootTop;
+      lastScrollYRef.current = window.scrollY;
       return {
-        scrollTop: window.scrollY - rootTop,
+        scrollTop: useVirtualScrollRef.current ? virtualScrollRef.current : window.scrollY - rootTop,
         containerHeight: root ? root.clientHeight : window.innerHeight,
         scrollContainer: document.documentElement,
       };
@@ -119,6 +128,7 @@ const ScrollStack: React.FC<ScrollStackProps> = ({
       : (scrollerRef.current?.querySelector(".scroll-stack-end") as HTMLElement | null);
 
     const endElementTop = endElement ? getElementOffset(endElement) : 0;
+    maxVirtualScrollRef.current = Math.max(0, endElementTop - containerHeight / 2);
 
     cardsRef.current.forEach((card, i) => {
       if (!card) return;
@@ -290,6 +300,35 @@ const ScrollStack: React.FC<ScrollStackProps> = ({
     });
 
     if (useWindowScroll) {
+      const root = scrollerRef.current;
+      const updateInView = () => {
+        if (!root) return;
+        const rect = root.getBoundingClientRect();
+        isInViewRef.current = rect.bottom > 0 && rect.top < window.innerHeight;
+      };
+
+      const wheelHandler = (event: WheelEvent) => {
+        if (!isInViewRef.current) return;
+        const prevScrollY = lastScrollYRef.current;
+        if (window.scrollY === prevScrollY) {
+          event.preventDefault();
+          useVirtualScrollRef.current = true;
+          const next = Math.min(
+            Math.max(0, virtualScrollRef.current + event.deltaY),
+            maxVirtualScrollRef.current,
+          );
+          virtualScrollRef.current = next;
+          handleScroll();
+        } else {
+          useVirtualScrollRef.current = false;
+        }
+      };
+
+      updateInView();
+      inViewHandlerRef.current = updateInView;
+      wheelHandlerRef.current = wheelHandler;
+      window.addEventListener("scroll", updateInView, { passive: true });
+      window.addEventListener("wheel", wheelHandler, { passive: false });
       const updateCache = () => {
         const rootTop = scrollerRef.current
           ? scrollerRef.current.getBoundingClientRect().top + window.scrollY
@@ -301,6 +340,7 @@ const ScrollStack: React.FC<ScrollStackProps> = ({
         });
         handleScroll();
       };
+      resizeHandlerRef.current = updateCache;
       window.addEventListener("scroll", handleScroll, { passive: true });
       window.addEventListener("resize", updateCache);
     } else {
@@ -317,8 +357,19 @@ const ScrollStack: React.FC<ScrollStackProps> = ({
         cancelAnimationFrame(scrollRafRef.current);
       }
       if (useWindowScroll) {
+        const inViewHandler = inViewHandlerRef.current;
+        const wheelHandler = wheelHandlerRef.current;
+        if (inViewHandler) {
+          window.removeEventListener("scroll", inViewHandler);
+        }
+        if (wheelHandler) {
+          window.removeEventListener("wheel", wheelHandler);
+        }
         window.removeEventListener("scroll", handleScroll);
-        window.removeEventListener("resize", handleScroll);
+        const resizeHandler = resizeHandlerRef.current;
+        if (resizeHandler) {
+          window.removeEventListener("resize", resizeHandler);
+        }
       }
       if (lenisRef.current) {
         lenisRef.current.destroy();
