@@ -79,7 +79,7 @@ export default function WhyJoinPage() {
           <div className="absolute inset-x-0 -top-16 h-16 bg-gradient-to-b from-slate-950/0 to-slate-950/95" />
           <div className="relative h-screen w-full bg-slate-950/95 px-6 md:px-10">
             <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(16,185,129,0.12),transparent_55%)]" />
-            <div className="relative flex h-full flex-col">
+            <div className="relative flex h-full min-h-0 flex-col">
               <div className="flex flex-wrap items-center justify-between gap-4 pt-8">
                 <div>
                   <h2 className="text-2xl font-semibold text-white">Key ideas to pitch</h2>
@@ -92,8 +92,8 @@ export default function WhyJoinPage() {
                 </div>
               </div>
 
-              <div className="mt-6 flex-1">
-                <ScrollStack className="h-full" useWindowScroll={false}>
+              <div className="mt-6 flex-1 min-h-0">
+                <ScrollStack className="h-full min-h-0" useWindowScroll={false}>
                   <ScrollStackItem itemClassName="bg-slate-950/70 border border-emerald-900/40">
                 <div className="text-sm uppercase tracking-[0.2em] text-emerald-300/70">Habit formation</div>
                 <h3 className="mt-3 text-2xl font-semibold text-white">Daily logins feel rewarding.</h3>
