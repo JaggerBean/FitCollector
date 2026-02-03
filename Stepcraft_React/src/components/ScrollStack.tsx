@@ -68,6 +68,16 @@ const ScrollStack: React.FC<ScrollStackProps> = ({
     return (scrollTop - start) / (end - start);
   }, []);
 
+  const getElementPageTop = useCallback((element: HTMLElement) => {
+    let top = 0;
+    let current: HTMLElement | null = element;
+    while (current) {
+      top += current.offsetTop;
+      current = current.offsetParent as HTMLElement | null;
+    }
+    return top;
+  }, []);
+
   const parsePercentage = useCallback((value: string | number, containerHeight: number) => {
     if (typeof value === "string" && value.includes("%")) {
       return (parseFloat(value) / 100) * containerHeight;
@@ -78,8 +88,11 @@ const ScrollStack: React.FC<ScrollStackProps> = ({
   const getScrollData = useCallback(() => {
     if (useWindowScroll) {
       const root = scrollerRef.current;
-      const rootTop = root ? root.getBoundingClientRect().top + window.scrollY : 0;
-      scrollRootTopRef.current = rootTop;
+      const rootTop =
+        scrollRootTopRef.current || (root ? getElementPageTop(root) : 0);
+      if (!scrollRootTopRef.current && root) {
+        scrollRootTopRef.current = rootTop;
+      }
       return {
         scrollTop: window.scrollY - rootTop,
         containerHeight: root ? root.clientHeight : window.innerHeight,
@@ -98,12 +111,14 @@ const ScrollStack: React.FC<ScrollStackProps> = ({
   const getElementOffset = useCallback(
     (element: HTMLElement) => {
       if (useWindowScroll) {
-        const rect = element.getBoundingClientRect();
-        return rect.top + window.scrollY - scrollRootTopRef.current;
+        const rootTop =
+          scrollRootTopRef.current ||
+          (scrollerRef.current ? getElementPageTop(scrollerRef.current) : 0);
+        return getElementPageTop(element) - rootTop;
       }
       return element.offsetTop;
     },
-    [useWindowScroll],
+    [useWindowScroll, getElementPageTop],
   );
 
   const updateCardTransforms = useCallback(() => {
@@ -263,14 +278,9 @@ const ScrollStack: React.FC<ScrollStackProps> = ({
     ) as HTMLElement[];
     cardsRef.current = cards;
     if (useWindowScroll) {
-      const rootTop = scrollerRef.current
-        ? scrollerRef.current.getBoundingClientRect().top + window.scrollY
-        : 0;
+      const rootTop = scrollerRef.current ? getElementPageTop(scrollerRef.current) : 0;
       scrollRootTopRef.current = rootTop;
-      cardTopCacheRef.current = cards.map((card) => {
-        const rect = card.getBoundingClientRect();
-        return rect.top + window.scrollY - rootTop;
-      });
+      cardTopCacheRef.current = cards.map((card) => getElementPageTop(card) - rootTop);
     } else {
       cardTopCacheRef.current = cards.map((card) => card.offsetTop);
     }
@@ -291,14 +301,11 @@ const ScrollStack: React.FC<ScrollStackProps> = ({
 
     if (useWindowScroll) {
       const updateCache = () => {
-        const rootTop = scrollerRef.current
-          ? scrollerRef.current.getBoundingClientRect().top + window.scrollY
-          : 0;
+        const rootTop = scrollerRef.current ? getElementPageTop(scrollerRef.current) : 0;
         scrollRootTopRef.current = rootTop;
-        cardTopCacheRef.current = cardsRef.current.map((card) => {
-          const rect = card.getBoundingClientRect();
-          return rect.top + window.scrollY - rootTop;
-        });
+        cardTopCacheRef.current = cardsRef.current.map(
+          (card) => getElementPageTop(card) - rootTop,
+        );
         handleScroll();
       };
       resizeHandlerRef.current = updateCache;
