@@ -250,7 +250,7 @@ const scenes = useMemo(
               ))}
             </section>
 
-            {/* PINNED SCROLL STORY */}
+            {/* PINNED SCROLL STORYS */}
             <div className="mt-14">
               <PitchScrollScene scenes={scenes} />
             </div>
