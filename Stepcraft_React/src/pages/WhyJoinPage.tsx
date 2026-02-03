@@ -102,7 +102,7 @@ export default function WhyJoinPage() {
   const { isAuthenticated } = useAuthContext();
 
   const primaryCtaTo = isAuthenticated ? "/dashboard" : "/account/register";
-  const primaryCtaLabel = isAuthenticated ? "Go to dashboard" : "Get started";
+  const primaryCtaLabel = isAuthenticated ? "Go to dashboard" : "Get started!";
 
   const scenes = useMemo(
     () => [
@@ -150,18 +150,18 @@ export default function WhyJoinPage() {
               <div className="relative grid gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
                 <div>
                   <p className="text-xs uppercase tracking-[0.28em] text-emerald-300/80">
-                    Why StepCraft for your server
+                    Why you should choose StepCraft for your server
                   </p>
 
                   <h1 className="mt-4 text-[2.6rem] font-semibold leading-tight text-white md:text-[3.4rem]">
-                    A retention system players can’t ignore—because it lives on their phone.
+                    A retention system players can’t ignore because it lives on their phone.
                   </h1>
 
-                  <p className="mt-5 text-base leading-relaxed text-slate-300 md:text-lg">
+                  {/* <p className="mt-5 text-base leading-relaxed text-slate-300 md:text-lg">
                     StepCraft turns real-world movement into in-game progress. Players build streaks, chase daily goals,
                     and come back more often. For server owners, that means higher retention, longer sessions, and more
                     opportunities to monetize without feeling pay-to-win.
-                  </p>
+                  </p> */}
 
                   <div className="mt-8 flex flex-wrap gap-3">
                     <Link
@@ -171,40 +171,41 @@ export default function WhyJoinPage() {
                       {primaryCtaLabel}
                     </Link>
 
-                    <Link
+                    {/* <Link
                       to="/"
                       className="flex h-11 items-center justify-center rounded-md border border-slate-700 px-6 text-sm font-semibold text-white transition hover:border-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
                     >
                       Back to landing
-                    </Link>
+                    </Link> */}
                   </div>
 
                   <div className="mt-6 grid gap-3 sm:grid-cols-3">
                     <div className="rounded-xl border border-slate-800/70 bg-slate-950/55 p-4">
-                      <div className="text-xs uppercase tracking-[0.2em] text-slate-400">Outcome</div>
-                      <div className="mt-1 text-sm font-semibold text-white">More days played</div>
-                      <div className="mt-1 text-xs text-slate-400">Fewer players drifting away.</div>
+                      <div className="text-xs uppercase tracking-[0.2em] text-slate-400">Retention</div>
+                      <div className="mt-1 text-sm font-semibold text-white">More consecutive days played</div>
+                      <div className="mt-1 text-xs text-slate-400">Fewer players forgetting to log in.</div>
                     </div>
                     <div className="rounded-xl border border-slate-800/70 bg-slate-950/55 p-4">
-                      <div className="text-xs uppercase tracking-[0.2em] text-slate-400">Outcome</div>
-                      <div className="mt-1 text-sm font-semibold text-white">More sessions</div>
-                      <div className="mt-1 text-xs text-slate-400">More chances to convert.</div>
+                      <div className="text-xs uppercase tracking-[0.2em] text-slate-400">Marketability</div>
+                      <div className="mt-1 text-sm font-semibold text-white">A unique health hook</div>
+                      <div className="mt-1 text-xs text-slate-400">Gives you a headline other servers can’t copy: “walk to earn in-game rewards.”</div>
                     </div>
                     <div className="rounded-xl border border-slate-800/70 bg-slate-950/55 p-4">
-                      <div className="text-xs uppercase tracking-[0.2em] text-slate-400">Outcome</div>
+                      <div className="text-xs uppercase tracking-[0.2em] text-slate-400">Visibility</div>
                       <div className="mt-1 text-sm font-semibold text-white">More touchpoints</div>
-                      <div className="mt-1 text-xs text-slate-400">Your server stays visible.</div>
+                      <div className="mt-1 text-xs text-slate-400">Keeps your server in players’ daily routine. ot just when they’re online.</div>
                     </div>
                   </div>
                 </div>
 
                 <div className="rounded-2xl border border-slate-800/70 bg-slate-950/50 p-6 shadow-[0_10px_30px_rgba(15,23,42,0.35)] backdrop-blur">
-                  <div className="text-xs uppercase tracking-[0.2em] text-slate-400">Owner pitch (copy/paste)</div>
+                  <div className="text-xs uppercase tracking-[0.2em] text-slate-400">Why it Works</div>
 
                   <p className="mt-4 text-base leading-relaxed text-slate-200">
                     StepCraft increases retention by giving players daily goals that reward real-world steps with in-game
-                    progress. Players build streaks and return more often, which boosts playtime and raises conversion on
-                    ranks, cosmetics, boosters, and seasonal offers. Unlike most mods, StepCraft adds a phone app
+                    progress. Unlike other daily server rewards, players feel like they earned these rewards and therefore are more likely to log on and claim them, 
+                    which boosts playtime and in turn raises conversion on
+                    in-game rank/item sales. Unlike most mods, StepCraft also adds a phone app
                     touchpoint, keeping your server top-of-mind even when players aren’t online.
                   </p>
 
