@@ -107,30 +107,30 @@ export default function WhyJoinPage() {
 const scenes = useMemo(
   () => [
     {
-      eyebrow: "Casual retention",
+      eyebrow: "Casual player retention",
       title: "Turn one-day visitors into regulars.",
-      body: "Most players join, play once, and disappear—especially casuals. StepCraft gives them a simple daily reason to come back: hit a step goal, claim a reward, feel progress. Your dedicated players keep grinding; your casual players finally have a loop that fits their schedule.",
+      body: "Most players join, play once, and disappear, especially casual players. StepCraft gives them a simple daily reason to come back: hit a step goal, claim a reward, feel progress. Your dedicated players keep grinding; your casual players finally have a loop that fits their schedule. You have full control over pacing and rewards, so you can design for all player types without penalizing anyone's playstyle.",
       imageAlt: "Daily step goal and reward claim",
       imageUrl: undefined,
     },
     {
       eyebrow: "Zero friction",
       title: "Server-side only: players just join.",
-      body: "No client mod. No extra installs. No \"go download this\" drop-off. Anyone who can join your server can participate immediately, which keeps your funnel clean and your player count healthier.",
+      body: "No client mod. No extra installs. No \"go download this\" drop-off. Anyone who wants to join your server can participate immediately.",
       imageAlt: "Join server without installing anything",
       imageUrl: undefined,
     },
     {
       eyebrow: "Owner control",
       title: "Cater to casuals without nerfing the dedicated base.",
-      body: "You control the reward structure: step thresholds, pacing, and payouts. Make it a small daily boost for casuals, a meaningful streak system for regulars, or a long-term ladder for grinders—without flattening your server’s progression.",
+      body: "You control the reward structure: step thresholds, pacing, and payouts. Make it a small daily boost for casuals, without impacting your server’s regular path of progression. Or go big and make a server dedicated to healthy lifestyles with exclusive ranks, cosmetics, and perks. The choice is yours.",
       imageAlt: "Reward tiers and tuning controls",
       imageUrl: undefined,
     },
     {
       eyebrow: "Integrations",
-      title: "Command-driven rewards that work with your whole stack.",
-      body: "Rewards are commands, so StepCraft can integrate with whatever you already run—economy, ranks, crates, quests, skills, cosmetics, custom items. If it has a command, StepCraft can trigger it.",
+      title: "Command-driven rewards that work with your whole mod stack.",
+      body: "Rewards are commands, so StepCraft can integrate with whatever mods you already run. Economy, ranks, crates, quests, skills, cosmetics, custom items. If it has a command, StepCraft can trigger it.",
       imageAlt: "Reward commands integrating with other plugins/mods",
       imageUrl: undefined,
     },
