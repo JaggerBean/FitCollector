@@ -135,7 +135,7 @@ export default function DashboardPage() {
         <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">Your servers</h1>
         <Link
           to="/register"
-          className="rounded-lg border border-emerald-200 bg-white px-4 py-2 text-sm font-medium text-emerald-700 shadow-sm hover:border-emerald-300 hover:bg-emerald-50 dark:border-slate-800 dark:bg-slate-900 dark:text-emerald-200"
+          className="rounded-lg border border-emerald-200 bg-white px-4 py-2 text-sm font-medium text-emerald-700 shadow-sm transition hover:border-emerald-600 hover:bg-emerald-600 hover:text-white dark:border-slate-800 dark:bg-slate-900 dark:text-emerald-200 dark:hover:border-emerald-500 dark:hover:bg-emerald-600"
         >
           Register server
         </Link>
@@ -246,7 +246,7 @@ export default function DashboardPage() {
                     type="button"
                     onClick={() => onResumeServer(server.server_name)}
                     disabled={resumeLoading === server.server_name}
-                    className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-700 hover:border-emerald-300 hover:bg-emerald-100 disabled:opacity-70 dark:border-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-200"
+                    className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-700 transition hover:border-emerald-600 hover:bg-emerald-600 hover:text-white disabled:opacity-70 dark:border-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-200 dark:hover:border-emerald-500 dark:hover:bg-emerald-600"
                   >
                     {resumeLoading === server.server_name ? "Resuming..." : "Resume server"}
                   </button>
@@ -254,7 +254,7 @@ export default function DashboardPage() {
                     type="button"
                     onClick={() => onReopenServer(server.server_name)}
                     disabled={reopenLoading === server.server_name}
-                    className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-700 hover:border-emerald-300 hover:bg-emerald-100 disabled:opacity-70 dark:border-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-200"
+                    className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-700 transition hover:border-emerald-600 hover:bg-emerald-600 hover:text-white disabled:opacity-70 dark:border-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-200 dark:hover:border-emerald-500 dark:hover:bg-emerald-600"
                   >
                     {reopenLoading === server.server_name ? "Re-opening..." : "Re-open server"}
                   </button>

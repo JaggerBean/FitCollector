@@ -327,7 +327,7 @@ export default function ServerManagePage() {
                   type="button"
                   onClick={onTogglePrivacy}
                   disabled={privacyLoading}
-                  className="rounded-lg border border-emerald-200 bg-white px-3 py-2 text-sm font-medium text-emerald-700 shadow-sm hover:border-emerald-300 hover:bg-emerald-50 disabled:opacity-70 dark:border-slate-700 dark:bg-slate-900 dark:text-emerald-200"
+                  className="rounded-lg border border-emerald-200 bg-white px-3 py-2 text-sm font-medium text-emerald-700 shadow-sm transition hover:border-emerald-600 hover:bg-emerald-600 hover:text-white disabled:opacity-70 dark:border-slate-700 dark:bg-slate-900 dark:text-emerald-200 dark:hover:border-emerald-500 dark:hover:bg-emerald-600"
                 >
                   {privacyLoading ? "Updating..." : info?.is_private ? "Make public" : "Make private"}
                 </button>
