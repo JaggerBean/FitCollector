@@ -41,16 +41,18 @@ function useSectionProgress(sectionRef: React.RefObject<HTMLElement | null>) {
 
 function ScrollMarqueeBand({
   words,
-  centerLabel = "StepCraft pitch",
+  centerLabel = "Built for retention",
+  subLabel = "Turn real-world movement into repeat play sessions.",
 }: {
   words: string[];
   centerLabel?: string;
+  subLabel?: string;
 }) {
   const sectionRef = useRef<HTMLElement | null>(null);
   const p = useSectionProgress(sectionRef);
 
   const track = useMemo(() => {
-    const base = words.length ? words : ["Retention", "Habits", "Revenue", "Streaks", "Engagement"];
+    const base = words.length ? words : ["Retention", "Streaks", "Sessions", "ARPU", "Reactivation"];
     return [...base, ...base, ...base];
   }, [words]);
 
@@ -83,11 +85,8 @@ function ScrollMarqueeBand({
                 transition: "transform 120ms ease",
               }}
             >
-              <div className="text-xs uppercase tracking-[0.28em] text-emerald-300/80">Always-on loop</div>
-              <div className="mt-2 text-2xl font-semibold text-white">{centerLabel}</div>
-              <div className="mt-2 max-w-sm text-sm text-slate-300">
-                Scroll-driven motion across the whole page (not just “fade in once”).
-              </div>
+              <div className="text-xs uppercase tracking-[0.28em] text-emerald-300/80">{centerLabel}</div>
+              <div className="mt-2 max-w-md text-sm text-slate-300">{subLabel}</div>
             </div>
           </div>
 
@@ -103,29 +102,36 @@ export default function WhyJoinPage() {
   const { isAuthenticated } = useAuthContext();
 
   const primaryCtaTo = isAuthenticated ? "/dashboard" : "/account/register";
-  const primaryCtaLabel = isAuthenticated ? "Go to dashboard" : "Create your account";
+  const primaryCtaLabel = isAuthenticated ? "Go to dashboard" : "Get started";
 
   const scenes = useMemo(
     () => [
       {
-        eyebrow: "Habit formation",
-        title: "Daily logins feel rewarding.",
-        body: "Players build streaks by hitting step goals, which increases the chance they return day after day.",
-        imageAlt: "Streak reward UI",
+        eyebrow: "Retention engine",
+        title: "Build a daily habit that pulls players back in.",
+        body: "StepCraft turns real-world steps into in-game progress. Players get a reason to show up every day, even when they weren’t planning to play. More days played means less churn and stronger communities.",
+        imageAlt: "Daily streak rewards",
         imageUrl: undefined,
       },
       {
-        eyebrow: "Monetization",
-        title: "More playtime, more purchases.",
-        body: "Reward loops increase engagement, which leads to higher conversion on ranks, keys, and limited drops.",
-        imageAlt: "Store or rank tier UI",
+        eyebrow: "Revenue lift",
+        title: "More sessions → more purchases.",
+        body: "When players log in more often, they buy more often. StepCraft increases playtime and repeat visits, which raises conversion on ranks, boosters, cosmetics, crates, and seasonal offers.",
+        imageAlt: "Store and rank upgrades",
         imageUrl: undefined,
       },
       {
-        eyebrow: "Direct contact",
-        title: "A connection beyond Discord.",
-        body: "Push notifications and app visibility give you a rare touchpoint, even when the player is not online.",
-        imageAlt: "Push notification preview",
+        eyebrow: "Point of contact",
+        title: "Your server stays visible off-platform.",
+        body: "Most servers rely on Discord and hope players notice pings. StepCraft adds a phone app touchpoint—something players see every day—so your server stays top-of-mind even when they’re not online.",
+        imageAlt: "Phone notifications and app presence",
+        imageUrl: undefined,
+      },
+      {
+        eyebrow: "Reactivation",
+        title: "Bring back players who drift away.",
+        body: "Players lapse. StepCraft gives you reactivation moments: missed streaks, weekly goals, and reward reminders that nudge players back into the server—without you spamming Discord.",
+        imageAlt: "Reactivation reminders",
         imageUrl: undefined,
       },
     ],
@@ -143,13 +149,18 @@ export default function WhyJoinPage() {
 
               <div className="relative grid gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
                 <div>
-                  <p className="text-xs uppercase tracking-[0.28em] text-emerald-300/80">Why you should join</p>
+                  <p className="text-xs uppercase tracking-[0.28em] text-emerald-300/80">
+                    Why StepCraft for your server
+                  </p>
+
                   <h1 className="mt-4 text-[2.6rem] font-semibold leading-tight text-white md:text-[3.4rem]">
-                    StepCraft turns real-world movement into daily reasons to log back in.
+                    A retention system players can’t ignore—because it lives on their phone.
                   </h1>
+
                   <p className="mt-5 text-base leading-relaxed text-slate-300 md:text-lg">
-                    StepCraft builds player habits by rewarding steps with in-game progress. That habit loop increases
-                    retention, boosts playtime, and opens new revenue opportunities for your server.
+                    StepCraft turns real-world movement into in-game progress. Players build streaks, chase daily goals,
+                    and come back more often. For server owners, that means higher retention, longer sessions, and more
+                    opportunities to monetize without feeling pay-to-win.
                   </p>
 
                   <div className="mt-8 flex flex-wrap gap-3">
@@ -167,37 +178,58 @@ export default function WhyJoinPage() {
                       Back to landing
                     </Link>
                   </div>
+
+                  <div className="mt-6 grid gap-3 sm:grid-cols-3">
+                    <div className="rounded-xl border border-slate-800/70 bg-slate-950/55 p-4">
+                      <div className="text-xs uppercase tracking-[0.2em] text-slate-400">Outcome</div>
+                      <div className="mt-1 text-sm font-semibold text-white">More days played</div>
+                      <div className="mt-1 text-xs text-slate-400">Fewer players drifting away.</div>
+                    </div>
+                    <div className="rounded-xl border border-slate-800/70 bg-slate-950/55 p-4">
+                      <div className="text-xs uppercase tracking-[0.2em] text-slate-400">Outcome</div>
+                      <div className="mt-1 text-sm font-semibold text-white">More sessions</div>
+                      <div className="mt-1 text-xs text-slate-400">More chances to convert.</div>
+                    </div>
+                    <div className="rounded-xl border border-slate-800/70 bg-slate-950/55 p-4">
+                      <div className="text-xs uppercase tracking-[0.2em] text-slate-400">Outcome</div>
+                      <div className="mt-1 text-sm font-semibold text-white">More touchpoints</div>
+                      <div className="mt-1 text-xs text-slate-400">Your server stays visible.</div>
+                    </div>
+                  </div>
                 </div>
 
                 <div className="rounded-2xl border border-slate-800/70 bg-slate-950/50 p-6 shadow-[0_10px_30px_rgba(15,23,42,0.35)] backdrop-blur">
-                  <div className="text-xs uppercase tracking-[0.2em] text-slate-400">Elevator pitch</div>
+                  <div className="text-xs uppercase tracking-[0.2em] text-slate-400">Owner pitch (copy/paste)</div>
+
                   <p className="mt-4 text-base leading-relaxed text-slate-200">
-                    StepCraft gives your server an always-on connection to players through the phone app they already use
-                    every day. By turning steps into rewards, you create daily streaks, higher retention, and more time
-                    online—which directly raises revenue from ranks, boosts, and cosmetics.
+                    StepCraft increases retention by giving players daily goals that reward real-world steps with in-game
+                    progress. Players build streaks and return more often, which boosts playtime and raises conversion on
+                    ranks, cosmetics, boosters, and seasonal offers. Unlike most mods, StepCraft adds a phone app
+                    touchpoint, keeping your server top-of-mind even when players aren’t online.
                   </p>
 
-                  <div className="mt-6 rounded-xl border border-slate-800/70 bg-slate-900/30 p-4 text-xs text-slate-400">
-                    Replace with: mobile screenshots + dashboard collage.
+                  <div className="mt-6 rounded-xl border border-slate-800/70 bg-slate-900/30 p-4 text-xs text-slate-300">
+                    Tip: add 2–3 screenshots here (streaks, reward claim, server dashboard) and this becomes a shareable
+                    one-pager for owners.
                   </div>
                 </div>
               </div>
             </section>
 
-            {/* QUICK VALUE CARDS */}
+            {/* KEY BENEFITS */}
             <section className="mt-10 grid gap-6 lg:grid-cols-3">
               {[
                 {
                   title: "Retention loop",
-                  body: "Daily step goals give players a reason to check in even when they are not thinking about the server.",
+                  body: "Daily step goals create a habit. Players show up because they don’t want to break streaks.",
                 },
                 {
-                  title: "Revenue lift",
-                  body: "More sessions and longer playtime amplify rank upgrades, cosmetics, and other monetized perks.",
+                  title: "Profit lift",
+                  body: "More days played means more store exposure and higher conversion on monetized perks.",
                 },
                 {
-                  title: "Always-on contact",
-                  body: "Few Minecraft mods live on a player's phone. StepCraft keeps your server top-of-mind off-platform.",
+                  title: "Off-platform visibility",
+                  body: "A phone app is a rare advantage. Players see it every day—your server stays top-of-mind.",
                 },
               ].map((item) => (
                 <div
@@ -215,58 +247,136 @@ export default function WhyJoinPage() {
               <PitchScrollScene scenes={scenes} />
             </div>
 
-            {/* DRAG GALLERY */}
-            <div className="mt-14">
-              <DragGallery
-                items={[
-                  { label: "Home screen" },
-                  { label: "Reward claim" },
-                  { label: "Streak tracker" },
-                  { label: "Server dashboard" },
-                  { label: "Store / boosts" },
-                ]}
-              />
+            {/* DRAG GALLERY (SELLS “REAL PRODUCT”, NOT PLACEHOLDER) */}
+            <div className="mt-14 rounded-3xl border border-slate-800/70 bg-slate-950/70 p-8">
+              <div className="flex flex-wrap items-end justify-between gap-6">
+                <div>
+                  <div className="text-xs uppercase tracking-[0.28em] text-emerald-300/80">What players experience</div>
+                  <h2 className="mt-3 text-2xl font-semibold text-white">A simple loop: steps → rewards → login.</h2>
+                  <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-300">
+                    Players don’t need a tutorial. They hit a goal, claim a reward, and feel progress. That loop is what
+                    keeps communities alive—especially between big updates.
+                  </p>
+                </div>
+
+                <div className="rounded-full border border-slate-800/80 bg-slate-950/40 px-4 py-2 text-xs uppercase tracking-[0.3em] text-slate-400">
+                  Drag to explore
+                </div>
+              </div>
+
+              <div className="mt-8">
+                <DragGallery
+                  items={[
+                    { label: "Daily goals & streaks" },
+                    { label: "Reward claim flow" },
+                    { label: "Progress tiers" },
+                    { label: "Server offers (ranks/boosts)" },
+                    { label: "Owner dashboard insights" },
+                  ]}
+                />
+              </div>
+
+              <div className="mt-6 grid gap-3 md:grid-cols-3">
+                {[
+                  {
+                    h: "Not pay-to-win",
+                    p: "Rewards can be balanced around convenience and cosmetics—engagement without backlash.",
+                  },
+                  {
+                    h: "Seasonal hooks",
+                    p: "Tie goals to events, weekends, and limited drops to create predictable spikes in activity.",
+                  },
+                  {
+                    h: "Community stickiness",
+                    p: "Daily shared goals create conversation, competition, and “I’ll hop on” moments.",
+                  },
+                ].map((x) => (
+                  <div key={x.h} className="rounded-2xl border border-slate-800/60 bg-slate-950/60 p-5">
+                    <div className="text-sm font-semibold text-white">{x.h}</div>
+                    <div className="mt-2 text-sm text-slate-300">{x.p}</div>
+                  </div>
+                ))}
+              </div>
             </div>
 
             {/* BIG TYPO BAND */}
             <ScrollMarqueeBand
-              words={["Retention", "Streaks", "Daily Goals", "Playtime", "Revenue", "Notifications", "Habit Loop"]}
-              centerLabel="StepCraft pitch"
+              words={["Retention", "Streaks", "Sessions", "Conversion", "ARPU", "Reactivation", "Touchpoints"]}
+              centerLabel="Built for server owners"
+              subLabel="More repeat play, more store exposure, and a direct line to players via the phone app."
             />
 
-            {/* DIFFERENTIATORS + VISUALS */}
+            {/* DIFFERENTIATORS + IMPLEMENTATION ANGLES */}
             <section className="mt-16 grid gap-6 lg:grid-cols-[1.1fr_0.9fr] lg:items-start">
               <div className="rounded-2xl border border-slate-800/60 bg-slate-950/70 p-6">
-                <h2 className="text-2xl font-semibold text-white">What makes StepCraft different?</h2>
-                <ul className="mt-4 space-y-3 text-sm text-slate-300">
-                  <li>- Real-world movement mapped directly to rewards and server stats.</li>
-                  <li>- Daily step tiers create an always-on reason to return.</li>
-                  <li>- Push notifications give server owners a direct contact point.</li>
-                  <li>- Works for public hubs or invite-only communities.</li>
-                </ul>
+                <h2 className="text-2xl font-semibold text-white">Why this works when Discord doesn’t</h2>
+
+                <div className="mt-4 space-y-4 text-sm text-slate-300">
+                  <div>
+                    <div className="text-xs uppercase tracking-[0.2em] text-slate-400">The problem</div>
+                    <p className="mt-1">
+                      Most servers fight churn with announcements and pings. Players mute channels, miss messages, or
+                      simply drift away.
+                    </p>
+                  </div>
+
+                  <div>
+                    <div className="text-xs uppercase tracking-[0.2em] text-slate-400">StepCraft advantage</div>
+                    <p className="mt-1">
+                      StepCraft is a daily device touchpoint. Players see it on their phone—often multiple times per
+                      day—so your server stays present even when they aren’t thinking about Minecraft.
+                    </p>
+                  </div>
+
+                  <div>
+                    <div className="text-xs uppercase tracking-[0.2em] text-slate-400">Owner impact</div>
+                    <ul className="mt-2 space-y-2">
+                      <li>- Higher retention from streaks and daily goals.</li>
+                      <li>- Higher conversion from more sessions and store exposure.</li>
+                      <li>- Cleaner marketing: fewer “spammy” pings, more meaningful nudges.</li>
+                      <li>- Reactivation hooks for players who drift away.</li>
+                    </ul>
+                  </div>
+                </div>
               </div>
 
               <div className="rounded-2xl border border-slate-800/60 bg-slate-950/60 p-6 text-slate-300">
-                <div className="text-xs uppercase tracking-[0.2em] text-slate-400">Visual impact</div>
-                <p className="mt-3 text-sm">
-                  Place screenshots of the mobile app, server dashboard, reward tiers, or player streaks here.
-                </p>
-                <div className="mt-6 grid gap-3 sm:grid-cols-2">
-                  <div className="rounded-xl border border-slate-800/70 bg-slate-900/40 p-6 text-xs text-slate-400">
-                    Image placeholder
-                  </div>
-                  <div className="rounded-xl border border-slate-800/70 bg-slate-900/40 p-6 text-xs text-slate-400">
-                    Image placeholder
-                  </div>
+                <div className="text-xs uppercase tracking-[0.2em] text-slate-400">Use cases owners care about</div>
+
+                <div className="mt-4 space-y-4">
+                  {[
+                    {
+                      h: "Rank & cosmetic lift",
+                      p: "Higher play frequency increases conversion without changing your store at all.",
+                    },
+                    {
+                      h: "Weekend events",
+                      p: "Boost step multipliers for events to create predictable spikes in activity and revenue.",
+                    },
+                    {
+                      h: "Seasonal retention",
+                      p: "Daily goals keep players engaged between major content drops when churn normally rises.",
+                    },
+                    {
+                      h: "New player onboarding",
+                      p: "Give fresh players a clear daily path so they don’t bounce after day one.",
+                    },
+                  ].map((x) => (
+                    <div key={x.h} className="rounded-xl border border-slate-800/70 bg-slate-900/30 p-4">
+                      <div className="text-sm font-semibold text-white">{x.h}</div>
+                      <div className="mt-1 text-sm text-slate-300">{x.p}</div>
+                    </div>
+                  ))}
                 </div>
               </div>
             </section>
 
             {/* FINAL CTA */}
             <section className="mt-16 rounded-2xl border border-slate-800 bg-slate-950/70 p-8 text-center">
-              <h2 className="text-2xl font-semibold text-white">Bring retention and revenue together.</h2>
+              <h2 className="text-2xl font-semibold text-white">Turn daily movement into daily logins.</h2>
               <p className="mt-2 text-sm text-slate-400">
-                Start your StepCraft server and build a community that logs in every day.
+                If you want higher retention, more sessions, and a new off-platform touchpoint, StepCraft is built for
+                you.
               </p>
               <div className="mt-6 flex justify-center">
                 <Link
@@ -275,6 +385,9 @@ export default function WhyJoinPage() {
                 >
                   {primaryCtaLabel}
                 </Link>
+              </div>
+              <div className="mt-4 text-xs text-slate-500">
+                Want a quick owner demo? Add 2–3 screenshots above and share this page as your pitch.
               </div>
             </section>
           </div>
