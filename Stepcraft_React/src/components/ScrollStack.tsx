@@ -65,9 +65,9 @@ const ScrollStack: React.FC<ScrollStackProps> = ({
   const maxVirtualScrollRef = useRef(0);
   const lastScrollYRef = useRef(0);
   const isInViewRef = useRef(false);
-  const wheelHandlerRef = useRef<(event: WheelEvent) => void>();
-  const inViewHandlerRef = useRef<() => void>();
-  const resizeHandlerRef = useRef<() => void>();
+  const wheelHandlerRef = useRef<((event: WheelEvent) => void) | null>(null);
+  const inViewHandlerRef = useRef<(() => void) | null>(null);
+  const resizeHandlerRef = useRef<(() => void) | null>(null);
 
   const calculateProgress = useCallback((scrollTop: number, start: number, end: number) => {
     if (scrollTop < start) return 0;
