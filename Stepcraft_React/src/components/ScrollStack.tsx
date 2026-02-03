@@ -76,7 +76,10 @@ export function PitchScrollScene({ scenes }: { scenes: Scene[] }) {
   const baseIndex = Math.min(sceneCount - 1, Math.floor(scaled));
   const t = clamp01(scaled - baseIndex); // 0..1 within current step
 
+  const showScrollHint = isPinned && p < 0.985;
+
   const onScrollHintClick = () => {
+    if (!sceneCount) return;
     const wrap = wrapRef.current;
     if (!wrap) return;
 
@@ -183,10 +186,11 @@ export function PitchScrollScene({ scenes }: { scenes: Scene[] }) {
         <button
           type="button"
           aria-label="Keep scrolling"
+          disabled={!showScrollHint}
           onClick={onScrollHintClick}
           className={[
             "absolute bottom-6 left-1/2 z-20 -translate-x-1/2 transition-all duration-300",
-            isPinned && p < 0.985 ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3",
+            showScrollHint ? "opacity-100 translate-y-0" : "pointer-events-none opacity-0 translate-y-3",
           ].join(" ")}
         >
           <div className="flex flex-col items-center gap-2">
