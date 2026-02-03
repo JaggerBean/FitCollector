@@ -77,23 +77,25 @@ export default function WhyJoinPage() {
 
         <section className="relative mt-16 -mx-6 md:-mx-10">
           <div className="absolute inset-x-0 -top-16 h-16 bg-gradient-to-b from-slate-950/0 to-slate-950/95" />
-          <div className="relative h-screen w-full bg-slate-950/95 px-6 md:px-10">
-            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(16,185,129,0.12),transparent_55%)]" />
-            <div className="relative flex h-full min-h-0 flex-col">
-              <div className="flex flex-wrap items-center justify-between gap-4 pt-8">
-                <div>
-                  <h2 className="text-2xl font-semibold text-white">Key ideas to pitch</h2>
-                  <p className="mt-2 text-sm text-slate-400">
-                    Use these talking points when explaining StepCraft to server owners.
-                  </p>
+          <div className="relative min-h-[220vh]">
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-slate-950/0 via-slate-950/70 to-slate-950/95" />
+            <div className="sticky top-0 h-screen w-full overflow-hidden bg-slate-950/95 px-6 md:px-10">
+              <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(16,185,129,0.12),transparent_55%)]" />
+              <div className="relative flex h-full flex-col">
+                <div className="flex flex-wrap items-center justify-between gap-4 pt-8">
+                  <div>
+                    <h2 className="text-2xl font-semibold text-white">Key ideas to pitch</h2>
+                    <p className="mt-2 text-sm text-slate-400">
+                      Use these talking points when explaining StepCraft to server owners.
+                    </p>
+                  </div>
+                  <div className="rounded-full border border-slate-800 px-4 py-2 text-xs uppercase tracking-[0.3em] text-slate-400">
+                    Scroll to explore
+                  </div>
                 </div>
-                <div className="rounded-full border border-slate-800 px-4 py-2 text-xs uppercase tracking-[0.3em] text-slate-400">
-                  Scroll to explore
-                </div>
-              </div>
 
-              <div className="mt-6 flex-1 min-h-0">
-                <ScrollStack className="h-full min-h-0" useWindowScroll={false}>
+                <div className="mt-6 flex-1">
+                  <ScrollStack className="h-full" useWindowScroll>
                   <ScrollStackItem itemClassName="bg-slate-950/70 border border-emerald-900/40">
                 <div className="text-sm uppercase tracking-[0.2em] text-emerald-300/70">Habit formation</div>
                 <h3 className="mt-3 text-2xl font-semibold text-white">Daily logins feel rewarding.</h3>
@@ -125,6 +127,7 @@ export default function WhyJoinPage() {
                 </div>
                   </ScrollStackItem>
                 </ScrollStack>
+                </div>
               </div>
             </div>
           </div>
