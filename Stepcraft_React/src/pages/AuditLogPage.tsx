@@ -4,7 +4,7 @@ import AnimatedList from "../components/AnimatedList";
 import ConfirmDialog from "../components/ConfirmDialog";
 import { useAuthContext } from "../app/AuthContext";
 import { getAuditLog, getOwnedServers } from "../api/servers";
-import type { AuditLogResponse, AuditEvent, OwnedServersResponse } from "../api/types";
+import type { AuditEvent, OwnedServersResponse } from "../api/types";
 
 export default function AuditLogPage() {
   const { token } = useAuthContext();
