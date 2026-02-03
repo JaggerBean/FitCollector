@@ -89,7 +89,7 @@ export default function WhyJoinPage() {
           </div>
 
           <div className="mt-8 rounded-3xl border border-slate-900/70 bg-slate-950/60 p-6">
-            <ScrollStack className="h-[70vh]" useWindowScroll={false}>
+            <ScrollStack useWindowScroll>
               <ScrollStackItem itemClassName="bg-slate-950/70 border border-emerald-900/40">
                 <div className="text-sm uppercase tracking-[0.2em] text-emerald-300/70">Habit formation</div>
                 <h3 className="mt-3 text-2xl font-semibold text-white">Daily logins feel rewarding.</h3>

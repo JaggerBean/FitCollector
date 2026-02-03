@@ -283,20 +283,31 @@ const ScrollStack: React.FC<ScrollStackProps> = ({
     updateCardTransforms,
   ]);
 
+  const containerClass = useWindowScroll
+    ? `relative w-full ${className}`.trim()
+    : `relative h-full w-full overflow-x-visible overflow-y-auto ${className}`.trim();
+
   return (
     <div
-      className={`relative h-full w-full overflow-x-visible overflow-y-auto ${className}`.trim()}
+      className={containerClass}
       ref={scrollerRef}
-      style={{
-        overscrollBehavior: "contain",
-        WebkitOverflowScrolling: "touch",
-        scrollBehavior: "smooth",
-        WebkitTransform: "translateZ(0)",
-        transform: "translateZ(0)",
-        willChange: "scroll-position",
-      }}
+      style={
+        useWindowScroll
+          ? {
+              WebkitTransform: "translateZ(0)",
+              transform: "translateZ(0)",
+            }
+          : {
+              overscrollBehavior: "contain",
+              WebkitOverflowScrolling: "touch",
+              scrollBehavior: "smooth",
+              WebkitTransform: "translateZ(0)",
+              transform: "translateZ(0)",
+              willChange: "scroll-position",
+            }
+      }
     >
-      <div className="scroll-stack-inner min-h-screen px-20 pb-[50rem] pt-[20vh]">
+      <div className="scroll-stack-inner min-h-screen px-6 pb-[50rem] pt-[20vh] md:px-12 lg:px-20">
         {children}
         <div className="scroll-stack-end h-px w-full" />
       </div>
