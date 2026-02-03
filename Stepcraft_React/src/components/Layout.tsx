@@ -1,9 +1,12 @@
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import type { ReactNode } from "react";
 import { useAuthContext } from "../app/AuthContext";
 
 export function Layout({ children }: { children: ReactNode }) {
   const { isAuthenticated, logout } = useAuthContext();
+  const location = useLocation();
+  const showDashboard =
+    isAuthenticated && location.pathname !== "/dashboard" && location.pathname !== "/";
 
   return (
     <div className="flex min-h-screen flex-col bg-gradient-to-br from-slate-950 to-slate-900">
@@ -16,12 +19,22 @@ export function Layout({ children }: { children: ReactNode }) {
           </Link>
         </div>
         {isAuthenticated ? (
-          <button
-            onClick={logout}
-            className="rounded-full border border-emerald-200 bg-white px-4 py-2 text-sm font-medium text-emerald-700 shadow-sm transition hover:border-emerald-600 hover:bg-emerald-600 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 dark:border-slate-700 dark:bg-slate-900 dark:text-emerald-200 dark:hover:border-emerald-500 dark:hover:bg-emerald-600"
-          >
-            Sign out
-          </button>
+          <div className="flex items-center gap-3">
+            {showDashboard && (
+              <Link
+                to="/dashboard"
+                className="rounded-full border border-slate-600 bg-slate-900/70 px-4 py-2 text-sm font-medium text-slate-100 shadow-sm transition hover:border-emerald-500/70 hover:bg-emerald-600 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
+              >
+                Dashboard
+              </Link>
+            )}
+            <button
+              onClick={logout}
+              className="rounded-full border border-emerald-200 bg-white px-4 py-2 text-sm font-medium text-emerald-700 shadow-sm transition hover:border-emerald-600 hover:bg-emerald-600 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 dark:border-slate-700 dark:bg-slate-900 dark:text-emerald-200 dark:hover:border-emerald-500 dark:hover:bg-emerald-600"
+            >
+              Sign out
+            </button>
+          </div>
         ) : (
           <div className="flex items-center gap-3">
             <Link
