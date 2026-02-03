@@ -1,9 +1,10 @@
+import { useMemo, useRef, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Layout } from "../components/Layout";
 import SmoothScroll from "../components/SmoothScroll";
 import { PitchScrollScene } from "../components/ScrollStack";
+import { DragGallery } from "../components/DraggableGallery";
 import { useAuthContext } from "../app/AuthContext";
-import { useMemo, useRef, useEffect, useState } from "react";
 
 function clamp01(v: number) {
   return Math.min(1, Math.max(0, v));
@@ -40,7 +41,7 @@ function useSectionProgress(sectionRef: React.RefObject<HTMLElement | null>) {
 
 function ScrollMarqueeBand({
   words,
-  centerLabel = "StepCraft",
+  centerLabel = "StepCraft pitch",
 }: {
   words: string[];
   centerLabel?: string;
@@ -85,7 +86,7 @@ function ScrollMarqueeBand({
               <div className="text-xs uppercase tracking-[0.28em] text-emerald-300/80">Always-on loop</div>
               <div className="mt-2 text-2xl font-semibold text-white">{centerLabel}</div>
               <div className="mt-2 max-w-sm text-sm text-slate-300">
-                This is scroll-driven motion (not “fade-in on view”), so the page feels alive while you move.
+                Scroll-driven motion across the whole page (not just “fade in once”).
               </div>
             </div>
           </div>
@@ -111,24 +112,21 @@ export default function WhyJoinPage() {
         title: "Daily logins feel rewarding.",
         body: "Players build streaks by hitting step goals, which increases the chance they return day after day.",
         imageAlt: "Streak reward UI",
-        imageUrl:
-          "https://images.unsplash.com/photo-1520975958225-7f61d4308d7d?auto=format&fit=crop&w=2400&q=80",
+        imageUrl: undefined,
       },
       {
         eyebrow: "Monetization",
         title: "More playtime, more purchases.",
         body: "Reward loops increase engagement, which leads to higher conversion on ranks, keys, and limited drops.",
         imageAlt: "Store or rank tier UI",
-        imageUrl:
-          "https://images.unsplash.com/photo-1518548419970-58e3b4079ab2?auto=format&fit=crop&w=2400&q=80",
+        imageUrl: undefined,
       },
       {
         eyebrow: "Direct contact",
         title: "A connection beyond Discord.",
         body: "Push notifications and app visibility give you a rare touchpoint, even when the player is not online.",
         imageAlt: "Push notification preview",
-        imageUrl:
-          "https://images.unsplash.com/photo-1516542076529-1ea3854896f2?auto=format&fit=crop&w=2400&q=80",
+        imageUrl: undefined,
       },
     ],
     [],
@@ -212,12 +210,25 @@ export default function WhyJoinPage() {
               ))}
             </section>
 
-            {/* YUCCA-LIKE “SCROLL SCENE” (PINNED FULLSCREEN STORY) */}
+            {/* PINNED SCROLL STORY */}
             <div className="mt-14">
               <PitchScrollScene scenes={scenes} />
             </div>
 
-            {/* BIG TYPO BAND (YUCCA-LIKE) */}
+            {/* DRAG GALLERY */}
+            <div className="mt-14">
+              <DragGallery
+                items={[
+                  { label: "Home screen" },
+                  { label: "Reward claim" },
+                  { label: "Streak tracker" },
+                  { label: "Server dashboard" },
+                  { label: "Store / boosts" },
+                ]}
+              />
+            </div>
+
+            {/* BIG TYPO BAND */}
             <ScrollMarqueeBand
               words={["Retention", "Streaks", "Daily Goals", "Playtime", "Revenue", "Notifications", "Habit Loop"]}
               centerLabel="StepCraft pitch"
