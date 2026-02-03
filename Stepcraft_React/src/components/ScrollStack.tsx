@@ -337,7 +337,7 @@ const ScrollStack: React.FC<ScrollStackProps> = ({
         willChange: "scroll-position",
       }}
     >
-      <div className="scroll-stack-inner pt-[20vh] px-20 pb-[50rem] min-h-screen">
+      <div className="scroll-stack-inner min-h-screen px-6 pb-[50rem] pt-[20vh] md:px-12 lg:px-20">
         {children}
         <div className="scroll-stack-end w-full h-px" />
       </div>

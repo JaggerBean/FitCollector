@@ -75,24 +75,26 @@ export default function WhyJoinPage() {
           ))}
         </section>
 
-        <section className="mt-16">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div>
-              <h2 className="text-2xl font-semibold text-white">Key ideas to pitch</h2>
-              <p className="mt-2 text-sm text-slate-400">
-                Use these talking points when explaining StepCraft to server owners.
-              </p>
-            </div>
-            <div className="rounded-full border border-slate-800 px-4 py-2 text-xs uppercase tracking-[0.3em] text-slate-400">
-              Scroll to explore
-            </div>
-          </div>
+        <section className="relative mt-16 -mx-6 md:-mx-10">
+          <div className="absolute inset-x-0 -top-16 h-16 bg-gradient-to-b from-slate-950/0 to-slate-950/95" />
+          <div className="relative h-screen w-full bg-slate-950/95 px-6 md:px-10">
+            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(16,185,129,0.12),transparent_55%)]" />
+            <div className="relative flex h-full flex-col">
+              <div className="flex flex-wrap items-center justify-between gap-4 pt-8">
+                <div>
+                  <h2 className="text-2xl font-semibold text-white">Key ideas to pitch</h2>
+                  <p className="mt-2 text-sm text-slate-400">
+                    Use these talking points when explaining StepCraft to server owners.
+                  </p>
+                </div>
+                <div className="rounded-full border border-slate-800 px-4 py-2 text-xs uppercase tracking-[0.3em] text-slate-400">
+                  Scroll to explore
+                </div>
+              </div>
 
-          <div className="relative mt-8">
-            <div className="pointer-events-none absolute inset-0 rounded-[32px] bg-gradient-to-b from-slate-950 via-slate-950/80 to-slate-950/10" />
-            <div className="rounded-[32px] border border-slate-900/70 bg-slate-950/60 p-6">
-              <ScrollStack className="h-[80vh] md:h-[90vh]" useWindowScroll={false}>
-              <ScrollStackItem itemClassName="bg-slate-950/70 border border-emerald-900/40">
+              <div className="mt-6 flex-1">
+                <ScrollStack className="h-full" useWindowScroll={false}>
+                  <ScrollStackItem itemClassName="bg-slate-950/70 border border-emerald-900/40">
                 <div className="text-sm uppercase tracking-[0.2em] text-emerald-300/70">Habit formation</div>
                 <h3 className="mt-3 text-2xl font-semibold text-white">Daily logins feel rewarding.</h3>
                 <p className="mt-3 text-sm text-slate-300">
@@ -101,8 +103,8 @@ export default function WhyJoinPage() {
                 <div className="mt-6 rounded-xl border border-slate-800/70 bg-slate-900/30 p-4 text-xs text-slate-400">
                   Image placeholder: streak reward UI or daily notification.
                 </div>
-              </ScrollStackItem>
-              <ScrollStackItem itemClassName="bg-slate-950/70 border border-emerald-900/40">
+                  </ScrollStackItem>
+                  <ScrollStackItem itemClassName="bg-slate-950/70 border border-emerald-900/40">
                 <div className="text-sm uppercase tracking-[0.2em] text-emerald-300/70">Monetization</div>
                 <h3 className="mt-3 text-2xl font-semibold text-white">More playtime, more purchases.</h3>
                 <p className="mt-3 text-sm text-slate-300">
@@ -111,8 +113,8 @@ export default function WhyJoinPage() {
                 <div className="mt-6 rounded-xl border border-slate-800/70 bg-slate-900/30 p-4 text-xs text-slate-400">
                   Image placeholder: store items, rank tiers, or marketplace UI.
                 </div>
-              </ScrollStackItem>
-              <ScrollStackItem itemClassName="bg-slate-950/70 border border-emerald-900/40">
+                  </ScrollStackItem>
+                  <ScrollStackItem itemClassName="bg-slate-950/70 border border-emerald-900/40">
                 <div className="text-sm uppercase tracking-[0.2em] text-emerald-300/70">Direct contact</div>
                 <h3 className="mt-3 text-2xl font-semibold text-white">A connection beyond Discord.</h3>
                 <p className="mt-3 text-sm text-slate-300">
@@ -121,8 +123,9 @@ export default function WhyJoinPage() {
                 <div className="mt-6 rounded-xl border border-slate-800/70 bg-slate-900/30 p-4 text-xs text-slate-400">
                   Image placeholder: push notification preview or app badge.
                 </div>
-              </ScrollStackItem>
-              </ScrollStack>
+                  </ScrollStackItem>
+                </ScrollStack>
+              </div>
             </div>
           </div>
         </section>
