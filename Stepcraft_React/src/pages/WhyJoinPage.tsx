@@ -2,28 +2,11 @@ import { Link } from "react-router-dom";
 import { Layout } from "../components/Layout";
 import { useAuthContext } from "../app/AuthContext";
 
-type Card = {
-  title: string;
-  body: string;
-  href: string;
-};
+// Adjust these two imports to match whatever you exported in those files.
+import { PitchScrollScene } from "../components/AnimatedList";
+import { DraggableGallery } from "../components/DraggableGallery";
 
-type GridItem = {
-  title: string;
-  body: string;
-  tag?: string;
-};
-
-type Step = {
-  number: string;
-  title: string;
-  body: string;
-};
-
-type FAQ = {
-  q: string;
-  a: string;
-};
+type Card = { title: string; body: string; href: string };
 
 function SectionHeader({
   kicker,
@@ -40,13 +23,9 @@ function SectionHeader({
     <div className="flex flex-wrap items-end justify-between gap-6">
       <div className="max-w-2xl">
         {kicker ? (
-          <p className="text-xs font-medium uppercase tracking-[0.28em] text-emerald-700/80">
-            {kicker}
-          </p>
+          <p className="text-xs font-medium uppercase tracking-[0.28em] text-emerald-700/80">{kicker}</p>
         ) : null}
-        <h2 className="mt-3 text-3xl font-semibold tracking-tight text-slate-900 md:text-4xl">
-          {title}
-        </h2>
+        <h2 className="mt-3 text-3xl font-semibold tracking-tight text-slate-900 md:text-4xl">{title}</h2>
         {body ? <p className="mt-3 text-base leading-relaxed text-slate-600">{body}</p> : null}
       </div>
       {right ? <div>{right}</div> : null}
@@ -97,70 +76,6 @@ export default function WhyJoinPage() {
     "Server growth",
   ];
 
-  const newCapabilities: GridItem[] = [
-    {
-      tag: "New",
-      title: "Habit formation",
-      body: "Players build streaks by hitting step goals, which increases the chance they return day after day.",
-    },
-    {
-      tag: "New",
-      title: "Monetization",
-      body: "Reward loops increase engagement, which leads to higher conversion on ranks, keys, and limited drops.",
-    },
-    {
-      tag: "New",
-      title: "Direct contact",
-      body: "Push notifications and app visibility give you a rare touchpoint, even when the player is not online.",
-    },
-    {
-      title: "Works for any community style",
-      body: "Fits public hubs, invite-only communities, or small friend servers without changing your identity.",
-    },
-  ];
-
-  const steps: Step[] = [
-    {
-      number: "01",
-      title: "Set the goal",
-      body: "Choose daily step tiers that feel attainable and rewardable for your players.",
-    },
-    {
-      number: "02",
-      title: "Connect the loop",
-      body: "Steps convert into progress so there’s always a reason to log in and claim rewards.",
-    },
-    {
-      number: "03",
-      title: "Reinforce with streaks",
-      body: "Streaks turn casual activity into a daily habit that keeps your server top-of-mind.",
-    },
-    {
-      number: "04",
-      title: "Scale the impact",
-      body: "Better retention and longer sessions create more opportunity for monetization and community growth.",
-    },
-  ];
-
-  const faqs: FAQ[] = [
-    {
-      q: "Is StepCraft only for big servers?",
-      a: "No. The loop works for small friend servers and large public hubs. The key is consistent rewards and clear daily goals.",
-    },
-    {
-      q: "Does this replace Discord?",
-      a: "No. Think of it as an additional touchpoint that lives where players already are every day: their phone.",
-    },
-    {
-      q: "What should I show when pitching StepCraft?",
-      a: "Lead with retention (daily habit), then the revenue lift (more sessions and playtime), then the always-on contact point.",
-    },
-    {
-      q: "What screenshots should go on this page?",
-      a: "App home, reward claim, streak screen, and a server/admin dashboard view (even mockups are fine).",
-    },
-  ];
-
   return (
     <Layout>
       <div className="bg-white">
@@ -197,7 +112,7 @@ export default function WhyJoinPage() {
                 </Link>
               </div>
 
-              {/* “Packaging solutions” style cards */}
+              {/* 3 “solutions” cards */}
               <div className="mt-10 grid gap-4 md:grid-cols-3">
                 {solutionCards.map((c) => (
                   <a
@@ -210,19 +125,17 @@ export default function WhyJoinPage() {
                     </div>
                     <p className="mt-3 text-sm leading-relaxed text-slate-600">{c.body}</p>
                     <div className="mt-5 text-sm font-semibold text-slate-900">
-                      Tell me more <span className="transition group-hover:translate-x-0.5 inline-block">→</span>
+                      Tell me more <span className="inline-block transition group-hover:translate-x-0.5">→</span>
                     </div>
                   </a>
                 ))}
               </div>
             </div>
 
-            {/* Right “Elevator pitch” panel */}
+            {/* Elevator pitch */}
             <ShellCard>
               <div className="p-7">
-                <div className="text-xs font-medium uppercase tracking-[0.22em] text-slate-500">
-                  Elevator pitch
-                </div>
+                <div className="text-xs font-medium uppercase tracking-[0.22em] text-slate-500">Elevator pitch</div>
                 <p className="mt-4 text-base leading-relaxed text-slate-700">
                   StepCraft gives your server an always-on connection to players through the phone app they already use
                   every day. By turning steps into rewards, you create daily streaks, higher retention, and more time
@@ -253,12 +166,51 @@ export default function WhyJoinPage() {
           </div>
         </section>
 
-        {/* COMMITTED + MISSION/VISION STYLE */}
+        {/* MOTION / SCROLL STORY (replaces old ScrollStack section) */}
         <section className="mx-auto max-w-6xl px-6 py-14">
+          <SectionHeader
+            kicker="Key ideas to pitch"
+            title="A fluid scroll story you can present in 30 seconds"
+            body="This is the interactive section: as you scroll, the talking points and visuals progress like a mini narrative."
+            right={
+              <div className="rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-xs uppercase tracking-[0.3em] text-slate-500">
+                Scroll
+              </div>
+            }
+          />
+
+          <div className="mt-8">
+            <PitchScrollScene
+              scenes={[
+                {
+                  eyebrow: "Habit formation",
+                  title: "Daily logins feel rewarding.",
+                  body: "Players build streaks by hitting step goals, which increases the chance they return day after day.",
+                  imageAlt: "Streak reward UI",
+                },
+                {
+                  eyebrow: "Monetization",
+                  title: "More playtime, more purchases.",
+                  body: "Reward loops increase engagement, which leads to higher conversion on ranks, keys, and limited drops.",
+                  imageAlt: "Store items / rank tiers",
+                },
+                {
+                  eyebrow: "Direct contact",
+                  title: "A connection beyond Discord.",
+                  body: "Push notifications and app visibility give you a rare touchpoint, even when the player is not online.",
+                  imageAlt: "Push notification preview",
+                },
+              ]}
+            />
+          </div>
+        </section>
+
+        {/* COMMITTED + “WHAT’S DIFFERENT” */}
+        <section className="mx-auto max-w-6xl px-6 pb-14">
           <SectionHeader
             kicker="Committed"
             title="Committed to retention, always reinforcing the habit."
-            body="Use these blocks to explain what makes StepCraft different at a glance—then back it up with visuals."
+            body="These blocks explain what makes StepCraft different at a glance—then you back it up with visuals."
             right={
               <Link
                 to={primaryCtaTo}
@@ -284,9 +236,7 @@ export default function WhyJoinPage() {
 
             <ShellCard>
               <div className="p-7">
-                <div className="text-xs font-medium uppercase tracking-[0.22em] text-slate-500">
-                  Visual impact
-                </div>
+                <div className="text-xs font-medium uppercase tracking-[0.22em] text-slate-500">Visual impact</div>
                 <p className="mt-3 text-sm text-slate-600">
                   Place screenshots of the mobile app, server dashboard, reward tiers, or player streaks here.
                 </p>
@@ -303,135 +253,24 @@ export default function WhyJoinPage() {
           </div>
         </section>
 
-        {/* NEW CAPABILITIES GRID */}
+        {/* DRAGGABLE GALLERY (interactive) */}
         <section className="mx-auto max-w-6xl px-6 pb-14">
           <SectionHeader
-            title="New capabilities to highlight"
-            body="This is your “New Products” grid, but translated into pitchable outcomes and features."
-            right={
-              <a
-                href="#gallery"
-                className="text-sm font-semibold text-slate-900 hover:text-slate-700"
-              >
-                See examples →
-              </a>
-            }
-          />
-
-          <div className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            {newCapabilities.map((f) => (
-              <ShellCard key={f.title}>
-                <div className="p-5">
-                  <div className="h-24 rounded-2xl border border-slate-200 bg-slate-50" />
-                  <div className="mt-4 flex items-center justify-between gap-3">
-                    <div className="font-semibold text-slate-900">{f.title}</div>
-                    {f.tag ? (
-                      <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-800">
-                        {f.tag}
-                      </span>
-                    ) : null}
-                  </div>
-                  <p className="mt-2 text-sm leading-relaxed text-slate-600">{f.body}</p>
-                </div>
-              </ShellCard>
-            ))}
-          </div>
-        </section>
-
-        {/* PROCESS */}
-        <section className="border-t border-slate-200 bg-slate-50">
-          <div className="mx-auto max-w-6xl px-6 py-14">
-            <SectionHeader
-              kicker="Process"
-              title="A simple 4-step loop that drives daily logins"
-              body="Modeled after a “process” section: short, numbered, and easy to scan."
-            />
-
-            <div className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-              {steps.map((s) => (
-                <ShellCard key={s.number}>
-                  <div className="p-6">
-                    <div className="text-xs font-semibold text-slate-500">{s.number}</div>
-                    <div className="mt-2 text-lg font-semibold text-slate-900">{s.title}</div>
-                    <p className="mt-3 text-sm leading-relaxed text-slate-600">{s.body}</p>
-                  </div>
-                </ShellCard>
-              ))}
-            </div>
-
-            {/* Custom Solutions-style CTA band */}
-            <div className="mt-10 rounded-[32px] border border-slate-200 bg-white p-8 shadow-[0_8px_30px_rgba(15,23,42,0.06)]">
-              <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-                <div>
-                  <div className="text-xl font-semibold text-slate-900">
-                    Bring retention and revenue together.
-                  </div>
-                  <div className="mt-2 text-sm text-slate-600">
-                    Start your StepCraft server and build a community that logs in every day.
-                  </div>
-                </div>
-                <Link
-                  to={primaryCtaTo}
-                  className="inline-flex h-11 items-center justify-center rounded-full bg-slate-900 px-6 text-sm font-semibold text-white transition hover:bg-slate-800"
-                >
-                  {primaryCtaLabel}
-                </Link>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* GET INSPIRED / GALLERY */}
-        <section id="gallery" className="mx-auto max-w-6xl px-6 py-14">
-          <SectionHeader
             kicker="Get inspired"
-            title="Show the story visually"
-            body="Use a horizontal gallery to match the “drag to explore” feel."
+            title="Screens & moments"
+            body="This adds that “interactive” feel: users can drag through examples instead of just reading."
           />
 
-          <div className="mt-8 -mx-6 px-6">
-            <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory">
-              {[
-                "App home screen",
-                "Reward claim",
-                "Streak screen",
-                "Server dashboard",
-                "Push notification",
-              ].map((label) => (
-                <div
-                  key={label}
-                  className="min-w-[280px] max-w-[280px] snap-start rounded-3xl border border-slate-200 bg-white shadow-[0_8px_30px_rgba(15,23,42,0.06)]"
-                >
-                  <div className="p-5">
-                    <div className="h-40 rounded-2xl border border-slate-200 bg-slate-50" />
-                    <div className="mt-4 text-sm font-semibold text-slate-900">{label}</div>
-                    <div className="mt-1 text-xs text-slate-500">Image placeholder</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* FAQ */}
-        <section className="border-t border-slate-200 bg-white">
-          <div className="mx-auto max-w-6xl px-6 py-14">
-            <SectionHeader
-              kicker="FAQ"
-              title="Questions that come up in a pitch"
-              body="Keep these short. The goal is confidence, not a wall of text."
+          <div className="mt-8">
+            <DraggableGallery
+              items={[
+                { label: "App home (steps + goal)" },
+                { label: "Reward claim screen" },
+                { label: "Streak milestone screen" },
+                { label: "Server dashboard snapshot" },
+                { label: "Push notification preview" },
+              ]}
             />
-
-            <div className="mt-8 grid gap-4 md:grid-cols-2">
-              {faqs.map((f) => (
-                <ShellCard key={f.q}>
-                  <div className="p-6">
-                    <div className="text-sm font-semibold text-slate-900">{f.q}</div>
-                    <div className="mt-2 text-sm leading-relaxed text-slate-600">{f.a}</div>
-                  </div>
-                </ShellCard>
-              ))}
-            </div>
           </div>
         </section>
 
@@ -439,10 +278,10 @@ export default function WhyJoinPage() {
         <section className="border-t border-slate-200 bg-slate-50">
           <div className="mx-auto max-w-6xl px-6 py-14 text-center">
             <h2 className="text-3xl font-semibold tracking-tight text-slate-900">
-              Ready to pitch StepCraft with confidence?
+              Bring retention and revenue together.
             </h2>
             <p className="mt-3 text-base text-slate-600">
-              Keep the message simple: habit → retention → revenue.
+              Start your StepCraft server and build a community that logs in every day.
             </p>
             <div className="mt-7 flex justify-center">
               <Link
