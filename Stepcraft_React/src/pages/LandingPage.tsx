@@ -31,12 +31,20 @@ export default function LandingPage() {
                 </p>
                 <div className="mt-10 flex flex-wrap gap-4">
                   {isAuthenticated ? (
-                    <Link
-                      to="/dashboard"
-                      className="flex h-11 items-center justify-center rounded-md bg-emerald-500 px-6 text-sm font-semibold text-slate-950 transition hover:bg-emerald-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
-                    >
-                      Go to dashboard
-                    </Link>
+                    <>
+                      <Link
+                        to="/dashboard"
+                        className="flex h-11 items-center justify-center rounded-md bg-emerald-500 px-6 text-sm font-semibold text-slate-950 transition hover:bg-emerald-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
+                      >
+                        Go to dashboard
+                      </Link>
+                      <Link
+                        to="/why-join"
+                        className="flex h-11 items-center justify-center rounded-md border border-slate-700 px-6 text-sm font-semibold text-white transition hover:border-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
+                      >
+                        Why you should join
+                      </Link>
+                    </>
                   ) : (
                     <>
                       <Link
@@ -44,6 +52,12 @@ export default function LandingPage() {
                         className="flex h-11 items-center justify-center rounded-md bg-emerald-500 px-6 text-sm font-semibold text-slate-950 transition hover:bg-emerald-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
                       >
                         Create your account
+                      </Link>
+                      <Link
+                        to="/why-join"
+                        className="flex h-11 items-center justify-center rounded-md border border-slate-700 px-6 text-sm font-semibold text-white transition hover:border-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
+                      >
+                        Why you should join
                       </Link>
                       <Link
                         to="/login"

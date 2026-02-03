@@ -11,6 +11,7 @@ import RewardsPage from "./pages/RewardsPage";
 import PushPage from "./pages/PushPage";
 import NotFoundPage from "./pages/NotFoundPage";
 import AuditLogPage from "./pages/AuditLogPage";
+import WhyJoinPage from "./pages/WhyJoinPage";
 
 function RequireAuth({ children }: { children: ReactElement }) {
   const { isAuthenticated } = useAuthContext();
@@ -26,6 +27,7 @@ function App() {
   return (
     <Routes>
       <Route path="/" element={<LandingPage />} />
+      <Route path="/why-join" element={<WhyJoinPage />} />
       <Route path="/login" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <LoginPage />} />
       <Route
         path="/account/register"
