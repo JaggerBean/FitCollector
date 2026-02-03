@@ -73,18 +73,18 @@ export default function AuditLogPage() {
           </label>
           <label className="text-xs font-semibold uppercase tracking-wide text-slate-400">
             Action
-            <input
+            <select
               className="mt-2 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100"
-              placeholder="Filter by action"
-              value={actionFilter}
-              onChange={(event) => setActionFilter(event.target.value)}
-              list="audit-action-options"
-            />
-            <datalist id="audit-action-options">
+              value={actionFilter || "all"}
+              onChange={(event) => setActionFilter(event.target.value === "all" ? "" : event.target.value)}
+            >
+              <option value="all">All actions</option>
               {actionTags.map((action) => (
-                <option key={action} value={action} />
+                <option key={action} value={action}>
+                  {action}
+                </option>
               ))}
-            </datalist>
+            </select>
           </label>
           <label className="text-xs font-semibold uppercase tracking-wide text-slate-400">
             Limit
