@@ -16,6 +16,7 @@ export default function AuditLogPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeAudit, setActiveAudit] = useState<AuditEvent | null>(null);
+  const [actionOptions, setActionOptions] = useState<string[]>([]);
 
   useEffect(() => {
     if (!token) return;
@@ -28,20 +29,22 @@ export default function AuditLogPage() {
     if (!token) return;
     setLoading(true);
     setError(null);
-    getAuditLog(token, {
-      server: serverFilter === "all" ? undefined : serverFilter,
-      action: actionFilter.trim() || undefined,
-      limit,
-    })
-      .then((data: AuditLogResponse) => setItems(data.items))
+    const serverParam = serverFilter === "all" ? undefined : serverFilter;
+    const baseRequest = getAuditLog(token, { server: serverParam, limit });
+    const filteredRequest = actionFilter.trim()
+      ? getAuditLog(token, { server: serverParam, action: actionFilter.trim(), limit })
+      : baseRequest;
+    Promise.all([baseRequest, filteredRequest])
+      .then(([baseData, filteredData]) => {
+        setItems(filteredData.items);
+        const options = new Set(baseData.items.map((item) => item.action));
+        setActionOptions(Array.from(options).sort());
+      })
       .catch((err) => setError((err as Error).message))
       .finally(() => setLoading(false));
   }, [token, serverFilter, actionFilter, limit]);
 
-  const actionTags = useMemo(() => {
-    const set = new Set(items.map((item) => item.action));
-    return Array.from(set).sort();
-  }, [items]);
+  const actionTags = useMemo(() => actionOptions, [actionOptions]);
 
   return (
     <Layout>
