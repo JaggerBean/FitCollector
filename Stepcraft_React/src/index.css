@@ -15,6 +15,31 @@ body {
   min-height: 100vh;
 }
 
+.reveal-out {
+  opacity: 0;
+  transform: translateY(18px) scale(0.985);
+  filter: blur(10px);
+  transition: opacity 700ms ease, transform 700ms ease, filter 700ms ease;
+}
+
+.reveal-in {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  filter: blur(0);
+  transition: opacity 700ms ease, transform 700ms ease, filter 700ms ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal-out,
+  .reveal-in {
+    transition: none !important;
+    transform: none !important;
+    filter: none !important;
+    opacity: 1 !important;
+  }
+}
+
+
 .confirm-overlay {
   position: fixed;
   inset: 0;
