@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { Layout } from "../components/Layout";
 import SmoothScroll from "../components/SmoothScroll";
-import ScrollStack, { ScrollStackItem } from "../components/ScrollStack";
+import { ScrollStack, ScrollStackItem } from "../components/ScrollStack";
 import { useAuthContext } from "../app/AuthContext";
 import { useEffect, useMemo, useRef, useState } from "react";
 
