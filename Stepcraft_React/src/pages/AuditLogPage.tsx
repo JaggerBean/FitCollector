@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Layout } from "../components/Layout";
+import AnimatedList from "../components/AnimatedList";
+import ConfirmDialog from "../components/ConfirmDialog";
 import { useAuthContext } from "../app/AuthContext";
 import { getAuditLog, getOwnedServers } from "../api/servers";
 import type { AuditLogResponse, AuditEvent, OwnedServersResponse } from "../api/types";
@@ -13,6 +15,7 @@ export default function AuditLogPage() {
   const [limit, setLimit] = useState(200);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [activeAudit, setActiveAudit] = useState<AuditEvent | null>(null);
 
   useEffect(() => {
     if (!token) return;
@@ -112,34 +115,72 @@ export default function AuditLogPage() {
               No audit events yet.
             </div>
           ) : (
-            items.map((item) => (
-              <div
-                key={item.id}
-                className="rounded-2xl border border-slate-800/70 bg-slate-950/40 p-4 shadow-sm"
-              >
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div>
-                    <div className="text-sm font-semibold text-slate-100">
-                      {item.summary || item.action.replace(/_/g, " ")}
+            <AnimatedList
+              items={items}
+              className="text-sm text-slate-300"
+              maxHeightClassName="max-h-[520px]"
+              onItemSelect={(item) => setActiveAudit(item)}
+              renderItem={(item) => (
+                <div className="rounded-2xl border border-slate-800/70 bg-slate-950/40 p-4 shadow-sm">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <div className="text-sm font-semibold text-slate-100">
+                        {item.summary || item.action.replace(/_/g, " ")}
+                      </div>
+                      <div className="mt-1 text-xs text-slate-400">
+                        {item.server_name} Â· {new Date(item.created_at).toLocaleString()}
+                      </div>
                     </div>
-                    <div className="mt-1 text-xs text-slate-400">
-                      {item.server_name} · {new Date(item.created_at).toLocaleString()}
+                    <div className="text-xs font-medium text-emerald-300">
+                      {item.actor_email || "System"}
                     </div>
-                  </div>
-                  <div className="text-xs font-medium text-emerald-300">
-                    {item.actor_email || "System"}
                   </div>
                 </div>
-                {item.details && Object.keys(item.details).length > 0 && (
-                  <pre className="mt-3 whitespace-pre-wrap rounded-lg border border-slate-800 bg-slate-950/60 px-3 py-2 text-xs text-slate-300">
-                    {JSON.stringify(item.details, null, 2)}
-                  </pre>
-                )}
-              </div>
-            ))
+              )}
+            />
           )}
         </div>
       )}
+      <ConfirmDialog
+        open={!!activeAudit}
+        title={activeAudit?.summary || activeAudit?.action?.replace(/_/g, " ") || "Audit entry"}
+        confirmLabel="Close"
+        cancelLabel="Close"
+        onConfirm={() => setActiveAudit(null)}
+        onCancel={() => setActiveAudit(null)}
+        content={
+          activeAudit ? (
+            <div className="space-y-3">
+              <div className="text-xs text-slate-500 dark:text-slate-400">
+                <div>
+                  <span className="font-semibold text-slate-700 dark:text-slate-200">Server:</span>{" "}
+                  {activeAudit.server_name}
+                </div>
+                <div>
+                  <span className="font-semibold text-slate-700 dark:text-slate-200">Action:</span>{" "}
+                  {activeAudit.action}
+                </div>
+                <div>
+                  <span className="font-semibold text-slate-700 dark:text-slate-200">Actor:</span>{" "}
+                  {activeAudit.actor_email || "System"}
+                </div>
+                <div>
+                  <span className="font-semibold text-slate-700 dark:text-slate-200">When:</span>{" "}
+                  {new Date(activeAudit.created_at).toLocaleString()}
+                </div>
+              </div>
+              <div>
+                <div className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                  Details
+                </div>
+                <pre className="mt-2 max-h-72 overflow-auto rounded-lg border border-slate-800 bg-slate-950/60 px-3 py-2 text-xs text-slate-300">
+                  {JSON.stringify(activeAudit.details ?? {}, null, 2)}
+                </pre>
+              </div>
+            </div>
+          ) : null
+        }
+      />
     </Layout>
   );
 }
