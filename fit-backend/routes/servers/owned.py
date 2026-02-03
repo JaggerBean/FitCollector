@@ -5,6 +5,7 @@ from sqlalchemy import text
 
 from database import engine
 from auth import require_user
+from audit import log_audit_event
 
 router = APIRouter()
 
@@ -84,6 +85,13 @@ def pause_server(server_name: str, user=Depends(require_user)):
             """),
             {"server": server_name, "user_id": user["id"]},
         )
+    log_audit_event(
+        server_name=server_name,
+        actor_user_id=user["id"],
+        action="server_paused",
+        summary="Paused server (API key deactivated)",
+        details={"keys_deactivated": result.rowcount},
+    )
     return {
         "ok": True,
         "server_name": server_name,
@@ -125,6 +133,12 @@ def resume_server(server_name: str, user=Depends(require_user)):
             {"id": key_row[0]},
         )
 
+    log_audit_event(
+        server_name=server_name,
+        actor_user_id=user["id"],
+        action="server_resumed",
+        summary="Resumed server (API key activated)",
+    )
     return {
         "ok": True,
         "server_name": server_name,
@@ -185,6 +199,12 @@ def delete_server(server_name: str, user=Depends(require_user)):
             if result.rowcount == 0:
                 raise HTTPException(status_code=404, detail=f"Server '{server_name}' not found")
 
+        log_audit_event(
+            server_name=server_name,
+            actor_user_id=user["id"],
+            action="server_deleted",
+            summary="Deleted server and all data",
+        )
         return {"ok": True, "message": f"Server '{server_name}' deleted."}
     except HTTPException:
         raise

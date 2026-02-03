@@ -20,6 +20,7 @@ import type {
   InactivePruneRunResponse,
   ClaimWindowResponse,
   AuthMeResponse,
+  AuditLogResponse,
 } from "./types";
 
 export async function login(email: string, password: string): Promise<LoginResponse> {
@@ -359,4 +360,16 @@ export async function updateClaimWindow(
     },
     token,
   );
+}
+
+export async function getAuditLog(
+  token: string,
+  params: { server?: string; action?: string; limit?: number } = {},
+): Promise<AuditLogResponse> {
+  const search = new URLSearchParams();
+  if (params.server) search.set("server", params.server);
+  if (params.action) search.set("action", params.action);
+  if (params.limit) search.set("limit", String(params.limit));
+  const suffix = search.toString();
+  return apiRequest<AuditLogResponse>(`/v1/servers/audit${suffix ? `?${suffix}` : ""}`, {}, token);
 }

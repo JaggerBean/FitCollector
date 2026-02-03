@@ -1,6 +1,6 @@
 """Server push notification endpoints (API key required)."""
 
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Header
 from pydantic import BaseModel, Field
 from sqlalchemy import text
 from zoneinfo import ZoneInfo
@@ -8,6 +8,7 @@ from datetime import datetime, timezone
 
 from database import engine
 from auth import require_server_access
+from audit import log_audit_event, maybe_get_user
 from apns_service import (
     ApnsConfigError,
     APNsException,
@@ -58,7 +59,12 @@ def list_push_notifications(server_name: str = Depends(require_server_access)):
 
 
 @router.post("/v1/servers/push")
-def schedule_push_notification(payload: PushPayload, server_name: str = Depends(require_server_access)):
+def schedule_push_notification(
+    payload: PushPayload,
+    server_name: str = Depends(require_server_access),
+    authorization: str | None = Header(default=None, alias="Authorization"),
+    x_user_token: str | None = Header(default=None, alias="X-User-Token"),
+):
     try:
         scheduled = datetime.fromisoformat(payload.scheduled_at)
     except Exception:
@@ -97,11 +103,28 @@ def schedule_push_notification(payload: PushPayload, server_name: str = Depends(
             },
         ).mappings().first()
 
+    user = maybe_get_user(authorization=authorization, x_user_token=x_user_token)
+    log_audit_event(
+        server_name=server_name,
+        actor_user_id=user["id"] if user else None,
+        action="push_scheduled",
+        summary="Scheduled push notification",
+        details={
+            "message": payload.message.strip(),
+            "scheduled_at": scheduled_utc.isoformat(),
+            "timezone": payload.timezone,
+        },
+    )
     return {"server_name": server_name, "item": dict(row)}
 
 
 @router.post("/v1/servers/push/send")
-def send_push_now(payload: PushSendPayload, server_name: str = Depends(require_server_access)):
+def send_push_now(
+    payload: PushSendPayload,
+    server_name: str = Depends(require_server_access),
+    authorization: str | None = Header(default=None, alias="Authorization"),
+    x_user_token: str | None = Header(default=None, alias="X-User-Token"),
+):
     target_sandbox: bool | None = None
     try:
         target_sandbox = apns_use_sandbox()
@@ -176,6 +199,19 @@ def send_push_now(payload: PushSendPayload, server_name: str = Depends(require_s
             except APNsException as e:
                 raise HTTPException(status_code=502, detail=f"APNs error: {format_apns_exception(e)}")
 
+        user = maybe_get_user(authorization=authorization, x_user_token=x_user_token)
+        log_audit_event(
+            server_name=server_name,
+            actor_user_id=user["id"] if user else None,
+            action="push_sent_now",
+            summary="Sent push notification",
+            details={
+                "title": title,
+                "body": payload.body,
+                "tokens": len(eligible),
+                "failed": failures,
+            },
+        )
         return {"status": "sent", "tokens": len(eligible), "failed": failures}
 
     except FcmConfigError as e:

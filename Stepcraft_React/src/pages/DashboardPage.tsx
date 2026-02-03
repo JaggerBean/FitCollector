@@ -133,12 +133,20 @@ export default function DashboardPage() {
     <Layout>
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">Your servers</h1>
-        <Link
-          to="/register"
-          className="rounded-lg border border-emerald-200 bg-white px-4 py-2 text-sm font-medium text-emerald-700 shadow-sm transition hover:border-emerald-600 hover:bg-emerald-600 hover:text-white dark:border-slate-800 dark:bg-slate-900 dark:text-emerald-200 dark:hover:border-emerald-500 dark:hover:bg-emerald-600"
-        >
-          Register server
-        </Link>
+        <div className="flex flex-wrap items-center gap-2">
+          <Link
+            to="/audit"
+            className="rounded-lg border border-slate-700 bg-slate-950/60 px-4 py-2 text-sm font-medium text-slate-100 shadow-sm transition hover:border-emerald-500/70 hover:bg-emerald-600 hover:text-white"
+          >
+            Audit log
+          </Link>
+          <Link
+            to="/register"
+            className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
+          >
+            Register server
+          </Link>
+        </div>
       </div>
       {error && (
         <div className="mt-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900/40 dark:bg-red-900/20 dark:text-red-200">

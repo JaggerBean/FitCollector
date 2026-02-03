@@ -390,3 +390,26 @@ def init_db() -> None:
         CREATE INDEX IF NOT EXISTS idx_push_device_tokens_device
         ON push_device_tokens(device_id, server_name);
         """))
+
+        # 14) Audit log for server admin actions
+        conn.execute(text("""
+        CREATE TABLE IF NOT EXISTS audit_logs (
+            id BIGSERIAL PRIMARY KEY,
+            server_name TEXT NOT NULL,
+            actor_user_id BIGINT,
+            action TEXT NOT NULL,
+            summary TEXT,
+            details_json TEXT,
+            created_at TIMESTAMPTZ DEFAULT NOW()
+        );
+        """))
+
+        conn.execute(text("""
+        CREATE INDEX IF NOT EXISTS idx_audit_logs_server_time
+        ON audit_logs(server_name, created_at);
+        """))
+
+        conn.execute(text("""
+        CREATE INDEX IF NOT EXISTS idx_audit_logs_actor
+        ON audit_logs(actor_user_id, created_at);
+        """))

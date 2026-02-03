@@ -9,6 +9,7 @@ from .management import router as management_router
 from .rewards import router as rewards_router
 from .push import router as push_router
 from .owned import router as owned_router
+from .audit import router as audit_router
 
 router = APIRouter()
 router.include_router(registration_router)
@@ -18,3 +19,4 @@ router.include_router(management_router)
 router.include_router(rewards_router)
 router.include_router(push_router)
 router.include_router(owned_router)
+router.include_router(audit_router)

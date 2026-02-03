@@ -1,11 +1,12 @@
 """Server rewards configuration endpoints."""
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Header
 from pydantic import BaseModel, Field
 from sqlalchemy import text
 import json
 from database import engine
 from auth import require_server_access
+from audit import log_audit_event, maybe_get_user
 
 router = APIRouter()
 
@@ -61,7 +62,11 @@ def get_server_rewards(server_name: str = Depends(require_server_access)):
 
 
 @router.post("/v1/servers/rewards/default")
-def seed_default_rewards(server_name: str = Depends(require_server_access)):
+def seed_default_rewards(
+    server_name: str = Depends(require_server_access),
+    authorization: str | None = Header(default=None, alias="Authorization"),
+    x_user_token: str | None = Header(default=None, alias="X-User-Token"),
+):
     with engine.begin() as conn:
         conn.execute(
             text("DELETE FROM server_rewards WHERE server_name = :server"),
@@ -84,6 +89,13 @@ def seed_default_rewards(server_name: str = Depends(require_server_access)):
                 },
             )
 
+    user = maybe_get_user(authorization=authorization, x_user_token=x_user_token)
+    log_audit_event(
+        server_name=server_name,
+        actor_user_id=user["id"] if user else None,
+        action="rewards_reset_default",
+        summary="Reset rewards to default tiers",
+    )
     return {
         "server_name": server_name,
         "tiers": [tier.model_dump() for tier in DEFAULT_REWARDS],
@@ -92,13 +104,25 @@ def seed_default_rewards(server_name: str = Depends(require_server_access)):
 
 
 @router.put("/v1/servers/rewards")
-def replace_rewards(payload: RewardsPayload, server_name: str = Depends(require_server_access)):
+def replace_rewards(
+    payload: RewardsPayload,
+    server_name: str = Depends(require_server_access),
+    authorization: str | None = Header(default=None, alias="Authorization"),
+    x_user_token: str | None = Header(default=None, alias="X-User-Token"),
+):
     if not payload.tiers:
         with engine.begin() as conn:
             conn.execute(
                 text("DELETE FROM server_rewards WHERE server_name = :server"),
                 {"server": server_name},
             )
+        user = maybe_get_user(authorization=authorization, x_user_token=x_user_token)
+        log_audit_event(
+            server_name=server_name,
+            actor_user_id=user["id"] if user else None,
+            action="rewards_cleared",
+            summary="Cleared all reward tiers",
+        )
         return {"server_name": server_name, "tiers": []}
 
     for tier in payload.tiers:
@@ -129,4 +153,12 @@ def replace_rewards(payload: RewardsPayload, server_name: str = Depends(require_
                 },
             )
 
+    user = maybe_get_user(authorization=authorization, x_user_token=x_user_token)
+    log_audit_event(
+        server_name=server_name,
+        actor_user_id=user["id"] if user else None,
+        action="rewards_updated",
+        summary=f"Updated {len(payload.tiers)} reward tier(s)",
+        details={"tiers": [tier.model_dump() for tier in payload.tiers]},
+    )
     return {"server_name": server_name, "tiers": [tier.model_dump() for tier in payload.tiers]}

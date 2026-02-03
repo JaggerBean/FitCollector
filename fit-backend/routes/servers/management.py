@@ -1,6 +1,6 @@
 """Server management endpoints for server owners."""
 
-from fastapi import APIRouter, HTTPException, Depends, Query
+from fastapi import APIRouter, HTTPException, Depends, Query, Header
 from pydantic import BaseModel, Field
 from sqlalchemy import text
 from typing import Optional, Literal
@@ -8,6 +8,7 @@ from datetime import datetime, timezone, timedelta
 
 from database import engine
 from auth import require_server_access, require_master_admin
+from audit import log_audit_event, maybe_get_user
 from fastapi.responses import JSONResponse
 
 router = APIRouter()
@@ -517,6 +518,8 @@ def run_inactive_prune(
 def server_wipe_player(
     minecraft_username: str,
     server_name: str = Depends(require_server_access),
+    authorization: str | None = Header(default=None, alias="Authorization"),
+    x_user_token: str | None = Header(default=None, alias="X-User-Token"),
 ):
     """
     Wipe all data for a specific player on your server only.
@@ -565,6 +568,19 @@ def server_wipe_player(
                 {"minecraft_username": minecraft_username, "server_name": server_name}
             )
         
+        user = maybe_get_user(authorization=authorization, x_user_token=x_user_token)
+        log_audit_event(
+            server_name=server_name,
+            actor_user_id=user["id"] if user else None,
+            action="player_wiped",
+            summary=f"Wiped {minecraft_username}",
+            details={
+                "minecraft_username": minecraft_username,
+                "player_keys_deleted": key_result.rowcount,
+                "step_records_deleted": step_result.rowcount,
+                "bans_deleted": ban_result.rowcount,
+            },
+        )
         return {
             "ok": True,
             "action": "server_wiped_player",

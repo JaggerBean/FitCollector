@@ -1,0 +1,145 @@
+import { useEffect, useMemo, useState } from "react";
+import { Layout } from "../components/Layout";
+import { useAuthContext } from "../app/AuthContext";
+import { getAuditLog, getOwnedServers } from "../api/servers";
+import type { AuditLogResponse, AuditEvent, OwnedServersResponse } from "../api/types";
+
+export default function AuditLogPage() {
+  const { token } = useAuthContext();
+  const [servers, setServers] = useState<OwnedServersResponse["servers"]>([]);
+  const [items, setItems] = useState<AuditEvent[]>([]);
+  const [serverFilter, setServerFilter] = useState("all");
+  const [actionFilter, setActionFilter] = useState("");
+  const [limit, setLimit] = useState(200);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!token) return;
+    getOwnedServers(token)
+      .then((data) => setServers(data.servers))
+      .catch((err) => setError((err as Error).message));
+  }, [token]);
+
+  useEffect(() => {
+    if (!token) return;
+    setLoading(true);
+    setError(null);
+    getAuditLog(token, {
+      server: serverFilter === "all" ? undefined : serverFilter,
+      action: actionFilter.trim() || undefined,
+      limit,
+    })
+      .then((data: AuditLogResponse) => setItems(data.items))
+      .catch((err) => setError((err as Error).message))
+      .finally(() => setLoading(false));
+  }, [token, serverFilter, actionFilter, limit]);
+
+  const actionTags = useMemo(() => {
+    const set = new Set(items.map((item) => item.action));
+    return Array.from(set).sort();
+  }, [items]);
+
+  return (
+    <Layout>
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">Audit log</h1>
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+            Track admin actions like push sends, reward edits, bans, wipes, and server changes.
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-6 rounded-2xl border border-slate-800/60 bg-slate-950/40 p-4">
+        <div className="grid gap-3 md:grid-cols-[1.2fr_1fr_0.6fr]">
+          <label className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+            Server
+            <select
+              className="mt-2 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100"
+              value={serverFilter}
+              onChange={(event) => setServerFilter(event.target.value)}
+            >
+              <option value="all">All servers</option>
+              {servers.map((server) => (
+                <option key={server.server_name} value={server.server_name}>
+                  {server.server_name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+            Action
+            <input
+              className="mt-2 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100"
+              placeholder="Filter by action"
+              value={actionFilter}
+              onChange={(event) => setActionFilter(event.target.value)}
+              list="audit-action-options"
+            />
+            <datalist id="audit-action-options">
+              {actionTags.map((action) => (
+                <option key={action} value={action} />
+              ))}
+            </datalist>
+          </label>
+          <label className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+            Limit
+            <input
+              type="number"
+              min={50}
+              max={1000}
+              className="mt-2 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100"
+              value={limit}
+              onChange={(event) => setLimit(Number(event.target.value))}
+            />
+          </label>
+        </div>
+      </div>
+
+      {error && (
+        <div className="mt-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900/40 dark:bg-red-900/20 dark:text-red-200">
+          {error}
+        </div>
+      )}
+
+      {loading ? (
+        <div className="mt-6 text-sm text-slate-500 dark:text-slate-400">Loading audit events...</div>
+      ) : (
+        <div className="mt-6 space-y-4">
+          {items.length === 0 ? (
+            <div className="rounded-xl border border-slate-800/70 bg-slate-950/40 px-4 py-8 text-center text-sm text-slate-400">
+              No audit events yet.
+            </div>
+          ) : (
+            items.map((item) => (
+              <div
+                key={item.id}
+                className="rounded-2xl border border-slate-800/70 bg-slate-950/40 p-4 shadow-sm"
+              >
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <div className="text-sm font-semibold text-slate-100">
+                      {item.summary || item.action.replace(/_/g, " ")}
+                    </div>
+                    <div className="mt-1 text-xs text-slate-400">
+                      {item.server_name} · {new Date(item.created_at).toLocaleString()}
+                    </div>
+                  </div>
+                  <div className="text-xs font-medium text-emerald-300">
+                    {item.actor_email || "System"}
+                  </div>
+                </div>
+                {item.details && Object.keys(item.details).length > 0 && (
+                  <pre className="mt-3 whitespace-pre-wrap rounded-lg border border-slate-800 bg-slate-950/60 px-3 py-2 text-xs text-slate-300">
+                    {JSON.stringify(item.details, null, 2)}
+                  </pre>
+                )}
+              </div>
+            ))
+          )}
+        </div>
+      )}
+    </Layout>
+  );
+}

@@ -181,3 +181,19 @@ export interface ClaimWindowResponse {
   server_name: string;
   claim_buffer_days: number;
 }
+
+export interface AuditEvent {
+  id: number;
+  server_name: string;
+  actor_user_id?: number | null;
+  actor_email?: string | null;
+  action: string;
+  summary?: string | null;
+  details?: Record<string, unknown>;
+  created_at: string;
+}
+
+export interface AuditLogResponse {
+  items: AuditEvent[];
+  limit: number;
+}

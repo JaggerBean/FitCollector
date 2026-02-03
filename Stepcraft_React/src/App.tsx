@@ -10,6 +10,7 @@ import ServerManagePage from "./pages/ServerManagePage";
 import RewardsPage from "./pages/RewardsPage";
 import PushPage from "./pages/PushPage";
 import NotFoundPage from "./pages/NotFoundPage";
+import AuditLogPage from "./pages/AuditLogPage";
 
 function RequireAuth({ children }: { children: ReactElement }) {
   const { isAuthenticated } = useAuthContext();
@@ -67,6 +68,14 @@ function App() {
         element={
           <RequireAuth>
             <PushPage />
+          </RequireAuth>
+        }
+      />
+      <Route
+        path="/audit"
+        element={
+          <RequireAuth>
+            <AuditLogPage />
           </RequireAuth>
         }
       />

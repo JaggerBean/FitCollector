@@ -1,6 +1,6 @@
 """Server ban management endpoints."""
 
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Header
 from pydantic import BaseModel, Field
 from sqlalchemy import text
 from zoneinfo import ZoneInfo
@@ -8,6 +8,7 @@ import secrets
 
 from database import engine
 from auth import require_server_access
+from audit import log_audit_event, maybe_get_user
 
 CENTRAL_TZ = ZoneInfo("America/Chicago")
 router = APIRouter()
@@ -79,6 +80,8 @@ def ban_player(
     minecraft_username: str,
     request: BanRequest,
     server_name: str = Depends(require_server_access),
+    authorization: str | None = Header(default=None, alias="Authorization"),
+    x_user_token: str | None = Header(default=None, alias="X-User-Token"),
 ):
     """
     Ban a player from this server.
@@ -167,6 +170,14 @@ def ban_player(
                     )
                     banned_items.append(f"device '{device_id}'")
         
+        user = maybe_get_user(authorization=authorization, x_user_token=x_user_token)
+        log_audit_event(
+            server_name=server_name,
+            actor_user_id=user["id"] if user else None,
+            action="player_banned",
+            summary=f"Banned {minecraft_username}",
+            details={"minecraft_username": minecraft_username, "reason": request.reason, "device_count": len(device_ids)},
+        )
         return {
             "ok": True,
             "action": "banned",
@@ -187,6 +198,8 @@ def ban_player(
 def unban_player(
     minecraft_username: str,
     server_name: str = Depends(require_server_access),
+    authorization: str | None = Header(default=None, alias="Authorization"),
+    x_user_token: str | None = Header(default=None, alias="X-User-Token"),
 ):
     """
     Unban a player from this server.
@@ -244,6 +257,14 @@ def unban_player(
                 {"ban_group_id": ban_group_id}
             )
         
+        user = maybe_get_user(authorization=authorization, x_user_token=x_user_token)
+        log_audit_event(
+            server_name=server_name,
+            actor_user_id=user["id"] if user else None,
+            action="player_unbanned",
+            summary=f"Unbanned {minecraft_username}",
+            details={"minecraft_username": minecraft_username, "device_count": len(device_ids)},
+        )
         return {
             "ok": True,
             "action": "unbanned",
