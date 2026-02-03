@@ -76,7 +76,7 @@ export function PitchScrollScene({ scenes }: { scenes: Scene[] }) {
         <div className="relative mx-auto grid h-full max-w-6xl grid-cols-1 gap-10 px-6 py-10 md:grid-cols-2 md:px-10">
           {/* Left: copy */}
           <div className="flex flex-col justify-center">
-            <div className="text-xs uppercase tracking-[0.3em] text-slate-400">Scroll story</div>
+            <div className="text-xs uppercase tracking-[0.3em] text-slate-400">StepCraft in action</div>
 
             {safeScenes.map((s, i) => {
               // distance from active scene

@@ -109,7 +109,7 @@ const scenes = useMemo(
     {
       eyebrow: "Casual player retention",
       title: "Turn one-day visitors into regulars.",
-      body: "Most players join, play once, and disappear, especially casual players. StepCraft gives them a simple daily reason to come back: hit a step goal, claim a reward, feel progress. Your dedicated players keep grinding; your casual players finally have a loop that fits their schedule. You have full control over pacing and rewards, so you can design for all player types without penalizing anyone's playstyle.",
+      body: "Most players join, play once, and disappear—especially casuals. StepCraft gives them an easy daily reason to return: hit a step goal, claim a reward, feel progress. It turns “I’ll check it out” into a routine that fits busy schedules.",
       imageAlt: "Daily step goal and reward claim",
       imageUrl: undefined,
     },
