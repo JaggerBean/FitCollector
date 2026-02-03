@@ -104,39 +104,46 @@ export default function WhyJoinPage() {
   const primaryCtaTo = isAuthenticated ? "/dashboard" : "/account/register";
   const primaryCtaLabel = isAuthenticated ? "Go to dashboard" : "Get started!";
 
-  const scenes = useMemo(
-    () => [
-      {
-        eyebrow: "Retention engine",
-        title: "Build a daily habit that pulls players back in.",
-        body: "StepCraft turns real-world steps into in-game progress. Players get a reason to show up every day, even when they weren’t planning to play. More days played means less churn and stronger communities.",
-        imageAlt: "Daily streak rewards",
-        imageUrl: undefined,
-      },
-      {
-        eyebrow: "Revenue lift",
-        title: "More sessions → more purchases.",
-        body: "When players log in more often, they buy more often. StepCraft increases playtime and repeat visits, which raises conversion on ranks, boosters, cosmetics, crates, and seasonal offers.",
-        imageAlt: "Store and rank upgrades",
-        imageUrl: undefined,
-      },
-      {
-        eyebrow: "Point of contact",
-        title: "Your server stays visible off-platform.",
-        body: "Most servers rely on Discord and hope players notice pings. StepCraft adds a phone app touchpoint—something players see every day—so your server stays top-of-mind even when they’re not online.",
-        imageAlt: "Phone notifications and app presence",
-        imageUrl: undefined,
-      },
-      {
-        eyebrow: "Reactivation",
-        title: "Bring back players who drift away.",
-        body: "Players lapse. StepCraft gives you reactivation moments: missed streaks, weekly goals, and reward reminders that nudge players back into the server—without you spamming Discord.",
-        imageAlt: "Reactivation reminders",
-        imageUrl: undefined,
-      },
-    ],
-    [],
-  );
+const scenes = useMemo(
+  () => [
+    {
+      eyebrow: "Casual retention",
+      title: "Turn one-day visitors into regulars.",
+      body: "Most players join, play once, and disappear—especially casuals. StepCraft gives them a simple daily reason to come back: hit a step goal, claim a reward, feel progress. Your dedicated players keep grinding; your casual players finally have a loop that fits their schedule.",
+      imageAlt: "Daily step goal and reward claim",
+      imageUrl: undefined,
+    },
+    {
+      eyebrow: "Zero friction",
+      title: "Server-side only: players just join.",
+      body: "No client mod. No extra installs. No \"go download this\" drop-off. Anyone who can join your server can participate immediately, which keeps your funnel clean and your player count healthier.",
+      imageAlt: "Join server without installing anything",
+      imageUrl: undefined,
+    },
+    {
+      eyebrow: "Owner control",
+      title: "Cater to casuals without nerfing the dedicated base.",
+      body: "You control the reward structure: step thresholds, pacing, and payouts. Make it a small daily boost for casuals, a meaningful streak system for regulars, or a long-term ladder for grinders—without flattening your server’s progression.",
+      imageAlt: "Reward tiers and tuning controls",
+      imageUrl: undefined,
+    },
+    {
+      eyebrow: "Integrations",
+      title: "Command-driven rewards that work with your whole stack.",
+      body: "Rewards are commands, so StepCraft can integrate with whatever you already run—economy, ranks, crates, quests, skills, cosmetics, custom items. If it has a command, StepCraft can trigger it.",
+      imageAlt: "Reward commands integrating with other plugins/mods",
+      imageUrl: undefined,
+    },
+    {
+      eyebrow: "Reactivation",
+      title: "Bring players back without spamming Discord.",
+      body: "The phone app becomes a daily touchpoint: streak reminders, missed goals, and nudges that pull players back into Minecraft. It’s reactivation that feels like a reward, not an announcement.",
+      imageAlt: "App reminders and reactivation prompts",
+      imageUrl: undefined,
+    },
+  ],
+  [],
+);
 
   return (
     <Layout>
@@ -188,7 +195,7 @@ export default function WhyJoinPage() {
                     <div className="rounded-xl border border-slate-800/70 bg-slate-950/55 p-4">
                       <div className="text-xs uppercase tracking-[0.2em] text-slate-400">Marketability</div>
                       <div className="mt-1 text-sm font-semibold text-white">A unique health hook</div>
-                      <div className="mt-1 text-xs text-slate-400">Gives you a headline other servers can’t copy: “walk to earn in-game rewards.”</div>
+                      <div className="mt-1 text-xs text-slate-400">Gives you a headline other servers can’t copy: “walk IRL to earn in-game rewards.”</div>
                     </div>
                     <div className="rounded-xl border border-slate-800/70 bg-slate-950/55 p-4">
                       <div className="text-xs uppercase tracking-[0.2em] text-slate-400">Visibility</div>
