@@ -88,8 +88,10 @@ export default function WhyJoinPage() {
             </div>
           </div>
 
-          <div className="mt-8 rounded-3xl border border-slate-900/70 bg-slate-950/60 p-6">
-            <ScrollStack useWindowScroll>
+          <div className="relative mt-8">
+            <div className="pointer-events-none absolute inset-0 rounded-[32px] bg-gradient-to-b from-slate-950 via-slate-950/80 to-slate-950/10" />
+            <div className="rounded-[32px] border border-slate-900/70 bg-slate-950/60 p-6">
+              <ScrollStack className="h-[80vh] md:h-[90vh]" useWindowScroll={false}>
               <ScrollStackItem itemClassName="bg-slate-950/70 border border-emerald-900/40">
                 <div className="text-sm uppercase tracking-[0.2em] text-emerald-300/70">Habit formation</div>
                 <h3 className="mt-3 text-2xl font-semibold text-white">Daily logins feel rewarding.</h3>
@@ -120,7 +122,8 @@ export default function WhyJoinPage() {
                   Image placeholder: push notification preview or app badge.
                 </div>
               </ScrollStackItem>
-            </ScrollStack>
+              </ScrollStack>
+            </div>
           </div>
         </section>
 
