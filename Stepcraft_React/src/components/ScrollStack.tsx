@@ -262,7 +262,18 @@ const ScrollStack: React.FC<ScrollStackProps> = ({
         : (scrollerRef.current?.querySelectorAll(".scroll-stack-card") ?? []),
     ) as HTMLElement[];
     cardsRef.current = cards;
-    cardTopCacheRef.current = cards.map((card) => getElementOffset(card));
+    if (useWindowScroll) {
+      const rootTop = scrollerRef.current
+        ? scrollerRef.current.getBoundingClientRect().top + window.scrollY
+        : 0;
+      scrollRootTopRef.current = rootTop;
+      cardTopCacheRef.current = cards.map((card) => {
+        const rect = card.getBoundingClientRect();
+        return rect.top + window.scrollY - rootTop;
+      });
+    } else {
+      cardTopCacheRef.current = cards.map((card) => card.offsetTop);
+    }
     const transformsCache = lastTransformsRef.current;
 
     cards.forEach((card, i) => {
@@ -280,7 +291,14 @@ const ScrollStack: React.FC<ScrollStackProps> = ({
 
     if (useWindowScroll) {
       const updateCache = () => {
-        cardTopCacheRef.current = cardsRef.current.map((card) => getElementOffset(card));
+        const rootTop = scrollerRef.current
+          ? scrollerRef.current.getBoundingClientRect().top + window.scrollY
+          : 0;
+        scrollRootTopRef.current = rootTop;
+        cardTopCacheRef.current = cardsRef.current.map((card) => {
+          const rect = card.getBoundingClientRect();
+          return rect.top + window.scrollY - rootTop;
+        });
         handleScroll();
       };
       window.addEventListener("scroll", handleScroll, { passive: true });
