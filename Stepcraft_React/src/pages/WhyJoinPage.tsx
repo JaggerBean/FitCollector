@@ -221,16 +221,16 @@ export default function WhyJoinPage() {
             <section className="mt-10 grid gap-6 lg:grid-cols-3">
               {[
                 {
-                  title: "Retention loop",
-                  body: "Daily step goals create a habit. Players show up because they don’t want to break streaks.",
+                  title: "Privacy & invite codes",
+                  body: "Run private servers with invite codes + QR join, or go public. You stay in control of who can register.",
                 },
                 {
-                  title: "Profit lift",
-                  body: "More days played means more store exposure and higher conversion on monetized perks.",
+                  title: "Automated reward tiers",
+                  body: "Set step thresholds and the exact commands to run at each tier. Tweak rewards anytime without the difficulty of config files.",
                 },
                 {
-                  title: "Off-platform visibility",
-                  body: "A phone app is a rare advantage. Players see it every day—your server stays top-of-mind.",
+                  title: "Owner dashboard tools",
+                  body: "Schedule push notifications that get sent to your players' devices, manage players (ban/wipe), and review an audit log so you can run ops without guesswork.",
                 },
               ].map((item) => (
                 <div
