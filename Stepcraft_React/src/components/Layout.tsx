@@ -7,9 +7,6 @@ export function Layout({ children }: { children: ReactNode }) {
   const location = useLocation();
   const showDashboard =
     isAuthenticated && location.pathname !== "/dashboard" && location.pathname !== "/";
-  const serverMatch = location.pathname.match(/^\/servers\/([^/]+)/);
-  const currentServer = serverMatch ? decodeURIComponent(serverMatch[1]) : null;
-  const showAudit = Boolean(isAuthenticated && currentServer);
 
   return (
     <div className="flex min-h-screen flex-col bg-gradient-to-br from-slate-950 to-slate-900">
