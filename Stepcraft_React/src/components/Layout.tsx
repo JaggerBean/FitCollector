@@ -31,14 +31,6 @@ export function Layout({ children }: { children: ReactNode }) {
                 Dashboard
               </Link>
             )}
-            {showAudit && (
-              <Link
-                to={`/servers/${encodeURIComponent(currentServer as string)}#audit`}
-                className="rounded-full border border-slate-600 bg-slate-900/70 px-4 py-2 text-sm font-medium text-slate-100 shadow-sm transition hover:border-emerald-500/70 hover:bg-emerald-600 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
-              >
-                Audit log
-              </Link>
-            )}
             <button
               onClick={logout}
               className="rounded-full border border-emerald-200 bg-white px-4 py-2 text-sm font-medium text-emerald-700 shadow-sm transition hover:border-emerald-600 hover:bg-emerald-600 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 dark:border-slate-700 dark:bg-slate-900 dark:text-emerald-200 dark:hover:border-emerald-500 dark:hover:bg-emerald-600"
