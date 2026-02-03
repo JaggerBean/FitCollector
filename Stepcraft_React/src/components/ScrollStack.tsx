@@ -20,9 +20,11 @@ export function PitchScrollScene({ scenes }: { scenes: Scene[] }) {
   const progressRef = useRef(0);
   const lastPushedPRef = useRef(-1);
   const lastActiveRef = useRef(-1);
+  const lastPinnedRef = useRef(false);
 
   const [p, setP] = useState(0); // 0..1 (smoothed)
   const [active, setActive] = useState(0);
+  const [isPinned, setIsPinned] = useState(false);
 
   useEffect(() => {
     const wrap = wrapRef.current;
@@ -36,6 +38,7 @@ export function PitchScrollScene({ scenes }: { scenes: Scene[] }) {
 
       const total = rect.height - vh;
       const raw = clamp01(total > 0 ? -rect.top / total : 0);
+      const pinnedNow = rect.top <= 0 && rect.bottom >= vh;
 
       // smooth progress (fluid feel)
       progressRef.current = progressRef.current + (raw - progressRef.current) * 0.12;
@@ -52,6 +55,11 @@ export function PitchScrollScene({ scenes }: { scenes: Scene[] }) {
       if (nextActive !== lastActiveRef.current) {
         lastActiveRef.current = nextActive;
         setActive(nextActive);
+      }
+
+      if (pinnedNow !== lastPinnedRef.current) {
+        lastPinnedRef.current = pinnedNow;
+        setIsPinned(pinnedNow);
       }
 
       rafId = requestAnimationFrame(tick);
@@ -152,10 +160,31 @@ export function PitchScrollScene({ scenes }: { scenes: Scene[] }) {
                 );
               })}
             </div>
+          </div>
+        </div>
 
-            <div className="pointer-events-none absolute -bottom-6 left-6 rounded-full border border-slate-700/70 bg-slate-950/60 px-4 py-2 text-xs uppercase tracking-[0.3em] text-slate-400">
-              Keep scrolling
-            </div>
+        <div
+          aria-hidden="true"
+          className={[
+            "pointer-events-none absolute bottom-6 left-1/2 -translate-x-1/2 transition-all duration-300",
+            isPinned && p < 0.985 ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3",
+          ].join(" ")}
+        >
+          <div className="grid h-11 w-11 place-items-center rounded-full border border-slate-700/60 bg-slate-950/35 text-slate-300/80 shadow-[0_10px_30px_rgba(0,0,0,0.35)] backdrop-blur">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              className="h-5 w-5 motion-safe:animate-bounce"
+              style={{ animationDuration: "1.9s" }}
+            >
+              <path
+                d="M12 5v11m0 0 6-6m-6 6-6-6"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
           </div>
         </div>
       </div>
