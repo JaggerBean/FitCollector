@@ -218,7 +218,7 @@ export function PitchScrollScene({ scenes }: { scenes: Scene[] }) {
           <div className="flex h-full flex-col justify-center gap-6 md:hidden">
             <div className="text-[10px] uppercase tracking-[0.3em] text-slate-400">StepCraft in action</div>
 
-            <div className="relative min-h-[190px]">
+            <div className="relative min-h-[280px] sm:min-h-[320px]">
               <div
                 className="absolute inset-0 transition-opacity duration-200"
                 style={{ opacity: 1 - t }}
