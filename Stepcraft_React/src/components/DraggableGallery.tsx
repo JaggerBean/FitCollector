@@ -8,15 +8,18 @@ export function DragGallery({ items }: { items: { label: string }[] }) {
   const startScrollLeft = useRef(0);
   const autoScrollActiveRef = useRef(false);
   const autoScrollDirRef = useRef(1);
-  const rafRef = useRef(0);
+  const intervalRef = useRef<number | null>(null);
   const autoScrollStoppedRef = useRef(false);
-  const lastFrameRef = useRef(0);
+  const lastTimeRef = useRef(0);
 
   const stopAutoScroll = () => {
     if (!autoScrollActiveRef.current && autoScrollStoppedRef.current) return;
     autoScrollActiveRef.current = false;
     autoScrollStoppedRef.current = true;
-    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    if (intervalRef.current != null) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
   };
 
   useEffect(() => {
@@ -37,7 +40,7 @@ export function DragGallery({ items }: { items: { label: string }[] }) {
       autoScrollActiveRef.current = isVisible && canScroll;
 
       if (autoScrollActiveRef.current) {
-        const last = lastFrameRef.current || now;
+        const last = lastTimeRef.current || now;
         const dt = Math.min(0.05, Math.max(0, (now - last) / 1000));
         const next = el.scrollLeft + speedPxPerSec * dt * autoScrollDirRef.current;
         if (next >= maxScroll) {
@@ -51,14 +54,19 @@ export function DragGallery({ items }: { items: { label: string }[] }) {
         }
       }
 
-      lastFrameRef.current = now;
-      rafRef.current = requestAnimationFrame(tick);
+      lastTimeRef.current = now;
     };
 
-    rafRef.current = requestAnimationFrame(tick);
+    lastTimeRef.current = performance.now();
+    intervalRef.current = window.setInterval(() => {
+      tick(performance.now());
+    }, 16);
 
     return () => {
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      if (intervalRef.current != null) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
     };
   }, []);
 
