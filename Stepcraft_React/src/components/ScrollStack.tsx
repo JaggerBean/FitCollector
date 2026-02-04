@@ -101,6 +101,9 @@ export function PitchScrollScene({ scenes }: { scenes: Scene[] }) {
   const visualScaled = Math.min(sceneCount - 1, scaled);
   const baseIndex = Math.min(sceneCount - 1, Math.floor(visualScaled));
   const t = clamp01(visualScaled - baseIndex); // 0..1 within current step
+  const nextIndex = Math.min(sceneCount - 1, baseIndex + 1);
+  const mobileSceneA = safeScenes[baseIndex];
+  const mobileSceneB = safeScenes[nextIndex];
 
   const showScrollHint = isPinned && p < 0.985;
 
@@ -127,82 +130,142 @@ export function PitchScrollScene({ scenes }: { scenes: Scene[] }) {
       <div className="sticky top-0 h-screen w-full overflow-hidden rounded-2xl border border-slate-800/60 bg-slate-950/95 sm:rounded-3xl">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(16,185,129,0.14),transparent_55%)]" />
 
-        <div className="relative mx-auto grid h-full max-w-6xl grid-cols-1 gap-8 px-4 py-8 sm:gap-10 sm:px-6 sm:py-10 md:grid-cols-2 md:px-10">
-          {/* Left: copy */}
-          <div className="flex flex-col justify-center">
-            <div className="text-[10px] uppercase tracking-[0.3em] text-slate-400 sm:text-xs">StepCraft in action</div>
+        <div className="relative mx-auto h-full max-w-6xl px-4 py-8 sm:px-6 sm:py-10 md:px-10">
+          {/* Desktop layout */}
+          <div className="hidden h-full grid-cols-1 gap-8 sm:gap-10 md:grid md:grid-cols-2">
+            {/* Left: copy */}
+            <div className="flex flex-col justify-center">
+              <div className="text-[10px] uppercase tracking-[0.3em] text-slate-400 sm:text-xs">
+                StepCraft in action
+              </div>
 
-            {safeScenes.map((s, i) => {
-              const dist = Math.abs(i - visualScaled);
-              const fade = clamp01(1 - dist);
-
-              const baseOpacity = 0.08 + 0.92 * fade;
-
-              // motion: current slides up slightly as you progress to next scene
-              // and next slides in a bit
-              let y = 0;
-              if (i === baseIndex) y = -10 * t;
-              if (i === baseIndex + 1) y = 14 * (1 - t);
-
-              const scale = 0.98 + 0.02 * fade;
-
-              return (
-                <div
-                  key={s.title}
-                  className="mt-8"
-                  style={{
-                    opacity: baseOpacity,
-                    transform: `translate3d(0, ${y}px, 0) scale(${scale})`,
-                    transition: "opacity 280ms ease, transform 280ms ease",
-                  }}
-                >
-                  <div className="text-xs uppercase tracking-[0.2em] text-emerald-300/70">{s.eyebrow}</div>
-                  <h3 className="mt-3 text-xl font-semibold text-white sm:text-2xl">{s.title}</h3>
-                  <p className="mt-3 text-sm leading-relaxed text-slate-300">{s.body}</p>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Right: imagery */}
-          <div className="relative flex items-center justify-center">
-            <div
-              className="relative w-full max-w-[260px] aspect-[9/16] overflow-hidden rounded-2xl border border-slate-800/70 bg-slate-900/40 sm:max-w-sm md:max-w-md"
-              style={{
-                transform: `translate3d(0, ${-24 * p}px, 0) scale(${0.98 + 0.03 * p})`,
-                transition: "transform 60ms linear",
-              }}
-            >
               {safeScenes.map((s, i) => {
-                // crossfade based on proximity to scaled position
                 const dist = Math.abs(i - visualScaled);
-                const opacity = clamp01(1 - dist); // 1 when centered, 0 when >=1 away
+                const fade = clamp01(1 - dist);
 
-                // subtle depth per card
-                const z = i === active ? 1 : 0.995;
-                const blur = i === active ? 0 : Math.min(6, dist * 6);
+                const baseOpacity = 0.08 + 0.92 * fade;
+
+                // motion: current slides up slightly as you progress to next scene
+                // and next slides in a bit
+                let y = 0;
+                if (i === baseIndex) y = -10 * t;
+                if (i === baseIndex + 1) y = 14 * (1 - t);
+
+                const scale = 0.98 + 0.02 * fade;
 
                 return (
                   <div
-                    key={s.imageAlt}
-                    className="absolute inset-0"
+                    key={s.title}
+                    className="mt-8"
                     style={{
-                      opacity,
-                      transform: `scale(${z})`,
-                      filter: blur ? `blur(${blur}px)` : undefined,
-                      transition: "opacity 320ms ease, transform 320ms ease, filter 320ms ease",
+                      opacity: baseOpacity,
+                      transform: `translate3d(0, ${y}px, 0) scale(${scale})`,
+                      transition: "opacity 280ms ease, transform 280ms ease",
                     }}
                   >
-                    {s.imageUrl ? (
-                      <img src={s.imageUrl} alt={s.imageAlt} className="h-full w-full object-cover" />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center text-xs text-slate-400">
-                        Image placeholder ({s.imageAlt})
-                      </div>
-                    )}
+                    <div className="text-xs uppercase tracking-[0.2em] text-emerald-300/70">{s.eyebrow}</div>
+                    <h3 className="mt-3 text-xl font-semibold text-white sm:text-2xl">{s.title}</h3>
+                    <p className="mt-3 text-sm leading-relaxed text-slate-300">{s.body}</p>
                   </div>
                 );
               })}
+            </div>
+
+            {/* Right: imagery */}
+            <div className="relative flex items-center justify-center">
+              <div
+                className="relative w-full max-w-[260px] aspect-[9/16] overflow-hidden rounded-2xl border border-slate-800/70 bg-slate-900/40 sm:max-w-sm md:max-w-md"
+                style={{
+                  transform: `translate3d(0, ${-24 * p}px, 0) scale(${0.98 + 0.03 * p})`,
+                  transition: "transform 60ms linear",
+                }}
+              >
+                {safeScenes.map((s, i) => {
+                  // crossfade based on proximity to scaled position
+                  const dist = Math.abs(i - visualScaled);
+                  const opacity = clamp01(1 - dist); // 1 when centered, 0 when >=1 away
+
+                  // subtle depth per card
+                  const z = i === active ? 1 : 0.995;
+                  const blur = i === active ? 0 : Math.min(6, dist * 6);
+
+                  return (
+                    <div
+                      key={s.imageAlt}
+                      className="absolute inset-0"
+                      style={{
+                        opacity,
+                        transform: `scale(${z})`,
+                        filter: blur ? `blur(${blur}px)` : undefined,
+                        transition: "opacity 320ms ease, transform 320ms ease, filter 320ms ease",
+                      }}
+                    >
+                      {s.imageUrl ? (
+                        <img src={s.imageUrl} alt={s.imageAlt} className="h-full w-full object-cover" />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center text-xs text-slate-400">
+                          Image placeholder ({s.imageAlt})
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* Mobile layout */}
+          <div className="flex h-full flex-col justify-center gap-6 md:hidden">
+            <div className="text-[10px] uppercase tracking-[0.3em] text-slate-400">StepCraft in action</div>
+
+            <div className="relative min-h-[190px]">
+              <div
+                className="absolute inset-0 transition-opacity duration-200"
+                style={{ opacity: 1 - t }}
+              >
+                <div className="text-xs uppercase tracking-[0.2em] text-emerald-300/70">
+                  {mobileSceneA.eyebrow}
+                </div>
+                <h3 className="mt-3 text-xl font-semibold text-white">{mobileSceneA.title}</h3>
+                <p className="mt-3 text-sm leading-relaxed text-slate-300">{mobileSceneA.body}</p>
+              </div>
+              {nextIndex !== baseIndex && (
+                <div
+                  className="absolute inset-0 transition-opacity duration-200"
+                  style={{ opacity: t }}
+                >
+                  <div className="text-xs uppercase tracking-[0.2em] text-emerald-300/70">
+                    {mobileSceneB.eyebrow}
+                  </div>
+                  <h3 className="mt-3 text-xl font-semibold text-white">{mobileSceneB.title}</h3>
+                  <p className="mt-3 text-sm leading-relaxed text-slate-300">{mobileSceneB.body}</p>
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center justify-center">
+              <div className="relative w-full max-w-[220px] aspect-[9/16] overflow-hidden rounded-2xl border border-slate-800/70 bg-slate-900/40 sm:max-w-[260px]">
+                <div className="absolute inset-0 transition-opacity duration-200" style={{ opacity: 1 - t }}>
+                  {mobileSceneA.imageUrl ? (
+                    <img src={mobileSceneA.imageUrl} alt={mobileSceneA.imageAlt} className="h-full w-full object-cover" />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center text-xs text-slate-400">
+                      Image placeholder ({mobileSceneA.imageAlt})
+                    </div>
+                  )}
+                </div>
+                {nextIndex !== baseIndex && (
+                  <div className="absolute inset-0 transition-opacity duration-200" style={{ opacity: t }}>
+                    {mobileSceneB.imageUrl ? (
+                      <img src={mobileSceneB.imageUrl} alt={mobileSceneB.imageAlt} className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center text-xs text-slate-400">
+                        Image placeholder ({mobileSceneB.imageAlt})
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
