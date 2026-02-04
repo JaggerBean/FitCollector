@@ -19,6 +19,7 @@ export function DragGallery({ items }: { items: DragGalleryItem[] }) {
   const lastTimeRef = useRef(0);
   const copyWidthRef = useRef(0);
   const pauseUntilRef = useRef(0);
+  const bodyOverflowRef = useRef<string | null>(null);
 
   const loopedItems = useMemo(() => {
     if (!items.length) return [];
@@ -35,6 +36,18 @@ export function DragGallery({ items }: { items: DragGalleryItem[] }) {
     const now = performance.now();
     pauseUntilRef.current = Math.max(pauseUntilRef.current, now + delayMs);
     autoScrollActiveRef.current = false;
+  };
+
+  const lockBodyScroll = () => {
+    if (bodyOverflowRef.current !== null) return;
+    bodyOverflowRef.current = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+  };
+
+  const unlockBodyScroll = () => {
+    if (bodyOverflowRef.current === null) return;
+    document.body.style.overflow = bodyOverflowRef.current;
+    bodyOverflowRef.current = null;
   };
 
   useEffect(() => {
@@ -86,6 +99,7 @@ export function DragGallery({ items }: { items: DragGalleryItem[] }) {
         clearInterval(intervalRef.current);
         intervalRef.current = null;
       }
+      unlockBodyScroll();
     };
   }, []);
 
@@ -144,6 +158,7 @@ export function DragGallery({ items }: { items: DragGalleryItem[] }) {
           e.preventDefault();
           isDown.current = true;
           hasDraggedRef.current = false;
+          lockBodyScroll();
           startX.current = e.clientX;
           startScrollLeft.current = el.scrollLeft;
           (e.currentTarget as HTMLDivElement).setPointerCapture(e.pointerId);
@@ -173,16 +188,25 @@ export function DragGallery({ items }: { items: DragGalleryItem[] }) {
         }}
         onPointerUp={() => {
           isDown.current = false;
+          unlockBodyScroll();
         }}
         onPointerCancel={() => {
           isDown.current = false;
+          unlockBodyScroll();
         }}
         onTouchStart={() => {
           pauseAutoScroll();
+          lockBodyScroll();
         }}
         onTouchMove={(e) => {
           if (!isDown.current) return;
           e.preventDefault();
+        }}
+        onTouchEnd={() => {
+          unlockBodyScroll();
+        }}
+        onTouchCancel={() => {
+          unlockBodyScroll();
         }}
         onDragStart={(e) => {
           e.preventDefault();
