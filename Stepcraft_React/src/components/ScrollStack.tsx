@@ -132,12 +132,10 @@ export function PitchScrollScene({ scenes }: { scenes: Scene[] }) {
             <div className="text-xs uppercase tracking-[0.3em] text-slate-400">StepCraft in action</div>
 
             {safeScenes.map((s, i) => {
-              // distance from active scene
-              const d = i - active; // -2, -1, 0, +1, ...
-              const isCurrent = i === active;
+              const dist = Math.abs(i - scaled);
+              const fade = clamp01(1 - dist);
 
-              // make adjacent scenes more visible than far scenes
-              const baseOpacity = isCurrent ? 1 : Math.max(0.08, 0.22 - Math.abs(d) * 0.07);
+              const baseOpacity = 0.08 + 0.92 * fade;
 
               // motion: current slides up slightly as you progress to next scene
               // and next slides in a bit
@@ -145,7 +143,7 @@ export function PitchScrollScene({ scenes }: { scenes: Scene[] }) {
               if (i === baseIndex) y = -10 * t;
               if (i === baseIndex + 1) y = 14 * (1 - t);
 
-              const scale = isCurrent ? 1 : 0.98;
+              const scale = 0.98 + 0.02 * fade;
 
               return (
                 <div
