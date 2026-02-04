@@ -5,13 +5,15 @@ export function DragGallery({ items }: { items: { label: string }[] }) {
   const isDown = useRef(false);
   const startX = useRef(0);
   const startScrollLeft = useRef(0);
-  const autoScrollActiveRef = useRef(true);
+  const autoScrollActiveRef = useRef(false);
   const autoScrollDirRef = useRef(1);
   const rafRef = useRef(0);
+  const autoScrollStoppedRef = useRef(false);
 
   const stopAutoScroll = () => {
-    if (!autoScrollActiveRef.current) return;
+    if (!autoScrollActiveRef.current && autoScrollStoppedRef.current) return;
     autoScrollActiveRef.current = false;
+    autoScrollStoppedRef.current = true;
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
   };
 
@@ -20,6 +22,18 @@ export function DragGallery({ items }: { items: { label: string }[] }) {
     if (!el) return;
 
     const speed = 0.35;
+
+    const startAutoScroll = () => {
+      if (autoScrollStoppedRef.current || autoScrollActiveRef.current) return;
+      autoScrollActiveRef.current = true;
+      rafRef.current = requestAnimationFrame(tick);
+    };
+
+    const pauseAutoScroll = () => {
+      if (!autoScrollActiveRef.current) return;
+      autoScrollActiveRef.current = false;
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    };
 
     const tick = () => {
       if (!autoScrollActiveRef.current) return;
@@ -43,8 +57,24 @@ export function DragGallery({ items }: { items: { label: string }[] }) {
       rafRef.current = requestAnimationFrame(tick);
     };
 
-    rafRef.current = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(rafRef.current);
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        if (!entry) return;
+        if (entry.isIntersecting) {
+          startAutoScroll();
+        } else {
+          pauseAutoScroll();
+        }
+      },
+      { threshold: 0.2 },
+    );
+
+    observer.observe(el);
+    return () => {
+      observer.disconnect();
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    };
   }, []);
 
   return (
