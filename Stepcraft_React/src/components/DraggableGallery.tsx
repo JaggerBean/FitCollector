@@ -22,10 +22,10 @@ export function DragGallery({ items }: { items: DragGalleryItem[] }) {
 
   const loopedItems = useMemo(() => {
     if (!items.length) return [];
-    const result: { label: string; key: string }[] = [];
+    const result: Array<DragGalleryItem & { key: string }> = [];
     for (let copyIndex = 0; copyIndex < loopCount; copyIndex += 1) {
       items.forEach((item, index) => {
-        result.push({ label: item.label, key: `${copyIndex}-${index}-${item.label}` });
+        result.push({ ...item, key: `${copyIndex}-${index}-${item.label}` });
       });
     }
     return result;
