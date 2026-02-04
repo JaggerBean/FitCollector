@@ -89,11 +89,23 @@ body {
   }
 }
 
-@keyframes drag-wiggle {
+@keyframes drag-hand {
   0%,
   100% {
     transform: translateX(0);
-    opacity: 0.6;
+    opacity: 0.7;
+  }
+  50% {
+    transform: translateX(12px);
+    opacity: 1;
+  }
+}
+
+@keyframes drag-tile {
+  0%,
+  100% {
+    transform: translateX(0);
+    opacity: 0.7;
   }
   50% {
     transform: translateX(8px);
@@ -102,36 +114,47 @@ body {
 }
 
 .drag-hint {
-  animation: drag-wiggle 1.6s ease-in-out infinite;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.drag-hint-icon {
+.drag-hint-rail {
   position: relative;
-  display: inline-block;
-  width: 22px;
-  height: 18px;
+  width: 60px;
+  height: 22px;
 }
 
-.drag-hint-mouse {
+.drag-hint-tile {
   position: absolute;
   left: 0;
-  top: 0;
-  font-size: 14px;
-  line-height: 1;
+  top: 5px;
+  width: 18px;
+  height: 12px;
+  border-radius: 6px;
+  border: 1px solid rgba(148, 163, 184, 0.55);
+  background: rgba(15, 23, 42, 0.7);
+  animation: drag-tile 1.6s ease-in-out infinite;
 }
 
 .drag-hint-hand {
   position: absolute;
-  left: 9px;
+  left: 10px;
   top: -2px;
-  font-size: 14px;
-  line-height: 1;
+  animation: drag-hand 1.6s ease-in-out infinite;
+}
+
+.drag-hint-hand-icon {
+  width: 18px;
+  height: 18px;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .confirm-overlay,
   .confirm-panel,
-  .drag-hint {
+  .drag-hint,
+  .drag-hint-hand,
+  .drag-hint-tile {
     animation: none;
   }
 }
