@@ -57,7 +57,7 @@ export function PitchScrollScene({ scenes }: { scenes: Scene[] }) {
 
       const total = rect.height - vh;
       const raw = clamp01(total > 0 ? -rect.top / total : 0);
-      const held = applyStepHold(raw, safeScenes.length, 0.6);
+      const held = applyStepHold(raw, safeScenes.length, 25);
       const pinnedNow = rect.top <= 0 && rect.bottom >= vh;
 
       // smooth progress (fluid feel)
