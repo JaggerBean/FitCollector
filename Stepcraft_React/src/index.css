@@ -29,9 +29,6 @@ body {
   cursor: grabbing;
 }
 
-.drag-gallery-item {
-  touch-action: pan-x;
-}
 
 .reveal-out {
   opacity: 0;
