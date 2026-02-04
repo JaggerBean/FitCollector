@@ -1,4 +1,4 @@
-import { useMemo, useRef, useEffect, useState } from "react";
+import { useMemo } from "react";
 import { Link } from "react-router-dom";
 import { Layout } from "../components/Layout";
 import SmoothScroll from "../components/SmoothScroll";
@@ -10,98 +10,6 @@ import zeroFrictionImg from "../assets/MemoIMGs/Zero Friction.png";
 import ownerControlImg from "../assets/MemoIMGs/Owner control.png";
 import integrationsImg from "../assets/MemoIMGs/Integrations.png";
 import reactivationImg from "../assets/MemoIMGs/Reactivation.png";
-
-function clamp01(v: number) {
-  return Math.min(1, Math.max(0, v));
-}
-
-function useSectionProgress(sectionRef: React.RefObject<HTMLElement | null>) {
-  const [progress, setProgress] = useState(0);
-
-  useEffect(() => {
-    let raf = 0;
-
-    const tick = () => {
-      const el = sectionRef.current;
-      if (!el) {
-        raf = requestAnimationFrame(tick);
-        return;
-      }
-
-      const rect = el.getBoundingClientRect();
-      const vh = window.innerHeight || 1;
-      const totalScrollable = Math.max(1, rect.height - vh);
-      const scrolled = clamp01((-rect.top) / totalScrollable);
-
-      setProgress(scrolled);
-      raf = requestAnimationFrame(tick);
-    };
-
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, [sectionRef]);
-
-  return progress;
-}
-
-function ScrollMarqueeBand({
-  words,
-  centerLabel = "Built for retention",
-  subLabel = "Turn real-world movement into repeat play sessions.",
-}: {
-  words: string[];
-  centerLabel?: string;
-  subLabel?: string;
-}) {
-  const sectionRef = useRef<HTMLElement | null>(null);
-  const p = useSectionProgress(sectionRef);
-
-  const track = useMemo(() => {
-    const base = words.length ? words : ["Retention", "Streaks", "Sessions", "ARPU", "Reactivation"];
-    return [...base, ...base, ...base];
-  }, [words]);
-
-  const x = -(p * 40);
-
-  return (
-    <section ref={sectionRef} className="relative mt-12 h-[110vh] sm:mt-16 sm:h-[140vh]">
-      <div className="sticky top-0 overflow-hidden rounded-2xl border border-slate-800/70 bg-slate-950 py-12 sm:rounded-3xl sm:py-16">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(16,185,129,0.16),transparent_55%)]" />
-        <div className="relative">
-          <div
-            className="whitespace-nowrap text-[12vw] font-semibold tracking-tight text-white/90 sm:text-[9vw] md:text-[7vw]"
-            style={{
-              transform: `translate3d(${x}vw, 0, 0)`,
-              transition: "transform 40ms linear",
-            }}
-          >
-            {track.map((w, i) => (
-              <span key={`${w}-${i}`} className="mx-[2.2vw] inline-block">
-                {w}
-              </span>
-            ))}
-          </div>
-
-          <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-            <div
-              className="rounded-2xl border border-slate-200/15 bg-slate-950/30 px-6 py-5 text-center backdrop-blur sm:rounded-3xl sm:px-8 sm:py-6"
-              style={{
-                transform: `translateY(${(0.5 - p) * 16}px) scale(${1 + Math.sin(p * Math.PI) * 0.02})`,
-                transition: "transform 120ms ease",
-              }}
-            >
-              <div className="text-xs uppercase tracking-[0.28em] text-emerald-300/80">{centerLabel}</div>
-              <div className="mt-2 max-w-md text-[12px] text-slate-300 sm:text-sm">{subLabel}</div>
-            </div>
-          </div>
-
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-slate-950 to-transparent" />
-          <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-slate-950 to-transparent" />
-        </div>
-      </div>
-    </section>
-  );
-}
 
 export default function WhyJoinPage() {
   const { isAuthenticated } = useAuthContext();
