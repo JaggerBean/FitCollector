@@ -10,6 +10,7 @@ export function DragGallery({ items }: { items: { label: string }[] }) {
   const autoScrollDirRef = useRef(1);
   const rafRef = useRef(0);
   const autoScrollStoppedRef = useRef(false);
+  const lastFrameRef = useRef(0);
 
   const stopAutoScroll = () => {
     if (!autoScrollActiveRef.current && autoScrollStoppedRef.current) return;
@@ -22,9 +23,9 @@ export function DragGallery({ items }: { items: { label: string }[] }) {
     const el = scrollerRef.current;
     if (!el) return;
 
-    const speed = 0.35;
+    const speedPxPerSec = 48;
 
-    const tick = () => {
+    const tick = (now: number) => {
       if (autoScrollStoppedRef.current) return;
 
       const rect = el.getBoundingClientRect();
@@ -36,7 +37,9 @@ export function DragGallery({ items }: { items: { label: string }[] }) {
       autoScrollActiveRef.current = isVisible && canScroll;
 
       if (autoScrollActiveRef.current) {
-        const next = el.scrollLeft + speed * autoScrollDirRef.current;
+        const last = lastFrameRef.current || now;
+        const dt = Math.min(0.05, Math.max(0, (now - last) / 1000));
+        const next = el.scrollLeft + speedPxPerSec * dt * autoScrollDirRef.current;
         if (next >= maxScroll) {
           el.scrollLeft = maxScroll;
           autoScrollDirRef.current = -1;
@@ -48,6 +51,7 @@ export function DragGallery({ items }: { items: { label: string }[] }) {
         }
       }
 
+      lastFrameRef.current = now;
       rafRef.current = requestAnimationFrame(tick);
     };
 
