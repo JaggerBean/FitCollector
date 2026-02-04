@@ -7,7 +7,7 @@ type DragGalleryItem = {
 };
 
 export function DragGallery({ items }: { items: DragGalleryItem[] }) {
-  const loopCount = 3;
+  const loopCount = 5;
   const scrollerRef = useRef<HTMLDivElement>(null);
   const isDown = useRef(false);
   const hasDraggedRef = useRef(false);
@@ -46,11 +46,8 @@ export function DragGallery({ items }: { items: DragGalleryItem[] }) {
     const wrapScroll = () => {
       const copyWidth = copyWidthRef.current;
       if (!copyWidth) return;
-      if (el.scrollLeft < copyWidth * 0.5) {
-        el.scrollLeft += copyWidth;
-      } else if (el.scrollLeft > copyWidth * 1.5) {
-        el.scrollLeft -= copyWidth;
-      }
+      const base = ((el.scrollLeft % copyWidth) + copyWidth) % copyWidth;
+      el.scrollLeft = base + copyWidth * 2;
     };
 
     const tick = (now: number) => {
@@ -97,9 +94,8 @@ export function DragGallery({ items }: { items: DragGalleryItem[] }) {
       const copyWidth = total / loopCount;
       if (copyWidth > 0) {
         copyWidthRef.current = copyWidth;
-        if (el.scrollLeft < copyWidth * 0.5 || el.scrollLeft > copyWidth * 1.5) {
-          el.scrollLeft = copyWidth;
-        }
+        const base = ((el.scrollLeft % copyWidth) + copyWidth) % copyWidth;
+        el.scrollLeft = base + copyWidth * 2;
       }
     };
 
@@ -154,12 +150,12 @@ export function DragGallery({ items }: { items: DragGalleryItem[] }) {
           el.scrollLeft = startScrollLeft.current - dx;
           const copyWidth = copyWidthRef.current;
           if (copyWidth) {
-            if (el.scrollLeft < copyWidth * 0.5) {
-              el.scrollLeft += copyWidth;
-              startScrollLeft.current += copyWidth;
-            } else if (el.scrollLeft > copyWidth * 1.5) {
-              el.scrollLeft -= copyWidth;
-              startScrollLeft.current -= copyWidth;
+            const base = ((el.scrollLeft % copyWidth) + copyWidth) % copyWidth;
+            const next = base + copyWidth * 2;
+            if (Math.abs(next - el.scrollLeft) > 0.5) {
+              const delta = next - el.scrollLeft;
+              el.scrollLeft = next;
+              startScrollLeft.current += delta;
             }
           }
         }}
@@ -177,10 +173,10 @@ export function DragGallery({ items }: { items: DragGalleryItem[] }) {
           if (!el) return;
           const copyWidth = copyWidthRef.current;
           if (!copyWidth) return;
-          if (el.scrollLeft < copyWidth * 0.5) {
-            el.scrollLeft += copyWidth;
-          } else if (el.scrollLeft > copyWidth * 1.5) {
-            el.scrollLeft -= copyWidth;
+          const base = ((el.scrollLeft % copyWidth) + copyWidth) % copyWidth;
+          const next = base + copyWidth * 2;
+          if (Math.abs(next - el.scrollLeft) > 0.5) {
+            el.scrollLeft = next;
           }
         }}
         onDragStart={(e) => {
