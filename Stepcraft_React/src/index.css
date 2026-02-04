@@ -96,7 +96,7 @@ body {
   }
   55%,
   70% {
-    transform: translateX(-12px);
+    transform: translateX(-64px);
   }
   100% {
     transform: translateX(0);
@@ -110,7 +110,7 @@ body {
   }
   55%,
   70% {
-    transform: translateX(-8px);
+    transform: translateX(-44px);
   }
   100% {
     transform: translateX(0);
@@ -158,17 +158,17 @@ body {
 
 .drag-hint-rail {
   position: relative;
-  width: 96px;
-  height: 28px;
+  width: 160px;
+  height: 44px;
 }
 
 .drag-hint-tile {
   position: absolute;
-  left: 42px;
-  top: 7px;
-  width: 20px;
-  height: 14px;
-  border-radius: 6px;
+  left: 98px;
+  top: 14px;
+  width: 28px;
+  height: 18px;
+  border-radius: 8px;
   border: 1px solid rgba(148, 163, 184, 0.55);
   background: rgba(15, 23, 42, 0.7);
   animation: drag-tile-move 1.8s ease-in-out infinite;
@@ -176,14 +176,14 @@ body {
 
 .drag-hint-hand {
   position: absolute;
-  left: 50px;
-  top: -4px;
+  left: 112px;
+  top: -2px;
   animation: drag-hand-move 1.8s ease-in-out infinite;
 }
 
 .drag-hint-hand-icon {
-  width: 22px;
-  height: 22px;
+  width: 40px;
+  height: 40px;
   filter: invert(1) drop-shadow(0 3px 8px rgba(0, 0, 0, 0.35));
   opacity: 0.95;
 }
