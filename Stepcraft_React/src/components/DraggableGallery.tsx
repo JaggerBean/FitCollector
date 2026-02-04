@@ -46,8 +46,13 @@ export function DragGallery({ items }: { items: DragGalleryItem[] }) {
     const wrapScroll = () => {
       const copyWidth = copyWidthRef.current;
       if (!copyWidth) return;
-      const base = ((el.scrollLeft % copyWidth) + copyWidth) % copyWidth;
-      el.scrollLeft = base + copyWidth * 2;
+      const lower = copyWidth;
+      const upper = copyWidth * 3;
+      if (el.scrollLeft <= lower) {
+        el.scrollLeft += copyWidth * 2;
+      } else if (el.scrollLeft >= upper) {
+        el.scrollLeft -= copyWidth * 2;
+      }
     };
 
     const tick = (now: number) => {
@@ -94,8 +99,13 @@ export function DragGallery({ items }: { items: DragGalleryItem[] }) {
       const copyWidth = total / loopCount;
       if (copyWidth > 0) {
         copyWidthRef.current = copyWidth;
-        const base = ((el.scrollLeft % copyWidth) + copyWidth) % copyWidth;
-        el.scrollLeft = base + copyWidth * 2;
+        const lower = copyWidth;
+        const upper = copyWidth * 3;
+        if (el.scrollLeft <= lower) {
+          el.scrollLeft += copyWidth * 2;
+        } else if (el.scrollLeft >= upper) {
+          el.scrollLeft -= copyWidth * 2;
+        }
       }
     };
 
@@ -127,7 +137,7 @@ export function DragGallery({ items }: { items: DragGalleryItem[] }) {
       <div
         ref={scrollerRef}
         className="drag-gallery-scroller mt-6 flex gap-4 overflow-x-auto pb-3"
-        style={{ scrollbarWidth: "none" as any, touchAction: "pan-y" }}
+        style={{ scrollbarWidth: "none" as any, touchAction: "pan-x" }}
         onPointerDown={(e) => {
           const el = scrollerRef.current;
           if (!el) return;
@@ -150,12 +160,14 @@ export function DragGallery({ items }: { items: DragGalleryItem[] }) {
           el.scrollLeft = startScrollLeft.current - dx;
           const copyWidth = copyWidthRef.current;
           if (copyWidth) {
-            const base = ((el.scrollLeft % copyWidth) + copyWidth) % copyWidth;
-            const next = base + copyWidth * 2;
-            if (Math.abs(next - el.scrollLeft) > 0.5) {
-              const delta = next - el.scrollLeft;
-              el.scrollLeft = next;
-              startScrollLeft.current += delta;
+            const lower = copyWidth;
+            const upper = copyWidth * 3;
+            if (el.scrollLeft <= lower) {
+              el.scrollLeft += copyWidth * 2;
+              startScrollLeft.current += copyWidth * 2;
+            } else if (el.scrollLeft >= upper) {
+              el.scrollLeft -= copyWidth * 2;
+              startScrollLeft.current -= copyWidth * 2;
             }
           }
         }}
@@ -168,16 +180,9 @@ export function DragGallery({ items }: { items: DragGalleryItem[] }) {
         onTouchStart={() => {
           pauseAutoScroll();
         }}
-        onScroll={() => {
-          const el = scrollerRef.current;
-          if (!el) return;
-          const copyWidth = copyWidthRef.current;
-          if (!copyWidth) return;
-          const base = ((el.scrollLeft % copyWidth) + copyWidth) % copyWidth;
-          const next = base + copyWidth * 2;
-          if (Math.abs(next - el.scrollLeft) > 0.5) {
-            el.scrollLeft = next;
-          }
+        onTouchMove={(e) => {
+          if (!isDown.current) return;
+          e.preventDefault();
         }}
         onDragStart={(e) => {
           e.preventDefault();
