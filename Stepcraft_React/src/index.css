@@ -105,6 +105,29 @@ body {
   animation: drag-wiggle 1.6s ease-in-out infinite;
 }
 
+.drag-hint-icon {
+  position: relative;
+  display: inline-block;
+  width: 22px;
+  height: 18px;
+}
+
+.drag-hint-mouse {
+  position: absolute;
+  left: 0;
+  top: 0;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.drag-hint-hand {
+  position: absolute;
+  left: 9px;
+  top: -2px;
+  font-size: 14px;
+  line-height: 1;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .confirm-overlay,
   .confirm-panel,

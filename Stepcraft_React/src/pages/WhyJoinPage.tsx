@@ -272,18 +272,6 @@ const scenes = useMemo(
                   </p>
                 </div>
 
-                <div className="rounded-full border border-slate-800/80 bg-slate-950/40 px-4 py-2">
-                  <div className="drag-hint flex items-center gap-2 text-slate-400">
-                    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none">
-                      <path d="M15 6 9 12l6 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                    <div className="h-[2px] w-6 rounded-full bg-slate-700/70" />
-                    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none">
-                      <path d="m9 6 6 6-6 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  </div>
-                  <span className="sr-only">Drag to explore</span>
-                </div>
               </div>
 
               <div className="mt-8">
