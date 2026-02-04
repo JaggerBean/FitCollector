@@ -89,9 +89,26 @@ body {
   }
 }
 
+@keyframes drag-wiggle {
+  0%,
+  100% {
+    transform: translateX(0);
+    opacity: 0.6;
+  }
+  50% {
+    transform: translateX(8px);
+    opacity: 1;
+  }
+}
+
+.drag-hint {
+  animation: drag-wiggle 1.6s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .confirm-overlay,
-  .confirm-panel {
+  .confirm-panel,
+  .drag-hint {
     animation: none;
   }
 }

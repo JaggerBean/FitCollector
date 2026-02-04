@@ -264,27 +264,36 @@ const scenes = useMemo(
             <div className="mt-14 rounded-3xl border border-slate-800/70 bg-slate-950/70 p-8">
               <div className="flex flex-wrap items-end justify-between gap-6">
                 <div>
-                  <div className="text-xs uppercase tracking-[0.28em] text-emerald-300/80">What players experience</div>
-                  <h2 className="mt-3 text-2xl font-semibold text-white">A simple loop: steps → login → rewards.</h2>
+                  <div className="text-xs uppercase tracking-[0.28em] text-emerald-300/80">The player experience</div>
+                  <h2 className="mt-3 text-2xl font-semibold text-white">Clear goals, fast rewards, no clutter.</h2>
                   <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-300">
-                    Players don’t need a tutorial. They hit a goal, claim a reward, and feel progress. That loop is what
-                    keeps communities alive—especially between big updates.
+                    Players open the app and immediately see what to do next. Itâ€™s built like a fitness app: a simple
+                    daily target, a reward to claim, and a streak to protectâ€”no menus to learn.
                   </p>
                 </div>
 
-                <div className="rounded-full border border-slate-800/80 bg-slate-950/40 px-4 py-2 text-xs uppercase tracking-[0.3em] text-slate-400">
-                  Drag to explore
+                <div className="rounded-full border border-slate-800/80 bg-slate-950/40 px-4 py-2">
+                  <div className="drag-hint flex items-center gap-2 text-slate-400">
+                    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none">
+                      <path d="M15 6 9 12l6 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                    <div className="h-[2px] w-6 rounded-full bg-slate-700/70" />
+                    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none">
+                      <path d="m9 6 6 6-6 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </div>
+                  <span className="sr-only">Drag to explore</span>
                 </div>
               </div>
 
               <div className="mt-8">
                 <DragGallery
                   items={[
-                    { label: "Daily goals" },
-                    { label: "Reward claim flow" },
-                    { label: "Progress tiers" },
-                    { label: "Server offers (ranks/boosts)" },
-                    { label: "Owner dashboard insights" },
+                    { label: "Daily steps card" },
+                    { label: "Rewards inbox" },
+                    { label: "Streak tracker" },
+                    { label: "Invite / QR join" },
+                    { label: "Sync history" },
                   ]}
                 />
               </div>
@@ -292,16 +301,16 @@ const scenes = useMemo(
               <div className="mt-6 grid gap-3 md:grid-cols-3">
                 {[
                   {
-                    h: "Not pay-to-win",
-                    p: "Rewards can be balanced around convenience and cosmetics—engagement without backlash.",
+                    h: "Instant feedback",
+                    p: "Progress updates the moment steps sync, so players see the payoff right away.",
                   },
                   {
-                    h: "Seasonal hooks",
-                    p: "Tie goals to events, weekends, and limited drops to create predictable spikes in activity.",
+                    h: "Clear next step",
+                    p: "The UI always answers â€œwhat should I do next?â€ with one obvious action.",
                   },
                   {
-                    h: "Community stickiness",
-                    p: "Daily shared goals create conversation, competition, and “I’ll hop on” moments.",
+                    h: "Low cognitive load",
+                    p: "It feels like a fitness app, not a mod menuâ€”easy for casual players to adopt.",
                   },
                 ].map((x) => (
                   <div key={x.h} className="rounded-2xl border border-slate-800/60 bg-slate-950/60 p-5">
