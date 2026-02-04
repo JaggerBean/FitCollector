@@ -98,8 +98,9 @@ export function PitchScrollScene({ scenes }: { scenes: Scene[] }) {
 
   // Used to drive crossfades + motion between scenes
   const scaled = p * sceneCount;
-  const baseIndex = Math.min(sceneCount - 1, Math.floor(scaled));
-  const t = clamp01(scaled - baseIndex); // 0..1 within current step
+  const visualScaled = Math.min(sceneCount - 1, scaled);
+  const baseIndex = Math.min(sceneCount - 1, Math.floor(visualScaled));
+  const t = clamp01(visualScaled - baseIndex); // 0..1 within current step
 
   const showScrollHint = isPinned && p < 0.985;
 
@@ -132,7 +133,7 @@ export function PitchScrollScene({ scenes }: { scenes: Scene[] }) {
             <div className="text-xs uppercase tracking-[0.3em] text-slate-400">StepCraft in action</div>
 
             {safeScenes.map((s, i) => {
-              const dist = Math.abs(i - scaled);
+              const dist = Math.abs(i - visualScaled);
               const fade = clamp01(1 - dist);
 
               const baseOpacity = 0.08 + 0.92 * fade;
@@ -174,7 +175,7 @@ export function PitchScrollScene({ scenes }: { scenes: Scene[] }) {
             >
               {safeScenes.map((s, i) => {
                 // crossfade based on proximity to scaled position
-                const dist = Math.abs(i - scaled);
+                const dist = Math.abs(i - visualScaled);
                 const opacity = clamp01(1 - dist); // 1 when centered, 0 when >=1 away
 
                 // subtle depth per card
