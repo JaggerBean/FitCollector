@@ -10,6 +10,7 @@ import zeroFrictionImg from "../assets/MemoIMGs/Zero Friction.png";
 import ownerControlImg from "../assets/MemoIMGs/Owner control.png";
 import integrationsImg from "../assets/MemoIMGs/Integrations.png";
 import reactivationImg from "../assets/MemoIMGs/Reactivation.png";
+import claimRewardsImg from "../assets/draggableIMGS/Claim Rewards.png";
 
 export default function WhyJoinPage() {
   const { isAuthenticated } = useAuthContext();
@@ -191,7 +192,7 @@ export default function WhyJoinPage() {
                     { label: "Join servers (invite/QR)" },
                     { label: "Manage server notifications" },
                     { label: "Track rewards by server" },
-                    { label: "Claim rewards in-server" },
+                    { label: "Claim rewards in-server", imageUrl: claimRewardsImg, imageAlt: "Claim rewards in-server" },
                     { label: "Sync status / last sync" },
                     { label: "Activity log / sync history" },
                   ]}
