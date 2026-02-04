@@ -12,7 +12,7 @@ function clamp01(n: number) {
   return Math.min(1, Math.max(0, n));
 }
 
-function applyStepHold(progress: number, steps: number, hold = 0.24) {
+function applyStepHold(progress: number, steps: number, hold = 0.35) {
   const clamped = clamp01(progress);
   if (steps <= 1) return clamped;
 
@@ -20,13 +20,18 @@ function applyStepHold(progress: number, steps: number, hold = 0.24) {
   const idx = Math.min(steps - 1, Math.floor(clamped / step));
   const local = (clamped - idx * step) / step;
 
-  const holdClamped = Math.min(0.7, Math.max(0, hold));
-  const ramp = (1 - holdClamped) / 2;
-  if (ramp <= 0) return (idx + 0.5) / steps;
+  const holdClamped = Math.min(0.45, Math.max(0, hold));
+  if (holdClamped <= 0) return clamped;
 
-  let u = 0.5;
-  if (local < ramp) u = (local / ramp) * 0.5;
-  else if (local > 1 - ramp) u = 0.5 + ((local - (1 - ramp)) / ramp) * 0.5;
+  let u = 0;
+  if (local <= holdClamped) {
+    u = 0;
+  } else if (local >= 1 - holdClamped) {
+    u = 1;
+  } else {
+    const span = 1 - holdClamped * 2;
+    u = (local - holdClamped) / span;
+  }
 
   return (idx + u) / steps;
 }
@@ -57,7 +62,7 @@ export function PitchScrollScene({ scenes }: { scenes: Scene[] }) {
 
       const total = rect.height - vh;
       const raw = clamp01(total > 0 ? -rect.top / total : 0);
-      const held = applyStepHold(raw, safeScenes.length, 25);
+      const held = applyStepHold(raw, safeScenes.length, 0.4);
       const pinnedNow = rect.top <= 0 && rect.bottom >= vh;
 
       // smooth progress (fluid feel)
