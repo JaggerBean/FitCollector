@@ -59,10 +59,12 @@ export function PitchScrollScene({ scenes }: { scenes: Scene[] }) {
     const tick = () => {
       const rect = wrap.getBoundingClientRect();
       const vh = window.innerHeight || 1;
+      const isMobile = window.innerWidth < 768;
 
       const total = rect.height - vh;
       const raw = clamp01(total > 0 ? -rect.top / total : 0);
-      const held = applyStepHold(raw, safeScenes.length, 100);
+      const hold = isMobile ? 0.16 : 0.45;
+      const held = applyStepHold(raw, safeScenes.length, hold);
       const pinnedNow = rect.top <= 0 && rect.bottom >= vh;
 
       // smooth progress (fluid feel)
@@ -221,7 +223,12 @@ export function PitchScrollScene({ scenes }: { scenes: Scene[] }) {
             <div className="relative min-h-[260px] sm:min-h-[300px]">
               <div
                 className="absolute inset-0 transition-opacity duration-200"
-                style={{ opacity: 1 - t }}
+                style={{
+                  opacity: 1 - t,
+                  transform: `translate3d(0, ${-10 * t}px, 0) scale(${1 - 0.01 * t})`,
+                  filter: t > 0 ? `blur(${Math.min(2, t * 2)}px)` : undefined,
+                  transition: "opacity 80ms linear, transform 80ms linear, filter 80ms linear",
+                }}
               >
                 <div className="text-xs uppercase tracking-[0.2em] text-emerald-300/70">
                   {mobileSceneA.eyebrow}
@@ -232,7 +239,12 @@ export function PitchScrollScene({ scenes }: { scenes: Scene[] }) {
               {nextIndex !== baseIndex && (
                 <div
                   className="absolute inset-0 transition-opacity duration-200"
-                  style={{ opacity: t }}
+                  style={{
+                    opacity: t,
+                    transform: `translate3d(0, ${12 * (1 - t)}px, 0) scale(${0.99 + 0.01 * t})`,
+                    filter: t < 1 ? `blur(${Math.min(2, (1 - t) * 2)}px)` : undefined,
+                    transition: "opacity 80ms linear, transform 80ms linear, filter 80ms linear",
+                  }}
                 >
                   <div className="text-xs uppercase tracking-[0.2em] text-emerald-300/70">
                     {mobileSceneB.eyebrow}
@@ -245,7 +257,14 @@ export function PitchScrollScene({ scenes }: { scenes: Scene[] }) {
 
             <div className="flex items-center justify-center">
               <div className="relative h-[42vh] w-auto max-w-[240px] aspect-[9/16] overflow-hidden rounded-2xl border border-slate-800/70 bg-slate-900/40 sm:h-[48vh] sm:max-w-[280px]">
-                <div className="absolute inset-0 transition-opacity duration-200" style={{ opacity: 1 - t }}>
+                <div
+                  className="absolute inset-0 transition-opacity duration-200"
+                  style={{
+                    opacity: 1 - t,
+                    transform: `translate3d(0, ${-6 * t}px, 0) scale(${1 - 0.01 * t})`,
+                    transition: "opacity 80ms linear, transform 80ms linear",
+                  }}
+                >
                   {mobileSceneA.imageUrl ? (
                     <img src={mobileSceneA.imageUrl} alt={mobileSceneA.imageAlt} className="h-full w-full object-cover" />
                   ) : (
@@ -255,7 +274,14 @@ export function PitchScrollScene({ scenes }: { scenes: Scene[] }) {
                   )}
                 </div>
                 {nextIndex !== baseIndex && (
-                  <div className="absolute inset-0 transition-opacity duration-200" style={{ opacity: t }}>
+                  <div
+                    className="absolute inset-0 transition-opacity duration-200"
+                    style={{
+                      opacity: t,
+                      transform: `translate3d(0, ${6 * (1 - t)}px, 0) scale(${0.99 + 0.01 * t})`,
+                      transition: "opacity 80ms linear, transform 80ms linear",
+                    }}
+                  >
                     {mobileSceneB.imageUrl ? (
                       <img src={mobileSceneB.imageUrl} alt={mobileSceneB.imageAlt} className="h-full w-full object-cover" />
                     ) : (
