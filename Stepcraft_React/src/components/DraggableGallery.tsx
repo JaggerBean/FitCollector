@@ -1,4 +1,6 @@
 import { useRef, useState } from "react";
+import openHandSvg from "../assets/cursor/hand-svgrepo-com.svg";
+import grabHandSvg from "../assets/cursor/grab-svgrepo-com (1).svg";
 
 export function DragGallery({ items }: { items: { label: string }[] }) {
   const scrollerRef = useRef<HTMLDivElement>(null);
@@ -12,33 +14,7 @@ export function DragGallery({ items }: { items: { label: string }[] }) {
     <div className="rounded-3xl border border-slate-800/60 bg-slate-950/70 p-4 sm:p-6">
       <div className="flex items-center justify-between gap-4">
         <h3 className="text-base font-semibold text-white sm:text-lg">Screens & moments</h3>
-        {dragHintVisible && (
-          <div className="drag-hint rounded-full border border-slate-800 px-2.5 py-1.5 text-[10px] text-slate-300 sm:px-3 sm:py-2 sm:text-xs">
-            <div className="drag-hint-rail" aria-hidden="true">
-              <div className="drag-hint-tile" />
-              <div className="drag-hint-hand">
-                <svg viewBox="0 0 24 24" className="drag-hint-hand-icon drag-hint-hand-open" fill="none">
-                  <rect x="5" y="10" width="14" height="10" rx="4" stroke="currentColor" strokeWidth="1.6" />
-                  <rect x="6" y="3" width="3" height="8" rx="1.5" stroke="currentColor" strokeWidth="1.6" />
-                  <rect x="9.5" y="3" width="3" height="8" rx="1.5" stroke="currentColor" strokeWidth="1.6" />
-                  <rect x="13" y="3" width="3" height="8" rx="1.5" stroke="currentColor" strokeWidth="1.6" />
-                  <rect x="16.5" y="4" width="3" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.6" />
-                </svg>
-                <svg viewBox="0 0 24 24" className="drag-hint-hand-icon drag-hint-hand-closed" fill="none">
-                  <rect x="4.5" y="8" width="15" height="12" rx="4" stroke="currentColor" strokeWidth="1.6" />
-                  <path
-                    d="M7.5 8.5v-2a1.5 1.5 0 0 1 3 0v2m3 0v-2a1.5 1.5 0 0 1 3 0v2"
-                    stroke="currentColor"
-                    strokeWidth="1.6"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </div>
-            </div>
-            <span className="sr-only">Drag to explore</span>
-          </div>
-        )}
+        {dragHintVisible && <span className="sr-only">Drag to explore</span>}
       </div>
 
       <div
@@ -73,17 +49,42 @@ export function DragGallery({ items }: { items: { label: string }[] }) {
           }
         }}
       >
-        {items.map((it) => (
+        {items.map((it, index) => {
+          const showHint = dragHintVisible && index === 0;
+
+          return (
           <div
             key={it.label}
-            className="min-w-[220px] flex-none rounded-2xl border border-slate-800/70 bg-slate-900/40 p-5 text-[13px] text-slate-300 sm:min-w-[260px] sm:p-6 sm:text-sm"
+            className="relative min-w-[220px] flex-none rounded-2xl border border-slate-800/70 bg-slate-900/40 p-5 text-[13px] text-slate-300 sm:min-w-[260px] sm:p-6 sm:text-sm"
           >
             {it.label}
-            <div className="mt-4 rounded-xl border border-slate-800/70 bg-slate-950/40 p-4 text-xs text-slate-500">
+            <div className="relative mt-4 rounded-xl border border-slate-800/70 bg-slate-950/40 p-4 text-xs text-slate-500">
+              {showHint && (
+                <div className="drag-hint-overlay" aria-hidden="true">
+                  <div className="drag-hint-rail">
+                    <div className="drag-hint-tile" />
+                    <div className="drag-hint-hand">
+                      <img
+                        src={openHandSvg}
+                        alt=""
+                        className="drag-hint-hand-icon drag-hint-hand-open"
+                        loading="lazy"
+                      />
+                      <img
+                        src={grabHandSvg}
+                        alt=""
+                        className="drag-hint-hand-icon drag-hint-hand-closed"
+                        loading="lazy"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
               Image placeholder
             </div>
           </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

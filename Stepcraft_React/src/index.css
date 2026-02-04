@@ -147,18 +147,27 @@ body {
   justify-content: center;
 }
 
+.drag-hint-overlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  opacity: 0.85;
+}
+
 .drag-hint-rail {
   position: relative;
-  width: 72px;
-  height: 22px;
+  width: 96px;
+  height: 28px;
 }
 
 .drag-hint-tile {
   position: absolute;
-  left: 32px;
-  top: 5px;
-  width: 18px;
-  height: 12px;
+  left: 42px;
+  top: 7px;
+  width: 20px;
+  height: 14px;
   border-radius: 6px;
   border: 1px solid rgba(148, 163, 184, 0.55);
   background: rgba(15, 23, 42, 0.7);
@@ -167,14 +176,16 @@ body {
 
 .drag-hint-hand {
   position: absolute;
-  left: 40px;
-  top: -2px;
+  left: 50px;
+  top: -4px;
   animation: drag-hand-move 1.8s ease-in-out infinite;
 }
 
 .drag-hint-hand-icon {
-  width: 18px;
-  height: 18px;
+  width: 22px;
+  height: 22px;
+  filter: invert(1) drop-shadow(0 3px 8px rgba(0, 0, 0, 0.35));
+  opacity: 0.95;
 }
 
 .drag-hint-hand-open {
