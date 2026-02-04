@@ -143,7 +143,7 @@ export function PitchScrollScene({ scenes }: { scenes: Scene[] }) {
           {/* Right: imagery */}
           <div className="relative flex items-center justify-center">
             <div
-              className="relative w-full max-w-md aspect-[9/26] overflow-hidden rounded-2xl border border-slate-800/70 bg-slate-900/40"
+              className="relative w-full max-w-md aspect-[9/16] overflow-hidden rounded-2xl border border-slate-800/70 bg-slate-900/40"
               style={{
                 transform: `translate3d(0, ${-24 * p}px, 0) scale(${0.98 + 0.03 * p})`,
                 transition: "transform 60ms linear",
