@@ -25,7 +25,7 @@ export function DragGallery({ items }: { items: { label: string }[] }) {
       if (!autoScrollActiveRef.current) return;
       const maxScroll = el.scrollWidth - el.clientWidth;
       if (maxScroll <= 0) {
-        autoScrollActiveRef.current = false;
+        rafRef.current = requestAnimationFrame(tick);
         return;
       }
 
@@ -55,11 +55,12 @@ export function DragGallery({ items }: { items: { label: string }[] }) {
 
       <div
         ref={scrollerRef}
-        className="mt-6 flex gap-4 overflow-x-auto pb-3"
-        style={{ scrollbarWidth: "none" as any }}
+        className="drag-gallery-scroller mt-6 flex gap-4 overflow-x-auto pb-3"
+        style={{ scrollbarWidth: "none" as any, touchAction: "pan-y" }}
         onPointerDown={(e) => {
           const el = scrollerRef.current;
           if (!el) return;
+          e.preventDefault();
           stopAutoScroll();
           isDown.current = true;
           startX.current = e.clientX;
@@ -69,6 +70,7 @@ export function DragGallery({ items }: { items: { label: string }[] }) {
         onPointerMove={(e) => {
           const el = scrollerRef.current;
           if (!el || !isDown.current) return;
+          e.preventDefault();
           const dx = e.clientX - startX.current;
           el.scrollLeft = startScrollLeft.current - dx;
         }}
@@ -84,11 +86,14 @@ export function DragGallery({ items }: { items: { label: string }[] }) {
         onTouchStart={() => {
           stopAutoScroll();
         }}
+        onDragStart={(e) => {
+          e.preventDefault();
+        }}
       >
         {items.map((it) => (
           <div
             key={it.label}
-            className="min-w-[220px] flex-none rounded-2xl border border-slate-800/70 bg-slate-900/40 p-5 text-[13px] text-slate-300 sm:min-w-[260px] sm:p-6 sm:text-sm"
+            className="drag-gallery-item min-w-[220px] flex-none rounded-2xl border border-slate-800/70 bg-slate-900/40 p-5 text-[13px] text-slate-300 sm:min-w-[260px] sm:p-6 sm:text-sm"
           >
             {it.label}
             <div className="mt-4 rounded-xl border border-slate-800/70 bg-slate-950/40 p-4 text-xs text-slate-500">

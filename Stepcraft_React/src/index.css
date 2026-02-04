@@ -15,6 +15,20 @@ body {
   min-height: 100vh;
 }
 
+.drag-gallery-scroller,
+.drag-gallery-item {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.drag-gallery-scroller {
+  cursor: grab;
+}
+
+.drag-gallery-scroller:active {
+  cursor: grabbing;
+}
+
 .reveal-out {
   opacity: 0;
   transform: translateY(18px) scale(0.985);
