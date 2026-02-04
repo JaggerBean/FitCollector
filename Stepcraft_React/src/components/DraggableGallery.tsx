@@ -8,6 +8,7 @@ export function DragGallery({ items }: { items: { label: string }[] }) {
   const autoScrollActiveRef = useRef(false);
   const autoScrollDirRef = useRef(1);
   const rafRef = useRef(0);
+  const visibilityRafRef = useRef(0);
   const autoScrollStoppedRef = useRef(false);
 
   const stopAutoScroll = () => {
@@ -57,22 +58,29 @@ export function DragGallery({ items }: { items: { label: string }[] }) {
       rafRef.current = requestAnimationFrame(tick);
     };
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const entry = entries[0];
-        if (!entry) return;
-        if (entry.isIntersecting) {
+    let lastCheck = 0;
+    const visibilityThreshold = 0.2;
+    const checkVisibility = (now: number) => {
+      if (autoScrollStoppedRef.current) return;
+      if (now - lastCheck >= 150) {
+        lastCheck = now;
+        const rect = el.getBoundingClientRect();
+        const vh = window.innerHeight || 1;
+        const visibleHeight = Math.max(0, Math.min(rect.bottom, vh) - Math.max(rect.top, 0));
+        const ratio = rect.height > 0 ? visibleHeight / rect.height : 0;
+        if (ratio >= visibilityThreshold) {
           startAutoScroll();
         } else {
           pauseAutoScroll();
         }
-      },
-      { threshold: 0.2 },
-    );
+      }
+      visibilityRafRef.current = requestAnimationFrame(checkVisibility);
+    };
 
-    observer.observe(el);
+    visibilityRafRef.current = requestAnimationFrame(checkVisibility);
+
     return () => {
-      observer.disconnect();
+      if (visibilityRafRef.current) cancelAnimationFrame(visibilityRafRef.current);
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
   }, []);
