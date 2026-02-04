@@ -194,14 +194,10 @@ export default function WhyJoinPage() {
                 <DragGallery
                   items={[
                     { label: "Join servers (invite/QR)", imageUrl: joinServersImg, imageAlt: "Join servers" },
-                    {
-                      label: "Manage server notifications",
-                      imageUrl: manageNotificationsImg,
-                      imageAlt: "Manage server notifications",
-                    },
+                    { label: "Manage server notifications", imageUrl: manageNotificationsImg, imageAlt: "Manage server notifications" },
                     { label: "Track rewards by server", imageUrl: trackRewardsImg, imageAlt: "Track rewards" },
                     { label: "Claim rewards in-server", imageUrl: claimRewardsImg, imageAlt: "Claim rewards in-server" },
-                    { label: "Activity log / sync history", imageUrl: activityLogImg, imageAlt: "Activity log" },
+                    { label: "Activity log / sync history", imageUrl: activityLogImg, imageAlt: "Activity log" },                    
                   ]}
                 />
               </div>
