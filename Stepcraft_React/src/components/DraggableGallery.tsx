@@ -186,15 +186,15 @@ export function DragGallery({ items }: { items: DragGalleryItem[] }) {
         {loopedItems.map((it) => (
           <div
             key={it.key}
-            className="drag-gallery-item min-w-[220px] flex-none rounded-2xl border border-slate-800/70 bg-slate-900/40 p-5 text-[13px] text-slate-300 sm:min-w-[260px] sm:p-6 sm:text-sm"
+            className="drag-gallery-item min-w-[190px] flex-none rounded-2xl border border-slate-800/70 bg-slate-900/40 p-4 text-[13px] text-slate-300 sm:min-w-[260px] sm:p-6 sm:text-sm"
           >
             {it.label}
-            <div className="mt-4 overflow-hidden rounded-xl border border-slate-800/70 bg-slate-950/40 p-2 text-xs text-slate-500">
+            <div className="mt-3 h-[140px] overflow-hidden rounded-xl border border-slate-800/70 bg-slate-950/40 p-2 text-xs text-slate-500 sm:mt-4 sm:h-[200px]">
               {it.imageUrl ? (
                 <img
                   src={it.imageUrl}
                   alt={it.imageAlt ?? it.label}
-                  className="h-full w-full rounded-lg object-cover"
+                  className="h-full w-full rounded-lg object-contain sm:object-cover"
                   loading="lazy"
                 />
               ) : (
