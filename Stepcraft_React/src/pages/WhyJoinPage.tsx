@@ -188,11 +188,12 @@ export default function WhyJoinPage() {
               <div className="mt-8">
                 <DragGallery
                   items={[
-                    { label: "Daily steps card" },
-                    { label: "Rewards inbox" },
-                    { label: "Streak tracker" },
-                    { label: "Invite / QR join" },
-                    { label: "Sync history" },
+                    { label: "Join servers (invite/QR)" },
+                    { label: "Manage server notifications" },
+                    { label: "Track rewards by server" },
+                    { label: "Claim rewards in-server" },
+                    { label: "Sync status / last sync" },
+                    { label: "Activity log / sync history" },
                   ]}
                 />
               </div>

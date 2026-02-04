@@ -1,6 +1,12 @@
 import { useEffect, useMemo, useRef } from "react";
 
-export function DragGallery({ items }: { items: { label: string }[] }) {
+type DragGalleryItem = {
+  label: string;
+  imageUrl?: string;
+  imageAlt?: string;
+};
+
+export function DragGallery({ items }: { items: DragGalleryItem[] }) {
   const loopCount = 3;
   const scrollerRef = useRef<HTMLDivElement>(null);
   const isDown = useRef(false);
@@ -187,8 +193,17 @@ export function DragGallery({ items }: { items: { label: string }[] }) {
             className="drag-gallery-item min-w-[220px] flex-none rounded-2xl border border-slate-800/70 bg-slate-900/40 p-5 text-[13px] text-slate-300 sm:min-w-[260px] sm:p-6 sm:text-sm"
           >
             {it.label}
-            <div className="mt-4 rounded-xl border border-slate-800/70 bg-slate-950/40 p-4 text-xs text-slate-500">
-              Image placeholder
+            <div className="mt-4 overflow-hidden rounded-xl border border-slate-800/70 bg-slate-950/40 p-2 text-xs text-slate-500">
+              {it.imageUrl ? (
+                <img
+                  src={it.imageUrl}
+                  alt={it.imageAlt ?? it.label}
+                  className="h-full w-full rounded-lg object-cover"
+                  loading="lazy"
+                />
+              ) : (
+                <div className="p-3 text-xs text-slate-500">Image placeholder</div>
+              )}
             </div>
           </div>
         ))}
