@@ -7,6 +7,9 @@ import { DragGallery } from "../components/DraggableGallery";
 import { useAuthContext } from "../app/AuthContext";
 import casualRetentionImg from "../assets/MemoIMGs/Casual Player Retention.png";
 import zeroFrictionImg from "../assets/MemoIMGs/Zero Friction.png";
+import ownerControlImg from "../assets/MemoIMGs/Owner control.png";
+import integrationsImg from "../assets/MemoIMGs/Integrations.png";
+import reactivationImg from "../assets/MemoIMGs/Reactivation.png";
 
 function clamp01(v: number) {
   return Math.min(1, Math.max(0, v));
@@ -127,21 +130,21 @@ const scenes = useMemo(
       title: "Cater to casuals without nerfing the dedicated base.",
       body: "You control the reward structure: step thresholds, pacing, and payouts. Make it a small daily boost for casuals, without impacting your server’s regular path of progression. Or go big and make a server dedicated to healthy lifestyles with exclusive ranks, cosmetics, and perks. The choice is yours.",
       imageAlt: "Reward tiers and tuning controls",
-      imageUrl: undefined,
+      imageUrl: ownerControlImg,
     },
     {
       eyebrow: "Integrations",
       title: "Command-driven rewards that work with your whole mod stack.",
       body: "Rewards are commands, so StepCraft can integrate with whatever mods you already run. Economy, ranks, crates, quests, skills, cosmetics, custom items. If it has a command, StepCraft can trigger it.",
       imageAlt: "Reward commands integrating with other plugins/mods",
-      imageUrl: undefined,
+      imageUrl: integrationsImg,
     },
     {
       eyebrow: "Reactivation",
       title: "Bring players back without spamming Discord.",
       body: "The phone app becomes a daily touchpoint: streak reminders, missed goals, and nudges that pull players back into Minecraft. It’s reactivation that feels like a reward, not an announcement.",
       imageAlt: "App reminders and reactivation prompts",
-      imageUrl: undefined,
+      imageUrl: reactivationImg,
     },
   ],
   [],
