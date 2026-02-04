@@ -215,10 +215,10 @@ export function PitchScrollScene({ scenes }: { scenes: Scene[] }) {
           </div>
 
           {/* Mobile layout */}
-          <div className="flex h-full flex-col justify-center gap-6 md:hidden">
+          <div className="flex h-full flex-col justify-start gap-4 pt-2 md:hidden">
             <div className="text-[10px] uppercase tracking-[0.3em] text-slate-400">StepCraft in action</div>
 
-            <div className="relative min-h-[280px] sm:min-h-[320px]">
+            <div className="relative min-h-[260px] sm:min-h-[300px]">
               <div
                 className="absolute inset-0 transition-opacity duration-200"
                 style={{ opacity: 1 - t }}
@@ -244,7 +244,7 @@ export function PitchScrollScene({ scenes }: { scenes: Scene[] }) {
             </div>
 
             <div className="flex items-center justify-center">
-              <div className="relative w-full max-w-[220px] aspect-[9/16] overflow-hidden rounded-2xl border border-slate-800/70 bg-slate-900/40 sm:max-w-[260px]">
+              <div className="relative h-[42vh] w-auto max-w-[240px] aspect-[9/16] overflow-hidden rounded-2xl border border-slate-800/70 bg-slate-900/40 sm:h-[48vh] sm:max-w-[280px]">
                 <div className="absolute inset-0 transition-opacity duration-200" style={{ opacity: 1 - t }}>
                   {mobileSceneA.imageUrl ? (
                     <img src={mobileSceneA.imageUrl} alt={mobileSceneA.imageAlt} className="h-full w-full object-cover" />
