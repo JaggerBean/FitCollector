@@ -10,7 +10,7 @@ import zeroFrictionImg from "../assets/MemoIMGs/Zero Friction.png";
 import ownerControlImg from "../assets/MemoIMGs/Owner control.png";
 import integrationsImg from "../assets/MemoIMGs/Integrations.png";
 import reactivationImg from "../assets/MemoIMGs/Reactivation.png";
-import claimRewardsImg from "../assets/draggableIMGS/Claim Rewards.png";
+import claimRewardsImg from "../assets/DraggableIMGs/Claim Rewards.png";
 
 export default function WhyJoinPage() {
   const { isAuthenticated } = useAuthContext();
