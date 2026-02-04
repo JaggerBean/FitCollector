@@ -17,9 +17,17 @@ export function DragGallery({ items }: { items: { label: string }[] }) {
             <div className="drag-hint-rail" aria-hidden="true">
               <div className="drag-hint-tile" />
               <div className="drag-hint-hand">
-                <svg viewBox="0 0 24 24" className="drag-hint-hand-icon" fill="none">
+                <svg viewBox="0 0 24 24" className="drag-hint-hand-icon drag-hint-hand-open" fill="none">
+                  <rect x="5" y="10" width="14" height="10" rx="4" stroke="currentColor" strokeWidth="1.6" />
+                  <rect x="6" y="3" width="3" height="8" rx="1.5" stroke="currentColor" strokeWidth="1.6" />
+                  <rect x="9.5" y="3" width="3" height="8" rx="1.5" stroke="currentColor" strokeWidth="1.6" />
+                  <rect x="13" y="3" width="3" height="8" rx="1.5" stroke="currentColor" strokeWidth="1.6" />
+                  <rect x="16.5" y="4" width="3" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.6" />
+                </svg>
+                <svg viewBox="0 0 24 24" className="drag-hint-hand-icon drag-hint-hand-closed" fill="none">
+                  <rect x="4.5" y="8" width="15" height="12" rx="4" stroke="currentColor" strokeWidth="1.6" />
                   <path
-                    d="M7.5 12V6.75a1.5 1.5 0 1 1 3 0v4.5m0-2.25V5.25a1.5 1.5 0 1 1 3 0v5.25m0-1.5V6.75a1.5 1.5 0 1 1 3 0v7.5m0 0-1.2 4.2a3 3 0 0 1-2.88 2.1H9.6a3 3 0 0 1-2.9-2.2l-1.1-4.2a2 2 0 0 1 1.9-2.6H9"
+                    d="M7.5 8.5v-2a1.5 1.5 0 0 1 3 0v2m3 0v-2a1.5 1.5 0 0 1 3 0v2"
                     stroke="currentColor"
                     strokeWidth="1.6"
                     strokeLinecap="round"
