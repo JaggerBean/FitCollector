@@ -3,12 +3,12 @@ import { useEffect, useRef } from "react";
 export function DragGallery({ items }: { items: { label: string }[] }) {
   const scrollerRef = useRef<HTMLDivElement>(null);
   const isDown = useRef(false);
+  const hasDraggedRef = useRef(false);
   const startX = useRef(0);
   const startScrollLeft = useRef(0);
   const autoScrollActiveRef = useRef(false);
   const autoScrollDirRef = useRef(1);
   const rafRef = useRef(0);
-  const visibilityRafRef = useRef(0);
   const autoScrollStoppedRef = useRef(false);
 
   const stopAutoScroll = () => {
@@ -24,63 +24,36 @@ export function DragGallery({ items }: { items: { label: string }[] }) {
 
     const speed = 0.35;
 
-    const startAutoScroll = () => {
-      if (autoScrollStoppedRef.current || autoScrollActiveRef.current) return;
-      autoScrollActiveRef.current = true;
-      rafRef.current = requestAnimationFrame(tick);
-    };
-
-    const pauseAutoScroll = () => {
-      if (!autoScrollActiveRef.current) return;
-      autoScrollActiveRef.current = false;
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
-    };
-
     const tick = () => {
-      if (!autoScrollActiveRef.current) return;
-      const maxScroll = el.scrollWidth - el.clientWidth;
-      if (maxScroll <= 0) {
-        rafRef.current = requestAnimationFrame(tick);
-        return;
-      }
-
-      const next = el.scrollLeft + speed * autoScrollDirRef.current;
-      if (next >= maxScroll) {
-        el.scrollLeft = maxScroll;
-        autoScrollDirRef.current = -1;
-      } else if (next <= 0) {
-        el.scrollLeft = 0;
-        autoScrollDirRef.current = 1;
-      } else {
-        el.scrollLeft = next;
-      }
-
-      rafRef.current = requestAnimationFrame(tick);
-    };
-
-    let lastCheck = 0;
-    const visibilityThreshold = 0.01;
-    const checkVisibility = (now: number) => {
       if (autoScrollStoppedRef.current) return;
-      if (now - lastCheck >= 150) {
-        lastCheck = now;
-        const rect = el.getBoundingClientRect();
-        const vh = window.innerHeight || 1;
-        const visibleHeight = Math.max(0, Math.min(rect.bottom, vh) - Math.max(rect.top, 0));
-        const ratio = rect.height > 0 ? visibleHeight / rect.height : 0;
-        if (ratio >= visibilityThreshold) {
-          startAutoScroll();
+
+      const rect = el.getBoundingClientRect();
+      const vh = window.innerHeight || 1;
+      const isVisible = rect.bottom > 0 && rect.top < vh;
+      const maxScroll = el.scrollWidth - el.clientWidth;
+      const canScroll = maxScroll > 1;
+
+      autoScrollActiveRef.current = isVisible && canScroll;
+
+      if (autoScrollActiveRef.current) {
+        const next = el.scrollLeft + speed * autoScrollDirRef.current;
+        if (next >= maxScroll) {
+          el.scrollLeft = maxScroll;
+          autoScrollDirRef.current = -1;
+        } else if (next <= 0) {
+          el.scrollLeft = 0;
+          autoScrollDirRef.current = 1;
         } else {
-          pauseAutoScroll();
+          el.scrollLeft = next;
         }
       }
-      visibilityRafRef.current = requestAnimationFrame(checkVisibility);
+
+      rafRef.current = requestAnimationFrame(tick);
     };
 
-    visibilityRafRef.current = requestAnimationFrame(checkVisibility);
+    rafRef.current = requestAnimationFrame(tick);
 
     return () => {
-      if (visibilityRafRef.current) cancelAnimationFrame(visibilityRafRef.current);
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
   }, []);
@@ -99,8 +72,8 @@ export function DragGallery({ items }: { items: { label: string }[] }) {
           const el = scrollerRef.current;
           if (!el) return;
           e.preventDefault();
-          stopAutoScroll();
           isDown.current = true;
+          hasDraggedRef.current = false;
           startX.current = e.clientX;
           startScrollLeft.current = el.scrollLeft;
           (e.currentTarget as HTMLDivElement).setPointerCapture(e.pointerId);
@@ -110,6 +83,10 @@ export function DragGallery({ items }: { items: { label: string }[] }) {
           if (!el || !isDown.current) return;
           e.preventDefault();
           const dx = e.clientX - startX.current;
+          if (!hasDraggedRef.current && Math.abs(dx) > 4) {
+            hasDraggedRef.current = true;
+            stopAutoScroll();
+          }
           el.scrollLeft = startScrollLeft.current - dx;
         }}
         onPointerUp={() => {
