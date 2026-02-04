@@ -10,9 +10,9 @@ export function DragGallery({ items }: { items: { label: string }[] }) {
   const autoScrollActiveRef = useRef(false);
   const autoScrollDirRef = useRef(1);
   const intervalRef = useRef<number | null>(null);
-  const autoScrollStoppedRef = useRef(false);
   const lastTimeRef = useRef(0);
   const copyWidthRef = useRef(0);
+  const pauseUntilRef = useRef(0);
 
   const loopedItems = useMemo(() => {
     if (!items.length) return [];
@@ -25,14 +25,10 @@ export function DragGallery({ items }: { items: { label: string }[] }) {
     return result;
   }, [items, loopCount]);
 
-  const stopAutoScroll = () => {
-    if (!autoScrollActiveRef.current && autoScrollStoppedRef.current) return;
+  const pauseAutoScroll = (delayMs = 5000) => {
+    const now = performance.now();
+    pauseUntilRef.current = Math.max(pauseUntilRef.current, now + delayMs);
     autoScrollActiveRef.current = false;
-    autoScrollStoppedRef.current = true;
-    if (intervalRef.current != null) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
-    }
   };
 
   useEffect(() => {
@@ -52,15 +48,14 @@ export function DragGallery({ items }: { items: { label: string }[] }) {
     };
 
     const tick = (now: number) => {
-      if (autoScrollStoppedRef.current) return;
-
       const rect = el.getBoundingClientRect();
       const vh = window.innerHeight || 1;
       const isVisible = rect.bottom > 0 && rect.top < vh;
       const maxScroll = el.scrollWidth - el.clientWidth;
       const canScroll = maxScroll > 1;
+      const isUserPaused = now < pauseUntilRef.current;
 
-      autoScrollActiveRef.current = isVisible && canScroll;
+      autoScrollActiveRef.current = !isUserPaused && isVisible && canScroll;
 
       if (autoScrollActiveRef.current) {
         const last = lastTimeRef.current || now;
@@ -148,7 +143,7 @@ export function DragGallery({ items }: { items: { label: string }[] }) {
           const dx = e.clientX - startX.current;
           if (!hasDraggedRef.current && Math.abs(dx) > 4) {
             hasDraggedRef.current = true;
-            stopAutoScroll();
+            pauseAutoScroll();
           }
           el.scrollLeft = startScrollLeft.current - dx;
           const copyWidth = copyWidthRef.current;
@@ -169,7 +164,7 @@ export function DragGallery({ items }: { items: { label: string }[] }) {
           isDown.current = false;
         }}
         onTouchStart={() => {
-          stopAutoScroll();
+          pauseAutoScroll();
         }}
         onScroll={() => {
           const el = scrollerRef.current;
