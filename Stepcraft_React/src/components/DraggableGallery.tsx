@@ -105,7 +105,7 @@ export function DragGallery({ items }: { items: { label: string }[] }) {
     updateCopyWidth();
 
     let resizeObserver: ResizeObserver | null = null;
-    if ("ResizeObserver" in window) {
+    if (typeof ResizeObserver !== "undefined") {
       resizeObserver = new ResizeObserver(() => updateCopyWidth());
       resizeObserver.observe(el);
     } else {
