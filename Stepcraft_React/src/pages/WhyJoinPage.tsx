@@ -10,7 +10,11 @@ import zeroFrictionImg from "../assets/MemoIMGs/Zero Friction.png";
 import ownerControlImg from "../assets/MemoIMGs/Owner control.png";
 import integrationsImg from "../assets/MemoIMGs/Integrations.png";
 import reactivationImg from "../assets/MemoIMGs/Reactivation.png";
+import activityLogImg from "../assets/DraggableIMGs/Activity Log.png";
 import claimRewardsImg from "../assets/DraggableIMGs/Claim Rewards.png";
+import joinServersImg from "../assets/DraggableIMGs/Join Servers.png";
+import manageNotificationsImg from "../assets/DraggableIMGs/Manage Notifications.png";
+import trackRewardsImg from "../assets/DraggableIMGs/Track Rewards.png";
 
 export default function WhyJoinPage() {
   const { isAuthenticated } = useAuthContext();
@@ -189,12 +193,15 @@ export default function WhyJoinPage() {
               <div className="mt-8">
                 <DragGallery
                   items={[
-                    { label: "Join servers (invite/QR)" },
-                    { label: "Manage server notifications" },
-                    { label: "Track rewards by server" },
+                    { label: "Join servers (invite/QR)", imageUrl: joinServersImg, imageAlt: "Join servers" },
+                    {
+                      label: "Manage server notifications",
+                      imageUrl: manageNotificationsImg,
+                      imageAlt: "Manage server notifications",
+                    },
+                    { label: "Track rewards by server", imageUrl: trackRewardsImg, imageAlt: "Track rewards" },
                     { label: "Claim rewards in-server", imageUrl: claimRewardsImg, imageAlt: "Claim rewards in-server" },
-                    { label: "Sync status / last sync" },
-                    { label: "Activity log / sync history" },
+                    { label: "Activity log / sync history", imageUrl: activityLogImg, imageAlt: "Activity log" },
                   ]}
                 />
               </div>
