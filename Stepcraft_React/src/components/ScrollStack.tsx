@@ -222,12 +222,11 @@ export function PitchScrollScene({ scenes }: { scenes: Scene[] }) {
 
             <div className="relative min-h-[260px] sm:min-h-[300px]">
               <div
-                className="absolute inset-0 transition-opacity duration-200"
+                className="absolute inset-0"
                 style={{
                   opacity: 1 - t,
-                  transform: `translate3d(0, ${-10 * t}px, 0) scale(${1 - 0.01 * t})`,
-                  filter: t > 0 ? `blur(${Math.min(2, t * 2)}px)` : undefined,
-                  transition: "opacity 80ms linear, transform 80ms linear, filter 80ms linear",
+                  transform: `translate3d(0, ${-10 * t}px, 0) scale(${1 - 0.02 * t})`,
+                  willChange: "opacity, transform",
                 }}
               >
                 <div className="text-xs uppercase tracking-[0.2em] text-emerald-300/70">
@@ -238,12 +237,11 @@ export function PitchScrollScene({ scenes }: { scenes: Scene[] }) {
               </div>
               {nextIndex !== baseIndex && (
                 <div
-                  className="absolute inset-0 transition-opacity duration-200"
+                  className="absolute inset-0"
                   style={{
                     opacity: t,
-                    transform: `translate3d(0, ${12 * (1 - t)}px, 0) scale(${0.99 + 0.01 * t})`,
-                    filter: t < 1 ? `blur(${Math.min(2, (1 - t) * 2)}px)` : undefined,
-                    transition: "opacity 80ms linear, transform 80ms linear, filter 80ms linear",
+                    transform: `translate3d(0, ${12 * (1 - t)}px, 0) scale(${0.98 + 0.02 * t})`,
+                    willChange: "opacity, transform",
                   }}
                 >
                   <div className="text-xs uppercase tracking-[0.2em] text-emerald-300/70">
@@ -258,11 +256,11 @@ export function PitchScrollScene({ scenes }: { scenes: Scene[] }) {
             <div className="flex items-center justify-center">
               <div className="relative h-[42vh] w-auto max-w-[240px] aspect-[9/16] overflow-hidden rounded-2xl border border-slate-800/70 bg-slate-900/40 sm:h-[48vh] sm:max-w-[280px]">
                 <div
-                  className="absolute inset-0 transition-opacity duration-200"
+                  className="absolute inset-0"
                   style={{
                     opacity: 1 - t,
-                    transform: `translate3d(0, ${-6 * t}px, 0) scale(${1 - 0.01 * t})`,
-                    transition: "opacity 80ms linear, transform 80ms linear",
+                    transform: `translate3d(0, ${-6 * t}px, 0) scale(${1 - 0.015 * t})`,
+                    willChange: "opacity, transform",
                   }}
                 >
                   {mobileSceneA.imageUrl ? (
@@ -275,11 +273,11 @@ export function PitchScrollScene({ scenes }: { scenes: Scene[] }) {
                 </div>
                 {nextIndex !== baseIndex && (
                   <div
-                    className="absolute inset-0 transition-opacity duration-200"
+                    className="absolute inset-0"
                     style={{
                       opacity: t,
-                      transform: `translate3d(0, ${6 * (1 - t)}px, 0) scale(${0.99 + 0.01 * t})`,
-                      transition: "opacity 80ms linear, transform 80ms linear",
+                      transform: `translate3d(0, ${6 * (1 - t)}px, 0) scale(${0.985 + 0.015 * t})`,
+                      willChange: "opacity, transform",
                     }}
                   >
                     {mobileSceneB.imageUrl ? (
