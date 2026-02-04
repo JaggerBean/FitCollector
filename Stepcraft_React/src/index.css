@@ -29,6 +29,10 @@ body {
   cursor: grabbing;
 }
 
+.drag-gallery-item {
+  touch-action: pan-x;
+}
+
 .reveal-out {
   opacity: 0;
   transform: translateY(18px) scale(0.985);
