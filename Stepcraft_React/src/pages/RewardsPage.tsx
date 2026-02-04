@@ -6,14 +6,23 @@ import { getRewards, updateRewards, useDefaultRewards } from "../api/servers";
 import type { RewardsTier } from "../api/types";
 
 interface EditableTier {
+  id: string;
   min_steps: number;
   label: string;
   item_id: string;
   rewards: string[];
 }
 
+function makeTierId() {
+  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
+    return crypto.randomUUID();
+  }
+  return `tier_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+}
+
 function toEditable(tier: RewardsTier): EditableTier {
   return {
+    id: makeTierId(),
     min_steps: tier.min_steps,
     label: tier.label,
     item_id: tier.item_id ?? "",
@@ -93,7 +102,10 @@ export default function RewardsPage() {
   };
 
   const addTier = () => {
-    setTiers((prev) => [...prev, { min_steps: 0, label: "", item_id: "", rewards: [""] }]);
+    setTiers((prev) => [
+      ...prev,
+      { id: makeTierId(), min_steps: 0, label: "", item_id: "", rewards: [""] },
+    ]);
   };
 
   const updateTier = (index: number, patch: Partial<EditableTier>) => {
@@ -162,7 +174,7 @@ export default function RewardsPage() {
       <div className="mt-6 space-y-4">
         {tiers.map((tier, index) => (
           <div
-            key={`${tier.label}-${index}`}
+            key={tier.id}
             className="rounded-2xl border border-emerald-100 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900"
           >
             <div className="flex items-center justify-between">
