@@ -59,7 +59,7 @@ export function DragGallery({ items }: { items: { label: string }[] }) {
     };
 
     let lastCheck = 0;
-    const visibilityThreshold = 0.2;
+    const visibilityThreshold = 0.01;
     const checkVisibility = (now: number) => {
       if (autoScrollStoppedRef.current) return;
       if (now - lastCheck >= 150) {
@@ -117,9 +117,6 @@ export function DragGallery({ items }: { items: { label: string }[] }) {
         }}
         onPointerCancel={() => {
           isDown.current = false;
-        }}
-        onWheel={() => {
-          stopAutoScroll();
         }}
         onTouchStart={() => {
           stopAutoScroll();
