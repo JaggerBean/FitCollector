@@ -5,6 +5,8 @@ import SmoothScroll from "../components/SmoothScroll";
 import { PitchScrollScene } from "../components/ScrollStack";
 import { DragGallery } from "../components/DraggableGallery";
 import { useAuthContext } from "../app/AuthContext";
+import casualRetentionImg from "../assets/MemoIMGs/Casual Player Retention.png";
+import zeroFrictionImg from "../assets/MemoIMGs/Zero Friction.png";
 
 function clamp01(v: number) {
   return Math.min(1, Math.max(0, v));
@@ -111,14 +113,14 @@ const scenes = useMemo(
       title: "Turn one-day visitors into regulars.",
       body: "Most players join, play once, and disappear, especially casual players. StepCraft gives them an easy daily reason to return: hit a step goal, claim a reward, feel progress. It turns “I’ll check it out” into a routine that fits busy schedules.",
       imageAlt: "Daily step goal and reward claim",
-      imageUrl: undefined,
+      imageUrl: casualRetentionImg,
     },
     {
       eyebrow: "Zero friction",
       title: "Server-side only: players just join.",
       body: "No client mod. No extra installs. No \"go download this\" drop-off. Anyone who wants to join your server can participate immediately.",
       imageAlt: "Join server without installing anything",
-      imageUrl: undefined,
+      imageUrl: zeroFrictionImg,
     },
     {
       eyebrow: "Owner control",
