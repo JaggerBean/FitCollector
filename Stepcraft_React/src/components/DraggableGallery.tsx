@@ -1,20 +1,56 @@
-import { useRef, useState } from "react";
-import openHandSvg from "../assets/cursor/hand-svgrepo-com.svg";
-import grabHandSvg from "../assets/cursor/grab-svgrepo-com (1).svg";
+import { useEffect, useRef } from "react";
 
 export function DragGallery({ items }: { items: { label: string }[] }) {
   const scrollerRef = useRef<HTMLDivElement>(null);
   const isDown = useRef(false);
   const startX = useRef(0);
   const startScrollLeft = useRef(0);
-  const [hasDragged, setHasDragged] = useState(false);
-  const dragHintVisible = !hasDragged;
+  const autoScrollActiveRef = useRef(true);
+  const autoScrollDirRef = useRef(1);
+  const rafRef = useRef(0);
+
+  const stopAutoScroll = () => {
+    if (!autoScrollActiveRef.current) return;
+    autoScrollActiveRef.current = false;
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+  };
+
+  useEffect(() => {
+    const el = scrollerRef.current;
+    if (!el) return;
+
+    const speed = 0.35;
+
+    const tick = () => {
+      if (!autoScrollActiveRef.current) return;
+      const maxScroll = el.scrollWidth - el.clientWidth;
+      if (maxScroll <= 0) {
+        autoScrollActiveRef.current = false;
+        return;
+      }
+
+      const next = el.scrollLeft + speed * autoScrollDirRef.current;
+      if (next >= maxScroll) {
+        el.scrollLeft = maxScroll;
+        autoScrollDirRef.current = -1;
+      } else if (next <= 0) {
+        el.scrollLeft = 0;
+        autoScrollDirRef.current = 1;
+      } else {
+        el.scrollLeft = next;
+      }
+
+      rafRef.current = requestAnimationFrame(tick);
+    };
+
+    rafRef.current = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafRef.current);
+  }, []);
 
   return (
     <div className="rounded-3xl border border-slate-800/60 bg-slate-950/70 p-4 sm:p-6">
       <div className="flex items-center justify-between gap-4">
         <h3 className="text-base font-semibold text-white sm:text-lg">Screens & moments</h3>
-        {dragHintVisible && <span className="sr-only">Drag to explore</span>}
       </div>
 
       <div
@@ -24,6 +60,7 @@ export function DragGallery({ items }: { items: { label: string }[] }) {
         onPointerDown={(e) => {
           const el = scrollerRef.current;
           if (!el) return;
+          stopAutoScroll();
           isDown.current = true;
           startX.current = e.clientX;
           startScrollLeft.current = el.scrollLeft;
@@ -33,7 +70,6 @@ export function DragGallery({ items }: { items: { label: string }[] }) {
           const el = scrollerRef.current;
           if (!el || !isDown.current) return;
           const dx = e.clientX - startX.current;
-          if (!hasDragged && Math.abs(dx) > 6) setHasDragged(true);
           el.scrollLeft = startScrollLeft.current - dx;
         }}
         onPointerUp={() => {
@@ -42,49 +78,24 @@ export function DragGallery({ items }: { items: { label: string }[] }) {
         onPointerCancel={() => {
           isDown.current = false;
         }}
-        onScroll={(e) => {
-          if (hasDragged) return;
-          if ((e.currentTarget as HTMLDivElement).scrollLeft !== 0) {
-            setHasDragged(true);
-          }
+        onWheel={() => {
+          stopAutoScroll();
+        }}
+        onTouchStart={() => {
+          stopAutoScroll();
         }}
       >
-        {items.map((it, index) => {
-          const showHint = dragHintVisible && index === 0;
-
-          return (
+        {items.map((it) => (
           <div
             key={it.label}
-            className="relative min-w-[220px] flex-none rounded-2xl border border-slate-800/70 bg-slate-900/40 p-5 text-[13px] text-slate-300 sm:min-w-[260px] sm:p-6 sm:text-sm"
+            className="min-w-[220px] flex-none rounded-2xl border border-slate-800/70 bg-slate-900/40 p-5 text-[13px] text-slate-300 sm:min-w-[260px] sm:p-6 sm:text-sm"
           >
             {it.label}
-            <div className="relative mt-4 rounded-xl border border-slate-800/70 bg-slate-950/40 p-4 text-xs text-slate-500">
-              {showHint && (
-                <div className="drag-hint-overlay" aria-hidden="true">
-                  <div className="drag-hint-rail">
-                    <div className="drag-hint-tile" />
-                    <div className="drag-hint-hand">
-                      <img
-                        src={openHandSvg}
-                        alt=""
-                        className="drag-hint-hand-icon drag-hint-hand-open"
-                        loading="lazy"
-                      />
-                      <img
-                        src={grabHandSvg}
-                        alt=""
-                        className="drag-hint-hand-icon drag-hint-hand-closed"
-                        loading="lazy"
-                      />
-                    </div>
-                  </div>
-                </div>
-              )}
+            <div className="mt-4 rounded-xl border border-slate-800/70 bg-slate-950/40 p-4 text-xs text-slate-500">
               Image placeholder
             </div>
           </div>
-          );
-        })}
+        ))}
       </div>
     </div>
   );
