@@ -9,11 +9,11 @@ export function DragGallery({ items }: { items: { label: string }[] }) {
   const dragHintVisible = !hasDragged;
 
   return (
-    <div className="rounded-3xl border border-slate-800/60 bg-slate-950/70 p-6">
+    <div className="rounded-3xl border border-slate-800/60 bg-slate-950/70 p-4 sm:p-6">
       <div className="flex items-center justify-between gap-4">
-        <h3 className="text-lg font-semibold text-white">Screens & moments</h3>
+        <h3 className="text-base font-semibold text-white sm:text-lg">Screens & moments</h3>
         {dragHintVisible && (
-          <div className="drag-hint flex items-center gap-2 rounded-full border border-slate-800 px-3 py-2 text-slate-400">
+          <div className="drag-hint flex items-center gap-2 rounded-full border border-slate-800 px-2.5 py-1.5 text-[10px] text-slate-400 sm:px-3 sm:py-2 sm:text-xs">
             <span className="drag-hint-icon" aria-hidden="true">
               <span className="drag-hint-mouse">🖱️</span>
               <span className="drag-hint-hand">🤏</span>
@@ -65,7 +65,7 @@ export function DragGallery({ items }: { items: { label: string }[] }) {
         {items.map((it) => (
           <div
             key={it.label}
-            className="min-w-[260px] flex-none rounded-2xl border border-slate-800/70 bg-slate-900/40 p-6 text-sm text-slate-300"
+            className="min-w-[220px] flex-none rounded-2xl border border-slate-800/70 bg-slate-900/40 p-5 text-[13px] text-slate-300 sm:min-w-[260px] sm:p-6 sm:text-sm"
           >
             {it.label}
             <div className="mt-4 rounded-xl border border-slate-800/70 bg-slate-950/40 p-4 text-xs text-slate-500">

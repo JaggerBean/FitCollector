@@ -123,14 +123,14 @@ export function PitchScrollScene({ scenes }: { scenes: Scene[] }) {
   };
 
   return (
-    <div ref={wrapRef} className="relative min-h-[320vh]">
-      <div className="sticky top-0 h-screen w-full overflow-hidden rounded-3xl border border-slate-800/60 bg-slate-950/95">
+    <div ref={wrapRef} className="relative min-h-[300vh] sm:min-h-[320vh]">
+      <div className="sticky top-0 h-screen w-full overflow-hidden rounded-2xl border border-slate-800/60 bg-slate-950/95 sm:rounded-3xl">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(16,185,129,0.14),transparent_55%)]" />
 
-        <div className="relative mx-auto grid h-full max-w-6xl grid-cols-1 gap-10 px-6 py-10 md:grid-cols-2 md:px-10">
+        <div className="relative mx-auto grid h-full max-w-6xl grid-cols-1 gap-8 px-4 py-8 sm:gap-10 sm:px-6 sm:py-10 md:grid-cols-2 md:px-10">
           {/* Left: copy */}
           <div className="flex flex-col justify-center">
-            <div className="text-xs uppercase tracking-[0.3em] text-slate-400">StepCraft in action</div>
+            <div className="text-[10px] uppercase tracking-[0.3em] text-slate-400 sm:text-xs">StepCraft in action</div>
 
             {safeScenes.map((s, i) => {
               const dist = Math.abs(i - visualScaled);
@@ -157,7 +157,7 @@ export function PitchScrollScene({ scenes }: { scenes: Scene[] }) {
                   }}
                 >
                   <div className="text-xs uppercase tracking-[0.2em] text-emerald-300/70">{s.eyebrow}</div>
-                  <h3 className="mt-3 text-2xl font-semibold text-white">{s.title}</h3>
+                  <h3 className="mt-3 text-xl font-semibold text-white sm:text-2xl">{s.title}</h3>
                   <p className="mt-3 text-sm leading-relaxed text-slate-300">{s.body}</p>
                 </div>
               );
@@ -167,7 +167,7 @@ export function PitchScrollScene({ scenes }: { scenes: Scene[] }) {
           {/* Right: imagery */}
           <div className="relative flex items-center justify-center">
             <div
-              className="relative w-full max-w-md aspect-[9/16] overflow-hidden rounded-2xl border border-slate-800/70 bg-slate-900/40"
+              className="relative w-full max-w-[260px] aspect-[9/16] overflow-hidden rounded-2xl border border-slate-800/70 bg-slate-900/40 sm:max-w-sm md:max-w-md"
               style={{
                 transform: `translate3d(0, ${-24 * p}px, 0) scale(${0.98 + 0.03 * p})`,
                 transition: "transform 60ms linear",
@@ -213,12 +213,12 @@ export function PitchScrollScene({ scenes }: { scenes: Scene[] }) {
           disabled={!showScrollHint}
           onClick={onScrollHintClick}
           className={[
-            "absolute bottom-6 left-1/2 z-20 -translate-x-1/2 transition-all duration-300",
+            "absolute bottom-5 left-1/2 z-20 -translate-x-1/2 transition-all duration-300 sm:bottom-6",
             showScrollHint ? "opacity-100 translate-y-0" : "pointer-events-none opacity-0 translate-y-3",
           ].join(" ")}
         >
           <div className="flex flex-col items-center gap-2">
-            <div className="grid h-11 w-11 place-items-center rounded-full border border-slate-700/60 bg-slate-950/35 text-slate-300/80 shadow-[0_10px_30px_rgba(0,0,0,0.35)] backdrop-blur">
+            <div className="grid h-10 w-10 place-items-center rounded-full border border-slate-700/60 bg-slate-950/35 text-slate-300/80 shadow-[0_10px_30px_rgba(0,0,0,0.35)] backdrop-blur sm:h-11 sm:w-11">
               <svg
                 viewBox="0 0 24 24"
                 fill="none"
@@ -234,7 +234,9 @@ export function PitchScrollScene({ scenes }: { scenes: Scene[] }) {
                 />
               </svg>
             </div>
-            <div className="text-[11px] uppercase tracking-[0.3em] text-slate-400">Keep scrolling</div>
+            <div className="text-[10px] uppercase tracking-[0.3em] text-slate-400 sm:text-[11px]">
+              Keep scrolling
+            </div>
           </div>
         </button>
       </div>
