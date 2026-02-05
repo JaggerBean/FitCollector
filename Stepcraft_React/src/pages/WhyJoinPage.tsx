@@ -255,9 +255,9 @@ export default function WhyJoinPage() {
                   {primaryCtaLabel}
                 </Link>
               </div>
-              <div className="mt-4 text-xs text-slate-500">
+              {/* <div className="mt-4 text-xs text-slate-500">
                 Want a quick owner demo? Add 2-3 screenshots above and share this page as your pitch.
-              </div>
+              </div> */}
             </section>
           </div>
         </div>
