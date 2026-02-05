@@ -132,11 +132,11 @@ export function PitchScrollScene({ scenes }: { scenes: Scene[] }) {
       <div className="sticky top-0 h-screen w-full overflow-hidden rounded-2xl border border-slate-800/60 bg-slate-950/95 sm:rounded-3xl">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(16,185,129,0.14),transparent_55%)]" />
 
-        <div className="relative mx-auto h-full max-w-6xl px-4 py-8 sm:px-6 sm:py-10 md:px-10">
+        <div className="relative mx-auto h-full max-w-6xl px-4 py-8 sm:px-6 sm:py-10 md:px-10 [@media_(max-height:900px)]:py-6">
           {/* Desktop layout */}
           <div className="hidden h-full grid-cols-1 gap-8 sm:gap-10 md:grid md:grid-cols-2">
             {/* Left: copy */}
-            <div className="flex flex-col justify-center">
+            <div className="flex flex-col justify-center [@media_(max-height:900px)]:max-h-[calc(100vh-6rem)] [@media_(max-height:900px)]:overflow-y-auto [@media_(max-height:900px)]:pr-2">
               <div className="text-[10px] uppercase tracking-[0.3em] text-slate-400 sm:text-xs">
                 StepCraft in action
               </div>
