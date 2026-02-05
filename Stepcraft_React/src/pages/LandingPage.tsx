@@ -72,7 +72,7 @@ export default function LandingPage() {
                   )}
                 </div>
                 <p className="mt-4 text-[11px] uppercase tracking-[0.22em] text-slate-500">
-                  Rewards delivered daily • Steps tracked across servers
+                  Rewards delivered instantly • Communities grow daily
                 </p>
               </div>
               <div className="rounded-2xl border border-slate-900/60 bg-slate-950/60 p-6 shadow-[0_8px_30px_rgba(15,23,42,0.35)]">
