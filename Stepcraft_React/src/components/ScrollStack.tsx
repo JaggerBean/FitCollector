@@ -38,6 +38,9 @@ function applyStepHold(progress: number, steps: number, hold = 0.35) {
 
 export function PitchScrollScene({ scenes }: { scenes: Scene[] }) {
   const wrapRef = useRef<HTMLDivElement>(null);
+  const sceneWrapRef = useRef<HTMLDivElement>(null);
+  const sceneRefs = useRef<Array<HTMLDivElement | null>>([]);
+  const [sceneOverflow, setSceneOverflow] = useState<number[]>([]);
 
   const safeScenes = useMemo(() => scenes.slice(0, Math.max(1, scenes.length)), [scenes]);
 
@@ -96,6 +99,39 @@ export function PitchScrollScene({ scenes }: { scenes: Scene[] }) {
     return () => cancelAnimationFrame(rafId);
   }, [safeScenes.length]);
 
+  useEffect(() => {
+    const measure = () => {
+      const viewport = sceneWrapRef.current;
+      if (!viewport) return;
+      const viewHeight = viewport.clientHeight || 0;
+
+      const next = safeScenes.map((_, i) => {
+        const el = sceneRefs.current[i];
+        if (!el || viewHeight <= 0) return 0;
+        const contentHeight = el.scrollHeight || 0;
+        return Math.max(0, contentHeight - viewHeight);
+      });
+
+      setSceneOverflow(next);
+    };
+
+    measure();
+
+    let ro: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== "undefined") {
+      ro = new ResizeObserver(() => measure());
+      if (sceneWrapRef.current) ro.observe(sceneWrapRef.current);
+      sceneRefs.current.forEach((el) => el && ro?.observe(el));
+    } else {
+      window.addEventListener("resize", measure);
+    }
+
+    return () => {
+      ro?.disconnect();
+      window.removeEventListener("resize", measure);
+    };
+  }, [safeScenes]);
+
   const sceneCount = safeScenes.length;
 
   // Used to drive crossfades + motion between scenes
@@ -132,45 +168,54 @@ export function PitchScrollScene({ scenes }: { scenes: Scene[] }) {
       <div className="sticky top-0 h-screen w-full overflow-hidden rounded-2xl border border-slate-800/60 bg-slate-950/95 sm:rounded-3xl">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(16,185,129,0.14),transparent_55%)]" />
 
-        <div className="relative mx-auto h-full max-w-6xl px-4 py-8 sm:px-6 sm:py-10 md:px-10 [@media_(max-height:900px)]:py-6">
+        <div className="relative mx-auto h-full max-w-6xl px-4 py-8 sm:px-6 sm:py-10 md:px-10">
           {/* Desktop layout */}
           <div className="hidden h-full grid-cols-1 gap-8 sm:gap-10 md:grid md:grid-cols-2">
             {/* Left: copy */}
-            <div className="flex flex-col justify-center [@media_(max-height:900px)]:justify-start [@media_(max-height:900px)]:pt-2 [@media_(max-height:900px)]:pb-6 [@media_(max-height:900px)]:max-h-[calc(100vh-6rem)] [@media_(max-height:900px)]:overflow-y-auto [@media_(max-height:900px)]:pr-2">
+            <div className="flex min-h-0 flex-col justify-center">
               <div className="text-[10px] uppercase tracking-[0.3em] text-slate-400 sm:text-xs">
                 StepCraft in action
               </div>
 
-              {safeScenes.map((s, i) => {
-                const dist = Math.abs(i - visualScaled);
-                const fade = clamp01(1 - dist);
+              <div ref={sceneWrapRef} className="relative min-h-0 flex-1">
+                {safeScenes.map((s, i) => {
+                  const dist = Math.abs(i - visualScaled);
+                  const fade = clamp01(1 - dist);
 
-                const baseOpacity = 0.08 + 0.92 * fade;
+                  const baseOpacity = 0.08 + 0.92 * fade;
 
-                // motion: current slides up slightly as you progress to next scene
-                // and next slides in a bit
-                let y = 0;
-                if (i === baseIndex) y = -10 * t;
-                if (i === baseIndex + 1) y = 14 * (1 - t);
+                  // motion: current slides up slightly as you progress to next scene
+                  // and next slides in a bit
+                  let y = 0;
+                  if (i === baseIndex) y = -10 * t;
+                  if (i === baseIndex + 1) y = 14 * (1 - t);
 
-                const scale = 0.98 + 0.02 * fade;
+                  const overflow = sceneOverflow[i] || 0;
+                  const scrollProgress = i === baseIndex || i === baseIndex + 1 ? t : 0;
+                  const scrollY = -overflow * scrollProgress;
 
-                return (
-                  <div
-                    key={s.title}
-                    className="mt-8 [@media_(max-height:900px)]:mt-5"
-                    style={{
-                      opacity: baseOpacity,
-                      transform: `translate3d(0, ${y}px, 0) scale(${scale})`,
-                      transition: "opacity 280ms ease, transform 280ms ease",
-                    }}
-                  >
-                    <div className="text-xs uppercase tracking-[0.2em] text-emerald-300/70">{s.eyebrow}</div>
-                    <h3 className="mt-3 text-xl font-semibold text-white sm:text-2xl">{s.title}</h3>
-                    <p className="mt-3 text-sm leading-relaxed text-slate-300">{s.body}</p>
-                  </div>
-                );
-              })}
+                  const scale = 0.98 + 0.02 * fade;
+
+                  return (
+                    <div
+                      key={s.title}
+                      ref={(el) => {
+                        sceneRefs.current[i] = el;
+                      }}
+                      className="mt-8"
+                      style={{
+                        opacity: baseOpacity,
+                        transform: `translate3d(0, ${y + scrollY}px, 0) scale(${scale})`,
+                        transition: "opacity 280ms ease, transform 280ms ease",
+                      }}
+                    >
+                      <div className="text-xs uppercase tracking-[0.2em] text-emerald-300/70">{s.eyebrow}</div>
+                      <h3 className="mt-3 text-xl font-semibold text-white sm:text-2xl">{s.title}</h3>
+                      <p className="mt-3 text-sm leading-relaxed text-slate-300">{s.body}</p>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
 
             {/* Right: imagery */}
