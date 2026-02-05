@@ -143,7 +143,7 @@ export default function WhyJoinPage() {
                     <img
                       src={notiImg}
                       alt="StepCraft notification preview"
-                      className="h-48 w-full object-cover sm:h-56"
+                      className="h-56 w-full object-contain sm:h-64"
                       loading="lazy"
                     />
                   </div>
