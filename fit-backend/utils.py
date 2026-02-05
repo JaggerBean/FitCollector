@@ -129,7 +129,7 @@ def send_api_key_email(to_email: str, server_name: str, api_key: str, message: s
                     <div style=\"margin: 10px 0 14px; padding: 12px 14px; background: #0b1220; border-radius: 10px; border: 1px dashed #334155; color: #e2e8f0; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;\">
                         /stepcraft admin_gui
                     </div>
-                    <ol start=\"4\" style=\"margin: 0; padding-left: 18px; color: #cbd5f5;\">
+                    <ol start=\"4\" style=\"margin: 0 0 14px; padding-left: 18px; color: #cbd5f5;\">
                         <li>Open <strong>Settings</strong> and hover the API key status wool to confirm it shows <strong>Working</strong>.</li>
                     </ol>
 
