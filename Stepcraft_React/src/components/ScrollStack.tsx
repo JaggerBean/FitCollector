@@ -38,9 +38,6 @@ function applyStepHold(progress: number, steps: number, hold = 0.35) {
 
 export function PitchScrollScene({ scenes }: { scenes: Scene[] }) {
   const wrapRef = useRef<HTMLDivElement>(null);
-  const sceneWrapRef = useRef<HTMLDivElement>(null);
-  const sceneRefs = useRef<Array<HTMLDivElement | null>>([]);
-  const [sceneOverflow, setSceneOverflow] = useState<number[]>([]);
 
   const safeScenes = useMemo(() => scenes.slice(0, Math.max(1, scenes.length)), [scenes]);
 
@@ -99,38 +96,6 @@ export function PitchScrollScene({ scenes }: { scenes: Scene[] }) {
     return () => cancelAnimationFrame(rafId);
   }, [safeScenes.length]);
 
-  useEffect(() => {
-    const measure = () => {
-      const viewport = sceneWrapRef.current;
-      if (!viewport) return;
-      const viewHeight = viewport.clientHeight || 0;
-
-      const next = safeScenes.map((_, i) => {
-        const el = sceneRefs.current[i];
-        if (!el || viewHeight <= 0) return 0;
-        const contentHeight = el.scrollHeight || 0;
-        return Math.max(0, contentHeight - viewHeight);
-      });
-
-      setSceneOverflow(next);
-    };
-
-    measure();
-
-    let ro: ResizeObserver | null = null;
-    if (typeof ResizeObserver !== "undefined") {
-      ro = new ResizeObserver(() => measure());
-      if (sceneWrapRef.current) ro.observe(sceneWrapRef.current);
-      sceneRefs.current.forEach((el) => el && ro?.observe(el));
-    } else {
-      window.addEventListener("resize", measure);
-    }
-
-    return () => {
-      ro?.disconnect();
-      window.removeEventListener("resize", measure);
-    };
-  }, [safeScenes]);
 
   const sceneCount = safeScenes.length;
 
@@ -178,7 +143,6 @@ export function PitchScrollScene({ scenes }: { scenes: Scene[] }) {
               </div>
 
               <div
-                ref={sceneWrapRef}
                 className="relative min-h-0 flex-1"
                 style={{
                   transform: `translate3d(0, ${-36 * t}px, 0)`,
@@ -202,9 +166,6 @@ export function PitchScrollScene({ scenes }: { scenes: Scene[] }) {
                   return (
                     <div
                       key={s.title}
-                      ref={(el) => {
-                        sceneRefs.current[i] = el;
-                      }}
                       className="mt-8"
                       style={{
                         opacity: baseOpacity,
