@@ -73,28 +73,28 @@ def send_api_key_email(to_email: str, server_name: str, api_key: str, message: s
     if config is None:
         return False
 
-        safe_message = message or ""
-        logo_path = Path(__file__).resolve().parent / "Logo" / "logo.png"
-        logo_bytes = None
-        if logo_path.exists():
-                logo_bytes = logo_path.read_bytes()
+    safe_message = message or ""
+    logo_path = Path(__file__).resolve().parent / "Logo" / "logo.png"
+    logo_bytes = None
+    if logo_path.exists():
+        logo_bytes = logo_path.read_bytes()
 
-        subject = "Your StepCraft API Key"
-        text_body = (
-                "Thanks for registering your StepCraft server!\n\n"
-                f"Server: {server_name}\n"
-                f"API Key: {api_key}\n\n"
-                "Next steps (Minecraft server):\n"
-                "1) Join the server as an OP.\n"
-                "2) Run /stepcraft admin_gui\n"
-                "3) Open Settings -> Set API Key and paste:\n"
-                f"   /stepcraft set_api_key {api_key}\n"
-                "4) Confirm API Key Status shows Working.\n\n"
-                "Alternative: edit config/stepcraft.properties and set api_key=<your key>.\n\n"
-                f"{safe_message}\n"
-        )
+    subject = "Your StepCraft API Key"
+    text_body = (
+        "Thanks for registering your StepCraft server!\n\n"
+        f"Server: {server_name}\n"
+        f"API Key: {api_key}\n\n"
+        "Next steps (Minecraft server):\n"
+        "1) Join the server as an OP.\n"
+        "2) Run /stepcraft admin_gui\n"
+        "3) Open Settings -> Set API Key and paste:\n"
+        f"   /stepcraft set_api_key {api_key}\n"
+        "4) Confirm API Key Status shows Working.\n\n"
+        "Alternative: edit config/stepcraft.properties and set api_key=<your key>.\n\n"
+        f"{safe_message}\n"
+    )
 
-        html_body = f"""
+    html_body = f"""
         <div style=\"font-family: Inter, Arial, sans-serif; background: #0b0f14; color: #e2e8f0; padding: 32px;\">
             <div style=\"max-width: 640px; margin: 0 auto; background: #111827; border: 1px solid #1f2937; border-radius: 16px; overflow: hidden;\">
                 <div style=\"padding: 24px 28px; background: #0f172a; border-bottom: 1px solid #1f2937;\">
@@ -137,30 +137,30 @@ def send_api_key_email(to_email: str, server_name: str, api_key: str, message: s
         </div>
         """
 
-        msg = EmailMessage()
-        msg["Subject"] = subject
-        msg["From"] = config["from"]
-        msg["To"] = to_email
-        msg.set_content(text_body)
-        msg.add_alternative(html_body, subtype="html")
+    msg = EmailMessage()
+    msg["Subject"] = subject
+    msg["From"] = config["from"]
+    msg["To"] = to_email
+    msg.set_content(text_body)
+    msg.add_alternative(html_body, subtype="html")
 
-        if logo_bytes:
-            msg.get_payload()[1].add_related(logo_bytes, maintype="image", subtype="png", cid="stepcraft-logo")
+    if logo_bytes:
+        msg.get_payload()[1].add_related(logo_bytes, maintype="image", subtype="png", cid="stepcraft-logo")
 
-        try:
-            if config["ssl_tls"]:
-                with smtplib.SMTP_SSL(config["server"], config["port"]) as smtp:
-                    smtp.login(config["user"], config["password"])
-                    smtp.send_message(msg)
-            else:
-                with smtplib.SMTP(config["server"], config["port"]) as smtp:
-                    if config["starttls"]:
-                        smtp.starttls()
-                    smtp.login(config["user"], config["password"])
-                    smtp.send_message(msg)
-        except Exception as exc:
-            logging.exception("Failed to send API key email to %s: %s", to_email, exc)
-            return False
+    try:
+        if config["ssl_tls"]:
+            with smtplib.SMTP_SSL(config["server"], config["port"]) as smtp:
+                smtp.login(config["user"], config["password"])
+                smtp.send_message(msg)
+        else:
+            with smtplib.SMTP(config["server"], config["port"]) as smtp:
+                if config["starttls"]:
+                    smtp.starttls()
+                smtp.login(config["user"], config["password"])
+                smtp.send_message(msg)
+    except Exception as exc:
+        logging.exception("Failed to send API key email to %s: %s", to_email, exc)
+        return False
 
-        logging.info("Sent API key email to %s for server %s", to_email, server_name)
-        return True
+    logging.info("Sent API key email to %s for server %s", to_email, server_name)
+    return True
