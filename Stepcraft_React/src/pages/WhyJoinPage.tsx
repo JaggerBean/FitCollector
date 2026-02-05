@@ -135,7 +135,8 @@ export default function WhyJoinPage() {
                     StepCraft increases retention by giving players daily goals that reward real-world steps with in-game
                     progress. Unlike other daily server rewards, players feel like they earned these rewards and are more
                     likely to log on and claim them, which boosts playtime and raises conversion on in-game rank/item
-                    sales. Unlike most mods, StepCraft also adds a phone app touchpoint, keeping your server top-of-mind
+                    sales. Because the reward is physically earned, players are far more motivated to log in and collect it
+                    than with generic daily handouts. Unlike most mods, StepCraft also adds a phone app touchpoint, keeping your server top-of-mind
                     even when players aren't online.
                   </p>
 
@@ -219,8 +220,8 @@ export default function WhyJoinPage() {
                     p: "Progress updates the moment steps sync, so players see the payoff right away.",
                   },
                   {
-                    h: "Clear next step",
-                    p: "The UI always answers \"what should I do next?\" with one obvious action.",
+                    h: "Streak-driven motivation",
+                    p: "Players stay engaged because the app reinforces milestones and daily wins.",
                   },
                   {
                     h: "Low cognitive load",
