@@ -122,7 +122,10 @@ def send_api_key_email(to_email: str, server_name: str, api_key: str, message: s
                     <div style=\"margin: 10px 0 14px; padding: 12px 14px; background: #0b1220; border-radius: 10px; border: 1px dashed #334155; color: #e2e8f0; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;\">
                         /stepcraft set_api_key {api_key}
                     </div>
-                    <p style=\"margin: 0 0 14px; color: #cbd5f5;\">Then run <strong>/stepcraft admin_gui</strong> → open <strong>Settings</strong> and hover the API key status wool to confirm it shows <strong>Working</strong>.</p>
+                    <ol start=\"3\" style=\"margin: 0; padding-left: 18px; color: #cbd5f5;\">
+                        <li>Run <code style=\"background:#0b1220; padding:2px 6px; border-radius:6px; border:1px solid #1f2937;\">/stepcraft admin_gui</code></li>
+                        <li>Open <strong>Settings</strong> and hover the API key status wool to confirm it shows <strong>Working</strong>.</li>
+                    </ol>
 
                     <p style=\"margin: 0 0 10px; color: #94a3b8;\">Alternative: edit <strong>config/stepcraft.properties</strong> and set <code>api_key=&lt;your key&gt;</code>.</p>
 
