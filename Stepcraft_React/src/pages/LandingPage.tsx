@@ -26,7 +26,7 @@ export default function LandingPage() {
             <div className="grid gap-12 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
               <div className="max-w-xl">
                 <h1 className="text-[2.5rem] font-bold leading-[1.15] text-white md:text-[3.5rem]">
-                  Driving daily player engagement one\n
+                  Driving daily player engagement one
                   step at a time.
                 </h1>
                 <p className="mt-6 text-base leading-relaxed text-slate-300 md:text-lg">
