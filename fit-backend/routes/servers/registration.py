@@ -123,11 +123,11 @@ def register_server(request: ServerRegistrationRequest, user=Depends(require_use
             is_private=request.is_private,
             invite_code=invite_code,
         )
-        try:
-            if request.owner_email:
-                send_api_key_email(request.owner_email, request.server_name, plaintext_key, response.message)
-        except Exception:
-            pass
+        if request.owner_email:
+            sent = send_api_key_email(request.owner_email, request.server_name, plaintext_key, response.message)
+            if not sent:
+                import logging
+                logging.warning("API key email not sent for server %s (check SMTP config)", request.server_name)
         return response
     
     except HTTPException:

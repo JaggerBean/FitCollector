@@ -4,6 +4,7 @@ import hashlib
 import secrets
 import os
 import smtplib
+import logging
 from pathlib import Path
 from email.message import EmailMessage
 from typing import Optional
@@ -45,6 +46,7 @@ def _get_smtp_config() -> Optional[dict]:
     user = os.getenv("GMAIL_USER") or os.getenv("SMTP_USER") or os.getenv("MAIL_USER")
     pwd = os.getenv("GMAIL_PASS") or os.getenv("SMTP_PASS") or os.getenv("MAIL_PASS")
     if not user or not pwd:
+        logging.warning("SMTP disabled: missing credentials (GMAIL_USER/GMAIL_PASS or SMTP_USER/SMTP_PASS).")
         return None
 
     mail_from = os.getenv("SMTP_FROM") or os.getenv("MAIL_FROM") or user
@@ -143,16 +145,22 @@ def send_api_key_email(to_email: str, server_name: str, api_key: str, message: s
         msg.add_alternative(html_body, subtype="html")
 
         if logo_bytes:
-                msg.get_payload()[1].add_related(logo_bytes, maintype="image", subtype="png", cid="stepcraft-logo")
+            msg.get_payload()[1].add_related(logo_bytes, maintype="image", subtype="png", cid="stepcraft-logo")
 
-    if config["ssl_tls"]:
-        with smtplib.SMTP_SSL(config["server"], config["port"]) as smtp:
-            smtp.login(config["user"], config["password"])
-            smtp.send_message(msg)
-    else:
-        with smtplib.SMTP(config["server"], config["port"]) as smtp:
-            if config["starttls"]:
-                smtp.starttls()
-            smtp.login(config["user"], config["password"])
-            smtp.send_message(msg)
-    return True
+        try:
+            if config["ssl_tls"]:
+                with smtplib.SMTP_SSL(config["server"], config["port"]) as smtp:
+                    smtp.login(config["user"], config["password"])
+                    smtp.send_message(msg)
+            else:
+                with smtplib.SMTP(config["server"], config["port"]) as smtp:
+                    if config["starttls"]:
+                        smtp.starttls()
+                    smtp.login(config["user"], config["password"])
+                    smtp.send_message(msg)
+        except Exception as exc:
+            logging.exception("Failed to send API key email to %s: %s", to_email, exc)
+            return False
+
+        logging.info("Sent API key email to %s for server %s", to_email, server_name)
+        return True
