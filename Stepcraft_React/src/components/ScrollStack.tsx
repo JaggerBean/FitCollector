@@ -146,8 +146,8 @@ export function PitchScrollScene({ scenes }: { scenes: Scene[] }) {
               <div
                 className="relative min-h-0 flex-1"
                 style={{
-                  transform: `translate3d(0, ${-36 * active}px, 0)`,
-                  transition: "transform 260ms ease",
+                  transform: `translate3d(0, ${-36 * visualScaled}px, 0)`,
+                  transition: "transform 200ms ease",
                 }}
               >
                 {safeScenes.map((s, i) => {
