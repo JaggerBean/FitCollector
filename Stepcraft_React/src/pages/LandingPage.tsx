@@ -4,6 +4,7 @@ import { Layout } from "../components/Layout";
 import SmoothScroll from "../components/SmoothScroll";
 import MagicBento from "../components/MagicBento";
 import { useAuthContext } from "../app/AuthContext";
+import trackedRewardImg from "../assets/landing/Tracked Reward.png";
 
 export default function LandingPage() {
   const { isAuthenticated } = useAuthContext();
@@ -93,6 +94,14 @@ export default function LandingPage() {
                       </div>
                     ),
                   )}
+                </div>
+                <div className="mt-4 overflow-hidden rounded-xl border border-slate-800/60 bg-slate-950/50">
+                  <img
+                    src={trackedRewardImg}
+                    alt="Tracked reward preview"
+                    className="w-full object-contain"
+                    loading="lazy"
+                  />
                 </div>
               </div>
             </div>
