@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { Layout } from "../components/Layout";
 import SmoothScroll from "../components/SmoothScroll";
@@ -19,6 +19,10 @@ import notiImg from "../assets/whyitworksIMGs/Noti.png";
 
 export default function WhyJoinPage() {
   const { isAuthenticated } = useAuthContext();
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
 
   const primaryCtaTo = isAuthenticated ? "/dashboard" : "/account/register";
   const primaryCtaLabel = isAuthenticated ? "Go to dashboard" : "Get started!";
