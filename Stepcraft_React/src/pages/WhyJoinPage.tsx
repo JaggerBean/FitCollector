@@ -148,10 +148,10 @@ export default function WhyJoinPage() {
                     />
                   </div>
 
-                  <div className="mt-6 rounded-xl border border-slate-800/70 bg-slate-900/30 p-4 text-xs text-slate-300">
+                  {/* <div className="mt-6 rounded-xl border border-slate-800/70 bg-slate-900/30 p-4 text-xs text-slate-300">
                     Tip: add 2-3 screenshots here (streaks, reward claim, server dashboard) and this becomes a shareable
                     one-pager for owners.
-                  </div>
+                  </div> */}
                 </div>
               </div>
             </section>
