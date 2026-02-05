@@ -45,12 +45,10 @@ export function PitchScrollScene({ scenes }: { scenes: Scene[] }) {
   const lastPushedPRef = useRef(-1);
   const lastActiveRef = useRef(-1);
   const lastPinnedRef = useRef(false);
-  const hasMountedRef = useRef(false);
 
   const [p, setP] = useState(0); // 0..1 (smoothed)
   const [active, setActive] = useState(0);
   const [isPinned, setIsPinned] = useState(false);
-  const [shiftPulse, setShiftPulse] = useState(0);
 
   useEffect(() => {
     const wrap = wrapRef.current;
@@ -98,16 +96,6 @@ export function PitchScrollScene({ scenes }: { scenes: Scene[] }) {
     return () => cancelAnimationFrame(rafId);
   }, [safeScenes.length]);
 
-  useEffect(() => {
-    if (!hasMountedRef.current) {
-      hasMountedRef.current = true;
-      return;
-    }
-
-    setShiftPulse(1);
-    const timeoutId = window.setTimeout(() => setShiftPulse(0), 260);
-    return () => window.clearTimeout(timeoutId);
-  }, [active]);
 
 
   const sceneCount = safeScenes.length;
@@ -158,8 +146,8 @@ export function PitchScrollScene({ scenes }: { scenes: Scene[] }) {
               <div
                 className="relative min-h-0 flex-1"
                 style={{
-                  transform: `translate3d(0, ${-36 * shiftPulse}px, 0)`,
-                  transition: "transform 200ms ease",
+                  transform: `translate3d(0, ${-36 * active}px, 0)`,
+                  transition: "transform 260ms ease",
                 }}
               >
                 {safeScenes.map((s, i) => {
