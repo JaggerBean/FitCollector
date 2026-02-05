@@ -143,13 +143,17 @@ export function PitchScrollScene({ scenes }: { scenes: Scene[] }) {
                 StepCraft in action
               </div>
 
-              <div
-                className="relative min-h-0 flex-1"
-                style={{
-                  transform: `translate3d(0, ${-36 * visualScaled}px, 0)`,
-                  transition: "transform 200ms ease",
-                }}
-              >
+              <div className="relative min-h-0 flex-1">
+                <div className="pointer-events-none absolute left-0 right-0 top-0 z-10 h-14 bg-gradient-to-b from-slate-950/95 via-slate-950/70 to-transparent backdrop-blur-sm" />
+                <div
+                  className="relative"
+                  style={{
+                    transform: `translate3d(0, ${-36 * visualScaled}px, 0)`,
+                    transition: "transform 200ms ease",
+                    WebkitMaskImage: "linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,1) 16%, rgba(0,0,0,1) 100%)",
+                    maskImage: "linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,1) 16%, rgba(0,0,0,1) 100%)",
+                  }}
+                >
                 {safeScenes.map((s, i) => {
                   const dist = Math.abs(i - visualScaled);
                   const fade = clamp01(1 - dist);
@@ -180,6 +184,7 @@ export function PitchScrollScene({ scenes }: { scenes: Scene[] }) {
                     </div>
                   );
                 })}
+                </div>
               </div>
             </div>
 
