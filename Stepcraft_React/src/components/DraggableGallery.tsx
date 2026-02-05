@@ -130,7 +130,7 @@ export function DragGallery({ items }: { items: DragGalleryItem[] }) {
   }, [loopCount, items.length]);
 
   return (
-    <div className="rounded-3xl border border-slate-800/60 bg-slate-950/70 p-4 sm:p-6">
+    <div className="rounded-3xl border border-slate-800/60 bg-slate-950/70 p-4 sm:p-6 lg:p-8">
       <div className="flex items-center justify-between gap-4">
         <h3 className="text-base font-semibold text-white sm:text-lg">Screens & moments</h3>
       </div>
@@ -192,10 +192,10 @@ export function DragGallery({ items }: { items: DragGalleryItem[] }) {
         {loopedItems.map((it) => (
           <div
             key={it.key}
-            className="drag-gallery-item min-w-[190px] flex-none rounded-2xl border border-slate-800/70 bg-slate-900/40 p-4 text-[13px] text-slate-300 sm:min-w-[260px] sm:p-6 sm:text-sm"
+            className="drag-gallery-item min-w-[190px] flex-none rounded-2xl border border-slate-800/70 bg-slate-900/40 p-4 text-[13px] text-slate-300 sm:min-w-[260px] sm:p-6 sm:text-sm lg:min-w-[320px] lg:p-7 lg:text-base"
           >
             {it.label}
-            <div className="mt-3 h-[140px] overflow-hidden rounded-xl border border-slate-800/70 bg-slate-950/40 p-2 text-xs text-slate-500 sm:mt-4 sm:h-[200px]">
+            <div className="mt-3 h-[140px] overflow-hidden rounded-xl border border-slate-800/70 bg-slate-950/40 p-2 text-xs text-slate-500 sm:mt-4 sm:h-[200px] lg:h-[240px] lg:p-3">
               {it.imageUrl ? (
                 <img
                   src={it.imageUrl}
