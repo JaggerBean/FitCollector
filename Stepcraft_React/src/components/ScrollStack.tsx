@@ -136,7 +136,7 @@ export function PitchScrollScene({ scenes }: { scenes: Scene[] }) {
           {/* Desktop layout */}
           <div className="hidden h-full grid-cols-1 gap-8 sm:gap-10 md:grid md:grid-cols-2">
             {/* Left: copy */}
-            <div className="flex flex-col justify-center [@media_(max-height:900px)]:max-h-[calc(100vh-6rem)] [@media_(max-height:900px)]:overflow-y-auto [@media_(max-height:900px)]:pr-2">
+            <div className="flex flex-col justify-center [@media_(max-height:900px)]:justify-start [@media_(max-height:900px)]:pt-2 [@media_(max-height:900px)]:pb-6 [@media_(max-height:900px)]:max-h-[calc(100vh-6rem)] [@media_(max-height:900px)]:overflow-y-auto [@media_(max-height:900px)]:pr-2">
               <div className="text-[10px] uppercase tracking-[0.3em] text-slate-400 sm:text-xs">
                 StepCraft in action
               </div>
@@ -158,7 +158,7 @@ export function PitchScrollScene({ scenes }: { scenes: Scene[] }) {
                 return (
                   <div
                     key={s.title}
-                    className="mt-8"
+                    className="mt-8 [@media_(max-height:900px)]:mt-5"
                     style={{
                       opacity: baseOpacity,
                       transform: `translate3d(0, ${y}px, 0) scale(${scale})`,
