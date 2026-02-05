@@ -181,9 +181,7 @@ export function PitchScrollScene({ scenes }: { scenes: Scene[] }) {
                 ref={sceneWrapRef}
                 className="relative min-h-0 flex-1"
                 style={{
-                  transform: `translate3d(0, ${-
-                    Math.min(sceneOverflow[baseIndex] || 0, 120) * t
-                  }px, 0)`,
+                  transform: `translate3d(0, ${-36 * t}px, 0)`,
                   transition: "transform 200ms ease",
                 }}
               >
