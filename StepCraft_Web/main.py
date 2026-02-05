@@ -1,939 +1,939 @@
 
 
-# # Contact info page (must be after app = FastAPI())
-
-# from fastapi_mail import FastMail, MessageSchema, ConnectionConfig
-# import os
-# import json
-# import urllib.parse
-# import httpx
-# from fastapi import FastAPI, Form, Request
-# from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
-# from fastapi.templating import Jinja2Templates
-# from fastapi.staticfiles import StaticFiles
-# from starlette.middleware.sessions import SessionMiddleware
-
-# templates = Jinja2Templates(directory="templates")
-
-
-
-# app = FastAPI()
-# app.mount("/static", StaticFiles(directory="static"), name="static")
-# app.add_middleware(SessionMiddleware, secret_key=os.getenv("STEPCRAFT_WEB_SECRET", "change-me"))
-
-# BACKEND_URL = os.getenv("BACKEND_URL", "https://api.stepcraft.org")
-
-
-# def get_server_key_from_session(request: Request, server_name: str | None) -> str | None:
-#     if not server_name:
-#         return None
-#     keys = request.session.get("server_keys") or {}
-#     return keys.get(server_name)
-
-
-# @app.post("/api/server/toggle-privacy")
-# async def api_toggle_privacy(request: Request):
-#     data = await request.json()
-#     server_name = data.get("server_name")
-#     is_private = data.get("is_private")
-#     if not server_name or is_private is None:
-#         return JSONResponse({"ok": False, "detail": "Missing server_name or is_private"}, status_code=400)
-
-#     user_token = request.session.get("user_token")
-#     if not user_token:
-#         return JSONResponse({"ok": False, "detail": "Unauthorized"}, status_code=401)
-#     headers = {"Authorization": f"Bearer {user_token}"}
-#     async with httpx.AsyncClient() as client:
-#         try:
-#             resp = await client.post(
-#                 f"{BACKEND_URL}/v1/servers/toggle-privacy",
-#                 headers=headers,
-#                 json={"is_private": is_private},
-#                 params={"server": server_name},
-#                 timeout=10,
-#             )
-#         except Exception as e:
-#             return JSONResponse({"ok": False, "detail": str(e)}, status_code=500)
-
-#     try:
-#         payload = resp.json()
-#     except Exception:
-#         payload = {"ok": False, "detail": resp.text}
-#     return JSONResponse(payload, status_code=resp.status_code)
-
-
-# @app.get("/server/players", response_class=HTMLResponse)
-# async def server_players(request: Request):
-#     user_token = request.session.get("user_token")
-#     if not user_token:
-#         return JSONResponse({"error": "Unauthorized"}, status_code=401)
-
-#     server_name = request.query_params.get("server")
-#     if not server_name:
-#         return JSONResponse({"error": "Missing server"}, status_code=400)
-
-#     headers = {"Authorization": f"Bearer {user_token}"}
-#     async with httpx.AsyncClient() as client:
-#         try:
-#             resp = await client.get(
-#                 f"{BACKEND_URL}/v1/servers/players/list",
-#                 headers=headers,
-#                 params={"server": server_name, "limit": 500, "offset": 0},
-#                 timeout=10,
-#             )
-#         except Exception as e:
-#             return JSONResponse({"error": str(e)}, status_code=500)
-
-#     if resp.status_code != 200:
-#         return JSONResponse({"error": resp.text}, status_code=resp.status_code)
-
-#     try:
-#         data = resp.json()
-#         players = [p.get("minecraft_username") for p in data.get("players", []) if p.get("minecraft_username")]
-#         return JSONResponse({"players": players})
-#     except Exception as e:
-#         return JSONResponse({"error": str(e)}, status_code=500)
-# GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
-# GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
-# GOOGLE_REDIRECT_URI = os.getenv("GOOGLE_REDIRECT_URI", "https://stepcraft.org/account/google/callback")
-
-# # Contact info page
-# @app.get("/contact-info", response_class=HTMLResponse)
-# async def contact_info(request: Request):
-#     return templates.TemplateResponse("contact-info.html", {"request": request})
-
-# def _truthy_env(value: str | None, default: bool) -> bool:
-#     if value is None:
-#         return default
-#     return value.strip().lower() in {"1", "true", "yes", "on"}
-
-
-# def build_mail_conf():
-#     user = os.getenv("GMAIL_USER") or os.getenv("SMTP_USER") or os.getenv("MAIL_USER")
-#     pwd = os.getenv("GMAIL_PASS") or os.getenv("SMTP_PASS") or os.getenv("MAIL_PASS")
-#     if not user or not pwd:
-#         import logging
-#         logging.warning("Email is disabled: missing SMTP credentials (GMAIL_USER/GMAIL_PASS or SMTP_USER/SMTP_PASS).")
-#         return None
-
-#     mail_from = os.getenv("SMTP_FROM") or os.getenv("MAIL_FROM") or user
-#     server = os.getenv("SMTP_SERVER", "smtp.gmail.com")
-#     port = int(os.getenv("SMTP_PORT", "587"))
-#     starttls = _truthy_env(os.getenv("SMTP_STARTTLS"), True)
-#     ssl_tls = _truthy_env(os.getenv("SMTP_SSL_TLS"), False)
-#     if starttls and ssl_tls:
-#         ssl_tls = False
-
-#     return ConnectionConfig(
-#         MAIL_USERNAME=user,
-#         MAIL_PASSWORD=pwd,
-#         MAIL_FROM=mail_from,
-#         MAIL_PORT=port,
-#         MAIL_SERVER=server,
-#         MAIL_STARTTLS=starttls,
-#         MAIL_SSL_TLS=ssl_tls,
-#         USE_CREDENTIALS=True,
-#     )
-
-# async def send_api_key_email(email, server_name, api_key, message):
-#     mail_conf = build_mail_conf()
-#     if mail_conf is None:
-#         return
-#     subject = "Your StepCraft API Key"
-#     body = f"""Thank you for registering your server: {server_name}\nYour API Key: {api_key}\n{message}"""
-#     msg = MessageSchema(
-#         subject=subject,
-#         recipients=[email],
-#         body=body,
-#         subtype="plain"
-#     )
-#     fm = FastMail(mail_conf)
-#     await fm.send_message(msg)
-
-
-
-
-
-# # Serve landing page at root
-# @app.get("/", response_class=HTMLResponse)
-# def landing_page(request: Request):
-#     if request.session.get("user_token"):
-#         return RedirectResponse(url="/dashboard", status_code=302)
-#     return templates.TemplateResponse("landing.html", {"request": request})
-
-
-# @app.get("/account/login", response_class=HTMLResponse)
-# def account_login_form(request: Request):
-#     return templates.TemplateResponse("login.html", {"request": request})
-
-
-# @app.post("/account/login", response_class=HTMLResponse)
-# async def account_login_submit(request: Request, email: str = Form(...), password: str = Form(...)):
-#     async with httpx.AsyncClient() as client:
-#         try:
-#             resp = await client.post(
-#                 f"{BACKEND_URL}/v1/auth/login",
-#                 json={"email": email, "password": password},
-#                 timeout=10,
-#             )
-#         except Exception as e:
-#             return templates.TemplateResponse("login.html", {"request": request, "error": f"Backend error: {e}"})
-
-#     if resp.status_code != 200:
-#         error = None
-#         try:
-#             error = resp.json().get("error")
-#         except Exception:
-#             error = resp.text
-#         return templates.TemplateResponse("login.html", {"request": request, "error": error or "Invalid credentials."})
-
-#     token = resp.json().get("token")
-#     request.session["user_token"] = token
-#     request.session["user_email"] = None
-#     async with httpx.AsyncClient() as client:
-#         try:
-#             me = await client.get(
-#                 f"{BACKEND_URL}/v1/auth/me",
-#                 headers={"Authorization": f"Bearer {token}"},
-#                 timeout=10,
-#             )
-#             if me.status_code == 200:
-#                 request.session["user_email"] = me.json().get("email")
-#                 request.session["user_name"] = me.json().get("name")
-#         except Exception:
-#             pass
-#     return RedirectResponse(url="/dashboard", status_code=302)
-
-
-# @app.get("/account/register", response_class=HTMLResponse)
-# def account_register_form(request: Request):
-#     return templates.TemplateResponse("register_account.html", {"request": request})
-
-
-# @app.post("/account/register", response_class=HTMLResponse)
-# async def account_register_submit(request: Request, name: str = Form(...), email: str = Form(...), password: str = Form(...)):
-#     async with httpx.AsyncClient() as client:
-#         try:
-#             resp = await client.post(
-#                 f"{BACKEND_URL}/v1/auth/register",
-#                 json={"name": name, "email": email, "password": password},
-#                 timeout=10,
-#             )
-#         except Exception as e:
-#             return templates.TemplateResponse("register_account.html", {"request": request, "error": f"Backend error: {e}"})
-
-#     if resp.status_code != 200:
-#         error = None
-#         try:
-#             error = resp.json().get("error")
-#         except Exception:
-#             error = resp.text
-#         if not error:
-#             error = "Registration failed."
-#         error = f"{resp.status_code}: {error}"
-#         return templates.TemplateResponse("register_account.html", {"request": request, "error": error})
-
-#     return RedirectResponse(url="/account/login", status_code=302)
-
-
-# @app.get("/account/google/start")
-# def google_oauth_start(request: Request):
-#     if not GOOGLE_CLIENT_ID:
-#         return RedirectResponse(url="/account/login", status_code=302)
-
-#     state = os.urandom(16).hex()
-#     request.session["google_state"] = state
-#     params = {
-#         "client_id": GOOGLE_CLIENT_ID,
-#         "redirect_uri": GOOGLE_REDIRECT_URI,
-#         "response_type": "code",
-#         "scope": "openid email profile",
-#         "state": state,
-#         "access_type": "offline",
-#         "prompt": "consent",
-#     }
-#     query = urllib.parse.urlencode(params)
-#     return RedirectResponse(url=f"https://accounts.google.com/o/oauth2/v2/auth?{query}", status_code=302)
-
-
-# @app.get("/account/google/callback", response_class=HTMLResponse)
-# async def google_oauth_callback(request: Request):
-#     if not GOOGLE_CLIENT_ID or not GOOGLE_CLIENT_SECRET:
-#         return templates.TemplateResponse("login.html", {"request": request, "error": "Google OAuth not configured."})
-
-#     code = request.query_params.get("code")
-#     state = request.query_params.get("state")
-#     if not code or not state or state != request.session.get("google_state"):
-#         return templates.TemplateResponse("login.html", {"request": request, "error": "Invalid OAuth state."})
-#     request.session.pop("google_state", None)
-
-#     async with httpx.AsyncClient() as client:
-#         try:
-#             token_resp = await client.post(
-#                 "https://oauth2.googleapis.com/token",
-#                 data={
-#                     "code": code,
-#                     "client_id": GOOGLE_CLIENT_ID,
-#                     "client_secret": GOOGLE_CLIENT_SECRET,
-#                     "redirect_uri": GOOGLE_REDIRECT_URI,
-#                     "grant_type": "authorization_code",
-#                 },
-#                 timeout=10,
-#             )
-#         except Exception as e:
-#             return templates.TemplateResponse("login.html", {"request": request, "error": f"Google token error: {e}"})
-
-#     if token_resp.status_code != 200:
-#         return templates.TemplateResponse("login.html", {"request": request, "error": token_resp.text})
-
-#     id_token = token_resp.json().get("id_token")
-#     if not id_token:
-#         return templates.TemplateResponse("login.html", {"request": request, "error": "Missing id_token from Google."})
-
-#     async with httpx.AsyncClient() as client:
-#         try:
-#             resp = await client.post(
-#                 f"{BACKEND_URL}/v1/auth/google",
-#                 json={"id_token": id_token},
-#                 timeout=10,
-#             )
-#         except Exception as e:
-#             return templates.TemplateResponse("login.html", {"request": request, "error": f"Backend error: {e}"})
-
-#     if resp.status_code != 200:
-#         return templates.TemplateResponse("login.html", {"request": request, "error": resp.text})
-
-#     request.session["user_token"] = resp.json().get("token")
-#     token = request.session.get("user_token")
-#     if token:
-#         async with httpx.AsyncClient() as client:
-#             try:
-#                 me = await client.get(
-#                     f"{BACKEND_URL}/v1/auth/me",
-#                     headers={"Authorization": f"Bearer {token}"},
-#                     timeout=10,
-#                 )
-#                 if me.status_code == 200:
-#                     request.session["user_email"] = me.json().get("email")
-#                     request.session["user_name"] = me.json().get("name")
-#             except Exception:
-#                 pass
-#     return RedirectResponse(url="/dashboard", status_code=302)
-
-
-# @app.post("/logout")
-# def logout(request: Request):
-#     request.session.clear()
-#     return RedirectResponse(url="/", status_code=302)
-
-
-# @app.get("/dashboard", response_class=HTMLResponse)
-# async def dashboard(request: Request):
-#     user_token = request.session.get("user_token")
-#     if not user_token:
-#         return RedirectResponse(url="/account/login", status_code=302)
-
-#     servers = []
-#     async with httpx.AsyncClient() as client:
-#         try:
-#             resp = await client.get(
-#                 f"{BACKEND_URL}/v1/servers/owned",
-#                 headers={"Authorization": f"Bearer {user_token}"},
-#                 timeout=10,
-#             )
-#             if resp.status_code == 200:
-#                 servers = resp.json().get("servers", [])
-#         except Exception:
-#             servers = []
-
-#     server_keys = request.session.get("server_keys") or {}
-#     return templates.TemplateResponse("dashboard.html", {
-#         "request": request,
-#         "servers": servers,
-#         "server_keys": server_keys,
-#     })
-
-
-# @app.post("/server/key/save")
-# async def save_server_key(request: Request, server_name: str = Form(...), api_key: str = Form(...)):
-#     user_token = request.session.get("user_token")
-#     if not user_token:
-#         return RedirectResponse(url="/account/login", status_code=302)
-
-#     clean_name = server_name.strip()
-#     clean_key = api_key.strip()
-#     if clean_name and clean_key:
-#         keys = request.session.get("server_keys") or {}
-#         keys[clean_name] = clean_key
-#         request.session["server_keys"] = keys
-
-#     return RedirectResponse(url="/dashboard", status_code=302)
-
-
-# @app.get("/server/manage", response_class=HTMLResponse)
-# async def server_manage(request: Request):
-#     user_token = request.session.get("user_token")
-#     if not user_token:
-#         return RedirectResponse(url="/account/login", status_code=302)
-
-#     server_name = request.query_params.get("server")
-#     if not server_name:
-#         return RedirectResponse(url="/dashboard", status_code=302)
-
-#     servers = []
-#     async with httpx.AsyncClient() as client:
-#         try:
-#             resp = await client.get(
-#                 f"{BACKEND_URL}/v1/servers/owned",
-#                 headers={"Authorization": f"Bearer {user_token}"},
-#                 timeout=10,
-#             )
-#             if resp.status_code == 200:
-#                 servers = resp.json().get("servers", [])
-#         except Exception:
-#             servers = []
-
-#     server = next((s for s in servers if s.get("server_name") == server_name), None)
-#     if not server:
-#         return RedirectResponse(url="/dashboard", status_code=302)
-
-#     return templates.TemplateResponse(
-#         "server_manage.html",
-#         {
-#             "request": request,
-#             "server": server,
-#             "has_key": True,
-#             "action_name": None,
-#             "action_output": None,
-#             "action_error": None,
-#         },
-#     )
-
-
-# @app.post("/server/manage/action", response_class=HTMLResponse)
-# async def server_manage_action(
-#     request: Request,
-#     server_name: str = Form(...),
-#     action: str = Form(...),
-#     username: str = Form(""),
-#     reason: str = Form(""),
-#     query: str = Form(""),
-#     limit: int = Form(100),
-#     offset: int = Form(0),
-# ):
-#     user_token = request.session.get("user_token")
-#     if not user_token:
-#         return RedirectResponse(url="/account/login", status_code=302)
-
-#     servers = []
-#     async with httpx.AsyncClient() as client:
-#         try:
-#             resp = await client.get(
-#                 f"{BACKEND_URL}/v1/servers/owned",
-#                 headers={"Authorization": f"Bearer {user_token}"},
-#                 timeout=10,
-#             )
-#             if resp.status_code == 200:
-#                 servers = resp.json().get("servers", [])
-#         except Exception:
-#             servers = []
-
-#     server = next((s for s in servers if s.get("server_name") == server_name), None)
-#     if not server:
-#         return RedirectResponse(url="/dashboard", status_code=302)
-
-#     headers = {"Authorization": f"Bearer {user_token}"}
-#     action_output = None
-#     action_error = None
-
-#     async with httpx.AsyncClient() as client:
-#         try:
-#             if action == "info":
-#                 resp = await client.get(
-#                     f"{BACKEND_URL}/v1/servers/info",
-#                     headers=headers,
-#                     params={"server": server_name},
-#                     timeout=10,
-#                 )
-#             elif action == "list_players":
-#                 params = {"limit": limit, "offset": offset}
-#                 if query.strip():
-#                     params["q"] = query.strip()
-#                 params["server"] = server_name
-#                 resp = await client.get(
-#                     f"{BACKEND_URL}/v1/servers/players/list",
-#                     headers=headers,
-#                     params=params,
-#                     timeout=10,
-#                 )
-#             elif action in {"today_steps", "yesterday_steps"}:
-#                 resp = await client.get(
-#                     f"{BACKEND_URL}/v1/servers/players/{username.strip()}/today-steps",
-#                     headers=headers,
-#                     params={"server": server_name},
-#                     timeout=10,
-#                 )
-#             elif action == "claim_status":
-#                 resp = await client.get(
-#                     f"{BACKEND_URL}/v1/servers/players/{username.strip()}/claim-status",
-#                     headers=headers,
-#                     params={"server": server_name},
-#                     timeout=10,
-#                 )
-#             elif action == "claim_reward":
-#                 resp = await client.post(
-#                     f"{BACKEND_URL}/v1/servers/players/{username.strip()}/claim-reward",
-#                     headers=headers,
-#                     params={"server": server_name},
-#                     timeout=10,
-#                 )
-#             elif action == "list_bans":
-#                 resp = await client.get(
-#                     f"{BACKEND_URL}/v1/servers/bans",
-#                     headers=headers,
-#                     params={"server": server_name, "limit": 1000},
-#                     timeout=10,
-#                 )
-#             elif action == "ban_player":
-#                 payload = {"reason": reason.strip() or "broke code of conduct"}
-#                 resp = await client.post(
-#                     f"{BACKEND_URL}/v1/servers/players/{username.strip()}/ban",
-#                     headers=headers,
-#                     params={"server": server_name},
-#                     json=payload,
-#                     timeout=10,
-#                 )
-#             elif action == "unban_player":
-#                 resp = await client.delete(
-#                     f"{BACKEND_URL}/v1/servers/players/{username.strip()}/ban",
-#                     headers=headers,
-#                     params={"server": server_name},
-#                     timeout=10,
-#                 )
-#             elif action == "wipe_player":
-#                 resp = await client.delete(
-#                     f"{BACKEND_URL}/v1/servers/players/{username.strip()}",
-#                     headers=headers,
-#                     params={"server": server_name},
-#                     timeout=10,
-#                 )
-#             else:
-#                 resp = None
-#                 action_error = "Unknown action."
-
-#             if resp is not None:
-#                 try:
-#                     payload = resp.json()
-#                     action_output = json.dumps(payload, indent=2)
-#                 except Exception:
-#                     action_output = resp.text
-
-#                 if resp.status_code >= 400:
-#                     action_error = action_output or f"Request failed ({resp.status_code})"
-#         except Exception as e:
-#             action_error = str(e)
-
-#     return templates.TemplateResponse(
-#         "server_manage.html",
-#         {
-#             "request": request,
-#             "server": server,
-#             "has_key": True,
-#             "action_name": action,
-#             "action_output": action_output,
-#             "action_error": action_error,
-#         },
-#     )
-
-
-# @app.get("/push", response_class=HTMLResponse)
-# async def push_notifications_page(request: Request):
-#     server_name = request.query_params.get("server")
-#     if not server_name:
-#         return RedirectResponse(url="/dashboard", status_code=302)
-
-#     user_token = request.session.get("user_token")
-#     if not user_token:
-#         return RedirectResponse(url="/account/login", status_code=302)
-
-#     items = []
-#     error = None
-#     async with httpx.AsyncClient() as client:
-#         try:
-#             headers = {"Authorization": f"Bearer {user_token}"}
-#             resp = await client.get(
-#                 f"{BACKEND_URL}/v1/servers/push",
-#                 headers=headers,
-#                 params={"server": server_name},
-#                 timeout=10,
-#             )
-#             if resp.status_code == 200:
-#                 items = resp.json().get("items", [])
-#             else:
-#                 error = resp.text
-#         except Exception as e:
-#             error = str(e)
-
-#     try:
-#         from zoneinfo import available_timezones, ZoneInfo
-#         from datetime import datetime
-#         preferred = [
-#             "UTC",
-#             "America/New_York",
-#             "America/Chicago",
-#             "America/Denver",
-#             "America/Los_Angeles",
-#             "Europe/London",
-#             "Europe/Paris",
-#             "Europe/Berlin",
-#             "Europe/Warsaw",
-#             "Asia/Tokyo",
-#             "Australia/Sydney",
-#         ]
-
-#         tz_items = []
-#         now_utc = datetime.now(ZoneInfo("UTC"))
-#         by_offset = {}
-
-#         def offset_label(minutes: int) -> str:
-#             sign = "+" if minutes >= 0 else "-"
-#             hours = abs(minutes) // 60
-#             mins = abs(minutes) % 60
-#             return f"UTC{sign}{hours:02d}:{mins:02d}"
-
-#         def maybe_pick(tz_name: str):
-#             try:
-#                 now_local = now_utc.astimezone(ZoneInfo(tz_name))
-#                 offset = now_local.utcoffset()
-#                 if offset is None:
-#                     return
-#                 total_minutes = int(offset.total_seconds() // 60)
-#                 time_str = now_local.strftime("%H:%M")
-#                 label = f"{offset_label(total_minutes)} · {tz_name} · {time_str}"
-#                 current = by_offset.get(total_minutes)
-#                 if current is None:
-#                     by_offset[total_minutes] = {"value": tz_name, "label": label}
-#             except Exception:
-#                 return
-
-#         for tz in preferred:
-#             maybe_pick(tz)
-
-#         for tz in sorted(available_timezones()):
-#             maybe_pick(tz)
-
-#         tz_items = [by_offset[k] for k in sorted(by_offset.keys())]
-#     except Exception:
-#         tz_items = []
-
-#     success = "Push sent." if request.query_params.get("sent") else None
-#     return templates.TemplateResponse(
-#         "push_notifications.html",
-#         {
-#             "request": request,
-#             "server_name": server_name,
-#             "items": items,
-#             "error": error,
-#             "message": None,
-#             "success": success,
-#             "timezones": tz_items,
-#         },
-#     )
-
-
-# @app.post("/push/create", response_class=HTMLResponse)
-# async def push_notifications_create(
-#     request: Request,
-#     mode: str = Form("schedule"),
-#     message: str = Form(""),
-#     scheduled_at: str = Form(""),
-#     timezone: str = Form(""),
-#     title: str = Form(""),
-#     body: str = Form(""),
-# ):
-#     user_token = request.session.get("user_token")
-#     if not user_token:
-#         return RedirectResponse(url="/account/login", status_code=302)
-
-#     server_name = request.query_params.get("server")
-#     if not server_name:
-#         return RedirectResponse(url="/dashboard", status_code=302)
-
-#     error = None
-#     async with httpx.AsyncClient() as client:
-#         try:
-#             headers = {"Authorization": f"Bearer {user_token}"}
-#             if mode == "send_now":
-#                 resp = await client.post(
-#                     f"{BACKEND_URL}/v1/servers/push/send",
-#                     headers=headers,
-#                     json={"title": title, "body": body},
-#                     params={"server": server_name},
-#                     timeout=10,
-#                 )
-#             else:
-#                 resp = await client.post(
-#                     f"{BACKEND_URL}/v1/servers/push",
-#                     headers=headers,
-#                     json={"message": message, "scheduled_at": scheduled_at, "timezone": timezone},
-#                     params={"server": server_name},
-#                     timeout=10,
-#                 )
-#             if resp.status_code != 200:
-#                 error = resp.text
-#         except Exception as e:
-#             error = str(e)
-
-#     if error:
-#         return templates.TemplateResponse(
-#             "push_notifications.html",
-#             {"request": request, "server_name": server_name, "items": [], "error": error, "message": message or body, "success": None, "timezones": []},
-#         )
-
-#     if mode == "send_now":
-#         return RedirectResponse(url=f"/push?server={server_name}&sent=1", status_code=302)
-
-#     return RedirectResponse(url=f"/push?server={server_name}", status_code=302)
-
-
-# @app.get("/rewards", response_class=HTMLResponse)
-# async def rewards_page(request: Request):
-#     user_token = request.session.get("user_token")
-#     if not user_token:
-#         return RedirectResponse(url="/account/login", status_code=302)
-
-#     server_name = request.query_params.get("server")
-#     if not server_name:
-#         return RedirectResponse(url="/dashboard", status_code=302)
-
-#     data = None
-#     error = None
-#     async with httpx.AsyncClient() as client:
-#         try:
-#             headers = {"Authorization": f"Bearer {user_token}"}
-#             resp = await client.get(
-#                 f"{BACKEND_URL}/v1/servers/rewards",
-#                 headers=headers,
-#                 params={"server": server_name},
-#                 timeout=10,
-#             )
-#             if resp.status_code == 200:
-#                 data = resp.json()
-#             else:
-#                 error = resp.text
-#         except Exception as e:
-#             error = str(e)
-
-#     raw_json = ""
-#     if data is not None:
-#         raw_json = json.dumps({"tiers": data.get("tiers", [])}, indent=2)
-
-#     return templates.TemplateResponse(
-#         "rewards.html",
-#         {"request": request, "data": data, "raw_json": raw_json, "error": error, "server_name": server_name}
-#     )
-
-
-# @app.post("/rewards/update")
-# async def rewards_update(request: Request, rewards_json: str = Form(...)):
-#     user_token = request.session.get("user_token")
-#     if not user_token:
-#         return RedirectResponse(url="/account/login", status_code=302)
-
-#     server_name = request.query_params.get("server")
-#     if not server_name:
-#         return RedirectResponse(url="/dashboard", status_code=302)
-
-#     try:
-#         payload = json.loads(rewards_json)
-#         if "tiers" not in payload:
-#             payload = {"tiers": payload}
-#     except Exception as e:
-#         return templates.TemplateResponse(
-#             "rewards.html",
-#             {
-#                 "request": request,
-#                 "data": None,
-#                 "raw_json": rewards_json,
-#                 "error": f"Invalid JSON: {e}",
-#                 "server_name": server_name,
-#             },
-#         )
-
-#     async with httpx.AsyncClient() as client:
-#         try:
-#             headers = {"Authorization": f"Bearer {user_token}"}
-#             resp = await client.put(
-#                 f"{BACKEND_URL}/v1/servers/rewards",
-#                 headers=headers,
-#                 json=payload,
-#                 params={"server": server_name},
-#                 timeout=10,
-#             )
-#         except Exception as e:
-#             return templates.TemplateResponse(
-#                 "rewards.html",
-#                 {
-#                     "request": request,
-#                     "data": None,
-#                     "raw_json": rewards_json,
-#                     "error": f"Backend error: {e}",
-#                     "server_name": server_name,
-#                 },
-#             )
-
-#     if resp.status_code != 200:
-#         return templates.TemplateResponse(
-#             "rewards.html",
-#             {
-#                 "request": request,
-#                 "data": None,
-#                 "raw_json": rewards_json,
-#                 "error": resp.text,
-#                 "server_name": server_name,
-#             },
-#         )
-
-#     return RedirectResponse(url=f"/rewards?server={server_name}", status_code=302)
-
-
-# @app.post("/rewards/default")
-# async def rewards_default(request: Request):
-#     user_token = request.session.get("user_token")
-#     if not user_token:
-#         return RedirectResponse(url="/account/login", status_code=302)
-
-#     server_name = request.query_params.get("server")
-#     if not server_name:
-#         return RedirectResponse(url="/dashboard", status_code=302)
-
-#     async with httpx.AsyncClient() as client:
-#         try:
-#             headers = {"Authorization": f"Bearer {user_token}"}
-#             await client.post(
-#                 f"{BACKEND_URL}/v1/servers/rewards/default",
-#                 headers=headers,
-#                 params={"server": server_name},
-#                 timeout=10,
-#             )
-#         except Exception:
-#             pass
-
-#     return RedirectResponse(url=f"/rewards?server={server_name}", status_code=302)
-
-# # Registration form at /register
-# @app.get("/register", response_class=HTMLResponse)
-# def register_form(request: Request):
-#     import datetime
-#     if not request.session.get("user_token"):
-#         return RedirectResponse(url="/account/login", status_code=302)
-#     year = datetime.datetime.now().year
-#     return templates.TemplateResponse("register.html", {
-#         "request": request,
-#         "year": year,
-#         "owner_email": request.session.get("user_email"),
-#         "owner_name": request.session.get("user_name")
-#     })
-
-
-# @app.post("/registered", response_class=HTMLResponse)
-# async def register_server(request: Request,
-#     server_name: str = Form(...),
-#     owner_name: str = Form(...),
-#     owner_email: str = Form(...),
-#     server_address: str = Form(...),
-#     server_version: str = Form(""),
-#     is_private: str = Form(""),
-#     invite_code: str = Form(""),
-#     notes: str = Form("")
-# ):
-#     # Send registration data to backend API
-#     import logging
-#     logging.basicConfig(level=logging.INFO)
-#     backend_urls = [
-#         f"{BACKEND_URL}/v1/servers/register"
-#     ]
-#     response = None
-#     last_error = None
-#     user_token = request.session.get("user_token")
-#     if not user_token:
-#         return RedirectResponse(url="/account/login", status_code=302)
-#     import datetime
-#     year = datetime.datetime.now().year
-#     async with httpx.AsyncClient() as client:
-#         for url in backend_urls:
-#             try:
-#                 logging.info(f"Trying backend registration at {url}")
-#                 response = await client.post(
-#                     url,
-#                     json={
-#                         "server_name": server_name,
-#                         "owner_name": owner_name,
-#                         "owner_email": owner_email,
-#                         "server_address": server_address,
-#                         "server_version": server_version,
-#                         "is_private": bool(is_private),
-#                         "invite_code": invite_code.strip() or None,
-#                     },
-#                     headers={"Authorization": f"Bearer {user_token}"}
-#                 )
-#                 logging.info(f"Response status: {response.status_code}, body: {response.text}")
-#                 if response.status_code == 200:
-#                     break
-#             except Exception as e:
-#                 logging.error(f"Error contacting backend {url}: {e}")
-#                 last_error = str(e)
-#     if response and response.status_code == 200:
-#         data = response.json()
-#         api_key = data.get("api_key")
-#         server_name_val = data.get("server_name")
-#         message_val = data.get("message")
-#         if api_key and server_name_val:
-#             keys = request.session.get("server_keys") or {}
-#             keys[server_name_val] = api_key
-#             request.session["server_keys"] = keys
-#         # Send email with API key
-#         try:
-#             await send_api_key_email(owner_email, server_name_val, api_key, message_val)
-#         except Exception as e:
-#             import logging
-#             logging.error(f"Failed to send email: {e}")
-#         return templates.TemplateResponse("confirmation.html", {
-#             "request": request,
-#             "api_key": api_key,
-#             "server_name": server_name_val,
-#             "message": message_val,
-#             "invite_code": data.get("invite_code"),
-#             "is_private": data.get("is_private"),
-#             "year": year
-#         })
-#     else:
-#         error = None
-#         if response:
-#             try:
-#                 data = response.json()
-#                 error = data.get("detail") or data.get("error")
-#             except Exception:
-#                 error = response.text
-#         if not error:
-#             error = last_error or "No backend response"
-#         if response is not None:
-#             error = f"{response.status_code}: {error}"
-#         invite_code_error = bool(error and "invite code" in error.lower())
-#         logging.error(f"Registration failed: {error}")
-#         return templates.TemplateResponse("register.html", {
-#             "request": request,
-#             "error": error,
-#             "year": year,
-#             "server_name": server_name,
-#             "owner_name": owner_name,
-#             "owner_email": owner_email,
-#             "server_address": server_address,
-#             "server_version": server_version,
-#             "is_private": bool(is_private),
-#             "invite_code": invite_code,
-#             "notes": notes,
-#             "invite_code_error": invite_code_error,
-#         })
-
-# ## Optionally remove or refactor /admin if not needed
+# Contact info page (must be after app = FastAPI())
+
+from fastapi_mail import FastMail, MessageSchema, ConnectionConfig
+import os
+import json
+import urllib.parse
+import httpx
+from fastapi import FastAPI, Form, Request
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
+from fastapi.templating import Jinja2Templates
+from fastapi.staticfiles import StaticFiles
+from starlette.middleware.sessions import SessionMiddleware
+
+templates = Jinja2Templates(directory="templates")
+
+
+
+app = FastAPI()
+app.mount("/static", StaticFiles(directory="static"), name="static")
+app.add_middleware(SessionMiddleware, secret_key=os.getenv("STEPCRAFT_WEB_SECRET", "change-me"))
+
+BACKEND_URL = os.getenv("BACKEND_URL", "https://api.stepcraft.org")
+
+
+def get_server_key_from_session(request: Request, server_name: str | None) -> str | None:
+    if not server_name:
+        return None
+    keys = request.session.get("server_keys") or {}
+    return keys.get(server_name)
+
+
+@app.post("/api/server/toggle-privacy")
+async def api_toggle_privacy(request: Request):
+    data = await request.json()
+    server_name = data.get("server_name")
+    is_private = data.get("is_private")
+    if not server_name or is_private is None:
+        return JSONResponse({"ok": False, "detail": "Missing server_name or is_private"}, status_code=400)
+
+    user_token = request.session.get("user_token")
+    if not user_token:
+        return JSONResponse({"ok": False, "detail": "Unauthorized"}, status_code=401)
+    headers = {"Authorization": f"Bearer {user_token}"}
+    async with httpx.AsyncClient() as client:
+        try:
+            resp = await client.post(
+                f"{BACKEND_URL}/v1/servers/toggle-privacy",
+                headers=headers,
+                json={"is_private": is_private},
+                params={"server": server_name},
+                timeout=10,
+            )
+        except Exception as e:
+            return JSONResponse({"ok": False, "detail": str(e)}, status_code=500)
+
+    try:
+        payload = resp.json()
+    except Exception:
+        payload = {"ok": False, "detail": resp.text}
+    return JSONResponse(payload, status_code=resp.status_code)
+
+
+@app.get("/server/players", response_class=HTMLResponse)
+async def server_players(request: Request):
+    user_token = request.session.get("user_token")
+    if not user_token:
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+
+    server_name = request.query_params.get("server")
+    if not server_name:
+        return JSONResponse({"error": "Missing server"}, status_code=400)
+
+    headers = {"Authorization": f"Bearer {user_token}"}
+    async with httpx.AsyncClient() as client:
+        try:
+            resp = await client.get(
+                f"{BACKEND_URL}/v1/servers/players/list",
+                headers=headers,
+                params={"server": server_name, "limit": 500, "offset": 0},
+                timeout=10,
+            )
+        except Exception as e:
+            return JSONResponse({"error": str(e)}, status_code=500)
+
+    if resp.status_code != 200:
+        return JSONResponse({"error": resp.text}, status_code=resp.status_code)
+
+    try:
+        data = resp.json()
+        players = [p.get("minecraft_username") for p in data.get("players", []) if p.get("minecraft_username")]
+        return JSONResponse({"players": players})
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
+GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
+GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
+GOOGLE_REDIRECT_URI = os.getenv("GOOGLE_REDIRECT_URI", "https://stepcraft.org/account/google/callback")
+
+# Contact info page
+@app.get("/contact-info", response_class=HTMLResponse)
+async def contact_info(request: Request):
+    return templates.TemplateResponse("contact-info.html", {"request": request})
+
+def _truthy_env(value: str | None, default: bool) -> bool:
+    if value is None:
+        return default
+    return value.strip().lower() in {"1", "true", "yes", "on"}
+
+
+def build_mail_conf():
+    user = os.getenv("GMAIL_USER") or os.getenv("SMTP_USER") or os.getenv("MAIL_USER")
+    pwd = os.getenv("GMAIL_PASS") or os.getenv("SMTP_PASS") or os.getenv("MAIL_PASS")
+    if not user or not pwd:
+        import logging
+        logging.warning("Email is disabled: missing SMTP credentials (GMAIL_USER/GMAIL_PASS or SMTP_USER/SMTP_PASS).")
+        return None
+
+    mail_from = os.getenv("SMTP_FROM") or os.getenv("MAIL_FROM") or user
+    server = os.getenv("SMTP_SERVER", "smtp.gmail.com")
+    port = int(os.getenv("SMTP_PORT", "587"))
+    starttls = _truthy_env(os.getenv("SMTP_STARTTLS"), True)
+    ssl_tls = _truthy_env(os.getenv("SMTP_SSL_TLS"), False)
+    if starttls and ssl_tls:
+        ssl_tls = False
+
+    return ConnectionConfig(
+        MAIL_USERNAME=user,
+        MAIL_PASSWORD=pwd,
+        MAIL_FROM=mail_from,
+        MAIL_PORT=port,
+        MAIL_SERVER=server,
+        MAIL_STARTTLS=starttls,
+        MAIL_SSL_TLS=ssl_tls,
+        USE_CREDENTIALS=True,
+    )
+
+async def send_api_key_email(email, server_name, api_key, message):
+    mail_conf = build_mail_conf()
+    if mail_conf is None:
+        return
+    subject = "Your StepCraft API Key"
+    body = f"""Thank you for registering your server: {server_name}\nYour API Key: {api_key}\n{message}"""
+    msg = MessageSchema(
+        subject=subject,
+        recipients=[email],
+        body=body,
+        subtype="plain"
+    )
+    fm = FastMail(mail_conf)
+    await fm.send_message(msg)
+
+
+
+
+
+# Serve landing page at root
+@app.get("/", response_class=HTMLResponse)
+def landing_page(request: Request):
+    if request.session.get("user_token"):
+        return RedirectResponse(url="/dashboard", status_code=302)
+    return templates.TemplateResponse("landing.html", {"request": request})
+
+
+@app.get("/account/login", response_class=HTMLResponse)
+def account_login_form(request: Request):
+    return templates.TemplateResponse("login.html", {"request": request})
+
+
+@app.post("/account/login", response_class=HTMLResponse)
+async def account_login_submit(request: Request, email: str = Form(...), password: str = Form(...)):
+    async with httpx.AsyncClient() as client:
+        try:
+            resp = await client.post(
+                f"{BACKEND_URL}/v1/auth/login",
+                json={"email": email, "password": password},
+                timeout=10,
+            )
+        except Exception as e:
+            return templates.TemplateResponse("login.html", {"request": request, "error": f"Backend error: {e}"})
+
+    if resp.status_code != 200:
+        error = None
+        try:
+            error = resp.json().get("error")
+        except Exception:
+            error = resp.text
+        return templates.TemplateResponse("login.html", {"request": request, "error": error or "Invalid credentials."})
+
+    token = resp.json().get("token")
+    request.session["user_token"] = token
+    request.session["user_email"] = None
+    async with httpx.AsyncClient() as client:
+        try:
+            me = await client.get(
+                f"{BACKEND_URL}/v1/auth/me",
+                headers={"Authorization": f"Bearer {token}"},
+                timeout=10,
+            )
+            if me.status_code == 200:
+                request.session["user_email"] = me.json().get("email")
+                request.session["user_name"] = me.json().get("name")
+        except Exception:
+            pass
+    return RedirectResponse(url="/dashboard", status_code=302)
+
+
+@app.get("/account/register", response_class=HTMLResponse)
+def account_register_form(request: Request):
+    return templates.TemplateResponse("register_account.html", {"request": request})
+
+
+@app.post("/account/register", response_class=HTMLResponse)
+async def account_register_submit(request: Request, name: str = Form(...), email: str = Form(...), password: str = Form(...)):
+    async with httpx.AsyncClient() as client:
+        try:
+            resp = await client.post(
+                f"{BACKEND_URL}/v1/auth/register",
+                json={"name": name, "email": email, "password": password},
+                timeout=10,
+            )
+        except Exception as e:
+            return templates.TemplateResponse("register_account.html", {"request": request, "error": f"Backend error: {e}"})
+
+    if resp.status_code != 200:
+        error = None
+        try:
+            error = resp.json().get("error")
+        except Exception:
+            error = resp.text
+        if not error:
+            error = "Registration failed."
+        error = f"{resp.status_code}: {error}"
+        return templates.TemplateResponse("register_account.html", {"request": request, "error": error})
+
+    return RedirectResponse(url="/account/login", status_code=302)
+
+
+@app.get("/account/google/start")
+def google_oauth_start(request: Request):
+    if not GOOGLE_CLIENT_ID:
+        return RedirectResponse(url="/account/login", status_code=302)
+
+    state = os.urandom(16).hex()
+    request.session["google_state"] = state
+    params = {
+        "client_id": GOOGLE_CLIENT_ID,
+        "redirect_uri": GOOGLE_REDIRECT_URI,
+        "response_type": "code",
+        "scope": "openid email profile",
+        "state": state,
+        "access_type": "offline",
+        "prompt": "consent",
+    }
+    query = urllib.parse.urlencode(params)
+    return RedirectResponse(url=f"https://accounts.google.com/o/oauth2/v2/auth?{query}", status_code=302)
+
+
+@app.get("/account/google/callback", response_class=HTMLResponse)
+async def google_oauth_callback(request: Request):
+    if not GOOGLE_CLIENT_ID or not GOOGLE_CLIENT_SECRET:
+        return templates.TemplateResponse("login.html", {"request": request, "error": "Google OAuth not configured."})
+
+    code = request.query_params.get("code")
+    state = request.query_params.get("state")
+    if not code or not state or state != request.session.get("google_state"):
+        return templates.TemplateResponse("login.html", {"request": request, "error": "Invalid OAuth state."})
+    request.session.pop("google_state", None)
+
+    async with httpx.AsyncClient() as client:
+        try:
+            token_resp = await client.post(
+                "https://oauth2.googleapis.com/token",
+                data={
+                    "code": code,
+                    "client_id": GOOGLE_CLIENT_ID,
+                    "client_secret": GOOGLE_CLIENT_SECRET,
+                    "redirect_uri": GOOGLE_REDIRECT_URI,
+                    "grant_type": "authorization_code",
+                },
+                timeout=10,
+            )
+        except Exception as e:
+            return templates.TemplateResponse("login.html", {"request": request, "error": f"Google token error: {e}"})
+
+    if token_resp.status_code != 200:
+        return templates.TemplateResponse("login.html", {"request": request, "error": token_resp.text})
+
+    id_token = token_resp.json().get("id_token")
+    if not id_token:
+        return templates.TemplateResponse("login.html", {"request": request, "error": "Missing id_token from Google."})
+
+    async with httpx.AsyncClient() as client:
+        try:
+            resp = await client.post(
+                f"{BACKEND_URL}/v1/auth/google",
+                json={"id_token": id_token},
+                timeout=10,
+            )
+        except Exception as e:
+            return templates.TemplateResponse("login.html", {"request": request, "error": f"Backend error: {e}"})
+
+    if resp.status_code != 200:
+        return templates.TemplateResponse("login.html", {"request": request, "error": resp.text})
+
+    request.session["user_token"] = resp.json().get("token")
+    token = request.session.get("user_token")
+    if token:
+        async with httpx.AsyncClient() as client:
+            try:
+                me = await client.get(
+                    f"{BACKEND_URL}/v1/auth/me",
+                    headers={"Authorization": f"Bearer {token}"},
+                    timeout=10,
+                )
+                if me.status_code == 200:
+                    request.session["user_email"] = me.json().get("email")
+                    request.session["user_name"] = me.json().get("name")
+            except Exception:
+                pass
+    return RedirectResponse(url="/dashboard", status_code=302)
+
+
+@app.post("/logout")
+def logout(request: Request):
+    request.session.clear()
+    return RedirectResponse(url="/", status_code=302)
+
+
+@app.get("/dashboard", response_class=HTMLResponse)
+async def dashboard(request: Request):
+    user_token = request.session.get("user_token")
+    if not user_token:
+        return RedirectResponse(url="/account/login", status_code=302)
+
+    servers = []
+    async with httpx.AsyncClient() as client:
+        try:
+            resp = await client.get(
+                f"{BACKEND_URL}/v1/servers/owned",
+                headers={"Authorization": f"Bearer {user_token}"},
+                timeout=10,
+            )
+            if resp.status_code == 200:
+                servers = resp.json().get("servers", [])
+        except Exception:
+            servers = []
+
+    server_keys = request.session.get("server_keys") or {}
+    return templates.TemplateResponse("dashboard.html", {
+        "request": request,
+        "servers": servers,
+        "server_keys": server_keys,
+    })
+
+
+@app.post("/server/key/save")
+async def save_server_key(request: Request, server_name: str = Form(...), api_key: str = Form(...)):
+    user_token = request.session.get("user_token")
+    if not user_token:
+        return RedirectResponse(url="/account/login", status_code=302)
+
+    clean_name = server_name.strip()
+    clean_key = api_key.strip()
+    if clean_name and clean_key:
+        keys = request.session.get("server_keys") or {}
+        keys[clean_name] = clean_key
+        request.session["server_keys"] = keys
+
+    return RedirectResponse(url="/dashboard", status_code=302)
+
+
+@app.get("/server/manage", response_class=HTMLResponse)
+async def server_manage(request: Request):
+    user_token = request.session.get("user_token")
+    if not user_token:
+        return RedirectResponse(url="/account/login", status_code=302)
+
+    server_name = request.query_params.get("server")
+    if not server_name:
+        return RedirectResponse(url="/dashboard", status_code=302)
+
+    servers = []
+    async with httpx.AsyncClient() as client:
+        try:
+            resp = await client.get(
+                f"{BACKEND_URL}/v1/servers/owned",
+                headers={"Authorization": f"Bearer {user_token}"},
+                timeout=10,
+            )
+            if resp.status_code == 200:
+                servers = resp.json().get("servers", [])
+        except Exception:
+            servers = []
+
+    server = next((s for s in servers if s.get("server_name") == server_name), None)
+    if not server:
+        return RedirectResponse(url="/dashboard", status_code=302)
+
+    return templates.TemplateResponse(
+        "server_manage.html",
+        {
+            "request": request,
+            "server": server,
+            "has_key": True,
+            "action_name": None,
+            "action_output": None,
+            "action_error": None,
+        },
+    )
+
+
+@app.post("/server/manage/action", response_class=HTMLResponse)
+async def server_manage_action(
+    request: Request,
+    server_name: str = Form(...),
+    action: str = Form(...),
+    username: str = Form(""),
+    reason: str = Form(""),
+    query: str = Form(""),
+    limit: int = Form(100),
+    offset: int = Form(0),
+):
+    user_token = request.session.get("user_token")
+    if not user_token:
+        return RedirectResponse(url="/account/login", status_code=302)
+
+    servers = []
+    async with httpx.AsyncClient() as client:
+        try:
+            resp = await client.get(
+                f"{BACKEND_URL}/v1/servers/owned",
+                headers={"Authorization": f"Bearer {user_token}"},
+                timeout=10,
+            )
+            if resp.status_code == 200:
+                servers = resp.json().get("servers", [])
+        except Exception:
+            servers = []
+
+    server = next((s for s in servers if s.get("server_name") == server_name), None)
+    if not server:
+        return RedirectResponse(url="/dashboard", status_code=302)
+
+    headers = {"Authorization": f"Bearer {user_token}"}
+    action_output = None
+    action_error = None
+
+    async with httpx.AsyncClient() as client:
+        try:
+            if action == "info":
+                resp = await client.get(
+                    f"{BACKEND_URL}/v1/servers/info",
+                    headers=headers,
+                    params={"server": server_name},
+                    timeout=10,
+                )
+            elif action == "list_players":
+                params = {"limit": limit, "offset": offset}
+                if query.strip():
+                    params["q"] = query.strip()
+                params["server"] = server_name
+                resp = await client.get(
+                    f"{BACKEND_URL}/v1/servers/players/list",
+                    headers=headers,
+                    params=params,
+                    timeout=10,
+                )
+            elif action in {"today_steps", "yesterday_steps"}:
+                resp = await client.get(
+                    f"{BACKEND_URL}/v1/servers/players/{username.strip()}/today-steps",
+                    headers=headers,
+                    params={"server": server_name},
+                    timeout=10,
+                )
+            elif action == "claim_status":
+                resp = await client.get(
+                    f"{BACKEND_URL}/v1/servers/players/{username.strip()}/claim-status",
+                    headers=headers,
+                    params={"server": server_name},
+                    timeout=10,
+                )
+            elif action == "claim_reward":
+                resp = await client.post(
+                    f"{BACKEND_URL}/v1/servers/players/{username.strip()}/claim-reward",
+                    headers=headers,
+                    params={"server": server_name},
+                    timeout=10,
+                )
+            elif action == "list_bans":
+                resp = await client.get(
+                    f"{BACKEND_URL}/v1/servers/bans",
+                    headers=headers,
+                    params={"server": server_name, "limit": 1000},
+                    timeout=10,
+                )
+            elif action == "ban_player":
+                payload = {"reason": reason.strip() or "broke code of conduct"}
+                resp = await client.post(
+                    f"{BACKEND_URL}/v1/servers/players/{username.strip()}/ban",
+                    headers=headers,
+                    params={"server": server_name},
+                    json=payload,
+                    timeout=10,
+                )
+            elif action == "unban_player":
+                resp = await client.delete(
+                    f"{BACKEND_URL}/v1/servers/players/{username.strip()}/ban",
+                    headers=headers,
+                    params={"server": server_name},
+                    timeout=10,
+                )
+            elif action == "wipe_player":
+                resp = await client.delete(
+                    f"{BACKEND_URL}/v1/servers/players/{username.strip()}",
+                    headers=headers,
+                    params={"server": server_name},
+                    timeout=10,
+                )
+            else:
+                resp = None
+                action_error = "Unknown action."
+
+            if resp is not None:
+                try:
+                    payload = resp.json()
+                    action_output = json.dumps(payload, indent=2)
+                except Exception:
+                    action_output = resp.text
+
+                if resp.status_code >= 400:
+                    action_error = action_output or f"Request failed ({resp.status_code})"
+        except Exception as e:
+            action_error = str(e)
+
+    return templates.TemplateResponse(
+        "server_manage.html",
+        {
+            "request": request,
+            "server": server,
+            "has_key": True,
+            "action_name": action,
+            "action_output": action_output,
+            "action_error": action_error,
+        },
+    )
+
+
+@app.get("/push", response_class=HTMLResponse)
+async def push_notifications_page(request: Request):
+    server_name = request.query_params.get("server")
+    if not server_name:
+        return RedirectResponse(url="/dashboard", status_code=302)
+
+    user_token = request.session.get("user_token")
+    if not user_token:
+        return RedirectResponse(url="/account/login", status_code=302)
+
+    items = []
+    error = None
+    async with httpx.AsyncClient() as client:
+        try:
+            headers = {"Authorization": f"Bearer {user_token}"}
+            resp = await client.get(
+                f"{BACKEND_URL}/v1/servers/push",
+                headers=headers,
+                params={"server": server_name},
+                timeout=10,
+            )
+            if resp.status_code == 200:
+                items = resp.json().get("items", [])
+            else:
+                error = resp.text
+        except Exception as e:
+            error = str(e)
+
+    try:
+        from zoneinfo import available_timezones, ZoneInfo
+        from datetime import datetime
+        preferred = [
+            "UTC",
+            "America/New_York",
+            "America/Chicago",
+            "America/Denver",
+            "America/Los_Angeles",
+            "Europe/London",
+            "Europe/Paris",
+            "Europe/Berlin",
+            "Europe/Warsaw",
+            "Asia/Tokyo",
+            "Australia/Sydney",
+        ]
+
+        tz_items = []
+        now_utc = datetime.now(ZoneInfo("UTC"))
+        by_offset = {}
+
+        def offset_label(minutes: int) -> str:
+            sign = "+" if minutes >= 0 else "-"
+            hours = abs(minutes) // 60
+            mins = abs(minutes) % 60
+            return f"UTC{sign}{hours:02d}:{mins:02d}"
+
+        def maybe_pick(tz_name: str):
+            try:
+                now_local = now_utc.astimezone(ZoneInfo(tz_name))
+                offset = now_local.utcoffset()
+                if offset is None:
+                    return
+                total_minutes = int(offset.total_seconds() // 60)
+                time_str = now_local.strftime("%H:%M")
+                label = f"{offset_label(total_minutes)} · {tz_name} · {time_str}"
+                current = by_offset.get(total_minutes)
+                if current is None:
+                    by_offset[total_minutes] = {"value": tz_name, "label": label}
+            except Exception:
+                return
+
+        for tz in preferred:
+            maybe_pick(tz)
+
+        for tz in sorted(available_timezones()):
+            maybe_pick(tz)
+
+        tz_items = [by_offset[k] for k in sorted(by_offset.keys())]
+    except Exception:
+        tz_items = []
+
+    success = "Push sent." if request.query_params.get("sent") else None
+    return templates.TemplateResponse(
+        "push_notifications.html",
+        {
+            "request": request,
+            "server_name": server_name,
+            "items": items,
+            "error": error,
+            "message": None,
+            "success": success,
+            "timezones": tz_items,
+        },
+    )
+
+
+@app.post("/push/create", response_class=HTMLResponse)
+async def push_notifications_create(
+    request: Request,
+    mode: str = Form("schedule"),
+    message: str = Form(""),
+    scheduled_at: str = Form(""),
+    timezone: str = Form(""),
+    title: str = Form(""),
+    body: str = Form(""),
+):
+    user_token = request.session.get("user_token")
+    if not user_token:
+        return RedirectResponse(url="/account/login", status_code=302)
+
+    server_name = request.query_params.get("server")
+    if not server_name:
+        return RedirectResponse(url="/dashboard", status_code=302)
+
+    error = None
+    async with httpx.AsyncClient() as client:
+        try:
+            headers = {"Authorization": f"Bearer {user_token}"}
+            if mode == "send_now":
+                resp = await client.post(
+                    f"{BACKEND_URL}/v1/servers/push/send",
+                    headers=headers,
+                    json={"title": title, "body": body},
+                    params={"server": server_name},
+                    timeout=10,
+                )
+            else:
+                resp = await client.post(
+                    f"{BACKEND_URL}/v1/servers/push",
+                    headers=headers,
+                    json={"message": message, "scheduled_at": scheduled_at, "timezone": timezone},
+                    params={"server": server_name},
+                    timeout=10,
+                )
+            if resp.status_code != 200:
+                error = resp.text
+        except Exception as e:
+            error = str(e)
+
+    if error:
+        return templates.TemplateResponse(
+            "push_notifications.html",
+            {"request": request, "server_name": server_name, "items": [], "error": error, "message": message or body, "success": None, "timezones": []},
+        )
+
+    if mode == "send_now":
+        return RedirectResponse(url=f"/push?server={server_name}&sent=1", status_code=302)
+
+    return RedirectResponse(url=f"/push?server={server_name}", status_code=302)
+
+
+@app.get("/rewards", response_class=HTMLResponse)
+async def rewards_page(request: Request):
+    user_token = request.session.get("user_token")
+    if not user_token:
+        return RedirectResponse(url="/account/login", status_code=302)
+
+    server_name = request.query_params.get("server")
+    if not server_name:
+        return RedirectResponse(url="/dashboard", status_code=302)
+
+    data = None
+    error = None
+    async with httpx.AsyncClient() as client:
+        try:
+            headers = {"Authorization": f"Bearer {user_token}"}
+            resp = await client.get(
+                f"{BACKEND_URL}/v1/servers/rewards",
+                headers=headers,
+                params={"server": server_name},
+                timeout=10,
+            )
+            if resp.status_code == 200:
+                data = resp.json()
+            else:
+                error = resp.text
+        except Exception as e:
+            error = str(e)
+
+    raw_json = ""
+    if data is not None:
+        raw_json = json.dumps({"tiers": data.get("tiers", [])}, indent=2)
+
+    return templates.TemplateResponse(
+        "rewards.html",
+        {"request": request, "data": data, "raw_json": raw_json, "error": error, "server_name": server_name}
+    )
+
+
+@app.post("/rewards/update")
+async def rewards_update(request: Request, rewards_json: str = Form(...)):
+    user_token = request.session.get("user_token")
+    if not user_token:
+        return RedirectResponse(url="/account/login", status_code=302)
+
+    server_name = request.query_params.get("server")
+    if not server_name:
+        return RedirectResponse(url="/dashboard", status_code=302)
+
+    try:
+        payload = json.loads(rewards_json)
+        if "tiers" not in payload:
+            payload = {"tiers": payload}
+    except Exception as e:
+        return templates.TemplateResponse(
+            "rewards.html",
+            {
+                "request": request,
+                "data": None,
+                "raw_json": rewards_json,
+                "error": f"Invalid JSON: {e}",
+                "server_name": server_name,
+            },
+        )
+
+    async with httpx.AsyncClient() as client:
+        try:
+            headers = {"Authorization": f"Bearer {user_token}"}
+            resp = await client.put(
+                f"{BACKEND_URL}/v1/servers/rewards",
+                headers=headers,
+                json=payload,
+                params={"server": server_name},
+                timeout=10,
+            )
+        except Exception as e:
+            return templates.TemplateResponse(
+                "rewards.html",
+                {
+                    "request": request,
+                    "data": None,
+                    "raw_json": rewards_json,
+                    "error": f"Backend error: {e}",
+                    "server_name": server_name,
+                },
+            )
+
+    if resp.status_code != 200:
+        return templates.TemplateResponse(
+            "rewards.html",
+            {
+                "request": request,
+                "data": None,
+                "raw_json": rewards_json,
+                "error": resp.text,
+                "server_name": server_name,
+            },
+        )
+
+    return RedirectResponse(url=f"/rewards?server={server_name}", status_code=302)
+
+
+@app.post("/rewards/default")
+async def rewards_default(request: Request):
+    user_token = request.session.get("user_token")
+    if not user_token:
+        return RedirectResponse(url="/account/login", status_code=302)
+
+    server_name = request.query_params.get("server")
+    if not server_name:
+        return RedirectResponse(url="/dashboard", status_code=302)
+
+    async with httpx.AsyncClient() as client:
+        try:
+            headers = {"Authorization": f"Bearer {user_token}"}
+            await client.post(
+                f"{BACKEND_URL}/v1/servers/rewards/default",
+                headers=headers,
+                params={"server": server_name},
+                timeout=10,
+            )
+        except Exception:
+            pass
+
+    return RedirectResponse(url=f"/rewards?server={server_name}", status_code=302)
+
+# Registration form at /register
+@app.get("/register", response_class=HTMLResponse)
+def register_form(request: Request):
+    import datetime
+    if not request.session.get("user_token"):
+        return RedirectResponse(url="/account/login", status_code=302)
+    year = datetime.datetime.now().year
+    return templates.TemplateResponse("register.html", {
+        "request": request,
+        "year": year,
+        "owner_email": request.session.get("user_email"),
+        "owner_name": request.session.get("user_name")
+    })
+
+
+@app.post("/registered", response_class=HTMLResponse)
+async def register_server(request: Request,
+    server_name: str = Form(...),
+    owner_name: str = Form(...),
+    owner_email: str = Form(...),
+    server_address: str = Form(...),
+    server_version: str = Form(""),
+    is_private: str = Form(""),
+    invite_code: str = Form(""),
+    notes: str = Form("")
+):
+    # Send registration data to backend API
+    import logging
+    logging.basicConfig(level=logging.INFO)
+    backend_urls = [
+        f"{BACKEND_URL}/v1/servers/register"
+    ]
+    response = None
+    last_error = None
+    user_token = request.session.get("user_token")
+    if not user_token:
+        return RedirectResponse(url="/account/login", status_code=302)
+    import datetime
+    year = datetime.datetime.now().year
+    async with httpx.AsyncClient() as client:
+        for url in backend_urls:
+            try:
+                logging.info(f"Trying backend registration at {url}")
+                response = await client.post(
+                    url,
+                    json={
+                        "server_name": server_name,
+                        "owner_name": owner_name,
+                        "owner_email": owner_email,
+                        "server_address": server_address,
+                        "server_version": server_version,
+                        "is_private": bool(is_private),
+                        "invite_code": invite_code.strip() or None,
+                    },
+                    headers={"Authorization": f"Bearer {user_token}"}
+                )
+                logging.info(f"Response status: {response.status_code}, body: {response.text}")
+                if response.status_code == 200:
+                    break
+            except Exception as e:
+                logging.error(f"Error contacting backend {url}: {e}")
+                last_error = str(e)
+    if response and response.status_code == 200:
+        data = response.json()
+        api_key = data.get("api_key")
+        server_name_val = data.get("server_name")
+        message_val = data.get("message")
+        if api_key and server_name_val:
+            keys = request.session.get("server_keys") or {}
+            keys[server_name_val] = api_key
+            request.session["server_keys"] = keys
+        # Send email with API key
+        try:
+            await send_api_key_email(owner_email, server_name_val, api_key, message_val)
+        except Exception as e:
+            import logging
+            logging.error(f"Failed to send email: {e}")
+        return templates.TemplateResponse("confirmation.html", {
+            "request": request,
+            "api_key": api_key,
+            "server_name": server_name_val,
+            "message": message_val,
+            "invite_code": data.get("invite_code"),
+            "is_private": data.get("is_private"),
+            "year": year
+        })
+    else:
+        error = None
+        if response:
+            try:
+                data = response.json()
+                error = data.get("detail") or data.get("error")
+            except Exception:
+                error = response.text
+        if not error:
+            error = last_error or "No backend response"
+        if response is not None:
+            error = f"{response.status_code}: {error}"
+        invite_code_error = bool(error and "invite code" in error.lower())
+        logging.error(f"Registration failed: {error}")
+        return templates.TemplateResponse("register.html", {
+            "request": request,
+            "error": error,
+            "year": year,
+            "server_name": server_name,
+            "owner_name": owner_name,
+            "owner_email": owner_email,
+            "server_address": server_address,
+            "server_version": server_version,
+            "is_private": bool(is_private),
+            "invite_code": invite_code,
+            "notes": notes,
+            "invite_code_error": invite_code_error,
+        })
+
+## Optionally remove or refactor /admin if not needed
