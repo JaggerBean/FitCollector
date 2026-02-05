@@ -1,6 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { Layout } from "../components/Layout";
+import SmoothScroll from "../components/SmoothScroll";
 import MagicBento from "../components/MagicBento";
 import { useAuthContext } from "../app/AuthContext";
 
@@ -16,9 +17,10 @@ export default function LandingPage() {
 
   return (
     <Layout>
-      <div className="rounded-3xl bg-slate-950/95 px-6 py-16 md:px-10">
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-96 bg-[radial-gradient(circle_at_top,rgba(16,185,129,0.12),transparent_55%)]" />
-        <div className="space-y-12 md:space-y-16">
+      <SmoothScroll>
+        <div className="rounded-3xl bg-slate-950/95 px-6 py-16 md:px-10">
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-96 bg-[radial-gradient(circle_at_top,rgba(16,185,129,0.12),transparent_55%)]" />
+          <div className="space-y-12 md:space-y-16">
           <section className="relative">
             <div className="grid gap-12 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
               <div className="max-w-xl">
@@ -182,8 +184,9 @@ export default function LandingPage() {
             </Link>
           </div>
           </section>
+          </div>
         </div>
-      </div>
+      </SmoothScroll>
     </Layout>
   );
 }
