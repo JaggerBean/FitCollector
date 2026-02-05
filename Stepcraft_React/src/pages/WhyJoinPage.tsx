@@ -15,6 +15,7 @@ import claimRewardsImg from "../assets/DraggableIMGs/Claim Rewards.png";
 import joinServersImg from "../assets/DraggableIMGs/Join Servers.png";
 import manageNotificationsImg from "../assets/DraggableIMGs/Manage Notifications.png";
 import trackRewardsImg from "../assets/DraggableIMGs/Track Rewards.png";
+import notiImg from "../assets/whyitworksIMGs/Noti.png";
 
 export default function WhyJoinPage() {
   const { isAuthenticated } = useAuthContext();
@@ -137,6 +138,15 @@ export default function WhyJoinPage() {
                     sales. Unlike most mods, StepCraft also adds a phone app touchpoint, keeping your server top-of-mind
                     even when players aren't online.
                   </p>
+
+                  <div className="mt-5 overflow-hidden rounded-xl border border-slate-800/70 bg-slate-900/40">
+                    <img
+                      src={notiImg}
+                      alt="StepCraft notification preview"
+                      className="h-48 w-full object-cover sm:h-56"
+                      loading="lazy"
+                    />
+                  </div>
 
                   <div className="mt-6 rounded-xl border border-slate-800/70 bg-slate-900/30 p-4 text-xs text-slate-300">
                     Tip: add 2-3 screenshots here (streaks, reward claim, server dashboard) and this becomes a shareable
