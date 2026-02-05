@@ -42,6 +42,7 @@ public class StepCraftChestScreenHandler extends GenericContainerScreenHandler {
         return t;
     });
     private static final String DASHBOARD_URL = "https://stepcraft.org/dashboard#push";
+    private static final String ROOT_URL = "https://stepcraft.org";
 
     // Server constructor only (client uses vanilla screen + vanilla type)
     public StepCraftChestScreenHandler(int syncId, PlayerInventory playerInventory, SimpleInventory inventory) {
@@ -76,12 +77,15 @@ public class StepCraftChestScreenHandler extends GenericContainerScreenHandler {
                     case 32 -> { StepCraftUIHelper.openPlayerSelectList(serverPlayer, null, 0, StepCraftPlayerAction.DELETE); return; }
                         case 50 -> {
                         serverPlayer.closeHandledScreen();
-                        Text message = Text.literal("Open StepCraft Dashboard")
-                                .setStyle(Style.EMPTY
-                                        .withColor(TextColor.fromRgb(0x55AAFF))
-                                        .withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, DASHBOARD_URL))
-                                        .withUnderline(true)
-                                        .withItalic(false));
+                        boolean hasApiKey = StepCraftConfig.isApiKeyConfigured();
+                        String label = hasApiKey ? "Open StepCraft Dashboard" : "Register your server";
+                        String url = hasApiKey ? DASHBOARD_URL : ROOT_URL;
+                        Text message = Text.literal(label)
+                            .setStyle(Style.EMPTY
+                                .withColor(TextColor.fromRgb(0x55AAFF))
+                                .withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, url))
+                                .withUnderline(true)
+                                .withItalic(false));
                         serverPlayer.sendMessage(message);
                         return;
                     }

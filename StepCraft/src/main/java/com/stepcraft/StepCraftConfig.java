@@ -38,6 +38,11 @@ public class StepCraftConfig {
         return apiKey;
     }
 
+    public static boolean isApiKeyConfigured() {
+        String key = apiKey;
+        return key != null && !key.isBlank() && !"PUT_YOUR_API_KEY_HERE".equals(key);
+    }
+
     public static synchronized void setApiKey(String newKey) {
         apiKey = newKey;
         save();

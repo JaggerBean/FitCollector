@@ -32,6 +32,10 @@ public class StepCraftUIHelper {
 
             DefaultedList<ItemStack> items = DefaultedList.ofSize(54, ItemStack.EMPTY);
 
+                boolean hasApiKey = StepCraftConfig.isApiKeyConfigured();
+                String dashboardLabel = hasApiKey ? "Web Dashboard" : "Register your server";
+                String dashboardLore = hasApiKey ? "Open StepCraft dashboard" : "Open stepcraft.org";
+
                 Object[][] commandItems = new Object[][]{
                     // Info / system
                     {Items.BOOK, "Info", "Show backend + server info", Formatting.AQUA},
@@ -51,7 +55,7 @@ public class StepCraftUIHelper {
                     {Items.IRON_SWORD, "Ban Player", "Ban a player", Formatting.RED},
                     {Items.PAPER, "Unban Player", "Unban a player", Formatting.GREEN},
                     {Items.BARRIER, "Delete Player", "Delete player record", Formatting.DARK_RED},
-                        {Items.BELL, "Web Dashboard", "Open StepCraft dashboard", Formatting.LIGHT_PURPLE},
+                        {Items.BELL, dashboardLabel, dashboardLore, Formatting.LIGHT_PURPLE},
                 };
 
                             int[] slotLayout = new int[]{
