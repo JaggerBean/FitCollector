@@ -86,10 +86,10 @@ def send_api_key_email(to_email: str, server_name: str, api_key: str, message: s
         f"API Key: {api_key}\n\n"
         "Next steps (Minecraft server):\n"
         "1) Join the server as an OP.\n"
-        "2) Run /stepcraft admin_gui\n"
-        "3) Open Settings -> Set API Key and paste:\n"
+        "2) Run:\n"
         f"   /stepcraft set_api_key {api_key}\n"
-        "4) Confirm API Key Status shows Working.\n\n"
+        "3) Run /stepcraft admin_gui\n"
+        "4) Open Settings -> check if your API Key is working by hovering over the wool block:\n"
         "Alternative: edit config/stepcraft.properties and set api_key=<your key>.\n\n"
         f"{safe_message}\n"
     )
