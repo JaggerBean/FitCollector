@@ -133,7 +133,7 @@ def send_api_key_email(to_email: str, server_name: str, api_key: str, message: s
                         <li>Open <strong>Settings</strong> and hover the API key status wool to confirm it shows <strong>Working</strong>.</li>
                     </ol>
 
-                    <p style=\"margin: 0 0 10px; color: #94a3b8;\">Alternative: edit <strong>config/stepcraft.properties</strong> and set <code>api_key=&lt;your key&gt;</code>.</p>
+                    <p style=\"margin: 0 0 10px; color: #94a3b8;\">Alternative: edit <strong>config/stepcraft.properties</strong> in your server files and set <code>api_key=&lt;{api_key}&gt;</code>.</p>
 
                     {f"<div style=\"margin-top: 14px; color: #cbd5f5;\">{safe_message}</div>" if safe_message else ""}
                 </div>
