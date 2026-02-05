@@ -139,11 +139,11 @@ export default function WhyJoinPage() {
                     even when players aren't online.
                   </p>
 
-                  <div className="mt-5 overflow-hidden rounded-xl bg-slate-900/20 p-3">
+                  <div className="mt-5 inline-flex overflow-hidden rounded-xl bg-slate-900/20">
                     <img
                       src={notiImg}
                       alt="StepCraft notification preview"
-                      className="h-56 w-full object-contain sm:h-64"
+                      className="h-auto w-auto max-w-full object-contain"
                       loading="lazy"
                     />
                   </div>
