@@ -163,10 +163,10 @@ export default function LandingPage() {
               },
               {
                 color: "#060010",
-                title: "Community admin",
+                title: "Owner-ready from day one",
                 description:
-                  "“We doubled daily activity in two weeks. Players log in just to hit the next step tier.”",
-                label: "Community",
+                  "Set thresholds, manage invites, and audit reward claims without touching config files.",
+                label: "Operations",
               },
             ]}
           />
@@ -174,13 +174,13 @@ export default function LandingPage() {
 
           <section className="rounded-2xl border border-slate-800 bg-slate-950/70 p-8 text-center">
           <h2 className="text-2xl font-semibold text-white">Ready to build your StepCraft community?</h2>
-          <p className="mt-2 text-sm text-slate-400">Create your account and launch in minutes.</p>
+          <p className="mt-2 text-sm text-slate-400">See the full walkthrough and launch when you’re ready.</p>
           <div className="mt-6 flex justify-center">
             <Link
-              to={isAuthenticated ? "/dashboard" : "/account/register"}
+              to={isAuthenticated ? "/dashboard" : "/why-join"}
               className="flex h-11 items-center justify-center rounded-md bg-emerald-500 px-6 text-sm font-semibold text-slate-950 transition hover:bg-emerald-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
             >
-              {isAuthenticated ? "Go to dashboard" : "Create your account"}
+              {isAuthenticated ? "Go to dashboard" : "See why it works"}
             </Link>
           </div>
           </section>
