@@ -117,13 +117,12 @@ def send_api_key_email(to_email: str, server_name: str, api_key: str, message: s
                     <h3 style=\"margin: 22px 0 8px; font-size: 16px;\">Configure your Minecraft server</h3>
                     <ol style=\"margin: 0; padding-left: 18px; color: #cbd5f5;\">
                         <li>Join the server as an OP.</li>
-                        <li>Run <strong>/stepcraft admin_gui</strong>.</li>
-                        <li>Open <strong>Settings</strong> → <strong>Set API Key</strong> and paste:</li>
+                        <li>Run:</li>
                     </ol>
                     <div style=\"margin: 10px 0 14px; padding: 12px 14px; background: #0b1220; border-radius: 10px; border: 1px dashed #334155; color: #e2e8f0; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;\">
                         /stepcraft set_api_key {api_key}
                     </div>
-                    <p style=\"margin: 0 0 14px; color: #cbd5f5;\">Confirm <strong>API Key Status</strong> shows <strong>Working</strong>.</p>
+                    <p style=\"margin: 0 0 14px; color: #cbd5f5;\">Then run <strong>/stepcraft admin_gui</strong> → open <strong>Settings</strong> and hover the API key status wool to confirm it shows <strong>Working</strong>.</p>
 
                     <p style=\"margin: 0 0 10px; color: #94a3b8;\">Alternative: edit <strong>config/stepcraft.properties</strong> and set <code>api_key=&lt;your key&gt;</code>.</p>
 
