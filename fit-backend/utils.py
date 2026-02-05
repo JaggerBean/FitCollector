@@ -88,8 +88,9 @@ def send_api_key_email(to_email: str, server_name: str, api_key: str, message: s
         "1) Join the server as an OP.\n"
         "2) Run:\n"
         f"   /stepcraft set_api_key {api_key}\n"
-        "3) Run /stepcraft admin_gui\n"
-        "4) Open Settings -> check if your API Key is working by hovering over the wool block:\n"
+        "3) Run:\n"
+        "   /stepcraft admin_gui\n"
+        "4) Open Settings -> check if your API Key is working by hovering over the wool block:\n\n"
         "Alternative: edit config/stepcraft.properties and set api_key=<your key>.\n\n"
         f"{safe_message}\n"
     )
@@ -123,7 +124,12 @@ def send_api_key_email(to_email: str, server_name: str, api_key: str, message: s
                         /stepcraft set_api_key {api_key}
                     </div>
                     <ol start=\"3\" style=\"margin: 0; padding-left: 18px; color: #cbd5f5;\">
-                        <li>Run <code style=\"background:#0b1220; padding:2px 6px; border-radius:6px; border:1px solid #1f2937;\">/stepcraft admin_gui</code></li>
+                        <li>Run:</li>
+                    </ol>
+                    <div style=\"margin: 10px 0 14px; padding: 12px 14px; background: #0b1220; border-radius: 10px; border: 1px dashed #334155; color: #e2e8f0; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;\">
+                        /stepcraft admin_gui
+                    </div>
+                    <ol start=\"4\" style=\"margin: 0; padding-left: 18px; color: #cbd5f5;\">
                         <li>Open <strong>Settings</strong> and hover the API key status wool to confirm it shows <strong>Working</strong>.</li>
                     </ol>
 
