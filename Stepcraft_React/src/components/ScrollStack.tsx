@@ -177,7 +177,16 @@ export function PitchScrollScene({ scenes }: { scenes: Scene[] }) {
                 StepCraft in action
               </div>
 
-              <div ref={sceneWrapRef} className="relative min-h-0 flex-1 overflow-hidden pt-4">
+              <div
+                ref={sceneWrapRef}
+                className="relative min-h-0 flex-1"
+                style={{
+                  transform: `translate3d(0, ${-
+                    Math.min(sceneOverflow[baseIndex] || 0, 120) * t
+                  }px, 0)`,
+                  transition: "transform 200ms ease",
+                }}
+              >
                 {safeScenes.map((s, i) => {
                   const dist = Math.abs(i - visualScaled);
                   const fade = clamp01(1 - dist);
@@ -190,10 +199,6 @@ export function PitchScrollScene({ scenes }: { scenes: Scene[] }) {
                   if (i === baseIndex) y = -10 * t;
                   if (i === baseIndex + 1) y = 14 * (1 - t);
 
-                  const overflow = sceneOverflow[i] || 0;
-                  const perSceneProgress = clamp01(scaled - i);
-                  const scrollY = -overflow * perSceneProgress;
-
                   const scale = 0.98 + 0.02 * fade;
 
                   return (
@@ -202,10 +207,10 @@ export function PitchScrollScene({ scenes }: { scenes: Scene[] }) {
                       ref={(el) => {
                         sceneRefs.current[i] = el;
                       }}
-                      className="absolute inset-0"
+                      className="mt-8"
                       style={{
                         opacity: baseOpacity,
-                        transform: `translate3d(0, ${y + scrollY}px, 0) scale(${scale})`,
+                        transform: `translate3d(0, ${y}px, 0) scale(${scale})`,
                         transition: "opacity 280ms ease, transform 280ms ease",
                       }}
                     >
