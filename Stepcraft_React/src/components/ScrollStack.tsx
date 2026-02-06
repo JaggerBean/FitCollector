@@ -109,7 +109,6 @@ export function PitchScrollScene({ scenes }: { scenes: Scene[] }) {
   const mobileSceneA = safeScenes[baseIndex];
   const mobileSceneB = safeScenes[nextIndex];
 
-  const titleFadeStart = 0;
   const titleFadeEnd = 8;
 
   const showScrollHint = isPinned && p < 0.985;
