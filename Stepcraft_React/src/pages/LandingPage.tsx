@@ -4,6 +4,7 @@ import { Layout } from "../components/Layout";
 import SmoothScroll from "../components/SmoothScroll";
 import MagicBento from "../components/MagicBento";
 import StarBorder from "../components/StarBorder";
+import Magnet from "../components/Magnet";
 import { useAuthContext } from "../app/AuthContext";
 import trackedRewardImg from "../assets/landing/Tracked Reward.png";
 
@@ -37,49 +38,59 @@ export default function LandingPage() {
                 <div className="mt-10 flex flex-wrap gap-4">
                   {isAuthenticated ? (
                     <>
-                      <StarBorder
-                        as={Link}
-                        to="/dashboard"
-                        className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
-                        color="#10b981"
-                      >
-                        Go to dashboard
-                      </StarBorder>
-                      <StarBorder
-                        as={Link}
-                        to="/why-join"
-                        className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
-                        color="#10b981"
-                      >
-                        Why you should join
-                      </StarBorder>
+                      <Magnet>
+                        <StarBorder
+                          as={Link}
+                          to="/dashboard"
+                          className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
+                          color="#10b981"
+                        >
+                          Go to dashboard
+                        </StarBorder>
+                      </Magnet>
+                      <Magnet>
+                        <StarBorder
+                          as={Link}
+                          to="/why-join"
+                          className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
+                          color="#10b981"
+                        >
+                          Why you should join
+                        </StarBorder>
+                      </Magnet>
                     </>
                   ) : (
                     <>
-                      <StarBorder
-                        as={Link}
-                        to="/account/register"
-                        className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
-                        color="#10b981"
-                      >
-                        Create your account
-                      </StarBorder>
-                      <StarBorder
-                        as={Link}
-                        to="/why-join"
-                        className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
-                        color="#10b981"
-                      >
-                        Why you should join
-                      </StarBorder>
-                      <StarBorder
-                        as={Link}
-                        to="/login"
-                        className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
-                        color="#10b981"
-                      >
-                        Sign in
-                      </StarBorder>
+                      <Magnet>
+                        <StarBorder
+                          as={Link}
+                          to="/account/register"
+                          className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
+                          color="#10b981"
+                        >
+                          Create your account
+                        </StarBorder>
+                      </Magnet>
+                      <Magnet>
+                        <StarBorder
+                          as={Link}
+                          to="/why-join"
+                          className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
+                          color="#10b981"
+                        >
+                          Why you should join
+                        </StarBorder>
+                      </Magnet>
+                      <Magnet>
+                        <StarBorder
+                          as={Link}
+                          to="/login"
+                          className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
+                          color="#10b981"
+                        >
+                          Sign in
+                        </StarBorder>
+                      </Magnet>
                     </>
                   )}
                 </div>
@@ -197,14 +208,16 @@ export default function LandingPage() {
           <h2 className="text-2xl font-semibold text-white">Ready to build your StepCraft community?</h2>
           <p className="mt-2 text-sm text-slate-400">See the full walkthrough and launch when you’re ready.</p>
           <div className="mt-6 flex justify-center">
-            <StarBorder
-              as={Link}
-              to={isAuthenticated ? "/dashboard" : "/why-join"}
-              className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
-              color="#10b981"
-            >
-              {isAuthenticated ? "Go to dashboard" : "See why it works"}
-            </StarBorder>
+            <Magnet>
+              <StarBorder
+                as={Link}
+                to={isAuthenticated ? "/dashboard" : "/why-join"}
+                className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
+                color="#10b981"
+              >
+                {isAuthenticated ? "Go to dashboard" : "See why it works"}
+              </StarBorder>
+            </Magnet>
           </div>
           </section>
           </div>
