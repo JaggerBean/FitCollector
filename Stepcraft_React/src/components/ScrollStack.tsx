@@ -144,14 +144,24 @@ export function PitchScrollScene({ scenes }: { scenes: Scene[] }) {
               </div>
 
               <div className="relative min-h-0 flex-1">
-                <div className="pointer-events-none absolute left-0 right-0 top-0 z-10 h-14 bg-gradient-to-b from-slate-950/95 via-slate-950/70 to-transparent backdrop-blur-sm" />
+                <div
+                  className="pointer-events-none absolute left-0 right-0 top-0 z-10 h-16 backdrop-blur-md"
+                  style={{
+                    WebkitMaskImage:
+                      "linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.65) 60%, rgba(0,0,0,0) 100%)",
+                    maskImage:
+                      "linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.65) 60%, rgba(0,0,0,0) 100%)",
+                  }}
+                />
                 <div
                   className="relative"
                   style={{
                     transform: `translate3d(0, ${-36 * visualScaled}px, 0)`,
                     transition: "transform 200ms ease",
-                    WebkitMaskImage: "linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,1) 16%, rgba(0,0,0,1) 100%)",
-                    maskImage: "linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,1) 16%, rgba(0,0,0,1) 100%)",
+                    WebkitMaskImage:
+                      "linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.35) 22%, rgba(0,0,0,1) 55%, rgba(0,0,0,1) 100%)",
+                    maskImage:
+                      "linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.35) 22%, rgba(0,0,0,1) 55%, rgba(0,0,0,1) 100%)",
                   }}
                 >
                 {safeScenes.map((s, i) => {
