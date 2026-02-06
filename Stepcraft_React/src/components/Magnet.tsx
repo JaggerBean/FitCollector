@@ -59,24 +59,24 @@ const Magnet: React.FC<MagnetProps> = ({
 
           siblings.forEach((sib) => {
             const s = sib.getBoundingClientRect();
-
             const verticalOverlap = rect.top + offsetY < s.bottom && rect.bottom + offsetY > s.top;
-            if (verticalOverlap) {
-              if (offsetX > 0 && rect.right + offsetX > s.left - collisionPadding) {
-                offsetX = Math.min(offsetX, s.left - collisionPadding - rect.right);
-              }
-              if (offsetX < 0 && rect.left + offsetX < s.right + collisionPadding) {
-                offsetX = Math.max(offsetX, s.right + collisionPadding - rect.left);
+            if (!verticalOverlap) return;
+
+            if (offsetX > 0) {
+              const maxRight = s.left - collisionPadding - rect.right;
+              if (maxRight < 0) {
+                offsetX = 0;
+              } else if (offsetX > maxRight) {
+                offsetX = maxRight;
               }
             }
 
-            const horizontalOverlap = rect.left + offsetX < s.right && rect.right + offsetX > s.left;
-            if (horizontalOverlap) {
-              if (offsetY > 0 && rect.bottom + offsetY > s.top - collisionPadding) {
-                offsetY = Math.min(offsetY, s.top - collisionPadding - rect.bottom);
-              }
-              if (offsetY < 0 && rect.top + offsetY < s.bottom + collisionPadding) {
-                offsetY = Math.max(offsetY, s.bottom + collisionPadding - rect.top);
+            if (offsetX < 0) {
+              const maxLeft = s.right + collisionPadding - rect.left;
+              if (maxLeft > 0) {
+                offsetX = 0;
+              } else if (offsetX < maxLeft) {
+                offsetX = maxLeft;
               }
             }
           });
