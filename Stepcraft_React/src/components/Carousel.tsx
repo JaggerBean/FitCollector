@@ -9,6 +9,7 @@ export interface CarouselItem {
   description: string;
   id: number;
   icon: React.ReactNode;
+  imageUrl?: string;
 }
 
 export interface CarouselProps {
@@ -101,10 +102,23 @@ function CarouselItem({
       }}
       transition={transition}
     >
-      <div className={`${round ? "p-0 m-0" : "mb-4 p-5"}`}>
-        <span className="flex h-[44px] w-[44px] items-center justify-center rounded-full bg-[#060010]">
-          {item.icon}
-        </span>
+      {!round && item.imageUrl && (
+        <div
+          className="absolute inset-0 bg-center bg-cover"
+          style={{ backgroundImage: `url(${item.imageUrl})` }}
+        />
+      )}
+      {!round && <div className="absolute inset-0 bg-[#0b0f1a]/70" />}
+      <div className="relative z-10 w-full">
+        <div className={`${round ? "p-0 m-0" : "mb-4 p-5"}`}>
+          <span className="flex h-[44px] w-[44px] items-center justify-center rounded-full bg-[#060010]">
+            {item.icon}
+          </span>
+        </div>
+        <div className="p-5">
+          <div className="mb-1 font-black text-lg text-white">{item.title}</div>
+          <p className="text-sm text-white">{item.description}</p>
+        </div>
       </div>
       <div className="p-5">
         <div className="mb-1 font-black text-lg text-white">{item.title}</div>
@@ -125,7 +139,8 @@ export default function Carousel({
   round = false,
 }: CarouselProps): JSX.Element {
   const containerPadding = 16;
-  const itemWidth = baseWidth - containerPadding * 2;
+  const resolvedBaseWidth = baseWidth === 0 ? 0 : baseWidth;
+  const itemWidth = resolvedBaseWidth === 0 ? 0 : resolvedBaseWidth - containerPadding * 2;
   const trackItemOffset = itemWidth + GAP;
   const itemsForRender = useMemo(() => {
     if (!loop) return items;
@@ -168,7 +183,9 @@ export default function Carousel({
   useEffect(() => {
     const startingPosition = loop ? 1 : 0;
     setPosition(startingPosition);
-    x.set(-startingPosition * trackItemOffset);
+    if (trackItemOffset) {
+      x.set(-startingPosition * trackItemOffset);
+    }
   }, [items.length, loop, trackItemOffset, x]);
 
   useEffect(() => {
@@ -258,7 +275,7 @@ export default function Carousel({
         round ? "rounded-full border border-white" : "rounded-[24px] border border-[#222]"
       }`}
       style={{
-        width: `${baseWidth}px`,
+        width: baseWidth === 0 ? "100%" : `${baseWidth}px`,
         ...(round && { height: `${baseWidth}px` }),
       }}
     >
@@ -267,7 +284,7 @@ export default function Carousel({
         drag={isAnimating ? false : "x"}
         {...dragProps}
         style={{
-          width: itemWidth,
+          width: itemWidth || "100%",
           gap: `${GAP}px`,
           perspective: 1000,
           perspectiveOrigin: `${position * trackItemOffset + itemWidth / 2}px 50%`,

@@ -235,8 +235,8 @@ export default function WhyJoinPage() {
 
               <div className="mt-8">
                 <Carousel
-                  baseWidth={420}
-                  itemHeight={220}
+                  baseWidth={0}
+                  itemHeight={260}
                   autoplay
                   autoplayDelay={2000}
                   pauseOnHover
@@ -248,6 +248,7 @@ export default function WhyJoinPage() {
                       title: "Join servers",
                       description: "Invite/QR entry for quick onboarding.",
                       icon: <img src={joinServersImg} alt="Join servers" className="h-8 w-8 rounded" />,
+                      imageUrl: joinServersImg,
                     },
                     {
                       id: 2,
@@ -260,24 +261,28 @@ export default function WhyJoinPage() {
                           className="h-8 w-8 rounded"
                         />
                       ),
+                      imageUrl: manageNotificationsImg,
                     },
                     {
                       id: 3,
                       title: "Track rewards",
                       description: "See rewards by server at a glance.",
                       icon: <img src={trackRewardsImg} alt="Track rewards" className="h-8 w-8 rounded" />,
+                      imageUrl: trackRewardsImg,
                     },
                     {
                       id: 4,
                       title: "Claim rewards",
                       description: "Claim rewards in-server instantly.",
                       icon: <img src={claimRewardsImg} alt="Claim rewards" className="h-8 w-8 rounded" />,
+                      imageUrl: claimRewardsImg,
                     },
                     {
                       id: 5,
                       title: "Activity log",
                       description: "Review sync history and activity.",
                       icon: <img src={activityLogImg} alt="Activity log" className="h-8 w-8 rounded" />,
+                      imageUrl: activityLogImg,
                     },
                   ]}
                 />
