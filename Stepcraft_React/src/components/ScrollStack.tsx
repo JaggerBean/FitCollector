@@ -120,7 +120,8 @@ export function PitchScrollScene({
         const top = el.offsetTop;
         const height = el.offsetHeight + marginTop + marginBottom;
         const bottom = top + height;
-        return Math.max(0, bottom - viewportHeight);
+        const overshoot = 12;
+        return Math.max(0, bottom - viewportHeight + overshoot);
       });
 
       const maxOffset = rawOffsets.reduce((max, value) => Math.max(max, value), 0);
