@@ -42,6 +42,9 @@ export function PitchScrollScene({
   scenes: Scene[];
 }) {
   const wrapRef = useRef<HTMLDivElement>(null);
+  const copyViewportRef = useRef<HTMLDivElement>(null);
+  const copyListRef = useRef<HTMLDivElement>(null);
+  const sceneRefs = useRef<Array<HTMLDivElement | null>>([]);
 
   const safeScenes = useMemo(() => scenes.slice(0, Math.max(1, scenes.length)), [scenes]);
 
@@ -53,6 +56,7 @@ export function PitchScrollScene({
   const [p, setP] = useState(0); // 0..1 (smoothed)
   const [active, setActive] = useState(0);
   const [isPinned, setIsPinned] = useState(false);
+  const [sceneOffsets, setSceneOffsets] = useState<number[]>([]);
 
   useEffect(() => {
     const wrap = wrapRef.current;
@@ -100,6 +104,35 @@ export function PitchScrollScene({
     return () => cancelAnimationFrame(rafId);
   }, [safeScenes.length]);
 
+  useEffect(() => {
+    const viewport = copyViewportRef.current;
+    const list = copyListRef.current;
+    if (!viewport || !list) return;
+
+    const measure = () => {
+      const viewportHeight = viewport.clientHeight;
+      const nextOffsets = safeScenes.map((_, i) => {
+        const el = sceneRefs.current[i];
+        if (!el) return 0;
+        const top = el.offsetTop;
+        const height = el.offsetHeight;
+        const bottom = top + height;
+        return Math.max(0, bottom - viewportHeight);
+      });
+      setSceneOffsets(nextOffsets);
+    };
+
+    measure();
+
+    const ro = new ResizeObserver(measure);
+    ro.observe(viewport);
+    sceneRefs.current.forEach((el) => {
+      if (el) ro.observe(el);
+    });
+
+    return () => ro.disconnect();
+  }, [safeScenes.length]);
+
 
 
   const sceneCount = safeScenes.length;
@@ -110,6 +143,9 @@ export function PitchScrollScene({
   const baseIndex = Math.min(sceneCount - 1, Math.floor(visualScaled));
   const t = clamp01(visualScaled - baseIndex); // 0..1 within current step
   const nextIndex = Math.min(sceneCount - 1, baseIndex + 1);
+  const currentOffset = sceneOffsets[baseIndex] ?? 0;
+  const nextOffset = sceneOffsets[nextIndex] ?? currentOffset;
+  const scrollOffset = currentOffset + (nextOffset - currentOffset) * t;
   const mobileSceneA = safeScenes[baseIndex];
   const mobileSceneB = safeScenes[nextIndex];
 
@@ -147,11 +183,12 @@ export function PitchScrollScene({
                 StepCraft in action
               </div>
 
-              <div className="relative z-0 min-h-0 flex-1 overflow-hidden">
+              <div ref={copyViewportRef} className="relative z-0 min-h-0 flex-1 overflow-hidden">
                 <div
+                  ref={copyListRef}
                   className="relative"
                   style={{
-                    transform: `translate3d(0, ${-36 * visualScaled}px, 0)`,
+                    transform: `translate3d(0, ${-scrollOffset}px, 0)`,
                     transition: "transform 200ms ease",
                   }}
                 >
@@ -173,6 +210,9 @@ export function PitchScrollScene({
                     <div
                       key={s.title}
                       className="mt-8"
+                      ref={(el) => {
+                        sceneRefs.current[i] = el;
+                      }}
                       style={{
                         opacity: baseOpacity,
                         transform: `translate3d(0, ${y}px, 0) scale(${scale})`,
