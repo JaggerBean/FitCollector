@@ -88,6 +88,9 @@ function CarouselItem({
   const range = [-(index + 1) * trackItemOffset, -index * trackItemOffset, -(index - 1) * trackItemOffset];
   const outputRange = round ? [90, 0, -90] : [0, 0, 0];
   const rotateY = useTransform(x, range, outputRange, { clamp: false });
+  const scale = useTransform(x, range, round ? [0.88, 1, 0.88] : [0.96, 1, 0.96], { clamp: false });
+  const opacity = useTransform(x, range, round ? [0.55, 1, 0.55] : [0.75, 1, 0.75], { clamp: false });
+  const y = useTransform(x, range, round ? [10, 0, 10] : [6, 0, 6], { clamp: false });
 
   return (
     <motion.div
@@ -101,6 +104,9 @@ function CarouselItem({
         width: itemWidth,
         height: round ? itemWidth : itemHeight,
         rotateY: rotateY,
+        scale: scale,
+        opacity: opacity,
+        y: y,
         ...(round && { borderRadius: "50%" }),
       }}
       transition={transition}
@@ -119,26 +125,33 @@ function CarouselItem({
             <>
               <img
                 src={item.imageUrl}
-                alt={item.title}
-                className="absolute inset-0 h-full w-full object-cover"
+                alt=""
+                aria-hidden="true"
+                className="absolute inset-0 h-full w-full object-cover blur-md scale-110 opacity-35"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#0b0f1a]/90 via-[#0b0f1a]/45 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#0b0f1a]/85 via-[#0b0f1a]/45 to-transparent" />
             </>
           ) : null}
-          <div
-            className={`relative z-10 flex h-full w-full flex-col p-6 ${
-              item.imageUrl ? "justify-end" : "justify-center"
-            }`}
-          >
-            {!item.imageUrl && (
+          <div className="relative z-10 flex h-full w-full flex-col p-6">
+            {item.imageUrl ? (
+              <div className="flex-1 rounded-2xl bg-[#0b0f1a]/60 p-4 shadow-[0_10px_30px_rgba(0,0,0,0.35)]">
+                <img
+                  src={item.imageUrl}
+                  alt={item.title}
+                  className="h-full w-full object-contain"
+                />
+              </div>
+            ) : (
               <div className="mb-4">
                 <span className="flex h-[48px] w-[48px] items-center justify-center rounded-full bg-[#111827]">
                   {item.icon}
                 </span>
               </div>
             )}
-            <div className="text-xl font-black text-white">{item.title}</div>
-            <p className="mt-2 text-sm text-white/85">{item.description}</p>
+            <div className="pt-4">
+              <div className="text-xl font-black text-white">{item.title}</div>
+              <p className="mt-2 text-sm text-white/85">{item.description}</p>
+            </div>
           </div>
         </>
       )}
@@ -149,7 +162,7 @@ function CarouselItem({
 export default function Carousel({
   items = DEFAULT_ITEMS,
   baseWidth = 300,
-  itemHeight = 300,
+  itemHeight = 340,
   minItemWidth = 360,
   visibleCount,
   autoplay = false,
@@ -214,11 +227,12 @@ export default function Carousel({
     if (pauseOnHover && isHovered) return undefined;
 
     const timer = setInterval(() => {
+      if (isAnimating || isJumping) return;
       setPosition((prev) => Math.min(prev + 1, itemsForRender.length - 1));
     }, autoplayDelay);
 
     return () => clearInterval(timer);
-  }, [autoplay, autoplayDelay, isHovered, pauseOnHover, itemsForRender.length]);
+  }, [autoplay, autoplayDelay, isHovered, pauseOnHover, itemsForRender.length, isAnimating, isJumping]);
 
   useEffect(() => {
     const startingPosition = loop ? 1 : 0;

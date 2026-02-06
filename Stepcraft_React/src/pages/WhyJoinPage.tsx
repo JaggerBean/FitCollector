@@ -236,7 +236,7 @@ export default function WhyJoinPage() {
               <div className="mt-8">
                 <Carousel
                   baseWidth={0}
-                  itemHeight={320}
+                  itemHeight={360}
                   minItemWidth={360}
                   autoplay
                   autoplayDelay={2000}
