@@ -109,9 +109,9 @@ export function PitchScrollScene({ scenes }: { scenes: Scene[] }) {
   const mobileSceneA = safeScenes[baseIndex];
   const mobileSceneB = safeScenes[nextIndex];
 
-  const titleBlurOffset = -12;
-  const titleBlurHeight = 28;
-  const titleBlurFade = 14;
+  const titleBlurOffset = 20;
+  const titleBlurHeight = 26;
+  const titleBlurFade = 12;
 
   const showScrollHint = isPinned && p < 0.985;
 
