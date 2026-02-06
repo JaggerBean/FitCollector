@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { Layout } from "../components/Layout";
 import SmoothScroll from "../components/SmoothScroll";
 import { PitchScrollScene } from "../components/ScrollStack";
-import { DragGallery } from "../components/DraggableGallery";
+import Carousel from "../components/Carousel";
 import SplitText from "../components/SplitText";
 import MagicBento from "../components/MagicBento";
 import Magnet from "../components/Magnet";
@@ -234,13 +234,50 @@ export default function WhyJoinPage() {
               </div>
 
               <div className="mt-8">
-                <DragGallery
+                <Carousel
+                  baseWidth={320}
+                  autoplay
+                  autoplayDelay={2000}
+                  pauseOnHover
+                  loop
+                  round={false}
                   items={[
-                    { label: "Join servers (invite/QR)", imageUrl: joinServersImg, imageAlt: "Join servers" },
-                    { label: "Manage server notifications", imageUrl: manageNotificationsImg, imageAlt: "Manage server notifications" },
-                    { label: "Track rewards by server", imageUrl: trackRewardsImg, imageAlt: "Track rewards" },
-                    { label: "Claim rewards in-server", imageUrl: claimRewardsImg, imageAlt: "Claim rewards in-server" },
-                    { label: "Activity log / sync history", imageUrl: activityLogImg, imageAlt: "Activity log" },                    
+                    {
+                      id: 1,
+                      title: "Join servers",
+                      description: "Invite/QR entry for quick onboarding.",
+                      icon: <img src={joinServersImg} alt="Join servers" className="h-6 w-6 rounded" />,
+                    },
+                    {
+                      id: 2,
+                      title: "Notifications",
+                      description: "Manage server push alerts in seconds.",
+                      icon: (
+                        <img
+                          src={manageNotificationsImg}
+                          alt="Manage server notifications"
+                          className="h-6 w-6 rounded"
+                        />
+                      ),
+                    },
+                    {
+                      id: 3,
+                      title: "Track rewards",
+                      description: "See rewards by server at a glance.",
+                      icon: <img src={trackRewardsImg} alt="Track rewards" className="h-6 w-6 rounded" />,
+                    },
+                    {
+                      id: 4,
+                      title: "Claim rewards",
+                      description: "Claim rewards in-server instantly.",
+                      icon: <img src={claimRewardsImg} alt="Claim rewards" className="h-6 w-6 rounded" />,
+                    },
+                    {
+                      id: 5,
+                      title: "Activity log",
+                      description: "Review sync history and activity.",
+                      icon: <img src={activityLogImg} alt="Activity log" className="h-6 w-6 rounded" />,
+                    },
                   ]}
                 />
               </div>
