@@ -16,6 +16,8 @@ export interface CarouselProps {
   items?: CarouselItem[];
   baseWidth?: number;
   itemHeight?: number;
+  minItemWidth?: number;
+  visibleCount?: number;
   autoplay?: boolean;
   autoplayDelay?: number;
   pauseOnHover?: boolean;
@@ -93,7 +95,7 @@ function CarouselItem({
       className={`relative shrink-0 flex flex-col ${
         round
           ? "items-center justify-center text-center bg-[#060010] border-0"
-          : "items-start justify-between bg-[#222] border border-[#222] rounded-[12px]"
+          : "items-start justify-between bg-[#0b0f1a] border border-white/5 rounded-[20px] shadow-[0_20px_60px_rgba(0,0,0,0.35)]"
       } overflow-hidden cursor-grab active:cursor-grabbing`}
       style={{
         width: itemWidth,
@@ -113,30 +115,30 @@ function CarouselItem({
         </div>
       ) : (
         <>
-          {item.imageUrl ? <div className="absolute inset-0 bg-[#0b0f1a]/55" /> : null}
-          <div className="relative z-10 flex h-full w-full flex-col">
-            {item.imageUrl ? (
-              <div
-                className="mx-4 mt-4 flex items-center justify-center rounded-xl bg-[#0f172a]/60 p-3"
-                style={{ height: Math.max(150, Math.round(itemHeight * 0.55)) }}
-              >
-                <img
-                  src={item.imageUrl}
-                  alt={item.title}
-                  className="max-h-full max-w-full object-contain"
-                />
-              </div>
-            ) : (
-              <div className="mb-4 p-5">
-                <span className="flex h-[44px] w-[44px] items-center justify-center rounded-full bg-[#060010]">
+          {item.imageUrl ? (
+            <>
+              <img
+                src={item.imageUrl}
+                alt={item.title}
+                className="absolute inset-0 h-full w-full object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#0b0f1a]/90 via-[#0b0f1a]/45 to-transparent" />
+            </>
+          ) : null}
+          <div
+            className={`relative z-10 flex h-full w-full flex-col p-6 ${
+              item.imageUrl ? "justify-end" : "justify-center"
+            }`}
+          >
+            {!item.imageUrl && (
+              <div className="mb-4">
+                <span className="flex h-[48px] w-[48px] items-center justify-center rounded-full bg-[#111827]">
                   {item.icon}
                 </span>
               </div>
             )}
-            <div className="px-5 pb-5 pt-4">
-              <div className="mb-1 font-black text-lg text-white">{item.title}</div>
-              <p className="text-sm text-white/90">{item.description}</p>
-            </div>
+            <div className="text-xl font-black text-white">{item.title}</div>
+            <p className="mt-2 text-sm text-white/85">{item.description}</p>
           </div>
         </>
       )}
@@ -147,7 +149,9 @@ function CarouselItem({
 export default function Carousel({
   items = DEFAULT_ITEMS,
   baseWidth = 300,
-  itemHeight = 200,
+  itemHeight = 300,
+  minItemWidth = 360,
+  visibleCount,
   autoplay = false,
   autoplayDelay = 3000,
   pauseOnHover = false,
@@ -158,7 +162,16 @@ export default function Carousel({
   const containerPadding = 16;
   const [measuredWidth, setMeasuredWidth] = useState(0);
   const resolvedBaseWidth = baseWidth === 0 ? measuredWidth : baseWidth;
-  const itemWidth = resolvedBaseWidth ? resolvedBaseWidth - containerPadding * 2 : 0;
+  const availableWidth = resolvedBaseWidth ? resolvedBaseWidth - containerPadding * 2 : 0;
+  const autoVisibleCount = availableWidth
+    ? Math.max(1, Math.floor((availableWidth + GAP) / (minItemWidth + GAP)))
+    : 1;
+  const effectiveVisibleCount = round
+    ? 1
+    : Math.max(1, Math.min(visibleCount ?? Number.POSITIVE_INFINITY, autoVisibleCount));
+  const itemWidth = availableWidth
+    ? (availableWidth - GAP * (effectiveVisibleCount - 1)) / effectiveVisibleCount
+    : 0;
   const trackItemOffset = itemWidth + GAP;
   const itemsForRender = useMemo(() => {
     if (!loop) return items;
@@ -304,23 +317,14 @@ export default function Carousel({
         : Math.min(position, items.length - 1);
 
   return (
-    <div
-      ref={containerRef}
-      className={`relative overflow-visible p-4 ${
-        round ? "rounded-full border border-white" : "rounded-[24px] border border-[#222]"
-      }`}
-      style={{
-        width: baseWidth === 0 ? "100%" : `${baseWidth}px`,
-        ...(round && { height: `${baseWidth}px` }),
-      }}
-    >
+    <div className="relative">
       {showArrows && !round && (
         <>
           <button
             type="button"
             aria-label="Previous"
             onClick={() => goTo(-1)}
-            className="absolute -left-3 top-1/2 z-20 -translate-y-1/2 grid h-9 w-9 place-items-center rounded-full border border-white/10 bg-[#0b0f1a]/90 text-white hover:bg-[#111827]"
+            className="absolute -left-5 top-1/2 z-20 -translate-y-1/2 grid h-10 w-10 place-items-center rounded-full border border-white/10 bg-[#0b0f1a]/95 text-white shadow-[0_10px_25px_rgba(0,0,0,0.35)] hover:bg-[#111827]"
           >
             ‹
           </button>
@@ -328,68 +332,79 @@ export default function Carousel({
             type="button"
             aria-label="Next"
             onClick={() => goTo(1)}
-            className="absolute -right-3 top-1/2 z-20 -translate-y-1/2 grid h-9 w-9 place-items-center rounded-full border border-white/10 bg-[#0b0f1a]/90 text-white hover:bg-[#111827]"
+            className="absolute -right-5 top-1/2 z-20 -translate-y-1/2 grid h-10 w-10 place-items-center rounded-full border border-white/10 bg-[#0b0f1a]/95 text-white shadow-[0_10px_25px_rgba(0,0,0,0.35)] hover:bg-[#111827]"
           >
             ›
           </button>
         </>
       )}
-      <div className="overflow-hidden rounded-[20px]">
-        {itemWidth > 0 && (
-        <motion.div
-          className="flex"
-          drag={isAnimating ? false : "x"}
-          {...dragProps}
-          style={{
-            width: itemWidth || "100%",
-            gap: `${GAP}px`,
-            perspective: 1000,
-            perspectiveOrigin: `${position * trackItemOffset + itemWidth / 2}px 50%`,
-            x,
-          }}
-          onDragEnd={handleDragEnd}
-          animate={{ x: -(position * trackItemOffset) }}
-          transition={effectiveTransition}
-          onAnimationStart={handleAnimationStart}
-          onAnimationComplete={handleAnimationComplete}
-        >
-          {itemsForRender.map((item, index) => (
-            <CarouselItem
-              key={`${item?.id ?? index}-${index}`}
-              item={item}
-              index={index}
-              itemWidth={itemWidth}
-              itemHeight={itemHeight}
-              round={round}
-              trackItemOffset={trackItemOffset}
-              x={x}
-              transition={effectiveTransition}
-            />
-          ))}
-        </motion.div>
-        )}
-      </div>
-      <div className={`flex w-full justify-center ${round ? "absolute z-20 bottom-12 left-1/2 -translate-x-1/2" : ""}`}>
-        <div className="mt-4 flex w-[150px] justify-between px-8">
-          {items.map((_, index) => (
+      <div
+        ref={containerRef}
+        className={`relative overflow-visible p-4 ${
+          round ? "rounded-full border border-white" : "rounded-[24px] border border-[#222]"
+        }`}
+        style={{
+          width: baseWidth === 0 ? "100%" : `${baseWidth}px`,
+          ...(round && { height: `${baseWidth}px` }),
+        }}
+      >
+        <div className="overflow-hidden rounded-[20px]">
+          {itemWidth > 0 && (
             <motion.div
-              key={index}
-              className={`h-2 w-2 rounded-full cursor-pointer transition-colors duration-150 ${
-                activeIndex === index
-                  ? round
-                    ? "bg-white"
-                    : "bg-[#333333]"
-                  : round
-                    ? "bg-[#555]"
-                    : "bg-[rgba(51,51,51,0.4)]"
-              }`}
-              animate={{
-                scale: activeIndex === index ? 1.2 : 1,
+              className="flex"
+              drag={isAnimating ? false : "x"}
+              {...dragProps}
+              style={{
+                width: trackItemOffset * itemsForRender.length,
+                gap: `${GAP}px`,
+                perspective: 1000,
+                perspectiveOrigin: `${position * trackItemOffset + itemWidth / 2}px 50%`,
+                x,
               }}
-              onClick={() => setPosition(loop ? index + 1 : index)}
-              transition={{ duration: 0.15 }}
-            />
-          ))}
+              onDragEnd={handleDragEnd}
+              animate={{ x: -(position * trackItemOffset) }}
+              transition={effectiveTransition}
+              onAnimationStart={handleAnimationStart}
+              onAnimationComplete={handleAnimationComplete}
+            >
+              {itemsForRender.map((item, index) => (
+                <CarouselItem
+                  key={`${item?.id ?? index}-${index}`}
+                  item={item}
+                  index={index}
+                  itemWidth={itemWidth}
+                  itemHeight={itemHeight}
+                  round={round}
+                  trackItemOffset={trackItemOffset}
+                  x={x}
+                  transition={effectiveTransition}
+                />
+              ))}
+            </motion.div>
+          )}
+        </div>
+        <div className={`flex w-full justify-center ${round ? "absolute z-20 bottom-12 left-1/2 -translate-x-1/2" : ""}`}>
+          <div className="mt-4 flex w-[150px] justify-between px-8">
+            {items.map((_, index) => (
+              <motion.div
+                key={index}
+                className={`h-2 w-2 rounded-full cursor-pointer transition-colors duration-150 ${
+                  activeIndex === index
+                    ? round
+                      ? "bg-white"
+                      : "bg-[#333333]"
+                    : round
+                      ? "bg-[#555]"
+                      : "bg-[rgba(51,51,51,0.4)]"
+                }`}
+                animate={{
+                  scale: activeIndex === index ? 1.2 : 1,
+                }}
+                onClick={() => setPosition(loop ? index + 1 : index)}
+                transition={{ duration: 0.15 }}
+              />
+            ))}
+          </div>
         </div>
       </div>
     </div>
