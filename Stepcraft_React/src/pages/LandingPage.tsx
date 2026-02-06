@@ -47,6 +47,7 @@ export default function LandingPage() {
                         as={Link}
                         to="/why-join"
                         className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
+                        color="#10b981"
                         contentClassName="flex h-11 items-center justify-center rounded-md border border-slate-700 bg-transparent px-6 text-sm font-semibold text-white transition hover:border-slate-500"
                       >
                         Why you should join
@@ -64,6 +65,7 @@ export default function LandingPage() {
                         as={Link}
                         to="/why-join"
                         className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
+                        color="#10b981"
                         contentClassName="flex h-11 items-center justify-center rounded-md border border-slate-700 bg-transparent px-6 text-sm font-semibold text-white transition hover:border-slate-500"
                       >
                         Why you should join

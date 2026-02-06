@@ -14,7 +14,7 @@ const StarBorder = <T extends React.ElementType = "button">({
   as,
   className = "",
   contentClassName,
-  color = "white",
+  color = "#10b981",
   speed = "6s",
   thickness = 1,
   children,
@@ -45,6 +45,20 @@ const StarBorder = <T extends React.ElementType = "button">({
       ></div>
       <div
         className="absolute w-[300%] h-[50%] opacity-70 top-[-10px] left-[-250%] rounded-full animate-star-movement-top z-0"
+        style={{
+          background: `radial-gradient(circle, ${color}, transparent 10%)`,
+          animationDuration: speed,
+        }}
+      ></div>
+      <div
+        className="absolute h-[300%] w-[50%] opacity-70 left-[-10px] top-[-250%] rounded-full animate-star-movement-left z-0"
+        style={{
+          background: `radial-gradient(circle, ${color}, transparent 10%)`,
+          animationDuration: speed,
+        }}
+      ></div>
+      <div
+        className="absolute h-[300%] w-[50%] opacity-70 right-[-10px] bottom-[-250%] rounded-full animate-star-movement-right z-0"
         style={{
           background: `radial-gradient(circle, ${color}, transparent 10%)`,
           animationDuration: speed,
