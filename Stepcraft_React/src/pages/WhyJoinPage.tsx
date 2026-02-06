@@ -5,6 +5,7 @@ import SmoothScroll from "../components/SmoothScroll";
 import { PitchScrollScene } from "../components/ScrollStack";
 import { DragGallery } from "../components/DraggableGallery";
 import SplitText from "../components/SplitText";
+import MagicBento from "../components/MagicBento";
 import { useAuthContext } from "../app/AuthContext";
 import casualRetentionImg from "../assets/MemoIMGs/Casual Player Retention.png";
 import zeroFrictionImg from "../assets/MemoIMGs/Zero Friction.png";
@@ -172,29 +173,34 @@ export default function WhyJoinPage() {
             </section>
 
             {/* KEY BENEFITS */}
-            <section className="mt-8 grid gap-4 sm:mt-10 sm:grid-cols-2 lg:grid-cols-3">
-              {[
-                {
-                  title: "Privacy & invite codes",
-                  body: "Run private servers with invite codes + QR join, or go public. You stay in control of who can register.",
-                },
-                {
-                  title: "Automated reward tiers",
-                  body: "Set step thresholds and the exact commands to run at each tier. Tweak rewards anytime without the difficulty of config files.",
-                },
-                {
-                  title: "Owner dashboard tools",
-                  body: "Schedule push notifications that get sent to your players' devices, manage players (ban/wipe), and review an audit log so you can run ops without guesswork.",
-                },
-              ].map((item) => (
-                <div
-                  key={item.title}
-                  className="rounded-2xl border border-slate-800/60 bg-slate-950/70 p-5 text-slate-200 sm:p-6"
-                >
-                  <div className="text-xs uppercase tracking-[0.2em] text-emerald-300/70">{item.title}</div>
-                  <p className="mt-3 text-sm leading-relaxed text-slate-300">{item.body}</p>
-                </div>
-              ))}
+            <section className="mt-8 sm:mt-10">
+              <MagicBento
+                glowColor="45, 212, 191"
+                enableTilt
+                cards={[
+                  {
+                    color: "#060010",
+                    title: "Privacy & invite codes",
+                    description:
+                      "Run private servers with invite codes + QR join, or go public. You stay in control of who can register.",
+                    label: "Key benefit",
+                  },
+                  {
+                    color: "#060010",
+                    title: "Automated reward tiers",
+                    description:
+                      "Set step thresholds and the exact commands to run at each tier. Tweak rewards anytime without the difficulty of config files.",
+                    label: "Key benefit",
+                  },
+                  {
+                    color: "#060010",
+                    title: "Owner dashboard tools",
+                    description:
+                      "Schedule push notifications that get sent to your players' devices, manage players (ban/wipe), and review an audit log so you can run ops without guesswork.",
+                    label: "Key benefit",
+                  },
+                ]}
+              />
             </section>
 
             {/* PINNED SCROLL STORY */}
@@ -227,26 +233,32 @@ export default function WhyJoinPage() {
                 />
               </div>
 
-              <div className="mt-6 grid gap-3 sm:grid-cols-2 md:grid-cols-3">
-                {[
-                  {
-                    h: "Instant feedback",
-                    p: "Progress updates the moment steps sync, so players see the payoff right away.",
-                  },
-                  {
-                    h: "Streak-driven motivation",
-                    p: "Players stay engaged because the app reinforces milestones and daily wins.",
-                  },
-                  {
-                    h: "Low cognitive load",
-                    p: "It feels like a fitness app, not a mod menu, easy for casual players to adopt.",
-                  },
-                ].map((x) => (
-                  <div key={x.h} className="rounded-2xl border border-slate-800/60 bg-slate-950/60 p-5">
-                    <div className="text-sm font-semibold text-white">{x.h}</div>
-                    <div className="mt-2 text-sm text-slate-300">{x.p}</div>
-                  </div>
-                ))}
+              <div className="mt-6">
+                <MagicBento
+                  glowColor="45, 212, 191"
+                  enableTilt
+                  cards={[
+                    {
+                      color: "#060010",
+                      title: "Instant feedback",
+                      description:
+                        "Progress updates the moment steps sync, so players see the payoff right away.",
+                      label: "Benefit",
+                    },
+                    {
+                      color: "#060010",
+                      title: "Streak-driven motivation",
+                      description: "Players stay engaged because the app reinforces milestones and daily wins.",
+                      label: "Benefit",
+                    },
+                    {
+                      color: "#060010",
+                      title: "Low cognitive load",
+                      description: "It feels like a fitness app, not a mod menu, easy for casual players to adopt.",
+                      label: "Benefit",
+                    },
+                  ]}
+                />
               </div>
             </div>
 
