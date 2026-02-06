@@ -138,12 +138,13 @@ export function PitchScrollScene({ scenes }: { scenes: Scene[] }) {
           {/* Desktop layout */}
           <div className="hidden h-full grid-cols-1 gap-8 sm:gap-10 md:grid md:grid-cols-2">
             {/* Left: copy */}
-            <div className="flex min-h-0 flex-col justify-center">
-              <div className="text-[10px] uppercase tracking-[0.3em] text-slate-400 sm:text-xs">
+            <div className="relative flex min-h-0 flex-col justify-center">
+              <div className="pointer-events-none absolute left-0 right-0 top-0 z-10 h-12 bg-slate-950/95" />
+              <div className="relative z-20 text-[10px] uppercase tracking-[0.3em] text-slate-400 sm:text-xs">
                 StepCraft in action
               </div>
 
-              <div className="relative min-h-0 flex-1">
+              <div className="relative z-0 min-h-0 flex-1">
                 <div
                   className="relative"
                   style={{
