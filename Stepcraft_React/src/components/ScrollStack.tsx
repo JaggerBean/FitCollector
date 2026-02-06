@@ -36,9 +36,18 @@ function applyStepHold(progress: number, steps: number, hold = 0.35) {
   return (idx + u) / steps;
 }
 
-export function PitchScrollScene({ scenes }: { scenes: Scene[] }) {
+export function PitchScrollScene({
+  scenes,
+  blurStart = 0.15,
+  blurRange = 0.85,
+  maxBlur = 6,
+}: {
+  scenes: Scene[];
+  blurStart?: number;
+  blurRange?: number;
+  maxBlur?: number;
+}) {
   const wrapRef = useRef<HTMLDivElement>(null);
-  const headerCutoff = 64;
 
   const safeScenes = useMemo(() => scenes.slice(0, Math.max(1, scenes.length)), [scenes]);
 
@@ -132,21 +141,10 @@ export function PitchScrollScene({ scenes }: { scenes: Scene[] }) {
 
   return (
     <div ref={wrapRef} className="relative min-h-[300vh] sm:min-h-[320vh]">
-      <div
-        className="sticky top-0 h-screen w-full overflow-hidden rounded-2xl border border-slate-800/60 bg-slate-950/95 sm:rounded-3xl"
-        style={{
-          WebkitMaskImage:
-            `linear-gradient(to bottom, transparent 0, transparent ${headerCutoff}px, black ${headerCutoff + 1}px, black 100%)`,
-          maskImage:
-            `linear-gradient(to bottom, transparent 0, transparent ${headerCutoff}px, black ${headerCutoff + 1}px, black 100%)`,
-        }}
-      >
+      <div className="sticky top-0 h-screen w-full overflow-hidden rounded-2xl border border-slate-800/60 bg-slate-950/95 sm:rounded-3xl">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(16,185,129,0.14),transparent_55%)]" />
 
-        <div
-          className="relative mx-auto h-full max-w-6xl px-4 py-8 sm:px-6 sm:py-10 md:px-10"
-          style={{ paddingTop: `calc(2rem + ${headerCutoff}px)` }}
-        >
+        <div className="relative mx-auto h-full max-w-6xl px-4 py-8 sm:px-6 sm:py-10 md:px-10">
           {/* Desktop layout */}
           <div className="hidden h-full grid-cols-1 gap-8 sm:gap-10 md:grid md:grid-cols-2">
             {/* Left: copy */}
@@ -178,6 +176,10 @@ export function PitchScrollScene({ scenes }: { scenes: Scene[] }) {
 
                   const scale = 0.98 + 0.02 * fade;
 
+                  // blur as a scene approaches/passes the top
+                  const blurProgress = clamp01((visualScaled - i - blurStart) / Math.max(0.001, blurRange));
+                  const blur = maxBlur * blurProgress;
+
                   return (
                     <div
                       key={s.title}
@@ -185,7 +187,8 @@ export function PitchScrollScene({ scenes }: { scenes: Scene[] }) {
                       style={{
                         opacity: baseOpacity,
                         transform: `translate3d(0, ${y}px, 0) scale(${scale})`,
-                        transition: "opacity 280ms ease, transform 280ms ease",
+                        filter: blur ? `blur(${blur}px)` : undefined,
+                        transition: "opacity 280ms ease, transform 280ms ease, filter 280ms ease",
                       }}
                     >
                       <div className="text-xs uppercase tracking-[0.2em] text-emerald-300/70">{s.eyebrow}</div>
