@@ -122,18 +122,18 @@ export function PitchScrollScene({
         const bottom = top + height;
         const overshootRatio = 0.10;
         const overshoot = viewportHeight * overshootRatio;
-        return Math.max(0, bottom - viewportHeight + overshoot);
+        if (height <= viewportHeight) {
+          return top - (viewportHeight - height) / 2;
+        }
+        return bottom - viewportHeight + overshoot;
       });
 
-      const maxOffset = rawOffsets.reduce((max, value) => Math.max(max, value), 0);
-      const span = Math.max(1, safeScenes.length - 1);
-      const distributed = rawOffsets.map((value, i) => {
-        if (maxOffset <= 0) return 0;
-        const ramp = (maxOffset * i) / span;
-        return Math.max(value, ramp);
+      const smoothed = rawOffsets.map((value, i) => {
+        if (i === 0) return value;
+        return Math.max(value, rawOffsets[i - 1]);
       });
 
-      setSceneOffsets(distributed);
+      setSceneOffsets(smoothed);
     };
 
     measure();
