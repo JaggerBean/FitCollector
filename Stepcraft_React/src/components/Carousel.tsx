@@ -86,11 +86,8 @@ function CarouselItem({
   transition,
 }: CarouselItemProps) {
   const range = [-(index + 1) * trackItemOffset, -index * trackItemOffset, -(index - 1) * trackItemOffset];
-  const outputRange = round ? [90, 0, -90] : [0, 0, 0];
+  const outputRange = [90, 0, -90];
   const rotateY = useTransform(x, range, outputRange, { clamp: false });
-  const scale = useTransform(x, range, round ? [0.88, 1, 0.88] : [0.96, 1, 0.96], { clamp: false });
-  const opacity = useTransform(x, range, round ? [0.55, 1, 0.55] : [0.75, 1, 0.75], { clamp: false });
-  const y = useTransform(x, range, round ? [10, 0, 10] : [6, 0, 6], { clamp: false });
 
   return (
     <motion.div
@@ -104,9 +101,6 @@ function CarouselItem({
         width: itemWidth,
         height: round ? itemWidth : itemHeight,
         rotateY: rotateY,
-        scale: scale,
-        opacity: opacity,
-        y: y,
         ...(round && { borderRadius: "50%" }),
       }}
       transition={transition}
@@ -134,12 +128,16 @@ function CarouselItem({
           ) : null}
           <div className="relative z-10 flex h-full w-full flex-col p-6">
             {item.imageUrl ? (
-              <div className="flex-1 rounded-2xl bg-[#0b0f1a]/60 p-4 shadow-[0_10px_30px_rgba(0,0,0,0.35)]">
+              <div className="relative flex-1 rounded-2xl bg-[#0b0f1a]/60 p-4 shadow-[0_10px_30px_rgba(0,0,0,0.35)]">
                 <img
                   src={item.imageUrl}
                   alt={item.title}
                   className="h-full w-full object-contain"
                 />
+                <div className="absolute bottom-4 left-4 right-4 rounded-xl border border-white/10 bg-[#0b0f1a]/80 px-4 py-3 backdrop-blur">
+                  <div className="text-base font-semibold text-white">{item.title}</div>
+                  <p className="mt-1 text-xs text-white/70">{item.description}</p>
+                </div>
               </div>
             ) : (
               <div className="mb-4">
@@ -148,10 +146,12 @@ function CarouselItem({
                 </span>
               </div>
             )}
-            <div className="pt-4">
-              <div className="text-xl font-black text-white">{item.title}</div>
-              <p className="mt-2 text-sm text-white/85">{item.description}</p>
-            </div>
+            {!item.imageUrl && (
+              <div className="pt-4">
+                <div className="text-xl font-black text-white">{item.title}</div>
+                <p className="mt-2 text-sm text-white/85">{item.description}</p>
+              </div>
+            )}
           </div>
         </>
       )}
@@ -371,8 +371,8 @@ export default function Carousel({
               style={{
                 width: trackItemOffset * itemsForRender.length,
                 gap: `${GAP}px`,
-                perspective: round ? 1000 : undefined,
-                perspectiveOrigin: round ? `${position * trackItemOffset + itemWidth / 2}px 50%` : undefined,
+                perspective: 1000,
+                perspectiveOrigin: `${position * trackItemOffset + itemWidth / 2}px 50%`,
                 x,
               }}
               onDragEnd={handleDragEnd}
