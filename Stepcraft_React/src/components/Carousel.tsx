@@ -14,6 +14,7 @@ export interface CarouselItem {
 export interface CarouselProps {
   items?: CarouselItem[];
   baseWidth?: number;
+  itemHeight?: number;
   autoplay?: boolean;
   autoplayDelay?: number;
   pauseOnHover?: boolean;
@@ -63,6 +64,7 @@ interface CarouselItemProps {
   item: CarouselItem;
   index: number;
   itemWidth: number;
+  itemHeight: number;
   round: boolean;
   trackItemOffset: number;
   x: any;
@@ -73,6 +75,7 @@ function CarouselItem({
   item,
   index,
   itemWidth,
+  itemHeight,
   round,
   trackItemOffset,
   x,
@@ -92,14 +95,14 @@ function CarouselItem({
       } overflow-hidden cursor-grab active:cursor-grabbing`}
       style={{
         width: itemWidth,
-        height: round ? itemWidth : "100%",
+        height: round ? itemWidth : itemHeight,
         rotateY: rotateY,
         ...(round && { borderRadius: "50%" }),
       }}
       transition={transition}
     >
       <div className={`${round ? "p-0 m-0" : "mb-4 p-5"}`}>
-        <span className="flex h-[28px] w-[28px] items-center justify-center rounded-full bg-[#060010]">
+        <span className="flex h-[44px] w-[44px] items-center justify-center rounded-full bg-[#060010]">
           {item.icon}
         </span>
       </div>
@@ -114,6 +117,7 @@ function CarouselItem({
 export default function Carousel({
   items = DEFAULT_ITEMS,
   baseWidth = 300,
+  itemHeight = 200,
   autoplay = false,
   autoplayDelay = 3000,
   pauseOnHover = false,
@@ -281,6 +285,7 @@ export default function Carousel({
             item={item}
             index={index}
             itemWidth={itemWidth}
+            itemHeight={itemHeight}
             round={round}
             trackItemOffset={trackItemOffset}
             x={x}
