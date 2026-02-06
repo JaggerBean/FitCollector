@@ -13,7 +13,7 @@ type MagnetProps = React.HTMLAttributes<HTMLDivElement> & {
 
 const Magnet: React.FC<MagnetProps> = ({
   children,
-  padding = 50,
+  padding = 25,
   disabled = false,
   magnetStrength = 5,
   activeTransition = "transform 0.3s ease-out",
