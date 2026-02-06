@@ -120,26 +120,32 @@ export default function WhyJoinPage() {
                     </Link> */}
                   </div>
 
-                  <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                    <div className="rounded-xl border border-slate-800/70 bg-slate-950/55 p-4">
-                      <div className="text-xs uppercase tracking-[0.2em] text-slate-400">Retention</div>
-                      <div className="mt-1 text-sm font-semibold text-white">More consecutive days played</div>
-                      <div className="mt-1 text-xs text-slate-400">Fewer players forgetting to log in.</div>
-                    </div>
-                    <div className="rounded-xl border border-slate-800/70 bg-slate-950/55 p-4">
-                      <div className="text-xs uppercase tracking-[0.2em] text-slate-400">Marketability</div>
-                      <div className="mt-1 text-sm font-semibold text-white">A unique health hook</div>
-                      <div className="mt-1 text-xs text-slate-400">
-                        Gives you a headline other servers can't copy: "walk IRL to earn in-game rewards."
-                      </div>
-                    </div>
-                    <div className="rounded-xl border border-slate-800/70 bg-slate-950/55 p-4">
-                      <div className="text-xs uppercase tracking-[0.2em] text-slate-400">Visibility</div>
-                      <div className="mt-1 text-sm font-semibold text-white">More touchpoints</div>
-                      <div className="mt-1 text-xs text-slate-400">
-                        Keeps your server in players' daily routine, not just when they're online.
-                      </div>
-                    </div>
+                  <div className="mt-6">
+                    <MagicBento
+                      glowColor="45, 212, 191"
+                      enableTilt
+                      cards={[
+                        {
+                          color: "#060010",
+                          title: "Retention",
+                          description: "More consecutive days played. Fewer players forgetting to log in.",
+                          label: "Benefit",
+                        },
+                        {
+                          color: "#060010",
+                          title: "Marketability",
+                          description:
+                            "A unique health hook that gives you a headline other servers can't copy.",
+                          label: "Benefit",
+                        },
+                        {
+                          color: "#060010",
+                          title: "Visibility",
+                          description: "Keeps your server in players' daily routine, not just when they're online.",
+                          label: "Benefit",
+                        },
+                      ]}
+                    />
                   </div>
                 </div>
 
