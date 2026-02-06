@@ -11,21 +11,3 @@ services:
     restart: unless-stopped
     env_file:
       - ../.env
-
-  stepcraft_react_dev:
-    image: node:22-alpine
-    working_dir: /app
-    command: npm run dev -- --host 0.0.0.0 --port 5173
-    ports:
-      - "5173:5173"
-    environment:
-      VITE_BACKEND_URL: ${VITE_BACKEND_URL:-https://api.stepcraft.org}
-      VITE_GOOGLE_CLIENT_ID: ${VITE_GOOGLE_CLIENT_ID:-}
-      CHOKIDAR_USEPOLLING: "true"
-      CHOKIDAR_INTERVAL: "200"
-    volumes:
-      - .:/app
-      - /app/node_modules
-    restart: unless-stopped
-    env_file:
-      - ../.env
