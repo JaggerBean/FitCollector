@@ -104,24 +104,31 @@ function CarouselItem({
       transition={transition}
     >
       {!round && item.imageUrl && (
-        <div
-          className="absolute inset-0 bg-center bg-cover"
-          style={{ backgroundImage: `url(${item.imageUrl})` }}
-        />
-      )}
-      {!round && <div className="absolute inset-0 bg-[#0b0f1a]/70" />}
-      <div className="relative z-10 w-full">
-        <div className={`${round ? "p-0 m-0" : "mb-4 p-5"}`}>
-          <span className="flex h-[44px] w-[44px] items-center justify-center rounded-full bg-[#060010]">
-            {item.icon}
-          </span>
+        {!round && <div className="absolute inset-0 bg-[#0b0f1a]/55" />}
+        <div className="relative z-10 flex h-full w-full flex-col">
+          {!round && item.imageUrl ? (
+            <div
+              className="mx-4 mt-4 flex items-center justify-center rounded-xl bg-[#0f172a]/60 p-3"
+              style={{ height: Math.max(150, Math.round(itemHeight * 0.55)) }}
+            >
+              <img
+                src={item.imageUrl}
+                alt={item.title}
+                className="max-h-full max-w-full object-contain"
+              />
+            </div>
+          ) : (
+            <div className={`${round ? "p-0 m-0" : "mb-4 p-5"}`}>
+              <span className="flex h-[44px] w-[44px] items-center justify-center rounded-full bg-[#060010]">
+                {item.icon}
+              </span>
+            </div>
+          )}
+          <div className="px-5 pb-5 pt-4">
+            <div className="mb-1 font-black text-lg text-white">{item.title}</div>
+            <p className="text-sm text-white/90">{item.description}</p>
+          </div>
         </div>
-        <div className="p-5">
-          <div className="mb-1 font-black text-lg text-white">{item.title}</div>
-          <p className="text-sm text-white">{item.description}</p>
-        </div>
-      </div>
-      <div className="p-5">
         <div className="mb-1 font-black text-lg text-white">{item.title}</div>
         <p className="text-sm text-white">{item.description}</p>
       </div>
@@ -291,7 +298,7 @@ export default function Carousel({
   return (
     <div
       ref={containerRef}
-      className={`relative overflow-hidden p-4 ${
+      className={`relative overflow-visible p-4 ${
         round ? "rounded-full border border-white" : "rounded-[24px] border border-[#222]"
       }`}
       style={{
@@ -305,7 +312,7 @@ export default function Carousel({
             type="button"
             aria-label="Previous"
             onClick={() => goTo(-1)}
-            className="absolute left-3 top-1/2 z-20 -translate-y-1/2 grid h-9 w-9 place-items-center rounded-full border border-white/10 bg-[#0b0f1a]/70 text-white hover:bg-[#111827]"
+            className="absolute -left-3 top-1/2 z-20 -translate-y-1/2 grid h-9 w-9 place-items-center rounded-full border border-white/10 bg-[#0b0f1a]/90 text-white hover:bg-[#111827]"
           >
             ‹
           </button>
@@ -313,45 +320,47 @@ export default function Carousel({
             type="button"
             aria-label="Next"
             onClick={() => goTo(1)}
-            className="absolute right-3 top-1/2 z-20 -translate-y-1/2 grid h-9 w-9 place-items-center rounded-full border border-white/10 bg-[#0b0f1a]/70 text-white hover:bg-[#111827]"
+            className="absolute -right-3 top-1/2 z-20 -translate-y-1/2 grid h-9 w-9 place-items-center rounded-full border border-white/10 bg-[#0b0f1a]/90 text-white hover:bg-[#111827]"
           >
             ›
           </button>
         </>
       )}
-      {itemWidth > 0 && (
-      <motion.div
-        className="flex"
-        drag={isAnimating ? false : "x"}
-        {...dragProps}
-        style={{
-          width: itemWidth || "100%",
-          gap: `${GAP}px`,
-          perspective: 1000,
-          perspectiveOrigin: `${position * trackItemOffset + itemWidth / 2}px 50%`,
-          x,
-        }}
-        onDragEnd={handleDragEnd}
-        animate={{ x: -(position * trackItemOffset) }}
-        transition={effectiveTransition}
-        onAnimationStart={handleAnimationStart}
-        onAnimationComplete={handleAnimationComplete}
-      >
-        {itemsForRender.map((item, index) => (
-          <CarouselItem
-            key={`${item?.id ?? index}-${index}`}
-            item={item}
-            index={index}
-            itemWidth={itemWidth}
-            itemHeight={itemHeight}
-            round={round}
-            trackItemOffset={trackItemOffset}
-            x={x}
-            transition={effectiveTransition}
-          />
-        ))}
-      </motion.div>
-      )}
+      <div className="overflow-hidden rounded-[20px]">
+        {itemWidth > 0 && (
+        <motion.div
+          className="flex"
+          drag={isAnimating ? false : "x"}
+          {...dragProps}
+          style={{
+            width: itemWidth || "100%",
+            gap: `${GAP}px`,
+            perspective: 1000,
+            perspectiveOrigin: `${position * trackItemOffset + itemWidth / 2}px 50%`,
+            x,
+          }}
+          onDragEnd={handleDragEnd}
+          animate={{ x: -(position * trackItemOffset) }}
+          transition={effectiveTransition}
+          onAnimationStart={handleAnimationStart}
+          onAnimationComplete={handleAnimationComplete}
+        >
+          {itemsForRender.map((item, index) => (
+            <CarouselItem
+              key={`${item?.id ?? index}-${index}`}
+              item={item}
+              index={index}
+              itemWidth={itemWidth}
+              itemHeight={itemHeight}
+              round={round}
+              trackItemOffset={trackItemOffset}
+              x={x}
+              transition={effectiveTransition}
+            />
+          ))}
+        </motion.div>
+        )}
+      </div>
       <div className={`flex w-full justify-center ${round ? "absolute z-20 bottom-12 left-1/2 -translate-x-1/2" : ""}`}>
         <div className="mt-4 flex w-[150px] justify-between px-8">
           {items.map((_, index) => (
