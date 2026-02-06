@@ -5,6 +5,7 @@ import SmoothScroll from "../components/SmoothScroll";
 import MagicBento from "../components/MagicBento";
 import StarBorder from "../components/StarBorder";
 import Magnet from "../components/Magnet";
+import SplitText from "../components/SplitText";
 import { useAuthContext } from "../app/AuthContext";
 import trackedRewardImg from "../assets/landing/Tracked Reward.png";
 
@@ -27,10 +28,18 @@ export default function LandingPage() {
           <section className="relative">
             <div className="grid gap-12 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
               <div className="max-w-xl">
-                <h1 className="text-[2.5rem] font-bold leading-[1.15] text-white md:text-[3.5rem]">
-                  Driving daily player engagement one<br />
-                  step at a time.
-                </h1>
+                <SplitText
+                  tag="h1"
+                  text="Driving daily player engagement one\nstep at a time."
+                  className="block text-[2.5rem] font-bold leading-[1.15] text-white md:text-[3.5rem]"
+                  textAlign="left"
+                  splitType="chars"
+                  delay={30}
+                  duration={1.1}
+                  ease="power3.out"
+                  threshold={0.2}
+                  rootMargin="-60px"
+                />
                 <p className="mt-6 text-base leading-relaxed text-slate-300 md:text-lg">
                   StepCraft turns step goals into in-game rewards. Launch a private or public server and keep your
                   community engaged every single day.

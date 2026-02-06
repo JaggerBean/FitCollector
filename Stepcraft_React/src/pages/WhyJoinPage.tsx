@@ -4,6 +4,7 @@ import { Layout } from "../components/Layout";
 import SmoothScroll from "../components/SmoothScroll";
 import { PitchScrollScene } from "../components/ScrollStack";
 import { DragGallery } from "../components/DraggableGallery";
+import SplitText from "../components/SplitText";
 import { useAuthContext } from "../app/AuthContext";
 import casualRetentionImg from "../assets/MemoIMGs/Casual Player Retention.png";
 import zeroFrictionImg from "../assets/MemoIMGs/Zero Friction.png";
@@ -83,9 +84,18 @@ export default function WhyJoinPage() {
                     Why you should choose StepCraft for your server
                   </p>
 
-                  <h1 className="mt-4 text-[2.1rem] font-semibold leading-tight text-white sm:text-[2.6rem] md:text-[3.4rem]">
-                    A retention system players can't ignore because it lives on their phone.
-                  </h1>
+                  <SplitText
+                    tag="h1"
+                    text="A retention system players can't ignore because it lives on their phone."
+                    className="block mt-4 text-[2.1rem] font-semibold leading-tight text-white sm:text-[2.6rem] md:text-[3.4rem]"
+                    textAlign="left"
+                    splitType="chars"
+                    delay={30}
+                    duration={1.1}
+                    ease="power3.out"
+                    threshold={0.2}
+                    rootMargin="-60px"
+                  />
 
                   {/* <p className="mt-5 text-base leading-relaxed text-slate-300 md:text-lg">
                     StepCraft turns real-world movement into in-game progress. Players build streaks, chase daily goals,
