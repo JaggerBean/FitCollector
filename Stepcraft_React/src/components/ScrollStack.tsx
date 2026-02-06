@@ -38,8 +38,8 @@ function applyStepHold(progress: number, steps: number, hold = 0.35) {
 
 export function PitchScrollScene({
   scenes,
-  blurStart = 0.00,
-  blurRange = 0.10,
+  blurStart = 1,
+  blurRange = 1,
   maxBlur = 6,
   blurBandStart = 0,
   blurBandHeight = 64,
