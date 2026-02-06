@@ -131,17 +131,26 @@ export function PitchScrollScene({
 
     measureRef.current = measure;
 
-    const ro = new ResizeObserver(measure);
-    resizeObserverRef.current = ro;
-    ro.observe(viewport);
-    if (list) ro.observe(list);
-    sceneRefs.current.forEach((el) => el && ro.observe(el));
-
     const rafId = requestAnimationFrame(measure);
     window.addEventListener("resize", measure);
+
+    if (typeof ResizeObserver !== "undefined") {
+      const ro = new ResizeObserver(measure);
+      resizeObserverRef.current = ro;
+      ro.observe(viewport);
+      if (list) ro.observe(list);
+      sceneRefs.current.forEach((el) => el && ro.observe(el));
+
+      return () => {
+        cancelAnimationFrame(rafId);
+        ro.disconnect();
+        resizeObserverRef.current = null;
+        window.removeEventListener("resize", measure);
+      };
+    }
+
     return () => {
       cancelAnimationFrame(rafId);
-      ro.disconnect();
       resizeObserverRef.current = null;
       window.removeEventListener("resize", measure);
     };
@@ -160,15 +169,13 @@ export function PitchScrollScene({
   const mobileSceneA = safeScenes[baseIndex];
   const mobileSceneB = safeScenes[nextIndex];
 
-  const overflowByScene = sceneOverflow.length === sceneCount
-    ? sceneOverflow
-    : new Array(sceneCount).fill(0);
+  const hasMeasurements = sceneOverflow.length === sceneCount && sceneOffsets.length === sceneCount;
+  const overflowByScene = hasMeasurements ? sceneOverflow : new Array(sceneCount).fill(0);
+  const offsetsByScene = hasMeasurements ? sceneOffsets : new Array(sceneCount).fill(0);
 
-  const offsetsByScene = sceneOffsets.length === sceneCount
-    ? sceneOffsets
-    : new Array(sceneCount).fill(0);
-
-  const totalShift = (offsetsByScene[baseIndex] || 0) + (overflowByScene[baseIndex] || 0) * t;
+  const totalShift = hasMeasurements
+    ? (offsetsByScene[baseIndex] || 0) + (overflowByScene[baseIndex] || 0) * t
+    : 0;
 
   const showScrollHint = isPinned && p < 0.985;
 
