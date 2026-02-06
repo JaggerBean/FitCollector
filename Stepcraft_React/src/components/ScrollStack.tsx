@@ -163,7 +163,6 @@ export function PitchScrollScene({
                   style={{
                     transform: `translate3d(0, ${-36 * visualScaled}px, 0)`,
                     transition: "transform 200ms ease",
-                    clipPath: `inset(${Math.max(0, blurBandStart + blurBandHeight)}px 0 0 0)`,
                   }}
                 >
                 {safeScenes.map((s, i) => {
