@@ -38,18 +38,8 @@ function applyStepHold(progress: number, steps: number, hold = 0.35) {
 
 export function PitchScrollScene({
   scenes,
-  blurStart = 1,
-  blurRange = 1,
-  maxBlur = 6,
-  blurBandStart = 0,
-  blurBandHeight = 64,
 }: {
   scenes: Scene[];
-  blurStart?: number;
-  blurRange?: number;
-  maxBlur?: number;
-  blurBandStart?: number;
-  blurBandHeight?: number;
 }) {
   const wrapRef = useRef<HTMLDivElement>(null);
 
@@ -195,57 +185,6 @@ export function PitchScrollScene({
                     </div>
                   );
                 })}
-                </div>
-
-                <div
-                  className="pointer-events-none absolute inset-0"
-                  style={{
-                    clipPath: `inset(${Math.max(0, blurBandStart)}px 0 calc(100% - ${Math.max(
-                      0,
-                      blurBandStart + blurBandHeight
-                    )}px) 0)`,
-                  }}
-                >
-                  <div
-                    className="relative"
-                    style={{
-                      transform: `translate3d(0, ${-36 * visualScaled}px, 0)`,
-                      transition: "transform 200ms ease",
-                    }}
-                  >
-                    {safeScenes.map((s, i) => {
-                      const dist = Math.abs(i - visualScaled);
-                      const fade = clamp01(1 - dist);
-
-                      const baseOpacity = 0.08 + 0.92 * fade;
-
-                      let y = 0;
-                      if (i === baseIndex) y = -10 * t;
-                      if (i === baseIndex + 1) y = 14 * (1 - t);
-
-                      const scale = 0.98 + 0.02 * fade;
-
-                      const blurProgress = clamp01((visualScaled - i - blurStart) / Math.max(0.001, blurRange));
-                      const blur = maxBlur * blurProgress;
-
-                      return (
-                        <div
-                          key={`${s.title}-blur`}
-                          className="mt-8"
-                          style={{
-                            opacity: baseOpacity * blurProgress,
-                            transform: `translate3d(0, ${y}px, 0) scale(${scale})`,
-                            filter: blur ? `blur(${blur}px)` : undefined,
-                            transition: "opacity 280ms ease, transform 280ms ease, filter 280ms ease",
-                          }}
-                        >
-                          <div className="text-xs uppercase tracking-[0.2em] text-emerald-300/70">{s.eyebrow}</div>
-                          <h3 className="mt-3 text-xl font-semibold text-white sm:text-2xl">{s.title}</h3>
-                          <p className="mt-3 text-sm leading-relaxed text-slate-300">{s.body}</p>
-                        </div>
-                      );
-                    })}
-                  </div>
                 </div>
               </div>
             </div>
