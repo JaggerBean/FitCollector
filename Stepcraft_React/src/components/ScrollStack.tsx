@@ -111,7 +111,7 @@ export function PitchScrollScene({
 
     const measure = () => {
       const viewportHeight = viewport.clientHeight;
-      const nextOffsets = safeScenes.map((_, i) => {
+      const rawOffsets = safeScenes.map((_, i) => {
         const el = sceneRefs.current[i];
         if (!el) return 0;
         const top = el.offsetTop;
@@ -119,7 +119,16 @@ export function PitchScrollScene({
         const bottom = top + height;
         return Math.max(0, bottom - viewportHeight);
       });
-      setSceneOffsets(nextOffsets);
+
+      const maxOffset = rawOffsets.reduce((max, value) => Math.max(max, value), 0);
+      const span = Math.max(1, safeScenes.length - 1);
+      const distributed = rawOffsets.map((value, i) => {
+        if (maxOffset <= 0) return 0;
+        const ramp = (maxOffset * i) / span;
+        return Math.max(value, ramp);
+      });
+
+      setSceneOffsets(distributed);
     };
 
     measure();
