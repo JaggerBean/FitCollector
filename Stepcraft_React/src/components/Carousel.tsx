@@ -1,5 +1,7 @@
-import React, { JSX, useEffect, useMemo, useRef, useState } from "react";
-import { motion, PanInfo, useMotionValue, useTransform } from "motion/react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { motion, useMotionValue, useTransform } from "motion/react";
+import type { JSX } from "react";
+import type { PanInfo } from "motion/react";
 import { FiCircle, FiCode, FiFileText, FiLayers, FiLayout } from "react-icons/fi";
 
 export interface CarouselItem {
