@@ -64,8 +64,23 @@ const Magnet: React.FC<MagnetProps> = ({
             const verticalOverlap = rect.top + offsetY < s.bottom && rect.bottom + offsetY > s.top;
             if (!verticalOverlap) return;
 
-            minX = Math.max(minX, s.right + collisionPadding - rect.left);
-            maxX = Math.min(maxX, s.left - collisionPadding - rect.right);
+            if (s.left >= rect.right) {
+              const gap = s.left - rect.right;
+              const maxRight = (gap - collisionPadding) / 2;
+              if (maxRight <= 0) {
+                maxX = Math.min(maxX, 0);
+              } else {
+                maxX = Math.min(maxX, maxRight);
+              }
+            } else if (s.right <= rect.left) {
+              const gap = rect.left - s.right;
+              const maxLeft = -(gap - collisionPadding) / 2;
+              if (maxLeft >= 0) {
+                minX = Math.max(minX, 0);
+              } else {
+                minX = Math.max(minX, maxLeft);
+              }
+            }
           });
 
           if (minX <= maxX) {
