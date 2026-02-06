@@ -109,10 +109,6 @@ export function PitchScrollScene({ scenes }: { scenes: Scene[] }) {
   const mobileSceneA = safeScenes[baseIndex];
   const mobileSceneB = safeScenes[nextIndex];
 
-  const titleBlurOffset = -40;
-  const titleBlurHeight = 80;
-  const titleBlurFade = 10;
-
   const showScrollHint = isPinned && p < 0.985;
 
   const onScrollHintClick = () => {
@@ -148,15 +144,6 @@ export function PitchScrollScene({ scenes }: { scenes: Scene[] }) {
               </div>
 
               <div className="relative min-h-0 flex-1">
-                <div
-                  className="pointer-events-none absolute left-0 right-0 z-10 backdrop-blur-md"
-                  style={{
-                    top: titleBlurOffset,
-                    height: titleBlurHeight,
-                    WebkitMaskImage: `linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.7) ${titleBlurFade}px, rgba(0,0,0,0) ${titleBlurHeight}px)`,
-                    maskImage: `linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.7) ${titleBlurFade}px, rgba(0,0,0,0) ${titleBlurHeight}px)`,
-                  }}
-                />
                 <div
                   className="relative"
                   style={{
