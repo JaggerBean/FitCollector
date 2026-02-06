@@ -30,7 +30,7 @@ export default function LandingPage() {
               <div className="max-w-xl">
                 <SplitText
                   tag="h1"
-                  text="Driving daily player engagement one\nstep at a time."
+                  text="Driving daily player engagement one step at a time."
                   className="block text-[2.5rem] font-bold leading-[1.15] text-white md:text-[3.5rem]"
                   textAlign="left"
                   splitType="chars"
