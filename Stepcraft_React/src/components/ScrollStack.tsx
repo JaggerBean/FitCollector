@@ -109,8 +109,8 @@ export function PitchScrollScene({ scenes }: { scenes: Scene[] }) {
   const mobileSceneA = safeScenes[baseIndex];
   const mobileSceneB = safeScenes[nextIndex];
 
-  const titleFadeStart = 18;
-  const titleFadeEnd = 44;
+  const titleFadeStart = 0;
+  const titleFadeEnd = 8;
 
   const showScrollHint = isPinned && p < 0.985;
 
@@ -147,28 +147,16 @@ export function PitchScrollScene({ scenes }: { scenes: Scene[] }) {
               </div>
 
               <div className="relative min-h-0 flex-1">
-                <div
-                  className="pointer-events-none absolute left-0 right-0 top-0 z-10 h-16 backdrop-blur-md"
-                  style={{
-                    WebkitMaskImage:
-                      `linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) ${titleFadeStart}px, rgba(0,0,0,0.6) ${titleFadeEnd}px, rgba(0,0,0,0) ${
-                        titleFadeEnd + 18
-                      }px)` ,
-                    maskImage:
-                      `linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) ${titleFadeStart}px, rgba(0,0,0,0.6) ${titleFadeEnd}px, rgba(0,0,0,0) ${
-                        titleFadeEnd + 18
-                      }px)` ,
-                  }}
-                />
+                <div className="pointer-events-none absolute left-0 right-0 top-0 z-10 h-10 backdrop-blur-md" />
                 <div
                   className="relative"
                   style={{
                     transform: `translate3d(0, ${-36 * visualScaled}px, 0)`,
                     transition: "transform 200ms ease",
                     WebkitMaskImage:
-                      `linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0) ${titleFadeStart}px, rgba(0,0,0,1) ${titleFadeEnd}px, rgba(0,0,0,1) 100%)`,
+                      `linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,1) ${titleFadeEnd}px, rgba(0,0,0,1) 100%)`,
                     maskImage:
-                      `linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0) ${titleFadeStart}px, rgba(0,0,0,1) ${titleFadeEnd}px, rgba(0,0,0,1) 100%)`,
+                      `linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,1) ${titleFadeEnd}px, rgba(0,0,0,1) 100%)`,
                   }}
                 >
                 {safeScenes.map((s, i) => {
