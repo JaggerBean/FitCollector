@@ -378,22 +378,3 @@ export default function Carousel({
     </div>
   );
 }
-
-                        {!round && <div className="absolute inset-0 bg-[#0b0f1a]/60" />}
-                        <div className="relative z-10 flex h-full w-full flex-col">
-                          {!round && item.imageUrl ? (
-                            <div className="flex flex-1 items-center justify-center px-6 py-6">
-                              <img src={item.imageUrl} alt={item.title} className="max-h-full w-full object-contain" />
-                            </div>
-                          ) : (
-                            <div className={`${round ? "p-0 m-0" : "mb-4 p-5"}`}>
-                              <span className="flex h-[44px] w-[44px] items-center justify-center rounded-full bg-[#060010]">
-                                {item.icon}
-                              </span>
-                            </div>
-                          )}
-                          <div className="px-5 pb-5">
-                            <div className="mb-1 font-black text-lg text-white">{item.title}</div>
-                            <p className="text-sm text-white/90">{item.description}</p>
-                          </div>
-                        </div>
