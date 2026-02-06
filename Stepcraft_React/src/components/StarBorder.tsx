@@ -3,6 +3,7 @@ import React from "react";
 type StarBorderProps<T extends React.ElementType> = React.ComponentPropsWithoutRef<T> & {
   as?: T;
   className?: string;
+  contentClassName?: string;
   children?: React.ReactNode;
   color?: string;
   speed?: React.CSSProperties["animationDuration"];
@@ -12,6 +13,7 @@ type StarBorderProps<T extends React.ElementType> = React.ComponentPropsWithoutR
 const StarBorder = <T extends React.ElementType = "button">({
   as,
   className = "",
+  contentClassName,
   color = "white",
   speed = "6s",
   thickness = 1,
@@ -19,6 +21,11 @@ const StarBorder = <T extends React.ElementType = "button">({
   ...rest
 }: StarBorderProps<T>) => {
   const Component = as || "button";
+  const defaultContentClass =
+    "bg-gradient-to-b from-black to-gray-900 border border-gray-800 text-white text-center text-[16px] py-[16px] px-[26px] rounded-[20px]";
+  const resolvedContentClass = contentClassName
+    ? `${defaultContentClass} ${contentClassName}`
+    : defaultContentClass;
 
   return (
     <Component
@@ -43,7 +50,7 @@ const StarBorder = <T extends React.ElementType = "button">({
           animationDuration: speed,
         }}
       ></div>
-      <div className="relative z-10 bg-gradient-to-b from-black to-gray-900 border border-gray-800 text-white text-center text-[16px] py-[16px] px-[26px] rounded-[20px]">
+      <div className={`relative z-10 ${resolvedContentClass}`}>
         {children}
       </div>
     </Component>
