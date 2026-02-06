@@ -64,18 +64,14 @@ const Magnet: React.FC<MagnetProps> = ({
 
             if (offsetX > 0) {
               const maxRight = s.left - collisionPadding - rect.right;
-              if (maxRight < 0) {
-                offsetX = 0;
-              } else if (offsetX > maxRight) {
+              if (offsetX > maxRight) {
                 offsetX = maxRight;
               }
             }
 
             if (offsetX < 0) {
               const maxLeft = s.right + collisionPadding - rect.left;
-              if (maxLeft > 0) {
-                offsetX = 0;
-              } else if (offsetX < maxLeft) {
+              if (offsetX < maxLeft) {
                 offsetX = maxLeft;
               }
             }
