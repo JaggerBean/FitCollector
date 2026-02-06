@@ -44,6 +44,8 @@ export function PitchScrollScene({
   const wrapRef = useRef<HTMLDivElement>(null);
   const textViewportRef = useRef<HTMLDivElement>(null);
   const sceneRefs = useRef<Array<HTMLDivElement | null>>([]);
+  const resizeObserverRef = useRef<ResizeObserver | null>(null);
+  const measureRef = useRef<() => void>(() => {});
 
   const safeScenes = useMemo(() => scenes.slice(0, Math.max(1, scenes.length)), [scenes]);
 
@@ -118,15 +120,19 @@ export function PitchScrollScene({
       setSceneOverflow(next);
     };
 
-    measure();
+    measureRef.current = measure;
 
     const ro = new ResizeObserver(measure);
+    resizeObserverRef.current = ro;
     ro.observe(viewport);
     sceneRefs.current.forEach((el) => el && ro.observe(el));
 
+    const rafId = requestAnimationFrame(measure);
     window.addEventListener("resize", measure);
     return () => {
+      cancelAnimationFrame(rafId);
       ro.disconnect();
+      resizeObserverRef.current = null;
       window.removeEventListener("resize", measure);
     };
   }, [safeScenes.length]);
@@ -220,6 +226,10 @@ export function PitchScrollScene({
                       key={s.title}
                       ref={(el) => {
                         sceneRefs.current[i] = el;
+                        if (el && resizeObserverRef.current) {
+                          resizeObserverRef.current.observe(el);
+                        }
+                        measureRef.current();
                       }}
                       className="mt-8"
                       style={{
