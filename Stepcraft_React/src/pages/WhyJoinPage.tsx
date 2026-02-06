@@ -6,6 +6,8 @@ import { PitchScrollScene } from "../components/ScrollStack";
 import { DragGallery } from "../components/DraggableGallery";
 import SplitText from "../components/SplitText";
 import MagicBento from "../components/MagicBento";
+import Magnet from "../components/Magnet";
+import StarBorder from "../components/StarBorder";
 import { useAuthContext } from "../app/AuthContext";
 import casualRetentionImg from "../assets/MemoIMGs/Casual Player Retention.png";
 import zeroFrictionImg from "../assets/MemoIMGs/Zero Friction.png";
@@ -105,12 +107,16 @@ export default function WhyJoinPage() {
                   </p> */}
 
                   <div className="mt-6 flex flex-wrap gap-3 sm:mt-8">
-                    <Link
-                      to={primaryCtaTo}
-                      className="flex h-11 w-full items-center justify-center rounded-md bg-emerald-500 px-6 text-sm font-semibold text-slate-950 transition hover:bg-emerald-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300 sm:w-auto"
-                    >
-                      {primaryCtaLabel}
-                    </Link>
+                    <Magnet>
+                      <StarBorder
+                        as={Link}
+                        to={primaryCtaTo}
+                        className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
+                        color="#10b981"
+                      >
+                        {primaryCtaLabel}
+                      </StarBorder>
+                    </Magnet>
 
                     {/* <Link
                       to="/"
@@ -276,12 +282,16 @@ export default function WhyJoinPage() {
                 you.
               </p>
               <div className="mt-6 flex justify-center">
-                <Link
-                  to={primaryCtaTo}
-                  className="flex h-11 w-full items-center justify-center rounded-md bg-emerald-500 px-6 text-sm font-semibold text-slate-950 transition hover:bg-emerald-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300 sm:w-auto"
-                >
-                  {primaryCtaLabel}
-                </Link>
+                <Magnet>
+                  <StarBorder
+                    as={Link}
+                    to={primaryCtaTo}
+                    className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
+                    color="#10b981"
+                  >
+                    {primaryCtaLabel}
+                  </StarBorder>
+                </Magnet>
               </div>
               {/* <div className="mt-4 text-xs text-slate-500">
                 Want a quick owner demo? Add 2-3 screenshots above and share this page as your pitch.
