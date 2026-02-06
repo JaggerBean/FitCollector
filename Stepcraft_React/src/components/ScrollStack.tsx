@@ -42,11 +42,6 @@ export function PitchScrollScene({
   scenes: Scene[];
 }) {
   const wrapRef = useRef<HTMLDivElement>(null);
-  const textViewportRef = useRef<HTMLDivElement>(null);
-  const textListRef = useRef<HTMLDivElement>(null);
-  const sceneRefs = useRef<Array<HTMLDivElement | null>>([]);
-  const resizeObserverRef = useRef<ResizeObserver | null>(null);
-  const measureRef = useRef<() => void>(() => {});
 
   const safeScenes = useMemo(() => scenes.slice(0, Math.max(1, scenes.length)), [scenes]);
 
@@ -58,8 +53,6 @@ export function PitchScrollScene({
   const [p, setP] = useState(0); // 0..1 (smoothed)
   const [active, setActive] = useState(0);
   const [isPinned, setIsPinned] = useState(false);
-  const [sceneOverflow, setSceneOverflow] = useState<number[]>([]);
-  const [sceneOffsets, setSceneOffsets] = useState<number[]>([]);
 
   useEffect(() => {
     const wrap = wrapRef.current;
@@ -107,55 +100,6 @@ export function PitchScrollScene({
     return () => cancelAnimationFrame(rafId);
   }, [safeScenes.length]);
 
-  useEffect(() => {
-    const viewport = textViewportRef.current;
-    const list = textListRef.current;
-    if (!viewport) return;
-
-    const measure = () => {
-      const viewportHeight = viewport.getBoundingClientRect().height || 0;
-      const nextOverflow = safeScenes.map((_, i) => {
-        const el = sceneRefs.current[i];
-        if (!el) return 0;
-        const h = el.getBoundingClientRect().height || 0;
-        return Math.max(0, h - viewportHeight);
-      });
-      const nextOffsets = safeScenes.map((_, i) => {
-        const el = sceneRefs.current[i];
-        if (!el) return 0;
-        return el.offsetTop - (list?.offsetTop ?? 0);
-      });
-      setSceneOverflow(nextOverflow);
-      setSceneOffsets(nextOffsets);
-    };
-
-    measureRef.current = measure;
-
-    const rafId = requestAnimationFrame(measure);
-    window.addEventListener("resize", measure);
-
-    if (typeof ResizeObserver !== "undefined") {
-      const ro = new ResizeObserver(measure);
-      resizeObserverRef.current = ro;
-      ro.observe(viewport);
-      if (list) ro.observe(list);
-      sceneRefs.current.forEach((el) => el && ro.observe(el));
-
-      return () => {
-        cancelAnimationFrame(rafId);
-        ro.disconnect();
-        resizeObserverRef.current = null;
-        window.removeEventListener("resize", measure);
-      };
-    }
-
-    return () => {
-      cancelAnimationFrame(rafId);
-      resizeObserverRef.current = null;
-      window.removeEventListener("resize", measure);
-    };
-  }, [safeScenes.length]);
-
 
 
   const sceneCount = safeScenes.length;
@@ -168,20 +112,6 @@ export function PitchScrollScene({
   const nextIndex = Math.min(sceneCount - 1, baseIndex + 1);
   const mobileSceneA = safeScenes[baseIndex];
   const mobileSceneB = safeScenes[nextIndex];
-
-  const hasMeasurements = sceneOverflow.length === sceneCount && sceneOffsets.length === sceneCount;
-  const overflowByScene = hasMeasurements ? sceneOverflow : new Array(sceneCount).fill(0);
-  const offsetsByScene = hasMeasurements ? sceneOffsets : new Array(sceneCount).fill(0);
-
-  const rawShift = hasMeasurements
-    ? (offsetsByScene[baseIndex] || 0) + (overflowByScene[baseIndex] || 0) * t
-    : 0;
-  const maxShift = hasMeasurements
-    ? (offsetsByScene[sceneCount - 1] || 0) + (overflowByScene[sceneCount - 1] || 0)
-    : 0;
-  const totalShift = Number.isFinite(rawShift)
-    ? Math.min(Math.max(0, rawShift), Math.max(0, maxShift))
-    : 0;
 
   const showScrollHint = isPinned && p < 0.985;
 
@@ -217,12 +147,11 @@ export function PitchScrollScene({
                 StepCraft in action
               </div>
 
-              <div ref={textViewportRef} className="relative z-0 min-h-0 flex-1 overflow-hidden">
+              <div className="relative z-0 min-h-0 flex-1 overflow-hidden">
                 <div
-                  ref={textListRef}
                   className="relative"
                   style={{
-                    transform: `translate3d(0, ${-totalShift}px, 0)`,
+                    transform: `translate3d(0, ${-36 * visualScaled}px, 0)`,
                     transition: "transform 200ms ease",
                   }}
                 >
@@ -243,13 +172,6 @@ export function PitchScrollScene({
                   return (
                     <div
                       key={s.title}
-                      ref={(el) => {
-                        sceneRefs.current[i] = el;
-                        if (el && resizeObserverRef.current) {
-                          resizeObserverRef.current.observe(el);
-                        }
-                        measureRef.current();
-                      }}
                       className="mt-8"
                       style={{
                         opacity: baseOpacity,
