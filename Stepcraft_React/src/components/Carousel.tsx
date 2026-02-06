@@ -139,8 +139,9 @@ export default function Carousel({
   round = false,
 }: CarouselProps): JSX.Element {
   const containerPadding = 16;
-  const resolvedBaseWidth = baseWidth === 0 ? 0 : baseWidth;
-  const itemWidth = resolvedBaseWidth === 0 ? 0 : resolvedBaseWidth - containerPadding * 2;
+  const [measuredWidth, setMeasuredWidth] = useState(0);
+  const resolvedBaseWidth = baseWidth === 0 ? measuredWidth : baseWidth;
+  const itemWidth = resolvedBaseWidth ? resolvedBaseWidth - containerPadding * 2 : 0;
   const trackItemOffset = itemWidth + GAP;
   const itemsForRender = useMemo(() => {
     if (!loop) return items;
@@ -155,6 +156,15 @@ export default function Carousel({
   const [isAnimating, setIsAnimating] = useState<boolean>(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (baseWidth !== 0 || !containerRef.current) return;
+    const el = containerRef.current;
+    const update = () => setMeasuredWidth(el.clientWidth);
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [baseWidth]);
   useEffect(() => {
     if (pauseOnHover && containerRef.current) {
       const container = containerRef.current;
@@ -279,6 +289,7 @@ export default function Carousel({
         ...(round && { height: `${baseWidth}px` }),
       }}
     >
+      {itemWidth > 0 && (
       <motion.div
         className="flex"
         drag={isAnimating ? false : "x"}
@@ -310,6 +321,7 @@ export default function Carousel({
           />
         ))}
       </motion.div>
+      )}
       <div className={`flex w-full justify-center ${round ? "absolute z-20 bottom-12 left-1/2 -translate-x-1/2" : ""}`}>
         <div className="mt-4 flex w-[150px] justify-between px-8">
           {items.map((_, index) => (
