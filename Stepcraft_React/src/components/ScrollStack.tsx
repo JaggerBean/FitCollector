@@ -201,7 +201,10 @@ export function PitchScrollScene({
                 <div
                   className="pointer-events-none absolute inset-0"
                   style={{
-                    clipPath: `inset(${Math.max(0, blurBandStart)}px 0 ${Math.max(0, 100 - (blurBandStart + blurBandHeight))}% 0)`,
+                    clipPath: `inset(${Math.max(0, blurBandStart)}px 0 calc(100% - ${Math.max(
+                      0,
+                      blurBandStart + blurBandHeight
+                    )}px) 0)`,
                   }}
                 >
                   <div
