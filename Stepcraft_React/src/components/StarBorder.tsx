@@ -30,17 +30,21 @@ const StarBorder = <T extends React.ElementType = "button">({
       }}
     >
       <div
-        className="absolute w-[300%] h-[50%] opacity-0 bottom-[-11px] right-[-250%] rounded-full z-0 transition-opacity duration-0 group-hover:opacity-70 group-hover:animate-star-movement-bottom"
+        className="absolute w-[220%] h-[60%] opacity-0 bottom-[-8px] right-[-120%] rounded-full z-0 transition-opacity duration-0 group-hover:opacity-70 group-hover:animate-star-movement-bottom"
         style={{
           background: `radial-gradient(circle, ${color}, transparent 10%)`,
           animationDuration: speed,
+          animationDelay: "0s",
+          animationTimingFunction: "linear",
         }}
       ></div>
       <div
-        className="absolute w-[300%] h-[50%] opacity-0 top-[-10px] left-[-250%] rounded-full z-0 transition-opacity duration-0 group-hover:opacity-70 group-hover:animate-star-movement-top"
+        className="absolute w-[220%] h-[60%] opacity-0 top-[-8px] left-[-120%] rounded-full z-0 transition-opacity duration-0 group-hover:opacity-70 group-hover:animate-star-movement-top"
         style={{
           background: `radial-gradient(circle, ${color}, transparent 10%)`,
           animationDuration: speed,
+          animationDelay: "0s",
+          animationTimingFunction: "linear",
         }}
       ></div>
       <div className="relative z-[1] bg-gradient-to-b from-emerald-950/90 via-slate-950 to-slate-950 border border-emerald-900/70 text-white text-center text-[16px] py-[16px] px-[26px] rounded-[20px]">
