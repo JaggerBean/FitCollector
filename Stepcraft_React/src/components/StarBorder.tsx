@@ -37,30 +37,10 @@ const StarBorder = <T extends React.ElementType = "button">({
       }}
     >
       <div
-        className="absolute w-[300%] h-[50%] opacity-70 bottom-[-11px] right-[-250%] rounded-full animate-star-movement-bottom z-0"
+        className="pointer-events-none absolute inset-0 rounded-[inherit] border border-transparent animate-star-rotate z-0"
         style={{
-          background: `radial-gradient(circle, ${color}, transparent 10%)`,
-          animationDuration: speed,
-        }}
-      ></div>
-      <div
-        className="absolute w-[300%] h-[50%] opacity-70 top-[-10px] left-[-250%] rounded-full animate-star-movement-top z-0"
-        style={{
-          background: `radial-gradient(circle, ${color}, transparent 10%)`,
-          animationDuration: speed,
-        }}
-      ></div>
-      <div
-        className="absolute left-0 top-[12%] h-[76%] w-[4px] opacity-80 animate-star-movement-left z-0 rounded-full"
-        style={{
-          background: `linear-gradient(to bottom, transparent 0%, ${color} 50%, transparent 100%)`,
-          animationDuration: speed,
-        }}
-      ></div>
-      <div
-        className="absolute right-0 top-[12%] h-[76%] w-[4px] opacity-80 animate-star-movement-right z-0 rounded-full"
-        style={{
-          background: `linear-gradient(to top, transparent 0%, ${color} 50%, transparent 100%)`,
+          background: `linear-gradient(#000, #000) padding-box, conic-gradient(from 0deg, transparent 0deg, ${color} 60deg, transparent 120deg, transparent 360deg) border-box`,
+          backgroundClip: "padding-box, border-box",
           animationDuration: speed,
         }}
       ></div>
