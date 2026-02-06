@@ -114,8 +114,11 @@ export function PitchScrollScene({
       const rawOffsets = safeScenes.map((_, i) => {
         const el = sceneRefs.current[i];
         if (!el) return 0;
+        const styles = window.getComputedStyle(el);
+        const marginTop = Number.parseFloat(styles.marginTop || "0") || 0;
+        const marginBottom = Number.parseFloat(styles.marginBottom || "0") || 0;
         const top = el.offsetTop;
-        const height = el.offsetHeight;
+        const height = el.offsetHeight + marginTop + marginBottom;
         const bottom = top + height;
         return Math.max(0, bottom - viewportHeight);
       });
