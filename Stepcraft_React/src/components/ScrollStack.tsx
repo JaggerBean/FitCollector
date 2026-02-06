@@ -109,7 +109,9 @@ export function PitchScrollScene({ scenes }: { scenes: Scene[] }) {
   const mobileSceneA = safeScenes[baseIndex];
   const mobileSceneB = safeScenes[nextIndex];
 
-  const titleFadeEnd = 8;
+  const titleBlurOffset = -12;
+  const titleBlurHeight = 28;
+  const titleBlurFade = 14;
 
   const showScrollHint = isPinned && p < 0.985;
 
@@ -146,16 +148,20 @@ export function PitchScrollScene({ scenes }: { scenes: Scene[] }) {
               </div>
 
               <div className="relative min-h-0 flex-1">
-                <div className="pointer-events-none absolute left-0 right-0 top-0 z-10 h-10 backdrop-blur-md" />
+                <div
+                  className="pointer-events-none absolute left-0 right-0 z-10 backdrop-blur-md"
+                  style={{
+                    top: titleBlurOffset,
+                    height: titleBlurHeight,
+                    WebkitMaskImage: `linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.7) ${titleBlurFade}px, rgba(0,0,0,0) ${titleBlurHeight}px)`,
+                    maskImage: `linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.7) ${titleBlurFade}px, rgba(0,0,0,0) ${titleBlurHeight}px)`,
+                  }}
+                />
                 <div
                   className="relative"
                   style={{
                     transform: `translate3d(0, ${-36 * visualScaled}px, 0)`,
                     transition: "transform 200ms ease",
-                    WebkitMaskImage:
-                      `linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,1) ${titleFadeEnd}px, rgba(0,0,0,1) 100%)`,
-                    maskImage:
-                      `linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,1) ${titleFadeEnd}px, rgba(0,0,0,1) 100%)`,
                   }}
                 >
                 {safeScenes.map((s, i) => {
