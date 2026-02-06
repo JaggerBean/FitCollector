@@ -131,7 +131,15 @@ export function PitchScrollScene({ scenes }: { scenes: Scene[] }) {
 
   return (
     <div ref={wrapRef} className="relative min-h-[300vh] sm:min-h-[320vh]">
-      <div className="sticky top-0 h-screen w-full overflow-hidden rounded-2xl border border-slate-800/60 bg-slate-950/95 sm:rounded-3xl">
+      <div
+        className="sticky top-0 h-screen w-full overflow-hidden rounded-2xl border border-slate-800/60 bg-slate-950/95 sm:rounded-3xl"
+        style={{
+          WebkitMaskImage:
+            "linear-gradient(to bottom, transparent 0, transparent 64px, black 65px, black 100%)",
+          maskImage:
+            "linear-gradient(to bottom, transparent 0, transparent 64px, black 65px, black 100%)",
+        }}
+      >
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(16,185,129,0.14),transparent_55%)]" />
 
         <div className="relative mx-auto h-full max-w-6xl px-4 py-8 sm:px-6 sm:py-10 md:px-10">
