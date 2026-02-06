@@ -56,30 +56,21 @@ const Magnet: React.FC<MagnetProps> = ({
           ) as HTMLDivElement[];
 
           const rect = magnetRef.current.getBoundingClientRect();
+          let minX = -Infinity;
+          let maxX = Infinity;
 
           siblings.forEach((sib) => {
             const s = sib.getBoundingClientRect();
             const verticalOverlap = rect.top + offsetY < s.bottom && rect.bottom + offsetY > s.top;
             if (!verticalOverlap) return;
 
-            if (offsetX > 0) {
-              const maxRight = s.left - collisionPadding - rect.right;
-              if (maxRight < 0) {
-                offsetX = 0;
-              } else if (offsetX > maxRight) {
-                offsetX = maxRight;
-              }
-            }
-
-            if (offsetX < 0) {
-              const maxLeft = s.right + collisionPadding - rect.left;
-              if (maxLeft > 0) {
-                offsetX = 0;
-              } else if (offsetX < maxLeft) {
-                offsetX = maxLeft;
-              }
-            }
+            minX = Math.max(minX, s.right + collisionPadding - rect.left);
+            maxX = Math.min(maxX, s.left - collisionPadding - rect.right);
           });
+
+          if (minX <= maxX) {
+            offsetX = Math.min(maxX, Math.max(minX, offsetX));
+          }
         }
 
         setPosition({ x: offsetX, y: offsetY });
