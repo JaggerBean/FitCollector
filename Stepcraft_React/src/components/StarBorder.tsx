@@ -30,14 +30,14 @@ const StarBorder = <T extends React.ElementType = "button">({
       }}
     >
       <div
-        className="absolute w-[300%] h-[50%] opacity-0 bottom-[-11px] right-[-250%] rounded-full z-0 transition-opacity duration-300 group-hover:opacity-70 group-hover:animate-star-movement-bottom"
+        className="absolute w-[300%] h-[50%] opacity-0 bottom-[-11px] right-[-250%] rounded-full z-0 transition-opacity duration-0 group-hover:opacity-70 group-hover:animate-star-movement-bottom"
         style={{
           background: `radial-gradient(circle, ${color}, transparent 10%)`,
           animationDuration: speed,
         }}
       ></div>
       <div
-        className="absolute w-[300%] h-[50%] opacity-0 top-[-10px] left-[-250%] rounded-full z-0 transition-opacity duration-300 group-hover:opacity-70 group-hover:animate-star-movement-top"
+        className="absolute w-[300%] h-[50%] opacity-0 top-[-10px] left-[-250%] rounded-full z-0 transition-opacity duration-0 group-hover:opacity-70 group-hover:animate-star-movement-top"
         style={{
           background: `radial-gradient(circle, ${color}, transparent 10%)`,
           animationDuration: speed,
