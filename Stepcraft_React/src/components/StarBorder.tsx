@@ -51,14 +51,14 @@ const StarBorder = <T extends React.ElementType = "button">({
         }}
       ></div>
       <div
-        className="absolute h-[220%] w-[6px] opacity-80 left-0 top-[-60%] animate-star-movement-left z-0"
+        className="absolute left-0 top-[12%] h-[76%] w-[4px] opacity-80 animate-star-movement-left z-0 rounded-full"
         style={{
           background: `linear-gradient(to bottom, transparent 0%, ${color} 50%, transparent 100%)`,
           animationDuration: speed,
         }}
       ></div>
       <div
-        className="absolute h-[220%] w-[6px] opacity-80 right-0 top-[-60%] animate-star-movement-right z-0"
+        className="absolute right-0 top-[12%] h-[76%] w-[4px] opacity-80 animate-star-movement-right z-0 rounded-full"
         style={{
           background: `linear-gradient(to top, transparent 0%, ${color} 50%, transparent 100%)`,
           animationDuration: speed,
