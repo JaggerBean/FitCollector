@@ -103,35 +103,43 @@ function CarouselItem({
       }}
       transition={transition}
     >
-      {!round && item.imageUrl && (
-        {!round && <div className="absolute inset-0 bg-[#0b0f1a]/55" />}
-        <div className="relative z-10 flex h-full w-full flex-col">
-          {!round && item.imageUrl ? (
-            <div
-              className="mx-4 mt-4 flex items-center justify-center rounded-xl bg-[#0f172a]/60 p-3"
-              style={{ height: Math.max(150, Math.round(itemHeight * 0.55)) }}
-            >
-              <img
-                src={item.imageUrl}
-                alt={item.title}
-                className="max-h-full max-w-full object-contain"
-              />
-            </div>
-          ) : (
-            <div className={`${round ? "p-0 m-0" : "mb-4 p-5"}`}>
-              <span className="flex h-[44px] w-[44px] items-center justify-center rounded-full bg-[#060010]">
-                {item.icon}
-              </span>
-            </div>
-          )}
-          <div className="px-5 pb-5 pt-4">
-            <div className="mb-1 font-black text-lg text-white">{item.title}</div>
-            <p className="text-sm text-white/90">{item.description}</p>
-          </div>
+      {round ? (
+        <div className="flex h-full w-full flex-col items-center justify-center gap-3 px-6">
+          <span className="flex h-[56px] w-[56px] items-center justify-center rounded-full bg-[#0f172a]">
+            {item.icon}
+          </span>
+          <div className="font-black text-lg text-white">{item.title}</div>
+          <p className="text-sm text-white/80">{item.description}</p>
         </div>
-        <div className="mb-1 font-black text-lg text-white">{item.title}</div>
-        <p className="text-sm text-white">{item.description}</p>
-      </div>
+      ) : (
+        <>
+          {item.imageUrl ? <div className="absolute inset-0 bg-[#0b0f1a]/55" /> : null}
+          <div className="relative z-10 flex h-full w-full flex-col">
+            {item.imageUrl ? (
+              <div
+                className="mx-4 mt-4 flex items-center justify-center rounded-xl bg-[#0f172a]/60 p-3"
+                style={{ height: Math.max(150, Math.round(itemHeight * 0.55)) }}
+              >
+                <img
+                  src={item.imageUrl}
+                  alt={item.title}
+                  className="max-h-full max-w-full object-contain"
+                />
+              </div>
+            ) : (
+              <div className="mb-4 p-5">
+                <span className="flex h-[44px] w-[44px] items-center justify-center rounded-full bg-[#060010]">
+                  {item.icon}
+                </span>
+              </div>
+            )}
+            <div className="px-5 pb-5 pt-4">
+              <div className="mb-1 font-black text-lg text-white">{item.title}</div>
+              <p className="text-sm text-white/90">{item.description}</p>
+            </div>
+          </div>
+        </>
+      )}
     </motion.div>
   );
 }
