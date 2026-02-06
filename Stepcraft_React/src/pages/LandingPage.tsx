@@ -37,12 +37,14 @@ export default function LandingPage() {
                 <div className="mt-10 flex flex-wrap gap-4">
                   {isAuthenticated ? (
                     <>
-                      <Link
+                      <StarBorder
+                        as={Link}
                         to="/dashboard"
-                        className="flex h-11 items-center justify-center rounded-md bg-emerald-500 px-6 text-sm font-semibold text-slate-950 transition hover:bg-emerald-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
+                        className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
+                        color="#10b981"
                       >
                         Go to dashboard
-                      </Link>
+                      </StarBorder>
                       <StarBorder
                         as={Link}
                         to="/why-join"
@@ -54,12 +56,14 @@ export default function LandingPage() {
                     </>
                   ) : (
                     <>
-                      <Link
+                      <StarBorder
+                        as={Link}
                         to="/account/register"
-                        className="flex h-11 items-center justify-center rounded-md bg-emerald-500 px-6 text-sm font-semibold text-slate-950 transition hover:bg-emerald-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
+                        className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
+                        color="#10b981"
                       >
                         Create your account
-                      </Link>
+                      </StarBorder>
                       <StarBorder
                         as={Link}
                         to="/why-join"
@@ -68,12 +72,14 @@ export default function LandingPage() {
                       >
                         Why you should join
                       </StarBorder>
-                      <Link
+                      <StarBorder
+                        as={Link}
                         to="/login"
-                        className="flex h-11 items-center justify-center rounded-md border border-slate-700 px-6 text-sm font-semibold text-white transition hover:border-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
+                        className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
+                        color="#10b981"
                       >
                         Sign in
-                      </Link>
+                      </StarBorder>
                     </>
                   )}
                 </div>
@@ -191,12 +197,14 @@ export default function LandingPage() {
           <h2 className="text-2xl font-semibold text-white">Ready to build your StepCraft community?</h2>
           <p className="mt-2 text-sm text-slate-400">See the full walkthrough and launch when you’re ready.</p>
           <div className="mt-6 flex justify-center">
-            <Link
+            <StarBorder
+              as={Link}
               to={isAuthenticated ? "/dashboard" : "/why-join"}
-              className="flex h-11 items-center justify-center rounded-md bg-emerald-500 px-6 text-sm font-semibold text-slate-950 transition hover:bg-emerald-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
+              className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
+              color="#10b981"
             >
               {isAuthenticated ? "Go to dashboard" : "See why it works"}
-            </Link>
+            </StarBorder>
           </div>
           </section>
           </div>
