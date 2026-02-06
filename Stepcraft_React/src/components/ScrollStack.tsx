@@ -57,6 +57,7 @@ export function PitchScrollScene({
   const [active, setActive] = useState(0);
   const [isPinned, setIsPinned] = useState(false);
   const [sceneOffsets, setSceneOffsets] = useState<number[]>([]);
+  const [baseOffset, setBaseOffset] = useState(0);
 
   useEffect(() => {
     const wrap = wrapRef.current;
@@ -134,6 +135,9 @@ export function PitchScrollScene({
       });
 
       setSceneOffsets(distributed);
+      const listHeight = list.scrollHeight;
+      const centeredOffset = Math.max(0, (viewportHeight - listHeight) / 2);
+      setBaseOffset(maxOffset <= 0 ? centeredOffset : 0);
     };
 
     measure();
@@ -202,7 +206,7 @@ export function PitchScrollScene({
                   ref={copyListRef}
                   className="relative"
                   style={{
-                    transform: `translate3d(0, ${-scrollOffset}px, 0)`,
+                    transform: `translate3d(0, ${baseOffset - scrollOffset}px, 0)`,
                     transition: "transform 200ms ease",
                   }}
                 >
