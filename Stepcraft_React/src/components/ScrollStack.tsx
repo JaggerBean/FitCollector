@@ -42,6 +42,8 @@ export function PitchScrollScene({
   scenes: Scene[];
 }) {
   const wrapRef = useRef<HTMLDivElement>(null);
+  const textViewportRef = useRef<HTMLDivElement>(null);
+  const sceneRefs = useRef<Array<HTMLDivElement | null>>([]);
 
   const safeScenes = useMemo(() => scenes.slice(0, Math.max(1, scenes.length)), [scenes]);
 
@@ -53,6 +55,7 @@ export function PitchScrollScene({
   const [p, setP] = useState(0); // 0..1 (smoothed)
   const [active, setActive] = useState(0);
   const [isPinned, setIsPinned] = useState(false);
+  const [sceneOverflow, setSceneOverflow] = useState<number[]>([]);
 
   useEffect(() => {
     const wrap = wrapRef.current;
@@ -100,6 +103,34 @@ export function PitchScrollScene({
     return () => cancelAnimationFrame(rafId);
   }, [safeScenes.length]);
 
+  useEffect(() => {
+    const viewport = textViewportRef.current;
+    if (!viewport) return;
+
+    const measure = () => {
+      const viewportHeight = viewport.getBoundingClientRect().height || 0;
+      const next = safeScenes.map((_, i) => {
+        const el = sceneRefs.current[i];
+        if (!el) return 0;
+        const h = el.getBoundingClientRect().height || 0;
+        return Math.max(0, h - viewportHeight);
+      });
+      setSceneOverflow(next);
+    };
+
+    measure();
+
+    const ro = new ResizeObserver(measure);
+    ro.observe(viewport);
+    sceneRefs.current.forEach((el) => el && ro.observe(el));
+
+    window.addEventListener("resize", measure);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", measure);
+    };
+  }, [safeScenes.length]);
+
 
 
   const sceneCount = safeScenes.length;
@@ -112,6 +143,21 @@ export function PitchScrollScene({
   const nextIndex = Math.min(sceneCount - 1, baseIndex + 1);
   const mobileSceneA = safeScenes[baseIndex];
   const mobileSceneB = safeScenes[nextIndex];
+
+  const overflowByScene = sceneOverflow.length === sceneCount
+    ? sceneOverflow
+    : new Array(sceneCount).fill(0);
+
+  const cumulativeOverflow = useMemo(() => {
+    let sum = 0;
+    return overflowByScene.map((v) => {
+      const prev = sum;
+      sum += v;
+      return prev;
+    });
+  }, [overflowByScene]);
+
+  const totalShift = (cumulativeOverflow[baseIndex] || 0) + (overflowByScene[baseIndex] || 0) * t;
 
   const showScrollHint = isPinned && p < 0.985;
 
@@ -147,11 +193,11 @@ export function PitchScrollScene({
                 StepCraft in action
               </div>
 
-              <div className="relative z-0 min-h-0 flex-1 overflow-hidden">
+              <div ref={textViewportRef} className="relative z-0 min-h-0 flex-1 overflow-hidden">
                 <div
                   className="relative"
                   style={{
-                    transform: `translate3d(0, ${-36 * visualScaled}px, 0)`,
+                    transform: `translate3d(0, ${-totalShift}px, 0)`,
                     transition: "transform 200ms ease",
                   }}
                 >
@@ -172,6 +218,9 @@ export function PitchScrollScene({
                   return (
                     <div
                       key={s.title}
+                      ref={(el) => {
+                        sceneRefs.current[i] = el;
+                      }}
                       className="mt-8"
                       style={{
                         opacity: baseOpacity,
