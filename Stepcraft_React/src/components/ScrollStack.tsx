@@ -173,8 +173,14 @@ export function PitchScrollScene({
   const overflowByScene = hasMeasurements ? sceneOverflow : new Array(sceneCount).fill(0);
   const offsetsByScene = hasMeasurements ? sceneOffsets : new Array(sceneCount).fill(0);
 
-  const totalShift = hasMeasurements
+  const rawShift = hasMeasurements
     ? (offsetsByScene[baseIndex] || 0) + (overflowByScene[baseIndex] || 0) * t
+    : 0;
+  const maxShift = hasMeasurements
+    ? (offsetsByScene[sceneCount - 1] || 0) + (overflowByScene[sceneCount - 1] || 0)
+    : 0;
+  const totalShift = Number.isFinite(rawShift)
+    ? Math.min(Math.max(0, rawShift), Math.max(0, maxShift))
     : 0;
 
   const showScrollHint = isPinned && p < 0.985;
