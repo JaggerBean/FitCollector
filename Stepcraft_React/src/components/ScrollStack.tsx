@@ -147,7 +147,7 @@ export function PitchScrollScene({
                 StepCraft in action
               </div>
 
-              <div className="relative z-0 min-h-0 flex-1">
+              <div className="relative z-0 min-h-0 flex-1 overflow-hidden">
                 <div
                   className="relative"
                   style={{
