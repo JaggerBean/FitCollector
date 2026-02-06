@@ -19,9 +19,6 @@ export default {
       animation: {
         "star-movement-bottom": "star-movement-bottom linear infinite alternate",
         "star-movement-top": "star-movement-top linear infinite alternate",
-        "star-movement-left": "star-movement-left linear infinite alternate",
-        "star-movement-right": "star-movement-right linear infinite alternate",
-        "star-rotate": "star-rotate linear infinite",
       },
       keyframes: {
         "star-movement-bottom": {
@@ -31,18 +28,6 @@ export default {
         "star-movement-top": {
           "0%": { transform: "translate(0%, 0%)", opacity: "1" },
           "100%": { transform: "translate(100%, 0%)", opacity: "0" },
-        },
-        "star-movement-left": {
-          "0%": { transform: "translate(0%, 0%)", opacity: "1" },
-          "100%": { transform: "translate(0%, 100%)", opacity: "0" },
-        },
-        "star-movement-right": {
-          "0%": { transform: "translate(0%, 0%)", opacity: "1" },
-          "100%": { transform: "translate(0%, -100%)", opacity: "0" },
-        },
-        "star-rotate": {
-          "0%": { transform: "rotate(0deg)" },
-          "100%": { transform: "rotate(360deg)" },
         },
       },
     },
