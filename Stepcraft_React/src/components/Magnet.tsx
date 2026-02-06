@@ -5,6 +5,7 @@ type MagnetProps = React.HTMLAttributes<HTMLDivElement> & {
   padding?: number;
   disabled?: boolean;
   magnetStrength?: number;
+  collisionPadding?: number;
   activeTransition?: string;
   inactiveTransition?: string;
   wrapperClassName?: string;
@@ -16,6 +17,7 @@ const Magnet: React.FC<MagnetProps> = ({
   padding = 25,
   disabled = false,
   magnetStrength = 5,
+  collisionPadding = 6,
   activeTransition = "transform 0.3s ease-out",
   inactiveTransition = "transform 0.5s ease-in-out",
   wrapperClassName = "",
@@ -44,8 +46,42 @@ const Magnet: React.FC<MagnetProps> = ({
 
       if (distX < width / 2 + padding && distY < height / 2 + padding) {
         setIsActive(true);
-        const offsetX = (e.clientX - centerX) / magnetStrength;
-        const offsetY = (e.clientY - centerY) / magnetStrength;
+        let offsetX = (e.clientX - centerX) / magnetStrength;
+        let offsetY = (e.clientY - centerY) / magnetStrength;
+
+        const parent = magnetRef.current.parentElement;
+        if (parent) {
+          const siblings = Array.from(parent.children).filter(
+            (el) => el !== magnetRef.current && el.getAttribute("data-magnet") === "true",
+          ) as HTMLDivElement[];
+
+          const rect = magnetRef.current.getBoundingClientRect();
+
+          siblings.forEach((sib) => {
+            const s = sib.getBoundingClientRect();
+
+            const verticalOverlap = rect.top + offsetY < s.bottom && rect.bottom + offsetY > s.top;
+            if (verticalOverlap) {
+              if (offsetX > 0 && rect.right + offsetX > s.left - collisionPadding) {
+                offsetX = Math.min(offsetX, s.left - collisionPadding - rect.right);
+              }
+              if (offsetX < 0 && rect.left + offsetX < s.right + collisionPadding) {
+                offsetX = Math.max(offsetX, s.right + collisionPadding - rect.left);
+              }
+            }
+
+            const horizontalOverlap = rect.left + offsetX < s.right && rect.right + offsetX > s.left;
+            if (horizontalOverlap) {
+              if (offsetY > 0 && rect.bottom + offsetY > s.top - collisionPadding) {
+                offsetY = Math.min(offsetY, s.top - collisionPadding - rect.bottom);
+              }
+              if (offsetY < 0 && rect.top + offsetY < s.bottom + collisionPadding) {
+                offsetY = Math.max(offsetY, s.bottom + collisionPadding - rect.top);
+              }
+            }
+          });
+        }
+
         setPosition({ x: offsetX, y: offsetY });
       } else {
         setIsActive(false);
@@ -65,6 +101,7 @@ const Magnet: React.FC<MagnetProps> = ({
     <div
       ref={magnetRef}
       className={wrapperClassName}
+      data-magnet="true"
       style={{ position: "relative", display: "inline-block" }}
       {...props}
     >
