@@ -86,7 +86,7 @@ function CarouselItem({
   transition,
 }: CarouselItemProps) {
   const range = [-(index + 1) * trackItemOffset, -index * trackItemOffset, -(index - 1) * trackItemOffset];
-  const outputRange = [90, 0, -90];
+  const outputRange = round ? [90, 0, -90] : [0, 0, 0];
   const rotateY = useTransform(x, range, outputRange, { clamp: false });
 
   return (
@@ -357,8 +357,8 @@ export default function Carousel({
               style={{
                 width: trackItemOffset * itemsForRender.length,
                 gap: `${GAP}px`,
-                perspective: 1000,
-                perspectiveOrigin: `${position * trackItemOffset + itemWidth / 2}px 50%`,
+                perspective: round ? 1000 : undefined,
+                perspectiveOrigin: round ? `${position * trackItemOffset + itemWidth / 2}px 50%` : undefined,
                 x,
               }}
               onDragEnd={handleDragEnd}
