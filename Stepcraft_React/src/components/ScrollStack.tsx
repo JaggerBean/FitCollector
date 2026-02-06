@@ -159,9 +159,9 @@ export function PitchScrollScene({ scenes }: { scenes: Scene[] }) {
                     transform: `translate3d(0, ${-36 * visualScaled}px, 0)`,
                     transition: "transform 200ms ease",
                     WebkitMaskImage:
-                      "linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.35) 22%, rgba(0,0,0,1) 55%, rgba(0,0,0,1) 100%)",
+                      "linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.1) 12%, rgba(0,0,0,1) 45%, rgba(0,0,0,1) 100%)",
                     maskImage:
-                      "linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.35) 22%, rgba(0,0,0,1) 55%, rgba(0,0,0,1) 100%)",
+                      "linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.1) 12%, rgba(0,0,0,1) 45%, rgba(0,0,0,1) 100%)",
                   }}
                 >
                 {safeScenes.map((s, i) => {
