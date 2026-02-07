@@ -124,6 +124,18 @@ struct OnboardingScreen: View {
                 Task {
                     guard !isAuthorizingHealthKit else { return }
                     isAuthorizingHealthKit = true
+                    errorMessage = nil
+                    let status = HealthKitManager.shared.stepAuthorizationStatus()
+                    if status == .sharingDenied {
+                        await MainActor.run {
+                            if let url = URL(string: UIApplication.openSettingsURLString) {
+                                UIApplication.shared.open(url)
+                            }
+                        }
+                        errorMessage = "HealthKit access is required to continue. Please enable Steps access in Settings."
+                        isAuthorizingHealthKit = false
+                        return
+                    }
                     do {
                         try await HealthKitManager.shared.requestAuthorization()
                         let granted = HealthKitManager.shared.isStepAuthorizationGranted()
