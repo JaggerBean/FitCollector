@@ -275,11 +275,11 @@ export default function Carousel({
       return;
     }
 
-    const firstCloneIndex = items.length + loopClones;
+    const lastCloneIndex = itemsForRender.length - 1;
 
-    if (position === firstCloneIndex) {
+    if (position === lastCloneIndex) {
       setIsJumping(true);
-      const target = loopClones;
+      const target = position - items.length;
       setPosition(target);
       x.set(-target * trackItemOffset);
       requestAnimationFrame(() => {
@@ -289,9 +289,9 @@ export default function Carousel({
       return;
     }
 
-    if (position === loopClones - 1) {
+    if (position === 0) {
       setIsJumping(true);
-      const target = items.length + loopClones - 1;
+      const target = position + items.length;
       setPosition(target);
       x.set(-target * trackItemOffset);
       requestAnimationFrame(() => {
