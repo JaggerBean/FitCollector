@@ -401,7 +401,11 @@ struct OnboardingScreen: View {
             let sorted = response.servers.sorted { $0.serverName.lowercased() < $1.serverName.lowercased() }
             await MainActor.run {
                 availableServers = sorted
-                errorMessage = nil
+                if sorted.isEmpty {
+                    errorMessage = "No public servers returned from the API."
+                } else {
+                    errorMessage = nil
+                }
             }
         } catch {
             await MainActor.run {
@@ -664,6 +668,8 @@ private struct PublicServersSheet: View {
                         Text("No servers found.")
                             .foregroundColor(.secondary)
                             .font(.footnote)
+                        Button("Retry") { onRetry() }
+                            .buttonStyle(PillSecondaryButton())
                     }
                     ForEach(filteredServers, id: \.serverName) { server in
                         Button {
@@ -686,6 +692,11 @@ private struct PublicServersSheet: View {
                     .buttonStyle(PillPrimaryButton())
             }
             .padding(20)
+            .onAppear {
+                if servers.isEmpty {
+                    onRetry()
+                }
+            }
         }
     }
 
