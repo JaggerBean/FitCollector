@@ -3,6 +3,7 @@ import UIKit
 
 struct DashboardScreen: View {
     @EnvironmentObject private var appState: AppState
+    @Environment(\.scenePhase) private var scenePhase
     @StateObject private var syncService = SyncService()
     @State private var rewards: [RewardTier] = []
     @State private var claimStatuses: [String: [ClaimStatusListItem]] = [:]
@@ -110,6 +111,10 @@ struct DashboardScreen: View {
                 await syncService.syncSteps(appState: appState, manual: false)
             }
             startResetTimer()
+        }
+        .onChange(of: scenePhase) { newPhase in
+            guard newPhase == .active else { return }
+            healthKitAuthorized = HealthKitManager.shared.isStepAuthorizationGranted()
         }
     }
 
