@@ -1,5 +1,6 @@
 import Foundation
 import UserNotifications
+import UIKit
 
 final class NotificationManager {
     static let shared = NotificationManager()
@@ -8,6 +9,15 @@ final class NotificationManager {
 
     func requestAuthorization() async throws -> Bool {
         try await UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge])
+    }
+
+    func requestAuthorizationAndRegister() async throws -> Bool {
+        let granted = try await requestAuthorization()
+        guard granted else { return false }
+        await MainActor.run {
+            UIApplication.shared.registerForRemoteNotifications()
+        }
+        return true
     }
 
     func sendLocalNotification(title: String, body: String) {

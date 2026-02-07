@@ -158,7 +158,7 @@ struct OnboardingScreen: View {
                     guard !isRequestingNotifications else { return }
                     isRequestingNotifications = true
                     do {
-                        notificationsAuthorized = try await NotificationManager.shared.requestAuthorization()
+                        notificationsAuthorized = try await NotificationManager.shared.requestAuthorizationAndRegister()
                     } catch {
                         notificationsAuthorized = false
                     }
