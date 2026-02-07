@@ -13,6 +13,7 @@ struct OnboardingScreen: View {
     @State private var selectedServers: Set<String> = []
     @State private var isLoading = false
     @State private var errorMessage: String?
+    @State private var healthKitErrorMessage: String?
     @State private var healthKitAuthorized = false
     @State private var notificationsAuthorized = false
     @State private var usernameValid: Bool?
@@ -125,7 +126,7 @@ struct OnboardingScreen: View {
                 Task {
                     guard !isAuthorizingHealthKit else { return }
                     isAuthorizingHealthKit = true
-                    errorMessage = nil
+                    healthKitErrorMessage = nil
                     let status = HealthKitManager.shared.stepAuthorizationStatus()
                     if status == .sharingDenied {
                         await MainActor.run {
@@ -133,7 +134,7 @@ struct OnboardingScreen: View {
                                 UIApplication.shared.open(url)
                             }
                         }
-                        errorMessage = "HealthKit is required. Open Settings → StepCraft → Health → Steps, then allow access."
+                        healthKitErrorMessage = "HealthKit is required. Open Settings → StepCraft → Health → Steps, then allow access."
                         isAuthorizingHealthKit = false
                         return
                     }
@@ -144,10 +145,10 @@ struct OnboardingScreen: View {
                         if granted {
                             step = 2
                         } else {
-                            errorMessage = "HealthKit is required. Open Settings → StepCraft → Health → Steps, then allow access."
+                            healthKitErrorMessage = "HealthKit is required. Open Settings → StepCraft → Health → Steps, then allow access."
                         }
                     } catch {
-                        errorMessage = "HealthKit is required. Open Settings → StepCraft → Health → Steps, then allow access."
+                        healthKitErrorMessage = "HealthKit is required. Open Settings → StepCraft → Health → Steps, then allow access."
                     }
                     isAuthorizingHealthKit = false
                 }
@@ -158,9 +159,19 @@ struct OnboardingScreen: View {
             Button("Skip for now") { showHealthKitSkipAlert = true }
                 .buttonStyle(PillSecondaryButton())
                 .alert("Without HealthKit access the app will not function as intended.", isPresented: $showHealthKitSkipAlert) {
-                    Button("Continue", role: .destructive) { step = 2 }
+                    Button("Continue", role: .destructive) {
+                        healthKitErrorMessage = nil
+                        step = 2
+                    }
                     Button("Cancel", role: .cancel) {}
                 }
+
+            if let healthKitErrorMessage {
+                Text(healthKitErrorMessage)
+                    .foregroundColor(.red)
+                    .multilineTextAlignment(.center)
+                    .font(.subheadline)
+            }
 
             if isAuthorizingHealthKit {
                 ProgressView()
