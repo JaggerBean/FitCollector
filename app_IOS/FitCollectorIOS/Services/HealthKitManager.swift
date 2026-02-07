@@ -39,6 +39,12 @@ final class HealthKitManager {
             _ = try await readTodaySteps()
             return true
         } catch {
+            let message = (error as NSError).localizedDescription.lowercased()
+            if message.contains("no data available")
+                || message.contains("data couldn't be read because it is missing")
+                || message.contains("data couldn’t be read because it is missing") {
+                return true
+            }
             return false
         }
     }
