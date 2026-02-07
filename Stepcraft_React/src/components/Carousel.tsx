@@ -190,6 +190,7 @@ export default function Carousel({
   const effectiveVisibleCount = round
     ? 1
     : Math.max(1, Math.min(visibleCount ?? Number.POSITIVE_INFINITY, autoVisibleCount));
+  const loopClones = loop ? Math.min(items.length, effectiveVisibleCount) : 0;
   const itemWidth = availableWidth
     ? (availableWidth - GAP * (effectiveVisibleCount - 1)) / effectiveVisibleCount
     : 0;
@@ -197,10 +198,12 @@ export default function Carousel({
   const itemsForRender = useMemo(() => {
     if (!loop) return items;
     if (items.length === 0) return [];
-    return [items[items.length - 1], ...items, items[0]];
-  }, [items, loop]);
+    const head = items.slice(0, loopClones);
+    const tail = items.slice(Math.max(0, items.length - loopClones));
+    return [...tail, ...items, ...head];
+  }, [items, loop, loopClones]);
 
-  const [position, setPosition] = useState<number>(loop ? 1 : 0);
+  const [position, setPosition] = useState<number>(loop ? loopClones : 0);
   const x = useMotionValue(0);
   const [isHovered, setIsHovered] = useState<boolean>(false);
   const [isJumping, setIsJumping] = useState<boolean>(false);
@@ -243,12 +246,12 @@ export default function Carousel({
   }, [autoplay, autoplayDelay, isHovered, pauseOnHover, itemsForRender.length, isAnimating, isJumping]);
 
   useEffect(() => {
-    const startingPosition = loop ? 1 : 0;
+    const startingPosition = loop ? loopClones : 0;
     setPosition(startingPosition);
     if (trackItemOffset) {
       x.set(-startingPosition * trackItemOffset);
     }
-  }, [items.length, loop, trackItemOffset, x]);
+  }, [items.length, loop, loopClones, trackItemOffset, x]);
 
   useEffect(() => {
     if (!loop && position > itemsForRender.length - 1) {
@@ -267,11 +270,16 @@ export default function Carousel({
       setIsAnimating(false);
       return;
     }
-    const lastCloneIndex = itemsForRender.length - 1;
+    if (loopClones === 0) {
+      setIsAnimating(false);
+      return;
+    }
 
-    if (position === lastCloneIndex) {
+    const firstCloneIndex = items.length + loopClones;
+
+    if (position === firstCloneIndex) {
       setIsJumping(true);
-      const target = 1;
+      const target = loopClones;
       setPosition(target);
       x.set(-target * trackItemOffset);
       requestAnimationFrame(() => {
@@ -281,9 +289,9 @@ export default function Carousel({
       return;
     }
 
-    if (position === 0) {
+    if (position === loopClones - 1) {
       setIsJumping(true);
-      const target = items.length;
+      const target = items.length + loopClones - 1;
       setPosition(target);
       x.set(-target * trackItemOffset);
       requestAnimationFrame(() => {
@@ -335,7 +343,7 @@ export default function Carousel({
     items.length === 0
       ? 0
       : loop
-        ? (position - 1 + items.length) % items.length
+        ? (position - loopClones + items.length) % items.length
         : Math.min(position, items.length - 1);
 
   return (
