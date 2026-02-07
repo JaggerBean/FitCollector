@@ -86,7 +86,7 @@ function CarouselItem({
   transition,
 }: CarouselItemProps) {
   const range = [-(index + 1) * trackItemOffset, -index * trackItemOffset, -(index - 1) * trackItemOffset];
-  const outputRange = [90, 0, -90];
+  const outputRange = round ? [90, 0, -90] : [35, 0, -35];
   const rotateY = useTransform(x, range, outputRange, { clamp: false });
 
   return (
