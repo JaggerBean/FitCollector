@@ -189,7 +189,7 @@ final class ApiClient {
     }
 
     func getAvailableServers(inviteCode: String?) async throws -> AvailableServersResponse {
-        var components = URLComponents(url: baseURL.appendingPathComponent("/v1/servers/available"), resolvingAgainstBaseURL: false)!
+        var components = URLComponents(url: baseURL.appendingPathComponent("v1/servers/available"), resolvingAgainstBaseURL: false)!
         var queryItems: [URLQueryItem] = [
             URLQueryItem(name: "ts", value: String(Int(Date().timeIntervalSince1970)))
         ]
@@ -209,7 +209,8 @@ final class ApiClient {
         let statusCode = http?.statusCode ?? -1
         if let http, !(200...299).contains(http.statusCode) {
             let detail = decodeErrorDetail(data) ?? "Server error (status \(http.statusCode))."
-            throw APIError(message: detail)
+            let urlText = components.url?.absoluteString ?? "(unknown url)"
+            throw APIError(message: "\(detail)\nURL: \(urlText)")
         }
         guard !data.isEmpty else {
             throw APIError(message: "Server returned empty response.")
@@ -217,7 +218,8 @@ final class ApiClient {
         do {
             let decoded = try JSONDecoder().decode(AvailableServersResponse.self, from: data)
             if decoded.totalServers == 0 {
-                throw APIError(message: "No public servers returned (status \(statusCode)).")
+                let urlText = components.url?.absoluteString ?? "(unknown url)"
+                throw APIError(message: "No public servers returned (status \(statusCode)).\nURL: \(urlText)")
             }
             return decoded
         } catch {
