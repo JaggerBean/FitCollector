@@ -4,7 +4,6 @@ import AVFoundation
 struct OnboardingScreen: View {
     @EnvironmentObject private var appState: AppState
     @Environment(\.colorScheme) private var colorScheme
-    @Environment(\.scenePhase) private var scenePhase
 
     @State private var step = 1
     @State private var username = ""
@@ -67,7 +66,7 @@ struct OnboardingScreen: View {
                             }
                         }
 
-                        if let errorMessage, step != 1 {
+                        if let errorMessage {
                             let errorText = errorMessage
                             Text(errorText)
                                 .foregroundColor(.red)
@@ -109,18 +108,6 @@ struct OnboardingScreen: View {
                     }
                     await loadServers(inviteCode: nil)
                 }
-                .onChange(of: scenePhase) { newPhase in
-                    guard newPhase == .active, step == 1 else { return }
-                    Task {
-                        let granted = await HealthKitManager.shared.hasStepAccess()
-                        await MainActor.run {
-                            healthKitAuthorized = granted
-                            if granted {
-                                healthKitErrorMessage = nil
-                            }
-                        }
-                    }
-                }
             }
         }
     }
@@ -153,7 +140,7 @@ struct OnboardingScreen: View {
                     }
                     do {
                         try await HealthKitManager.shared.requestAuthorization()
-                        let granted = await HealthKitManager.shared.hasStepAccess()
+                        let granted = HealthKitManager.shared.isStepAuthorizationGranted()
                         healthKitAuthorized = granted
                         if granted {
                             step = 2
@@ -345,10 +332,6 @@ struct OnboardingScreen: View {
                 servers: availableServers,
                 selectedServers: $selectedServers,
                 searchText: $serverSearch,
-                errorMessage: errorMessage,
-                onRetry: {
-                    Task { await loadServers(inviteCode: nil) }
-                },
                 onDone: { showPublicServers = false }
             )
         }
@@ -401,11 +384,6 @@ struct OnboardingScreen: View {
             let sorted = response.servers.sorted { $0.serverName.lowercased() < $1.serverName.lowercased() }
             await MainActor.run {
                 availableServers = sorted
-                if sorted.isEmpty {
-                    errorMessage = "No public servers returned from the API."
-                } else {
-                    errorMessage = nil
-                }
             }
         } catch {
             await MainActor.run {
@@ -638,8 +616,6 @@ private struct PublicServersSheet: View {
     let servers: [ServerInfo]
     @Binding var selectedServers: Set<String>
     @Binding var searchText: String
-    let errorMessage: String?
-    let onRetry: () -> Void
     let onDone: () -> Void
 
     var body: some View {
@@ -658,19 +634,6 @@ private struct PublicServersSheet: View {
                 .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
 
                 VStack(alignment: .leading, spacing: 12) {
-                    if let errorMessage {
-                        Text(errorMessage)
-                            .foregroundColor(.red)
-                            .font(.footnote)
-                        Button("Retry") { onRetry() }
-                            .buttonStyle(PillSecondaryButton())
-                    } else if filteredServers.isEmpty {
-                        Text("No servers found.")
-                            .foregroundColor(.secondary)
-                            .font(.footnote)
-                        Button("Retry") { onRetry() }
-                            .buttonStyle(PillSecondaryButton())
-                    }
                     ForEach(filteredServers, id: \.serverName) { server in
                         Button {
                             toggleServer(server.serverName)
@@ -692,11 +655,6 @@ private struct PublicServersSheet: View {
                     .buttonStyle(PillPrimaryButton())
             }
             .padding(20)
-            .onAppear {
-                if servers.isEmpty {
-                    onRetry()
-                }
-            }
         }
     }
 

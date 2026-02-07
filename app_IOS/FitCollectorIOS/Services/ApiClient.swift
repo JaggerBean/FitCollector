@@ -92,7 +92,7 @@ final class ApiClient {
         let http = response as? HTTPURLResponse
         if let http, !(200...299).contains(http.statusCode) {
             let detail = decodeErrorDetail(data) ?? "Server error (status \(http.statusCode))."
-            throw APIError(message: "\(detail)\nURL: \(url.absoluteString)")
+            throw APIError(message: detail)
         }
         guard !data.isEmpty else {
             throw APIError(message: "Server returned empty response.")
@@ -118,7 +118,7 @@ final class ApiClient {
         let http = response as? HTTPURLResponse
         if let http, !(200...299).contains(http.statusCode) {
             let detail = decodeErrorDetail(data) ?? "Server error (status \(http.statusCode))."
-            throw APIError(message: "\(detail)\nURL: \(url.absoluteString)")
+            throw APIError(message: detail)
         }
         guard !data.isEmpty else {
             throw APIError(message: "Server returned empty response.")
@@ -190,44 +190,13 @@ final class ApiClient {
 
     func getAvailableServers(inviteCode: String?) async throws -> AvailableServersResponse {
         var components = URLComponents(url: baseURL.appendingPathComponent("v1/servers/available"), resolvingAgainstBaseURL: false)!
-        var queryItems: [URLQueryItem] = [
-            URLQueryItem(name: "ts", value: String(Int(Date().timeIntervalSince1970)))
-        ]
         if let inviteCode, !inviteCode.isEmpty {
-            queryItems.append(URLQueryItem(name: "invite_code", value: inviteCode))
+            components.queryItems = [URLQueryItem(name: "invite_code", value: inviteCode)]
         }
-        components.queryItems = queryItems
         var request = URLRequest(url: components.url!)
         request.setValue(globalApiKey, forHTTPHeaderField: "X-API-Key")
-        request.setValue("application/json", forHTTPHeaderField: "Accept")
-        request.cachePolicy = .reloadIgnoringLocalCacheData
-        let config = URLSessionConfiguration.ephemeral
-        config.requestCachePolicy = .reloadIgnoringLocalCacheData
-        let session = URLSession(configuration: config)
-        let (data, response) = try await session.data(for: request)
-        let http = response as? HTTPURLResponse
-        let statusCode = http?.statusCode ?? -1
-        if let http, !(200...299).contains(http.statusCode) {
-            let detail = decodeErrorDetail(data) ?? "Server error (status \(http.statusCode))."
-            let urlText = components.url?.absoluteString ?? "(unknown url)"
-            throw APIError(message: "\(detail)\nURL: \(urlText)")
-        }
-        guard !data.isEmpty else {
-            throw APIError(message: "Server returned empty response.")
-        }
-        do {
-            let decoded = try JSONDecoder().decode(AvailableServersResponse.self, from: data)
-            if decoded.totalServers == 0 {
-                let urlText = components.url?.absoluteString ?? "(unknown url)"
-                throw APIError(message: "No public servers returned (status \(statusCode)).\nURL: \(urlText)")
-            }
-            return decoded
-        } catch {
-            let detail = decodeErrorDetail(data)
-                ?? String(data: data, encoding: .utf8)
-                ?? error.localizedDescription
-            throw APIError(message: detail)
-        }
+        let (data, _) = try await URLSession.shared.data(for: request)
+        return try JSONDecoder().decode(AvailableServersResponse.self, from: data)
     }
 
     func getDeviceUsername(deviceId: String, serverName: String) async throws -> DeviceUsernameResponse {
@@ -251,7 +220,7 @@ final class ApiClient {
     }
 
     func ingest(_ payload: IngestPayload) async throws -> IngestResponse {
-        let url = baseURL.appendingPathComponent("/v1/ingest")
+        let url = baseURL.appendingPathComponent("v1/ingest")
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
