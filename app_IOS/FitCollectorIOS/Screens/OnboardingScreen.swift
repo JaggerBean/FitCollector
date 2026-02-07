@@ -111,10 +111,14 @@ struct OnboardingScreen: View {
                 }
                 .onChange(of: scenePhase) { newPhase in
                     guard newPhase == .active, step == 1 else { return }
-                    let granted = HealthKitManager.shared.isStepAuthorizationGranted()
-                    healthKitAuthorized = granted
-                    if granted {
-                        healthKitErrorMessage = nil
+                    Task {
+                        let granted = await HealthKitManager.shared.hasStepAccess()
+                        await MainActor.run {
+                            healthKitAuthorized = granted
+                            if granted {
+                                healthKitErrorMessage = nil
+                            }
+                        }
                     }
                 }
             }
@@ -149,7 +153,7 @@ struct OnboardingScreen: View {
                     }
                     do {
                         try await HealthKitManager.shared.requestAuthorization()
-                        let granted = HealthKitManager.shared.isStepAuthorizationGranted()
+                        let granted = await HealthKitManager.shared.hasStepAccess()
                         healthKitAuthorized = granted
                         if granted {
                             step = 2

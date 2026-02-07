@@ -33,6 +33,16 @@ final class HealthKitManager {
         return healthStore.authorizationStatus(for: stepsType) == .sharingAuthorized
     }
 
+    func hasStepAccess() async -> Bool {
+        if isStepAuthorizationGranted() { return true }
+        do {
+            _ = try await readTodaySteps()
+            return true
+        } catch {
+            return false
+        }
+    }
+
     func stepAuthorizationStatus() -> HKAuthorizationStatus {
         guard HKHealthStore.isHealthDataAvailable(),
               let stepsType = HKObjectType.quantityType(forIdentifier: .stepCount) else {
