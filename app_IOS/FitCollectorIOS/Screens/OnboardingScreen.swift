@@ -19,6 +19,7 @@ struct OnboardingScreen: View {
     @State private var isValidating = false
     @State private var isAuthorizingHealthKit = false
     @State private var isRequestingNotifications = false
+    @State private var showHealthKitSkipAlert = false
     @State private var showPublicServers = false
     @State private var showPrivateServer = false
     @State private var serverSearch = ""
@@ -154,8 +155,12 @@ struct OnboardingScreen: View {
             .buttonStyle(PillPrimaryButton())
             .disabled(isAuthorizingHealthKit)
 
-            Button("Skip for now") { step = 2 }
+            Button("Skip for now") { showHealthKitSkipAlert = true }
                 .buttonStyle(PillSecondaryButton())
+                .alert("Without HealthKit access the app will not function as intended.", isPresented: $showHealthKitSkipAlert) {
+                    Button("Continue", role: .destructive) { step = 2 }
+                    Button("Cancel", role: .cancel) {}
+                }
 
             if isAuthorizingHealthKit {
                 ProgressView()
