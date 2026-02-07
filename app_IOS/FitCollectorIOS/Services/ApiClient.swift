@@ -204,7 +204,14 @@ final class ApiClient {
         guard !data.isEmpty else {
             throw APIError(message: "Server returned empty response.")
         }
-        return try JSONDecoder().decode(AvailableServersResponse.self, from: data)
+        do {
+            return try JSONDecoder().decode(AvailableServersResponse.self, from: data)
+        } catch {
+            let detail = decodeErrorDetail(data)
+                ?? String(data: data, encoding: .utf8)
+                ?? error.localizedDescription
+            throw APIError(message: detail)
+        }
     }
 
     func getDeviceUsername(deviceId: String, serverName: String) async throws -> DeviceUsernameResponse {

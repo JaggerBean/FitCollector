@@ -345,6 +345,10 @@ struct OnboardingScreen: View {
                 servers: availableServers,
                 selectedServers: $selectedServers,
                 searchText: $serverSearch,
+                errorMessage: errorMessage,
+                onRetry: {
+                    Task { await loadServers(inviteCode: nil) }
+                },
                 onDone: { showPublicServers = false }
             )
         }
@@ -397,6 +401,7 @@ struct OnboardingScreen: View {
             let sorted = response.servers.sorted { $0.serverName.lowercased() < $1.serverName.lowercased() }
             await MainActor.run {
                 availableServers = sorted
+                errorMessage = nil
             }
         } catch {
             await MainActor.run {
@@ -629,6 +634,8 @@ private struct PublicServersSheet: View {
     let servers: [ServerInfo]
     @Binding var selectedServers: Set<String>
     @Binding var searchText: String
+    let errorMessage: String?
+    let onRetry: () -> Void
     let onDone: () -> Void
 
     var body: some View {
@@ -647,6 +654,17 @@ private struct PublicServersSheet: View {
                 .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
 
                 VStack(alignment: .leading, spacing: 12) {
+                    if let errorMessage {
+                        Text(errorMessage)
+                            .foregroundColor(.red)
+                            .font(.footnote)
+                        Button("Retry") { onRetry() }
+                            .buttonStyle(PillSecondaryButton())
+                    } else if filteredServers.isEmpty {
+                        Text("No servers found.")
+                            .foregroundColor(.secondary)
+                            .font(.footnote)
+                    }
                     ForEach(filteredServers, id: \.serverName) { server in
                         Button {
                             toggleServer(server.serverName)
