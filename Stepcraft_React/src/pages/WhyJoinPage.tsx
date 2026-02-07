@@ -238,6 +238,7 @@ export default function WhyJoinPage() {
                   baseWidth={0}
                   itemHeight={360}
                   minItemWidth={360}
+                  visibleCount={2}
                   autoplay
                   autoplayDelay={2000}
                   pauseOnHover
