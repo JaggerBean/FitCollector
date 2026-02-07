@@ -67,7 +67,7 @@ struct OnboardingScreen: View {
                             }
                         }
 
-                        if let errorMessage {
+                        if let errorMessage, step != 1 {
                             let errorText = errorMessage
                             Text(errorText)
                                 .foregroundColor(.red)
