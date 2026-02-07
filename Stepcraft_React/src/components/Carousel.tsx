@@ -370,7 +370,7 @@ export default function Carousel({
           ...(round && { height: `${baseWidth}px` }),
         }}
       >
-        <div className="overflow-hidden rounded-[20px]">
+        <div className="overflow-hidden rounded-[20px]" style={{ clipPath: "inset(0)" }}>
           {itemWidth > 0 && (
             <motion.div
               className="flex"
