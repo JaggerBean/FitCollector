@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 struct DashboardScreen: View {
     @EnvironmentObject private var appState: AppState
@@ -9,6 +10,7 @@ struct DashboardScreen: View {
     @State private var errorMessage: String?
     @State private var stepsToday: Int = 0
     @State private var timeUntilReset: String = ""
+    @State private var healthKitAuthorized: Bool = true
 
     var body: some View {
         ScrollView {
@@ -33,6 +35,29 @@ struct DashboardScreen: View {
                         isSuccess: false,
                         timestamp: nil
                     )
+                }
+
+                if !healthKitAuthorized {
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text("HealthKit access required")
+                            .font(.headline)
+                        Text("Enable Steps access in Settings → StepCraft → Health → Steps to sync progress.")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                        Button("Open Settings") {
+                            if let url = URL(string: UIApplication.openSettingsURLString) {
+                                UIApplication.shared.open(url)
+                            }
+                        }
+                        .buttonStyle(PillPrimaryButton())
+                    }
+                    .padding(16)
+                    .background(Color.red.opacity(0.1))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                            .stroke(Color.red.opacity(0.5), lineWidth: 1)
+                    )
+                    .cornerRadius(14)
                 }
 
                 ActivityCard(stepsToday: stepsToday, canSync: canSync) {
@@ -77,6 +102,7 @@ struct DashboardScreen: View {
             .padding(.vertical, 12)
         }
         .task {
+            healthKitAuthorized = HealthKitManager.shared.isStepAuthorizationGranted()
             await refreshSteps()
             await refreshClaimStatuses()
             await refreshRewards()

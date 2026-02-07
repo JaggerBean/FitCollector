@@ -132,7 +132,7 @@ struct OnboardingScreen: View {
                                 UIApplication.shared.open(url)
                             }
                         }
-                        errorMessage = "HealthKit access is required to continue. Please enable Steps access in Settings."
+                        errorMessage = "HealthKit is required. Open Settings → StepCraft → Health → Steps, then allow access."
                         isAuthorizingHealthKit = false
                         return
                     }
@@ -143,16 +143,19 @@ struct OnboardingScreen: View {
                         if granted {
                             step = 2
                         } else {
-                            errorMessage = "HealthKit access is required to continue. Please enable Steps access."
+                            errorMessage = "HealthKit is required. Open Settings → StepCraft → Health → Steps, then allow access."
                         }
                     } catch {
-                        errorMessage = "HealthKit access is required to continue. Please enable Steps access."
+                        errorMessage = "HealthKit is required. Open Settings → StepCraft → Health → Steps, then allow access."
                     }
                     isAuthorizingHealthKit = false
                 }
             }
             .buttonStyle(PillPrimaryButton())
             .disabled(isAuthorizingHealthKit)
+
+            Button("Skip for now") { step = 2 }
+                .buttonStyle(PillSecondaryButton())
 
             if isAuthorizingHealthKit {
                 ProgressView()
