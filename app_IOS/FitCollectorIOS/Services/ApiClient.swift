@@ -190,17 +190,23 @@ final class ApiClient {
 
     func getAvailableServers(inviteCode: String?) async throws -> AvailableServersResponse {
         var components = URLComponents(url: baseURL.appendingPathComponent("/v1/servers/available"), resolvingAgainstBaseURL: false)!
+        var queryItems: [URLQueryItem] = [
+            URLQueryItem(name: "ts", value: String(Int(Date().timeIntervalSince1970)))
+        ]
         if let inviteCode, !inviteCode.isEmpty {
-            components.queryItems = [URLQueryItem(name: "invite_code", value: inviteCode)]
+            queryItems.append(URLQueryItem(name: "invite_code", value: inviteCode))
         }
+        components.queryItems = queryItems
         var request = URLRequest(url: components.url!)
         request.setValue(globalApiKey, forHTTPHeaderField: "X-API-Key")
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
         request.cachePolicy = .reloadIgnoringLocalCacheData
         let config = URLSessionConfiguration.ephemeral
         config.requestCachePolicy = .reloadIgnoringLocalCacheData
         let session = URLSession(configuration: config)
         let (data, response) = try await session.data(for: request)
         let http = response as? HTTPURLResponse
+        let statusCode = http?.statusCode ?? -1
         if let http, !(200...299).contains(http.statusCode) {
             let detail = decodeErrorDetail(data) ?? "Server error (status \(http.statusCode))."
             throw APIError(message: detail)
@@ -209,7 +215,11 @@ final class ApiClient {
             throw APIError(message: "Server returned empty response.")
         }
         do {
-            return try JSONDecoder().decode(AvailableServersResponse.self, from: data)
+            let decoded = try JSONDecoder().decode(AvailableServersResponse.self, from: data)
+            if decoded.totalServers == 0 {
+                throw APIError(message: "No public servers returned (status \(statusCode)).")
+            }
+            return decoded
         } catch {
             let detail = decodeErrorDetail(data)
                 ?? String(data: data, encoding: .utf8)
