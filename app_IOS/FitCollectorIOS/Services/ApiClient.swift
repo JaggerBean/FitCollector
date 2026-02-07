@@ -15,7 +15,7 @@ final class ApiClient {
     }
 
     func getRewards(deviceId: String, serverName: String, playerApiKey: String) async throws -> RewardsResponse {
-        var components = URLComponents(url: baseURL.appendingPathComponent("/v1/players/rewards"), resolvingAgainstBaseURL: false)!
+        var components = URLComponents(url: baseURL.appendingPathComponent("v1/players/rewards"), resolvingAgainstBaseURL: false)!
         components.queryItems = [
             URLQueryItem(name: "device_id", value: deviceId),
             URLQueryItem(name: "server_name", value: serverName),
@@ -28,7 +28,7 @@ final class ApiClient {
     }
 
     func getClaimStatus(minecraftUsername: String, serverName: String, minSteps: Int, day: String?) async throws -> ClaimStatusResponse {
-        var components = URLComponents(url: baseURL.appendingPathComponent("/v1/players/claim-status/\(minecraftUsername)"), resolvingAgainstBaseURL: false)!
+        var components = URLComponents(url: baseURL.appendingPathComponent("v1/players/claim-status/\(minecraftUsername)"), resolvingAgainstBaseURL: false)!
         var items = [
             URLQueryItem(name: "server_name", value: serverName),
             URLQueryItem(name: "min_steps", value: String(minSteps))
@@ -45,7 +45,7 @@ final class ApiClient {
     }
 
     func getStepsToday(minecraftUsername: String, playerApiKey: String) async throws -> StepsTodayResponse {
-        var components = URLComponents(url: baseURL.appendingPathComponent("/v1/players/steps-today"), resolvingAgainstBaseURL: false)!
+        var components = URLComponents(url: baseURL.appendingPathComponent("v1/players/steps-today"), resolvingAgainstBaseURL: false)!
         components.queryItems = [
             URLQueryItem(name: "minecraft_username", value: minecraftUsername),
             URLQueryItem(name: "player_api_key", value: playerApiKey)
@@ -62,7 +62,7 @@ final class ApiClient {
     }
 
     func getClaimStatusList(deviceId: String, playerApiKey: String) async throws -> ClaimStatusListResponse {
-        var components = URLComponents(url: baseURL.appendingPathComponent("/v1/players/claim-status-list"), resolvingAgainstBaseURL: false)!
+        var components = URLComponents(url: baseURL.appendingPathComponent("v1/players/claim-status-list"), resolvingAgainstBaseURL: false)!
         components.queryItems = [
             URLQueryItem(name: "device_id", value: deviceId),
             URLQueryItem(name: "player_api_key", value: playerApiKey)
@@ -74,7 +74,7 @@ final class ApiClient {
     }
 
     func register(deviceId: String, minecraftUsername: String, serverName: String, inviteCode: String?) async throws -> PlayerApiKeyResponse {
-        let url = baseURL.appendingPathComponent("/v1/players/register")
+        let url = baseURL.appendingPathComponent("v1/players/register")
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -92,7 +92,7 @@ final class ApiClient {
         let http = response as? HTTPURLResponse
         if let http, !(200...299).contains(http.statusCode) {
             let detail = decodeErrorDetail(data) ?? "Server error (status \(http.statusCode))."
-            throw APIError(message: detail)
+            throw APIError(message: "\(detail)\nURL: \(url.absoluteString)")
         }
         guard !data.isEmpty else {
             throw APIError(message: "Server returned empty response.")
@@ -101,7 +101,7 @@ final class ApiClient {
     }
 
     func recoverKey(deviceId: String, minecraftUsername: String, serverName: String) async throws -> PlayerApiKeyResponse {
-        let url = baseURL.appendingPathComponent("/v1/players/recover-key")
+        let url = baseURL.appendingPathComponent("v1/players/recover-key")
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -118,7 +118,7 @@ final class ApiClient {
         let http = response as? HTTPURLResponse
         if let http, !(200...299).contains(http.statusCode) {
             let detail = decodeErrorDetail(data) ?? "Server error (status \(http.statusCode))."
-            throw APIError(message: detail)
+            throw APIError(message: "\(detail)\nURL: \(url.absoluteString)")
         }
         guard !data.isEmpty else {
             throw APIError(message: "Server returned empty response.")
@@ -127,7 +127,7 @@ final class ApiClient {
     }
 
     func registerPushToken(deviceId: String, playerApiKey: String, token: String, isSandbox: Bool) async throws {
-        let url = baseURL.appendingPathComponent("/v1/players/push/register-device")
+        let url = baseURL.appendingPathComponent("v1/players/push/register-device")
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -151,7 +151,7 @@ final class ApiClient {
     }
 
     func unregisterPushToken(deviceId: String, playerApiKey: String, token: String? = nil) async throws {
-        let url = baseURL.appendingPathComponent("/v1/players/push/unregister-device")
+        let url = baseURL.appendingPathComponent("v1/players/push/unregister-device")
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -231,7 +231,7 @@ final class ApiClient {
     }
 
     func getDeviceUsername(deviceId: String, serverName: String) async throws -> DeviceUsernameResponse {
-        var components = URLComponents(url: baseURL.appendingPathComponent("/v1/players/device-username"), resolvingAgainstBaseURL: false)!
+        var components = URLComponents(url: baseURL.appendingPathComponent("v1/players/device-username"), resolvingAgainstBaseURL: false)!
         components.queryItems = [
             URLQueryItem(name: "device_id", value: deviceId),
             URLQueryItem(name: "server_name", value: serverName)
