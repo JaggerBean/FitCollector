@@ -25,6 +25,14 @@ final class HealthKitManager {
         }
     }
 
+    func isStepAuthorizationGranted() -> Bool {
+        guard HKHealthStore.isHealthDataAvailable(),
+              let stepsType = HKObjectType.quantityType(forIdentifier: .stepCount) else {
+            return false
+        }
+        return healthStore.authorizationStatus(for: stepsType) == .sharingAuthorized
+    }
+
     func readTodaySteps() async throws -> Int {
         guard let stepsType = HKObjectType.quantityType(forIdentifier: .stepCount) else { return 0 }
         let startOfDay = Calendar.current.startOfDay(for: Date())

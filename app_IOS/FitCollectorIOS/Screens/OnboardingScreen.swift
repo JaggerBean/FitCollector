@@ -126,10 +126,15 @@ struct OnboardingScreen: View {
                     isAuthorizingHealthKit = true
                     do {
                         try await HealthKitManager.shared.requestAuthorization()
-                        healthKitAuthorized = true
-                        step = 2
+                        let granted = HealthKitManager.shared.isStepAuthorizationGranted()
+                        healthKitAuthorized = granted
+                        if granted {
+                            step = 2
+                        } else {
+                            errorMessage = "HealthKit access is required to continue. Please enable Steps access."
+                        }
                     } catch {
-                        errorMessage = error.localizedDescription
+                        errorMessage = "HealthKit access is required to continue. Please enable Steps access."
                     }
                     isAuthorizingHealthKit = false
                 }
