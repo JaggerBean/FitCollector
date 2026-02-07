@@ -189,15 +189,15 @@ export function PitchScrollScene({
 
   return (
     <div ref={wrapRef} className="relative min-h-[300vh] sm:min-h-[320vh]">
-      <div className="sticky top-0 h-screen w-full overflow-hidden rounded-2xl border border-slate-800/60 bg-slate-950/95 sm:rounded-3xl">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(16,185,129,0.14),transparent_55%)]" />
+      <div className="sticky top-0 h-screen w-full overflow-hidden rounded-2xl border border-[#3a235e]/70 bg-[#0b0616]/95 sm:rounded-3xl">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(244,208,99,0.18),transparent_55%)]" />
 
         <div className="relative mx-auto h-full max-w-6xl px-4 py-8 sm:px-6 sm:py-10 md:px-10">
           {/* Desktop layout */}
           <div className="hidden h-full grid-cols-1 gap-8 sm:gap-10 md:grid md:grid-cols-2">
             {/* Left: copy */}
             <div className="relative flex min-h-0 flex-col justify-center">
-              <div className="relative z-20 text-[10px] uppercase tracking-[0.3em] text-slate-400 sm:text-xs">
+              <div className="relative z-20 text-[10px] uppercase tracking-[0.3em] text-[#d6c1ff]/70 sm:text-xs">
                 StepCraft in action
               </div>
 
@@ -237,9 +237,9 @@ export function PitchScrollScene({
                         transition: "opacity 280ms ease, transform 280ms ease",
                       }}
                     >
-                      <div className="text-xs uppercase tracking-[0.2em] text-emerald-300/70">{s.eyebrow}</div>
-                      <h3 className="mt-3 text-xl font-semibold text-white sm:text-2xl">{s.title}</h3>
-                      <p className="mt-3 text-sm leading-relaxed text-slate-300">{s.body}</p>
+                      <div className="text-xs uppercase tracking-[0.2em] text-[#f4d26b]/90">{s.eyebrow}</div>
+                      <h3 className="mt-3 text-xl font-semibold text-[#f9e08a] sm:text-2xl">{s.title}</h3>
+                      <p className="mt-3 text-sm leading-relaxed text-[#c9b2ff]">{s.body}</p>
                     </div>
                   );
                 })}
@@ -250,7 +250,7 @@ export function PitchScrollScene({
             {/* Right: imagery */}
             <div className="relative flex items-center justify-center">
               <div
-                className="relative w-full max-w-[260px] aspect-[9/16] overflow-hidden rounded-2xl border border-slate-800/70 bg-slate-900/40 sm:max-w-sm md:max-w-md"
+                className="relative w-full max-w-[260px] aspect-[9/16] overflow-hidden rounded-2xl border border-[#3a235e]/70 bg-[#1b0f2c]/50 sm:max-w-sm md:max-w-md"
                 style={{
                   transform: `translate3d(0, ${-24 * p}px, 0) scale(${0.98 + 0.03 * p})`,
                   transition: "transform 60ms linear",
@@ -279,7 +279,7 @@ export function PitchScrollScene({
                       {s.imageUrl ? (
                         <img src={s.imageUrl} alt={s.imageAlt} className="h-full w-full object-cover" />
                       ) : (
-                        <div className="flex h-full w-full items-center justify-center text-xs text-slate-400">
+                        <div className="flex h-full w-full items-center justify-center text-xs text-[#d6c1ff]/70">
                           Image placeholder ({s.imageAlt})
                         </div>
                       )}
@@ -292,7 +292,7 @@ export function PitchScrollScene({
 
           {/* Mobile layout */}
           <div className="flex h-full flex-col justify-start gap-4 pt-2 md:hidden">
-            <div className="text-[10px] uppercase tracking-[0.3em] text-slate-400">StepCraft in action</div>
+            <div className="text-[10px] uppercase tracking-[0.3em] text-[#d6c1ff]/70">StepCraft in action</div>
 
             <div className="relative min-h-[260px] sm:min-h-[300px]">
               <div
@@ -303,11 +303,11 @@ export function PitchScrollScene({
                   willChange: "opacity, transform",
                 }}
               >
-                <div className="text-xs uppercase tracking-[0.2em] text-emerald-300/70">
+                <div className="text-xs uppercase tracking-[0.2em] text-[#f4d26b]/90">
                   {mobileSceneA.eyebrow}
                 </div>
-                <h3 className="mt-3 text-xl font-semibold text-white">{mobileSceneA.title}</h3>
-                <p className="mt-3 text-sm leading-relaxed text-slate-300">{mobileSceneA.body}</p>
+                <h3 className="mt-3 text-xl font-semibold text-[#f9e08a]">{mobileSceneA.title}</h3>
+                <p className="mt-3 text-sm leading-relaxed text-[#c9b2ff]">{mobileSceneA.body}</p>
               </div>
               {nextIndex !== baseIndex && (
                 <div
@@ -318,17 +318,17 @@ export function PitchScrollScene({
                     willChange: "opacity, transform",
                   }}
                 >
-                  <div className="text-xs uppercase tracking-[0.2em] text-emerald-300/70">
+                  <div className="text-xs uppercase tracking-[0.2em] text-[#f4d26b]/90">
                     {mobileSceneB.eyebrow}
                   </div>
-                  <h3 className="mt-3 text-xl font-semibold text-white">{mobileSceneB.title}</h3>
-                  <p className="mt-3 text-sm leading-relaxed text-slate-300">{mobileSceneB.body}</p>
+                  <h3 className="mt-3 text-xl font-semibold text-[#f9e08a]">{mobileSceneB.title}</h3>
+                  <p className="mt-3 text-sm leading-relaxed text-[#c9b2ff]">{mobileSceneB.body}</p>
                 </div>
               )}
             </div>
 
             <div className="flex items-center justify-center">
-              <div className="relative h-[42vh] w-auto max-w-[240px] aspect-[9/16] overflow-hidden rounded-2xl border border-slate-800/70 bg-slate-900/40 sm:h-[48vh] sm:max-w-[280px]">
+              <div className="relative h-[42vh] w-auto max-w-[240px] aspect-[9/16] overflow-hidden rounded-2xl border border-[#3a235e]/70 bg-[#1b0f2c]/50 sm:h-[48vh] sm:max-w-[280px]">
                 <div
                   className="absolute inset-0"
                   style={{
@@ -340,7 +340,7 @@ export function PitchScrollScene({
                   {mobileSceneA.imageUrl ? (
                     <img src={mobileSceneA.imageUrl} alt={mobileSceneA.imageAlt} className="h-full w-full object-cover" />
                   ) : (
-                    <div className="flex h-full w-full items-center justify-center text-xs text-slate-400">
+                    <div className="flex h-full w-full items-center justify-center text-xs text-[#d6c1ff]/70">
                       Image placeholder ({mobileSceneA.imageAlt})
                     </div>
                   )}
@@ -357,7 +357,7 @@ export function PitchScrollScene({
                     {mobileSceneB.imageUrl ? (
                       <img src={mobileSceneB.imageUrl} alt={mobileSceneB.imageAlt} className="h-full w-full object-cover" />
                     ) : (
-                      <div className="flex h-full w-full items-center justify-center text-xs text-slate-400">
+                      <div className="flex h-full w-full items-center justify-center text-xs text-[#d6c1ff]/70">
                         Image placeholder ({mobileSceneB.imageAlt})
                       </div>
                     )}
@@ -379,7 +379,7 @@ export function PitchScrollScene({
           ].join(" ")}
         >
           <div className="flex flex-col items-center gap-2">
-            <div className="grid h-10 w-10 place-items-center rounded-full border border-slate-700/60 bg-slate-950/35 text-slate-300/80 shadow-[0_10px_30px_rgba(0,0,0,0.35)] backdrop-blur sm:h-11 sm:w-11">
+            <div className="grid h-10 w-10 place-items-center rounded-full border border-[#3a235e]/70 bg-[#0b0616]/60 text-[#f4d26b] shadow-[0_10px_30px_rgba(0,0,0,0.35)] backdrop-blur sm:h-11 sm:w-11">
               <svg
                 viewBox="0 0 24 24"
                 fill="none"
@@ -395,7 +395,7 @@ export function PitchScrollScene({
                 />
               </svg>
             </div>
-            <div className="text-[10px] uppercase tracking-[0.3em] text-slate-400 sm:text-[11px]">
+            <div className="text-[10px] uppercase tracking-[0.3em] text-[#d6c1ff]/70 sm:text-[11px]">
               Keep scrolling
             </div>
           </div>

@@ -31,31 +31,31 @@ const DEFAULT_ITEMS: CarouselItem[] = [
     title: "Text Animations",
     description: "Cool text animations for your projects.",
     id: 1,
-    icon: <FiFileText className="h-[16px] w-[16px] text-white" />,
+    icon: <FiFileText className="h-[16px] w-[16px] text-[#f4d26b]" />,
   },
   {
     title: "Animations",
     description: "Smooth animations for your projects.",
     id: 2,
-    icon: <FiCircle className="h-[16px] w-[16px] text-white" />,
+    icon: <FiCircle className="h-[16px] w-[16px] text-[#f4d26b]" />,
   },
   {
     title: "Components",
     description: "Reusable components for your projects.",
     id: 3,
-    icon: <FiLayers className="h-[16px] w-[16px] text-white" />,
+    icon: <FiLayers className="h-[16px] w-[16px] text-[#f4d26b]" />,
   },
   {
     title: "Backgrounds",
     description: "Beautiful backgrounds and patterns for your projects.",
     id: 4,
-    icon: <FiLayout className="h-[16px] w-[16px] text-white" />,
+    icon: <FiLayout className="h-[16px] w-[16px] text-[#f4d26b]" />,
   },
   {
     title: "Common UI",
     description: "Common UI components are coming soon!",
     id: 5,
-    icon: <FiCode className="h-[16px] w-[16px] text-white" />,
+    icon: <FiCode className="h-[16px] w-[16px] text-[#f4d26b]" />,
   },
 ];
 
@@ -102,8 +102,8 @@ function CarouselItem({
       key={`${item?.id ?? index}-${index}`}
       className={`relative shrink-0 flex flex-col ${
         round
-          ? "items-center justify-center text-center bg-[#060010] border-0"
-          : "items-start justify-between bg-[#0b0f1a] border border-white/5 rounded-[20px] shadow-[0_20px_60px_rgba(0,0,0,0.35)]"
+          ? "items-center justify-center text-center bg-[#12081f] border-0"
+          : "items-start justify-between bg-[#0b0616] border border-[#3a235e]/70 rounded-[20px] shadow-[0_20px_60px_rgba(16,6,28,0.6)]"
       } overflow-hidden cursor-grab active:cursor-grabbing`}
       style={{
         width: itemWidth,
@@ -115,11 +115,11 @@ function CarouselItem({
     >
       {round ? (
         <div className="flex h-full w-full flex-col items-center justify-center gap-3 px-6">
-          <span className="flex h-[56px] w-[56px] items-center justify-center rounded-full bg-[#0f172a]">
+          <span className="flex h-[56px] w-[56px] items-center justify-center rounded-full bg-[#1b0f2c]">
             {item.icon}
           </span>
-          <div className="font-black text-lg text-white">{item.title}</div>
-          <p className="text-sm text-white/80">{item.description}</p>
+          <div className="font-black text-lg text-[#f9e08a]">{item.title}</div>
+          <p className="text-sm text-[#c9b2ff]">{item.description}</p>
         </div>
       ) : (
         <>
@@ -131,33 +131,33 @@ function CarouselItem({
                 aria-hidden="true"
                 className="absolute inset-0 h-full w-full object-cover blur-md scale-110 opacity-35"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#0b0f1a]/85 via-[#0b0f1a]/45 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#0b0616]/90 via-[#0b0616]/45 to-transparent" />
             </>
           ) : null}
           <div className="relative z-10 flex h-full w-full flex-col p-6">
             {item.imageUrl ? (
-              <div className="relative flex-1 rounded-2xl bg-[#0b0f1a]/60 p-4 shadow-[0_10px_30px_rgba(0,0,0,0.35)]">
+              <div className="relative flex-1 rounded-2xl bg-[#1b0f2c]/60 p-4 shadow-[0_10px_30px_rgba(16,6,28,0.5)]">
                 <img
                   src={item.imageUrl}
                   alt={item.title}
                   className="h-full w-full object-contain"
                 />
-                <div className="absolute bottom-4 left-4 right-4 rounded-xl border border-white/10 bg-[#0b0f1a]/80 px-4 py-3 backdrop-blur">
-                  <div className="text-base font-semibold text-white">{item.title}</div>
-                  <p className="mt-1 text-xs text-white/70">{item.description}</p>
+                <div className="absolute bottom-4 left-4 right-4 rounded-xl border border-[#3a235e]/70 bg-[#0b0616]/85 px-4 py-3 backdrop-blur">
+                  <div className="text-base font-semibold text-[#f9e08a]">{item.title}</div>
+                  <p className="mt-1 text-xs text-[#c9b2ff]">{item.description}</p>
                 </div>
               </div>
             ) : (
               <div className="mb-4">
-                <span className="flex h-[48px] w-[48px] items-center justify-center rounded-full bg-[#111827]">
+                <span className="flex h-[48px] w-[48px] items-center justify-center rounded-full bg-[#1b0f2c]">
                   {item.icon}
                 </span>
               </div>
             )}
             {!item.imageUrl && (
               <div className="pt-4">
-                <div className="text-xl font-black text-white">{item.title}</div>
-                <p className="mt-2 text-sm text-white/85">{item.description}</p>
+                <div className="text-xl font-black text-[#f9e08a]">{item.title}</div>
+                <p className="mt-2 text-sm text-[#c9b2ff]">{item.description}</p>
               </div>
             )}
           </div>
@@ -354,7 +354,7 @@ export default function Carousel({
             type="button"
             aria-label="Previous"
             onClick={() => goTo(-1)}
-            className="absolute -left-5 top-1/2 z-20 -translate-y-1/2 grid h-10 w-10 place-items-center rounded-full border border-white/10 bg-[#0b0f1a]/95 text-white shadow-[0_10px_25px_rgba(0,0,0,0.35)] hover:bg-[#111827]"
+            className="absolute -left-5 top-1/2 z-20 -translate-y-1/2 grid h-10 w-10 place-items-center rounded-full border border-[#3a235e]/70 bg-[#0b0616]/95 text-[#f4d26b] shadow-[0_10px_25px_rgba(16,6,28,0.5)] hover:bg-[#1b0f2c]"
           >
             ‹
           </button>
@@ -362,7 +362,7 @@ export default function Carousel({
             type="button"
             aria-label="Next"
             onClick={() => goTo(1)}
-            className="absolute -right-5 top-1/2 z-20 -translate-y-1/2 grid h-10 w-10 place-items-center rounded-full border border-white/10 bg-[#0b0f1a]/95 text-white shadow-[0_10px_25px_rgba(0,0,0,0.35)] hover:bg-[#111827]"
+            className="absolute -right-5 top-1/2 z-20 -translate-y-1/2 grid h-10 w-10 place-items-center rounded-full border border-[#3a235e]/70 bg-[#0b0616]/95 text-[#f4d26b] shadow-[0_10px_25px_rgba(16,6,28,0.5)] hover:bg-[#1b0f2c]"
           >
             ›
           </button>
@@ -371,7 +371,7 @@ export default function Carousel({
       <div
         ref={containerRef}
         className={`relative overflow-visible p-4 ${
-          round ? "rounded-full border border-white" : "rounded-[24px] border border-[#222]"
+          round ? "rounded-full border border-[#3a235e]" : "rounded-[24px] border border-[#3a235e]"
         }`}
         style={{
           width: baseWidth === 0 ? "100%" : `${baseWidth}px`,
@@ -421,11 +421,11 @@ export default function Carousel({
                 className={`h-2 w-2 rounded-full cursor-pointer transition-colors duration-150 ${
                   activeIndex === index
                     ? round
-                      ? "bg-white"
-                      : "bg-[#333333]"
+                      ? "bg-[#f9e08a]"
+                      : "bg-[#f4d26b]"
                     : round
-                      ? "bg-[#555]"
-                      : "bg-[rgba(51,51,51,0.4)]"
+                      ? "bg-[#3a235e]"
+                      : "bg-[#2a163f]"
                 }`}
                 animate={{
                   scale: activeIndex === index ? 1.2 : 1,
