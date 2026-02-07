@@ -195,7 +195,11 @@ final class ApiClient {
         }
         var request = URLRequest(url: components.url!)
         request.setValue(globalApiKey, forHTTPHeaderField: "X-API-Key")
-        let (data, response) = try await URLSession.shared.data(for: request)
+        request.cachePolicy = .reloadIgnoringLocalCacheData
+        let config = URLSessionConfiguration.ephemeral
+        config.requestCachePolicy = .reloadIgnoringLocalCacheData
+        let session = URLSession(configuration: config)
+        let (data, response) = try await session.data(for: request)
         let http = response as? HTTPURLResponse
         if let http, !(200...299).contains(http.statusCode) {
             let detail = decodeErrorDetail(data) ?? "Server error (status \(http.statusCode))."
