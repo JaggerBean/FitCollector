@@ -228,6 +228,20 @@ struct DashboardScreen: View {
     }
 }
 
+private struct PillPrimaryButton: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.headline)
+            .foregroundColor(.white)
+            .padding(.vertical, 12)
+            .padding(.horizontal, 20)
+            .frame(maxWidth: .infinity)
+            .background(AppColors.healthGreen)
+            .clipShape(Capsule())
+            .opacity(configuration.isPressed ? 0.8 : 1)
+    }
+}
+
 private struct SyncStatusBanner: View {
     let message: String
     let isSuccess: Bool
