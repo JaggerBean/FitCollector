@@ -522,4 +522,52 @@ const MagicBento = ({
   );
 };
 
+export const MagicBentoCard = ({
+  children,
+  className = "",
+  color,
+  textAutoHide = true,
+  enableBorderGlow = true,
+  disableAnimations = false,
+  particleCount = DEFAULT_PARTICLE_COUNT,
+  glowColor = DEFAULT_GLOW_COLOR,
+  enableTilt = false,
+  clickEffect = true,
+  enableMagnetism = true,
+}: {
+  children: React.ReactNode;
+  className?: string;
+  color: string;
+  textAutoHide?: boolean;
+  enableBorderGlow?: boolean;
+  disableAnimations?: boolean;
+  particleCount?: number;
+  glowColor?: string;
+  enableTilt?: boolean;
+  clickEffect?: boolean;
+  enableMagnetism?: boolean;
+}) => {
+  const baseClassName = `magic-bento-card ${textAutoHide ? "magic-bento-card--text-autohide" : ""} ${
+    enableBorderGlow ? "magic-bento-card--border-glow" : ""
+  } ${className}`;
+
+  return (
+    <ParticleCard
+      className={baseClassName}
+      style={{
+        backgroundColor: color,
+        "--glow-color": glowColor,
+      } as React.CSSProperties}
+      disableAnimations={disableAnimations}
+      particleCount={particleCount}
+      glowColor={glowColor}
+      enableTilt={enableTilt}
+      clickEffect={clickEffect}
+      enableMagnetism={enableMagnetism}
+    >
+      {children}
+    </ParticleCard>
+  );
+};
+
 export default MagicBento;

@@ -5,7 +5,7 @@ import SmoothScroll from "../components/SmoothScroll";
 import { PitchScrollScene } from "../components/ScrollStack";
 import Carousel from "../components/Carousel";
 import SplitText from "../components/SplitText";
-import MagicBento from "../components/MagicBento";
+import MagicBento, { MagicBentoCard } from "../components/MagicBento";
 import Magnet from "../components/Magnet";
 import StarBorder from "../components/StarBorder";
 import { useAuthContext } from "../app/AuthContext";
@@ -160,17 +160,26 @@ export default function WhyJoinPage() {
                   </div>
                 </div>
 
-                <div className="rounded-2xl border border-slate-800/70 bg-slate-950/50 p-5 shadow-[0_10px_30px_rgba(15,23,42,0.35)] backdrop-blur sm:p-6">
-                  <div className="text-xs uppercase tracking-[0.2em] text-emerald-300/80">Why it Works</div>
-
-                  <p className="mt-4 text-sm leading-relaxed text-slate-200 sm:text-base">
-                    StepCraft increases retention by giving players daily goals that reward real-world steps with in-game
-                    progress. Unlike other daily server rewards, players feel like they earned these rewards and are more
-                    likely to log on and claim them, which boosts playtime and raises conversion on in-game rank/item
-                    sales. Because the reward is physically earned, players are far more motivated to log in and collect it
-                    than with generic daily handouts. Unlike most mods, StepCraft also adds a phone app touchpoint, keeping your server top-of-mind
-                    even when players aren't online.
-                  </p>
+                <MagicBentoCard
+                  color="#060010"
+                  glowColor="45, 212, 191"
+                  enableTilt
+                  className="rounded-2xl border border-slate-800/70 bg-slate-950/50 p-5 shadow-[0_10px_30px_rgba(15,23,42,0.35)] backdrop-blur sm:p-6"
+                >
+                  <div className="magic-bento-card__header">
+                    <div className="magic-bento-card__label">Why it Works</div>
+                  </div>
+                  <div className="magic-bento-card__content">
+                    <h2 className="magic-bento-card__title">Retention that feels earned</h2>
+                    <p className="magic-bento-card__description">
+                      StepCraft increases retention by giving players daily goals that reward real-world steps with in-game
+                      progress. Unlike other daily server rewards, players feel like they earned these rewards and are more
+                      likely to log on and claim them, which boosts playtime and raises conversion on in-game rank/item
+                      sales. Because the reward is physically earned, players are far more motivated to log in and collect it
+                      than with generic daily handouts. Unlike most mods, StepCraft also adds a phone app touchpoint, keeping your server top-of-mind
+                      even when players aren't online.
+                    </p>
+                  </div>
 
                   <div className="mt-5 inline-flex overflow-hidden rounded-xl bg-slate-900/20">
                     <img
@@ -185,7 +194,7 @@ export default function WhyJoinPage() {
                     Tip: add 2-3 screenshots here (streaks, reward claim, server dashboard) and this becomes a shareable
                     one-pager for owners.
                   </div> */}
-                </div>
+                </MagicBentoCard>
               </div>
             </section>
 
