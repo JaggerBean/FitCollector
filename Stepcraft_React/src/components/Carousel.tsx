@@ -273,7 +273,7 @@ export default function Carousel({
 
     const timer = setInterval(() => {
       setPosition((prev) => {
-        const max = loop ? items.length + loopClones : itemsForRender.length - 1;
+        const max = itemsForRender.length - 1;
         return Math.min(prev + 1, max);
       });
     }, autoplayDelay);
@@ -338,18 +338,16 @@ export default function Carousel({
 
     setPosition((prev) => {
       const next = prev + direction;
-      const max = loop ? items.length + loopClones : itemsForRender.length - 1;
-      const min = loop ? loopClones - 1 : 0;
-      return Math.max(min, Math.min(next, max));
+      const max = itemsForRender.length - 1;
+      return Math.max(0, Math.min(next, max));
     });
   };
 
   const goTo = (direction: 1 | -1) => {
     setPosition((prev) => {
       const next = prev + direction;
-      const max = loop ? items.length + loopClones : itemsForRender.length - 1;
-      const min = loop ? loopClones - 1 : 0;
-      return Math.max(min, Math.min(next, max));
+      const max = itemsForRender.length - 1;
+      return Math.max(0, Math.min(next, max));
     });
   };
 
