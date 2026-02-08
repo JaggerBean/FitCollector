@@ -470,7 +470,7 @@ export default function Carousel({
                 animate={{
                   scale: activeIndex === index ? 1.2 : 1,
                 }}
-                onClick={() => setPosition(loop ? index + 1 : index)}
+                onClick={() => setPosition(loop ? index + loopClones : index)}
                 transition={{ duration: 0.15 }}
               />
             ))}
