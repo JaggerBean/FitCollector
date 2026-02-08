@@ -136,6 +136,7 @@ export default function WhyJoinPage() {
                           title: "Retention",
                           description: "More consecutive days played. Fewer players forgetting to log in.",
                           label: "Keep players active",
+                          className: "min-h-[260px]",
                         },
                         {
                           color: "#060010",
@@ -143,12 +144,14 @@ export default function WhyJoinPage() {
                           description:
                             "A unique health hook that gives you a headline other servers can't copy: \"players earn rewards by being active in the real world, not just the game.\"",
                           label: "Unique server marketability",
+                          className: "min-h-[260px]",
                         },
                         {
                           color: "#060010",
                           title: "Visibility",
                           description: "Keeps your server in players' daily routine, not just when they're online.",
                           label: "Daily presence",
+                          className: "min-h-[260px]",
                         },
                       ]}
                     />
