@@ -111,7 +111,7 @@ function CarouselItem({
   const xShift = useTransform(
     x,
     range,
-    round ? [0, 0, 0] : [70, 24, 0, -24, -70],
+    round ? [0, 0, 0] : [0, 0, 0, 0, 0],
     { clamp: false }
   );
 
