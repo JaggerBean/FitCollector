@@ -296,7 +296,7 @@ export default function Carousel({
     }
   }, [itemsForRender.length, loop, position]);
 
-  const effectiveTransition = isJumping ? { duration: 0 } : SPRING_OPTIONS;
+  const effectiveTransition = SPRING_OPTIONS;
 
   const handleAnimationStart = () => {
     setIsAnimating(true);
@@ -343,7 +343,6 @@ export default function Carousel({
   };
 
   const handleDragEnd = (_: MouseEvent | TouchEvent | PointerEvent, info: PanInfo): void => {
-    if (isJumping || isAnimating) return;
     const { offset, velocity } = info;
     const direction =
       offset.x < -DRAG_BUFFER || velocity.x < -VELOCITY_THRESHOLD
@@ -363,7 +362,6 @@ export default function Carousel({
   };
 
   const goTo = (direction: 1 | -1) => {
-    if (isJumping || isAnimating) return;
     setPosition((prev) => {
       const next = prev + direction;
       const max = loop ? items.length + loopClones : itemsForRender.length - 1;
