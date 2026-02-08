@@ -99,7 +99,7 @@ function CarouselItem({
   const scale = useTransform(
     x,
     range,
-    round ? [0.88, 1, 0.88] : [0.88, 0.95, 1, 0.95, 0.88],
+    round ? [0.88, 1, 0.88] : [1, 1, 1, 1, 1],
     { clamp: false }
   );
   const opacity = useTransform(
