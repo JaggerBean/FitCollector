@@ -211,7 +211,6 @@ export default function Carousel({
   const effectiveVisibleCount = round
     ? 1
     : Math.max(1, Math.min(visibleCount ?? Number.POSITIVE_INFINITY, autoVisibleCount));
-  const loopClones = loop ? 1 : 0;
   const itemWidth = availableWidth
     ? (availableWidth - GAP * (effectiveVisibleCount - 1)) / effectiveVisibleCount
     : 0;
