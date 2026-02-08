@@ -227,8 +227,7 @@ export default function WhyJoinPage() {
                   <div className="text-xs uppercase tracking-[0.28em] text-emerald-300/80">The player experience</div>
                   <h2 className="mt-3 text-xl font-semibold text-white sm:text-2xl">Clear goals, fast rewards, no clutter.</h2>
                   <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-300">
-                    Players open the app and immediately see what to do next. It's built like a fitness app: a simple
-                    daily target, a reward to claim, and a streak to protect, no menus to learn.
+                    Players open the app and immediately see what to do next. It's built like a fitness app: simple step targets, rewards to reach, no confusing menus to learn.
                   </p>
                 </div>
               </div>
