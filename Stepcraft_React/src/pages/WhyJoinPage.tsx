@@ -134,7 +134,8 @@ export default function WhyJoinPage() {
                         {
                           color: "#060010",
                           title: "Retention",
-                          description: "More consecutive days played. Fewer players forgetting to log in.",
+                          description:
+                            "More consecutive days played and fewer players forgetting to log in. Daily step goals turn casual visits into a routine and keep servers active.",
                           label: "Keep players active",
                           className: "min-h-[260px]",
                         },
@@ -149,7 +150,8 @@ export default function WhyJoinPage() {
                         {
                           color: "#060010",
                           title: "Visibility",
-                          description: "Keeps your server in players' daily routine, not just when they're online.",
+                          description:
+                            "Keeps your server in players' daily routine, not just when they're online. Notifications and streaks bring them back with a clear next goal.",
                           label: "Daily presence",
                           className: "min-h-[260px]",
                         },
