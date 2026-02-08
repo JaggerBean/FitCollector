@@ -394,7 +394,7 @@ export default function Carousel({
             type="button"
             aria-label="Previous"
             onClick={() => goTo(-1)}
-            className="absolute left-0 top-1/2 z-20 -translate-x-1/2 -translate-y-1/2 grid h-11 w-11 place-items-center rounded-full border border-emerald-300/70 bg-[#0b0f1a] text-emerald-200 shadow-[0_10px_25px_rgba(0,0,0,0.35)] transition hover:bg-[#0f172a] hover:text-emerald-100"
+            className="absolute left-0 top-1/2 z-20 -translate-x-1/2 -translate-y-1/2 grid h-11 w-11 place-items-center rounded-full border border-emerald-300/70 bg-[#0b0f1a] text-emerald-200 shadow-[0_10px_25px_rgba(0,0,0,0.35)] transition hover:bg-emerald-300 hover:text-[#0b0f1a] hover:border-[#0b0f1a]"
           >
             ‹
           </button>
@@ -402,7 +402,7 @@ export default function Carousel({
             type="button"
             aria-label="Next"
             onClick={() => goTo(1)}
-            className="absolute right-0 top-1/2 z-20 translate-x-1/2 -translate-y-1/2 grid h-11 w-11 place-items-center rounded-full border border-emerald-300/70 bg-[#0b0f1a] text-emerald-200 shadow-[0_10px_25px_rgba(0,0,0,0.35)] transition hover:bg-[#0f172a] hover:text-emerald-100"
+            className="absolute right-0 top-1/2 z-20 translate-x-1/2 -translate-y-1/2 grid h-11 w-11 place-items-center rounded-full border border-emerald-300/70 bg-[#0b0f1a] text-emerald-200 shadow-[0_10px_25px_rgba(0,0,0,0.35)] transition hover:bg-emerald-300 hover:text-[#0b0f1a] hover:border-[#0b0f1a]"
           >
             ›
           </button>
