@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { animate, motion, useMotionValue, useTransform } from "motion/react";
+import { motion, useMotionValue, useTransform } from "motion/react";
 import type { JSX } from "react";
 import type { PanInfo } from "motion/react";
 import { FiCircle, FiCode, FiFileText, FiLayers, FiLayout } from "react-icons/fi";
@@ -231,8 +231,8 @@ export default function Carousel({
   const [position, setPosition] = useState<number>(loop ? loopClones : 0);
   const x = useMotionValue(0);
   const [isHovered, setIsHovered] = useState<boolean>(false);
-  const didInitRef = useRef(false);
-  const jumpRef = useRef(false);
+  const [isJumping, setIsJumping] = useState<boolean>(false);
+  const [isAnimating, setIsAnimating] = useState<boolean>(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -272,21 +272,21 @@ export default function Carousel({
     if (pauseOnHover && isHovered) return undefined;
 
     const timer = setInterval(() => {
+      if (isAnimating || isJumping) return;
       setPosition((prev) => {
-        const max = itemsForRender.length - 1;
+        const max = loop ? items.length + loopClones : itemsForRender.length - 1;
         return Math.min(prev + 1, max);
       });
     }, autoplayDelay);
 
     return () => clearInterval(timer);
-  }, [autoplay, autoplayDelay, isHovered, pauseOnHover, itemsForRender.length]);
+  }, [autoplay, autoplayDelay, isHovered, pauseOnHover, itemsForRender.length, isAnimating, isJumping]);
 
   useEffect(() => {
     const startingPosition = loop ? loopClones : 0;
     setPosition(startingPosition);
     if (trackItemOffset) {
       x.set(-startingPosition * trackItemOffset);
-      didInitRef.current = true;
     }
   }, [items.length, loop, loopClones, trackItemOffset, x]);
 
@@ -296,34 +296,51 @@ export default function Carousel({
     }
   }, [itemsForRender.length, loop, position]);
 
-  useEffect(() => {
-    if (!trackItemOffset || !didInitRef.current) return;
-    if (jumpRef.current) {
-      jumpRef.current = false;
-      x.set(-position * trackItemOffset);
+  const effectiveTransition = isJumping ? { duration: 0 } : SPRING_OPTIONS;
+
+  const handleAnimationStart = () => {
+    setIsAnimating(true);
+  };
+
+  const handleAnimationComplete = () => {
+    if (!loop || itemsForRender.length <= 1) {
+      setIsAnimating(false);
+      return;
+    }
+    if (loopClones === 0) {
+      setIsAnimating(false);
       return;
     }
 
-    const controls = animate(x, -position * trackItemOffset, SPRING_OPTIONS);
-    controls.then(() => {
-      if (!loop || itemsForRender.length <= 1 || loopClones === 0) {
-        return;
-      }
-      const firstCloneIndex = items.length + loopClones;
-      const lastCloneIndex = loopClones - 1;
-      if (position >= firstCloneIndex) {
-        jumpRef.current = true;
-        setPosition(loopClones);
-        return;
-      }
-      if (position <= lastCloneIndex) {
-        jumpRef.current = true;
-        setPosition(items.length + loopClones - 1);
-      }
-    });
+    const firstCloneIndex = items.length + loopClones;
+    const lastCloneIndex = loopClones - 1;
 
-    return () => controls.stop();
-  }, [position, trackItemOffset, loop, items.length, loopClones, itemsForRender.length, x]);
+    if (position >= firstCloneIndex) {
+      setIsJumping(true);
+      const target = loopClones;
+      setPosition(target);
+      x.set(-target * trackItemOffset);
+      requestAnimationFrame(() => {
+        setIsJumping(false);
+        setIsAnimating(false);
+      });
+      return;
+    }
+
+    if (position <= lastCloneIndex) {
+      setIsJumping(true);
+      const target = items.length + loopClones - 1;
+      setPosition(target);
+      x.set(-target * trackItemOffset);
+      requestAnimationFrame(() => {
+        setIsJumping(false);
+        setIsAnimating(false);
+      });
+      return;
+    }
+
+    setIsAnimating(false);
+  };
 
   const handleDragEnd = (_: MouseEvent | TouchEvent | PointerEvent, info: PanInfo): void => {
     const { offset, velocity } = info;
@@ -338,16 +355,18 @@ export default function Carousel({
 
     setPosition((prev) => {
       const next = prev + direction;
-      const max = itemsForRender.length - 1;
-      return Math.max(0, Math.min(next, max));
+      const max = loop ? items.length + loopClones : itemsForRender.length - 1;
+      const min = loop ? loopClones - 1 : 0;
+      return Math.max(min, Math.min(next, max));
     });
   };
 
   const goTo = (direction: 1 | -1) => {
     setPosition((prev) => {
       const next = prev + direction;
-      const max = itemsForRender.length - 1;
-      return Math.max(0, Math.min(next, max));
+      const max = loop ? items.length + loopClones : itemsForRender.length - 1;
+      const min = loop ? loopClones - 1 : 0;
+      return Math.max(min, Math.min(next, max));
     });
   };
 
@@ -403,7 +422,7 @@ export default function Carousel({
           {itemWidth > 0 && (
             <motion.div
               className="flex"
-              drag="x"
+              drag={isAnimating ? false : "x"}
               {...dragProps}
               style={{
                 width: trackItemOffset * itemsForRender.length,
@@ -413,6 +432,10 @@ export default function Carousel({
                 x,
               }}
               onDragEnd={handleDragEnd}
+              animate={{ x: -(position * trackItemOffset) }}
+              transition={effectiveTransition}
+              onAnimationStart={handleAnimationStart}
+              onAnimationComplete={handleAnimationComplete}
             >
               {itemsForRender.map((item, index) => (
                 <CarouselItem
@@ -424,7 +447,7 @@ export default function Carousel({
                   round={round}
                   trackItemOffset={trackItemOffset}
                   x={x}
-                  transition={SPRING_OPTIONS}
+                  transition={effectiveTransition}
                 />
               ))}
             </motion.div>
