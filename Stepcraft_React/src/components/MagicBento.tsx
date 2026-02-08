@@ -526,9 +526,12 @@ export const MagicBentoCard = ({
   children,
   className = "",
   color,
+  wrapperClassName = "",
   textAutoHide = true,
   enableBorderGlow = true,
   disableAnimations = false,
+  enableSpotlight = true,
+  spotlightRadius = DEFAULT_SPOTLIGHT_RADIUS,
   particleCount = DEFAULT_PARTICLE_COUNT,
   glowColor = DEFAULT_GLOW_COLOR,
   enableTilt = false,
@@ -537,36 +540,55 @@ export const MagicBentoCard = ({
 }: {
   children: React.ReactNode;
   className?: string;
+  wrapperClassName?: string;
   color: string;
   textAutoHide?: boolean;
   enableBorderGlow?: boolean;
   disableAnimations?: boolean;
+  enableSpotlight?: boolean;
+  spotlightRadius?: number;
   particleCount?: number;
   glowColor?: string;
   enableTilt?: boolean;
   clickEffect?: boolean;
   enableMagnetism?: boolean;
 }) => {
+  const gridRef = useRef<HTMLDivElement | null>(null);
+  const isMobile = useMobileDetection();
+  const shouldDisableAnimations = disableAnimations || isMobile;
   const baseClassName = `magic-bento-card ${textAutoHide ? "magic-bento-card--text-autohide" : ""} ${
     enableBorderGlow ? "magic-bento-card--border-glow" : ""
   } ${className}`;
 
   return (
-    <ParticleCard
-      className={baseClassName}
-      style={{
-        backgroundColor: color,
-        "--glow-color": glowColor,
-      } as React.CSSProperties}
-      disableAnimations={disableAnimations}
-      particleCount={particleCount}
-      glowColor={glowColor}
-      enableTilt={enableTilt}
-      clickEffect={clickEffect}
-      enableMagnetism={enableMagnetism}
-    >
-      {children}
-    </ParticleCard>
+    <>
+      {enableSpotlight && (
+        <GlobalSpotlight
+          gridRef={gridRef}
+          disableAnimations={shouldDisableAnimations}
+          enabled={enableSpotlight}
+          spotlightRadius={spotlightRadius}
+          glowColor={glowColor}
+        />
+      )}
+      <div className={`bento-section ${wrapperClassName}`} ref={gridRef}>
+        <ParticleCard
+          className={baseClassName}
+          style={{
+            backgroundColor: color,
+            "--glow-color": glowColor,
+          } as React.CSSProperties}
+          disableAnimations={shouldDisableAnimations}
+          particleCount={particleCount}
+          glowColor={glowColor}
+          enableTilt={enableTilt}
+          clickEffect={clickEffect}
+          enableMagnetism={enableMagnetism}
+        >
+          {children}
+        </ParticleCard>
+      </div>
+    </>
   );
 };
 
