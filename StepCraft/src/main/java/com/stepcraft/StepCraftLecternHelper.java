@@ -19,6 +19,7 @@ public final class StepCraftLecternHelper {
     private StepCraftLecternHelper() {}
 
     public static void openLectern(ServerPlayerEntity player, String title, List<String> pages) {
+        StepCraftNav.pushCurrent(player);
         ItemStack book = StepCraftBookHelper.createWrittenBook(title, "StepCraft", pages);
 
         SimpleInventory inventory = new SimpleInventory(1);

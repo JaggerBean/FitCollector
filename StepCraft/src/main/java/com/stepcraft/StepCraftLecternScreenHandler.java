@@ -44,7 +44,9 @@ public class StepCraftLecternScreenHandler extends LecternScreenHandler {
             return;
         }
         if (player instanceof net.minecraft.server.network.ServerPlayerEntity serverPlayer) {
-            serverPlayer.getServer().execute(() -> StepCraftUIHelper.openPlayersList(serverPlayer));
+            serverPlayer.getServer().execute(() ->
+                StepCraftNav.goBack(serverPlayer, serverPlayer::closeHandledScreen)
+            );
         }
     }
 }
