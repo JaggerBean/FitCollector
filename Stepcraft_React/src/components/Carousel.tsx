@@ -105,7 +105,7 @@ function CarouselItem({
   const opacity = useTransform(
     x,
     range,
-    round ? [0.55, 1, 0.55] : [0, 0.7, 1, 0.7, 0],
+    round ? [0.55, 1, 0.55] : [1, 1, 1, 1, 1],
     { clamp: false }
   );
   const xShift = useTransform(
