@@ -2,6 +2,7 @@ package com.stepcraft;
 
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,6 +38,12 @@ public class StepCraftMod implements ModInitializer {
         // Register admin command(s)
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
             StepCraftCommands.register(dispatcher);
+        });
+
+        ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
+            if (handler != null && handler.player != null) {
+                StepCraftAutoClaimService.scheduleAutoClaim(handler.player);
+            }
         });
 
     }

@@ -56,6 +56,15 @@ public final class StepCraftScreens {
         ));
     }
 
+    public static void openAutoClaim(ServerPlayerEntity player, String targetPlayer) {
+        StepCraftNav.pushCurrent(player);
+        player.openHandledScreen(new SimpleNamedScreenHandlerFactory(
+            (int syncId, PlayerInventory playerInv, PlayerEntity p) ->
+                new StepCraftAutoClaimScreenHandler(syncId, playerInv, targetPlayer),
+            Text.literal("Auto-Claim")
+        ));
+    }
+
         public static void openClaimRewards(ServerPlayerEntity player, String targetPlayer) {
         StepCraftNav.pushCurrent(player);
         player.openHandledScreen(new SimpleNamedScreenHandlerFactory(

@@ -30,6 +30,7 @@ public class StepCraftPlayerMenuScreenHandler extends GenericContainerScreenHand
         }
 
         inventory.setStack(20, makeActionItem(new ItemStack(Items.EMERALD), "Claim Rewards", 0x55FF55));
+        inventory.setStack(22, makeActionItem(new ItemStack(Items.REPEATER), "Auto-Claim", 0xFFAA00));
         inventory.setStack(24, makeActionItem(new ItemStack(Items.FEATHER), "Day Steps", 0x55FFFF));
         inventory.setStack(49, makeActionItem(new ItemStack(Items.BOOK), "Back", 0xFFFFFF));
     }
@@ -61,6 +62,10 @@ public class StepCraftPlayerMenuScreenHandler extends GenericContainerScreenHand
         switch (slot) {
             case 20 -> {
                 StepCraftScreens.openClaimRewards(serverPlayer, targetPlayer);
+                return;
+            }
+            case 22 -> {
+                StepCraftScreens.openAutoClaim(serverPlayer, targetPlayer);
                 return;
             }
             case 24 -> {
