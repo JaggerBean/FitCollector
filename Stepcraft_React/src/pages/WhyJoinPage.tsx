@@ -155,20 +155,17 @@ export default function WhyJoinPage() {
                   </div>
                 </div>
 
-                <div>
-                  <MagicBento
-                    glowColor="45, 212, 191"
-                    enableTilt
-                    cards={[
-                      {
-                        color: "#060010",
-                        title: "Why it works",
-                        description:
-                          "StepCraft ties rewards to real-world steps, which makes progress feel earned. That keeps players logging in, increases playtime, and boosts conversion without feeling like a daily handout.",
-                        label: "Retention mechanics",
-                      },
-                    ]}
-                  />
+                <div className="rounded-2xl border border-slate-800/70 bg-slate-950/50 p-5 shadow-[0_10px_30px_rgba(15,23,42,0.35)] backdrop-blur sm:p-6">
+                  <div className="text-xs uppercase tracking-[0.2em] text-emerald-300/80">Why it Works</div>
+
+                  <p className="mt-4 text-sm leading-relaxed text-slate-200 sm:text-base">
+                    StepCraft increases retention by giving players daily goals that reward real-world steps with in-game
+                    progress. Unlike other daily server rewards, players feel like they earned these rewards and are more
+                    likely to log on and claim them, which boosts playtime and raises conversion on in-game rank/item
+                    sales. Because the reward is physically earned, players are far more motivated to log in and collect it
+                    than with generic daily handouts. Unlike most mods, StepCraft also adds a phone app touchpoint, keeping your server top-of-mind
+                    even when players aren't online.
+                  </p>
 
                   <div className="mt-5 inline-flex overflow-hidden rounded-xl bg-slate-900/20">
                     <img
