@@ -273,7 +273,10 @@ export default function Carousel({
 
     const timer = setInterval(() => {
       if (isAnimating || isJumping) return;
-      setPosition((prev) => Math.min(prev + 1, itemsForRender.length - 1));
+      setPosition((prev) => {
+        const max = loop ? items.length + loopClones : itemsForRender.length - 1;
+        return Math.min(prev + 1, max);
+      });
     }, autoplayDelay);
 
     return () => clearInterval(timer);
@@ -312,7 +315,7 @@ export default function Carousel({
     const firstCloneIndex = items.length + loopClones;
     const lastCloneIndex = loopClones - 1;
 
-    if (position === firstCloneIndex) {
+    if (position >= firstCloneIndex) {
       setIsJumping(true);
       const target = loopClones;
       setPosition(target);
@@ -324,7 +327,7 @@ export default function Carousel({
       return;
     }
 
-    if (position === lastCloneIndex) {
+    if (position <= lastCloneIndex) {
       setIsJumping(true);
       const target = items.length + loopClones - 1;
       setPosition(target);
@@ -352,16 +355,18 @@ export default function Carousel({
 
     setPosition((prev) => {
       const next = prev + direction;
-      const max = itemsForRender.length - 1;
-      return Math.max(0, Math.min(next, max));
+      const max = loop ? items.length + loopClones : itemsForRender.length - 1;
+      const min = loop ? loopClones - 1 : 0;
+      return Math.max(min, Math.min(next, max));
     });
   };
 
   const goTo = (direction: 1 | -1) => {
     setPosition((prev) => {
       const next = prev + direction;
-      const max = itemsForRender.length - 1;
-      return Math.max(0, Math.min(next, max));
+      const max = loop ? items.length + loopClones : itemsForRender.length - 1;
+      const min = loop ? loopClones - 1 : 0;
+      return Math.max(min, Math.min(next, max));
     });
   };
 
