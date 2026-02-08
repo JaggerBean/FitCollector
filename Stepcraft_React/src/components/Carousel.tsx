@@ -426,7 +426,7 @@ export default function Carousel({
                   round={round}
                   trackItemOffset={trackItemOffset}
                   x={x}
-                  transition={effectiveTransition}
+                  transition={SPRING_OPTIONS}
                 />
               ))}
             </motion.div>
