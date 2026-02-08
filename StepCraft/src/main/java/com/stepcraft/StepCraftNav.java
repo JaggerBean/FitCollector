@@ -64,6 +64,7 @@ public final class StepCraftNav {
                     }
                 }
                 case ACTION_MENU -> StepCraftScreens.openActionMenu(player, entry.targetPlayer);
+                case PLAYER_MENU -> StepCraftScreens.openPlayerMenu(player, entry.targetPlayer);
                 case CLAIM_REWARDS -> StepCraftScreens.openClaimRewards(player, entry.targetPlayer);
                 case CLAIM_STATUS -> StepCraftScreens.openClaimStatus(player, entry.targetPlayer);
                 case SETTINGS -> StepCraftScreens.openSettings(player);
@@ -100,6 +101,9 @@ public final class StepCraftNav {
         if (handler instanceof StepCraftActionMenuScreenHandler menu) {
             return new NavEntry(Type.ACTION_MENU).withTarget(menu.getTargetPlayer());
         }
+        if (handler instanceof StepCraftPlayerMenuScreenHandler playerMenu) {
+            return new NavEntry(Type.PLAYER_MENU).withTarget(playerMenu.getTargetPlayer());
+        }
         if (handler instanceof StepCraftClaimRewardsScreenHandler claimRewards) {
             return new NavEntry(Type.CLAIM_REWARDS).withTarget(claimRewards.getTargetPlayer());
         }
@@ -125,6 +129,7 @@ public final class StepCraftNav {
         ADMIN,
         PLAYER_LIST,
         ACTION_MENU,
+        PLAYER_MENU,
         CLAIM_REWARDS,
         CLAIM_STATUS,
         SETTINGS,

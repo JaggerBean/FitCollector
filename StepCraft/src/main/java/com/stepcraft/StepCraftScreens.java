@@ -48,6 +48,14 @@ public final class StepCraftScreens {
         ));
     }
 
+    public static void openPlayerMenu(ServerPlayerEntity player, String targetPlayer) {
+        StepCraftNav.pushCurrent(player);
+        player.openHandledScreen(new StepCraftPlayerMenuScreenFactory(
+                targetPlayer,
+                Text.literal("Player Menu")
+        ));
+    }
+
         public static void openClaimRewards(ServerPlayerEntity player, String targetPlayer) {
         StepCraftNav.pushCurrent(player);
         player.openHandledScreen(new SimpleNamedScreenHandlerFactory(

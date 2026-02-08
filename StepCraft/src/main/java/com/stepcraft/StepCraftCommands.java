@@ -75,6 +75,19 @@ public class StepCraftCommands {
                     })
                 )
             )
+            // /stepcraft player_gui (all players)
+            .then(CommandManager.literal("player_gui")
+                .executes(context -> {
+                    ServerCommandSource source = context.getSource();
+                    if (source.getEntity() instanceof net.minecraft.server.network.ServerPlayerEntity player) {
+                        String username = player.getName().getString();
+                        StepCraftScreens.openPlayerMenu(player, username);
+                    } else {
+                        source.sendError(Text.literal("Only players can use this command."));
+                    }
+                    return Command.SINGLE_SUCCESS;
+                })
+            )
             // /stepcraft claim_status <username> (OPs only)
             .then(CommandManager.literal("claim_status")
                 .requires(source -> source.hasPermissionLevel(4))
