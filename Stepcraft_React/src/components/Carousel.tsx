@@ -94,8 +94,26 @@ function CarouselItem({
         -(index - 1) * trackItemOffset,
         -(index - 2) * trackItemOffset,
       ];
-  const outputRange = round ? [90, 0, -90] : [55, 25, 0, -25, -55];
+  const outputRange = round ? [90, 0, -90] : [65, 0, 0, 0, -65];
   const rotateY = useTransform(x, range, outputRange, { clamp: false });
+  const scale = useTransform(
+    x,
+    range,
+    round ? [0.88, 1, 0.88] : [0.88, 0.95, 1, 0.95, 0.88],
+    { clamp: false }
+  );
+  const opacity = useTransform(
+    x,
+    range,
+    round ? [0.55, 1, 0.55] : [0.35, 0.7, 1, 0.7, 0.35],
+    { clamp: false }
+  );
+  const xShift = useTransform(
+    x,
+    range,
+    round ? [0, 0, 0] : [70, 24, 0, -24, -70],
+    { clamp: false }
+  );
 
   return (
     <motion.div
@@ -109,6 +127,9 @@ function CarouselItem({
         width: itemWidth,
         height: round ? itemWidth : itemHeight,
         rotateY: rotateY,
+        scale: scale,
+        opacity: opacity,
+        x: xShift,
         ...(round && { borderRadius: "50%" }),
       }}
       transition={transition}
