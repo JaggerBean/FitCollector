@@ -151,6 +151,8 @@ function CarouselItem({
                 alt=""
                 aria-hidden="true"
                 className="absolute inset-0 h-full w-full object-cover blur-md scale-110 opacity-35"
+                loading="eager"
+                decoding="async"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-[#0b0f1a]/85 via-[#0b0f1a]/45 to-transparent" />
             </>
@@ -162,6 +164,8 @@ function CarouselItem({
                   src={item.imageUrl}
                   alt={item.title}
                   className="h-full w-full object-contain"
+                  loading="eager"
+                  decoding="async"
                 />
                 <div className="absolute bottom-4 left-4 right-4 rounded-xl border border-white/10 bg-[#0b0f1a]/80 px-4 py-3 backdrop-blur">
                   <div className="text-base font-semibold text-white">{item.title}</div>
@@ -250,6 +254,15 @@ export default function Carousel({
       };
     }
   }, [pauseOnHover]);
+
+  useEffect(() => {
+    if (!items.length) return;
+    items.forEach((item) => {
+      if (!item.imageUrl) return;
+      const img = new Image();
+      img.src = item.imageUrl;
+    });
+  }, [items]);
 
   useEffect(() => {
     if (!autoplay || itemsForRender.length <= 1) return undefined;
