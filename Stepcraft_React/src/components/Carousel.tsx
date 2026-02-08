@@ -462,10 +462,10 @@ export default function Carousel({
                   activeIndex === index
                     ? round
                       ? "bg-white"
-                      : "bg-[#333333]"
+                      : "bg-emerald-300/100"
                     : round
                       ? "bg-[#555]"
-                      : "bg-[rgba(51,51,51,0.4)]"
+                      : "bg-emerald-300/35"
                 }`}
                 animate={{
                   scale: activeIndex === index ? 1.2 : 1,
