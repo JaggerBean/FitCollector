@@ -4,6 +4,7 @@ import AVFoundation
 struct OnboardingScreen: View {
     @EnvironmentObject private var appState: AppState
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.scenePhase) private var scenePhase
 
     @State private var step = 1
     @State private var username = ""
@@ -108,6 +109,18 @@ struct OnboardingScreen: View {
                     }
                     await loadServers(inviteCode: nil)
                 }
+                .onChange(of: scenePhase) { newPhase in
+                    guard newPhase == .active, step == 1 else { return }
+                    Task {
+                        let granted = await HealthKitManager.shared.hasStepAccess()
+                        await MainActor.run {
+                            healthKitAuthorized = granted
+                            if granted {
+                                healthKitErrorMessage = nil
+                            }
+                        }
+                    }
+                }
             }
         }
     }
@@ -140,7 +153,7 @@ struct OnboardingScreen: View {
                     }
                     do {
                         try await HealthKitManager.shared.requestAuthorization()
-                        let granted = HealthKitManager.shared.isStepAuthorizationGranted()
+                        let granted = await HealthKitManager.shared.hasStepAccess()
                         healthKitAuthorized = granted
                         if granted {
                             step = 2

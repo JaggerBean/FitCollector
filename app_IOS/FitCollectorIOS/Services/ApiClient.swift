@@ -190,12 +190,21 @@ final class ApiClient {
 
     func getAvailableServers(inviteCode: String?) async throws -> AvailableServersResponse {
         var components = URLComponents(url: baseURL.appendingPathComponent("v1/servers/available"), resolvingAgainstBaseURL: false)!
+        var queryItems: [URLQueryItem] = [
+            URLQueryItem(name: "ts", value: String(Int(Date().timeIntervalSince1970)))
+        ]
         if let inviteCode, !inviteCode.isEmpty {
-            components.queryItems = [URLQueryItem(name: "invite_code", value: inviteCode)]
+            queryItems.append(URLQueryItem(name: "invite_code", value: inviteCode))
         }
+        components.queryItems = queryItems
         var request = URLRequest(url: components.url!)
         request.setValue(globalApiKey, forHTTPHeaderField: "X-API-Key")
-        let (data, _) = try await URLSession.shared.data(for: request)
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        request.cachePolicy = .reloadIgnoringLocalCacheData
+        let config = URLSessionConfiguration.ephemeral
+        config.requestCachePolicy = .reloadIgnoringLocalCacheData
+        let session = URLSession(configuration: config)
+        let (data, _) = try await session.data(for: request)
         return try JSONDecoder().decode(AvailableServersResponse.self, from: data)
     }
 
