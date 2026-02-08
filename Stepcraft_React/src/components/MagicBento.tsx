@@ -498,7 +498,7 @@ const MagicBento = ({
                   {card.label && <div className="magic-bento-card__label">{card.label}</div>}
                 </div>
                 <div className="magic-bento-card__content">
-                  <h2 className="magic-bento-card__title">{card.title}</h2>
+                  {card.title ? <h2 className="magic-bento-card__title">{card.title}</h2> : null}
                   <p className="magic-bento-card__description">{card.description}</p>
                 </div>
               </ParticleCard>
@@ -511,7 +511,7 @@ const MagicBento = ({
                 {card.label && <div className="magic-bento-card__label">{card.label}</div>}
               </div>
               <div className="magic-bento-card__content">
-                <h2 className="magic-bento-card__title">{card.title}</h2>
+                {card.title ? <h2 className="magic-bento-card__title">{card.title}</h2> : null}
                 <p className="magic-bento-card__description">{card.description}</p>
               </div>
             </div>

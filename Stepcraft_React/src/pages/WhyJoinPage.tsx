@@ -133,20 +133,20 @@ export default function WhyJoinPage() {
                       cards={[
                         {
                           color: "#060010",
-                          title: "Retention",
+                          title: "",
                           description: "More consecutive days played. Fewer players forgetting to log in.",
                           label: "Player retention",
                         },
                         {
                           color: "#060010",
-                          title: "Marketability",
+                          title: "",
                           description:
                             "A unique health hook that gives you a headline other servers can't copy.",
                           label: "Server marketing",
                         },
                         {
                           color: "#060010",
-                          title: "Visibility",
+                          title: "",
                           description: "Keeps your server in players' daily routine, not just when they're online.",
                           label: "Daily presence",
                         },
@@ -192,21 +192,21 @@ export default function WhyJoinPage() {
                 cards={[
                   {
                     color: "#060010",
-                    title: "Privacy & invite codes",
+                    title: "",
                     description:
                       "Run private servers with invite codes + QR join, or go public. You stay in control of who can register.",
                     label: "Access control",
                   },
                   {
                     color: "#060010",
-                    title: "Automated reward tiers",
+                    title: "",
                     description:
                       "Set step thresholds and the exact commands to run at each tier. Tweak rewards anytime without the difficulty of config files.",
                     label: "Reward automation",
                   },
                   {
                     color: "#060010",
-                    title: "Owner dashboard tools",
+                    title: "",
                     description:
                       "Schedule push notifications that get sent to your players' devices, manage players (ban/wipe), and review an audit log so you can run ops without guesswork.",
                     label: "Operator tools",
@@ -296,20 +296,20 @@ export default function WhyJoinPage() {
                   cards={[
                     {
                       color: "#060010",
-                      title: "Instant feedback",
+                      title: "",
                       description:
                         "Progress updates the moment steps sync, so players see the payoff right away.",
                       label: "Fast feedback",
                     },
                     {
                       color: "#060010",
-                      title: "Streak-driven motivation",
+                      title: "",
                       description: "Players stay engaged because the app reinforces milestones and daily wins.",
                       label: "Daily streaks",
                     },
                     {
                       color: "#060010",
-                      title: "Low cognitive load",
+                      title: "",
                       description: "It feels like a fitness app, not a mod menu, easy for casual players to adopt.",
                       label: "Simple UX",
                     },
