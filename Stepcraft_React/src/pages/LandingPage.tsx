@@ -90,16 +90,6 @@ export default function LandingPage() {
                           Why you should join
                         </StarBorder>
                       </Magnet>
-                      <Magnet>
-                        <StarBorder
-                          as={Link}
-                          to="/login"
-                          className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
-                          color="#10b981"
-                        >
-                          Sign in
-                        </StarBorder>
-                      </Magnet>
                     </>
                   )}
                 </div>
