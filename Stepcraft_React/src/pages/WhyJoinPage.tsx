@@ -135,14 +135,14 @@ export default function WhyJoinPage() {
                           color: "#060010",
                           title: "Retention",
                           description: "More consecutive days played. Fewer players forgetting to log in.",
-                          label: "Player retention",
+                          label: "Keep players active",
                         },
                         {
                           color: "#060010",
-                          title: "Marketability",
+                          title: "Health oriented",
                           description:
-                            "A unique health hook that gives you a headline other servers can't copy.",
-                          label: "Server marketing",
+                            "A unique health hook that gives you a headline other servers can't copy: \"players earn rewards by being active in the real world, not just the game.\"",
+                          label: "Unique server marketability",
                         },
                         {
                           color: "#060010",
@@ -195,21 +195,21 @@ export default function WhyJoinPage() {
                     title: "Privacy & invite codes",
                     description:
                       "Run private servers with invite codes + QR join, or go public. You stay in control of who can register.",
-                    label: "Access control",
+                    label: "Access",
                   },
                   {
                     color: "#060010",
                     title: "Automated reward tiers",
                     description:
-                      "Set step thresholds and the exact commands to run at each tier. Tweak rewards anytime without the difficulty of config files.",
-                    label: "Reward automation",
+                      "Set step thresholds and the exact commands to run at each tier. Tweak rewards anytime without the difficulty of manually editing config files.",
+                    label: "Rewards",
                   },
                   {
                     color: "#060010",
-                    title: "Owner dashboard tools",
+                    title: "Owner dashboard management",
                     description:
                       "Schedule push notifications that get sent to your players' devices, manage players (ban/wipe), and review an audit log so you can run ops without guesswork.",
-                    label: "Operator tools",
+                    label: "Tools",
                   },
                 ]}
               />
@@ -299,13 +299,13 @@ export default function WhyJoinPage() {
                       title: "Instant feedback",
                       description:
                         "Progress updates the moment steps sync, so players see the payoff right away.",
-                      label: "Fast feedback",
+                      label: "Player Statisfaction",
                     },
                     {
                       color: "#060010",
                       title: "Streak-driven motivation",
                       description: "Players stay engaged because the app reinforces milestones and daily wins.",
-                      label: "Daily streaks",
+                      label: "Return incentives",
                     },
                     {
                       color: "#060010",
