@@ -199,7 +199,7 @@ export default function Carousel({
   minItemWidth = 360,
   visibleCount,
   autoplay = false,
-  autoplayDelay = 3000,
+  autoplayDelay = 4500,
   pauseOnHover = false,
   loop = false,
   round = false,
